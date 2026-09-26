@@ -1,0 +1,7 @@
+**
+!.devcontainer/
+!.devcontainer/install-tools.sh
+!versions.env
+!tools.lock.json
+!scripts/
+!scripts/install-security-tools.sh

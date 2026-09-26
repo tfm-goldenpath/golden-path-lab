@@ -1,0 +1,17 @@
+# Dependencies and local data.
+node_modules/
+__pycache__/
+*.py[cod]
+coverage/
+.tmp/
+# Material awaiting review.
+/pendiente/
+.env
+.env.*
+!.env.example
+*.key
+# Generated data: retain outside Git according to the evaluation procedure.
+/evidence/raw/
+/evidence/packages/
+/evidence/environment/
+# Reports are not ignored globally: evidence intended for publication requires review.

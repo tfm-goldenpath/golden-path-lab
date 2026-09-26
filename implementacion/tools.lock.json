@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "platform": "linux/amd64",
+  "verifiedAt": "2026-09-21",
+  "tools": {
+    "trivy": {
+      "version": "0.74.0",
+      "url": "https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz",
+      "sha256": "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a",
+      "archive": "tar.gz",
+      "member": "trivy",
+      "release": "https://github.com/aquasecurity/trivy/releases/tag/v0.74.0",
+      "checksumSource": "https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_checksums.txt"
+    },
+    "conftest": {
+      "version": "0.70.1",
+      "url": "https://github.com/open-policy-agent/conftest/releases/download/v0.70.1/conftest_0.70.1_Linux_x86_64.tar.gz",
+      "sha256": "613d124b8f6c1f3cee890491f7ab19114cca5a2102ca47cb2e6c35b4c23f9c8a",
+      "archive": "tar.gz",
+      "member": "conftest",
+      "release": "https://github.com/open-policy-agent/conftest/releases/tag/v0.70.1",
+      "checksumSource": "https://api.github.com/repos/open-policy-agent/conftest/releases/tags/v0.70.1"
+    },
+    "cosign": {
+      "version": "3.1.3",
+      "url": "https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64",
+      "sha256": "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71",
+      "archive": "binary",
+      "member": "cosign",
+      "release": "https://github.com/sigstore/cosign/releases/tag/v3.1.3",
+      "checksumSource": "https://api.github.com/repos/sigstore/cosign/releases/tags/v3.1.3"
+    },
+    "helm": {
+      "version": "4.3.0",
+      "url": "https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz",
+      "sha256": "86584a54def73570558f66f5111cc53dfed56689637ae32c1201205d494f54fb",
+      "archive": "tar.gz",
+      "member": "linux-amd64/helm",
+      "release": "https://github.com/helm/helm/releases/tag/v4.3.0",
+      "checksumSource": "https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz.sha256sum"
+    },
+    "act": {
+      "version": "0.2.89",
+      "url": "https://github.com/nektos/act/releases/download/v0.2.89/act_Linux_x86_64.tar.gz",
+      "sha256": "0191d6f1f3b716b5c55820032605d05fc3c1cdbf581ebeff655019e5dd1524c0",
+      "archive": "tar.gz",
+      "member": "act",
+      "release": "https://github.com/nektos/act/releases/tag/v0.2.89",
+      "checksumSource": "https://api.github.com/repos/nektos/act/releases/tags/v0.2.89"
+    },
+    "kyverno": {
+      "version": "1.19.1",
+      "url": "https://github.com/kyverno/kyverno/releases/download/v1.19.1/kyverno-cli_v1.19.1_linux_x86_64.tar.gz",
+      "sha256": "b38228f367fc0fdc2b08f4c83ea50ac5f16c60ff8d62d76a66157c33c47b70ae",
+      "archive": "tar.gz",
+      "member": "kyverno",
+      "release": "https://github.com/kyverno/kyverno/releases/tag/v1.19.1",
+      "checksumSource": "https://api.github.com/repos/kyverno/kyverno/releases/tags/v1.19.1"
+    }
+  },
+  "images": {
+    "buildkit": {
+      "reference": "moby/buildkit@sha256:28a898719c18a33f4e8000685287fa36fd0dd9560c6440227d3a732d79bb41d8",
+      "source": "https://hub.docker.com/r/moby/buildkit",
+    "note": "Verified digest of the engine downloaded by Buildx during local validation."
+    },
+    "zot": {
+      "repository": "ghcr.io/project-zot/zot-linux-amd64",
+      "version": "v2.1.21",
+      "digest": "sha256:8258443838e95989c13c891f78a02bc1c391b5a00591ffef24cb8c17cde28038",
+      "reference": "ghcr.io/project-zot/zot-linux-amd64:v2.1.21@sha256:8258443838e95989c13c891f78a02bc1c391b5a00591ffef24cb8c17cde28038"
+    },
+    "kyverno": {
+      "admission": {
+        "repository": "ghcr.io/kyverno/kyverno",
+        "version": "v1.19.1",
+        "digest": "sha256:b31d8511ae5fd6010e2a01ea72ebae08eb82fa51d91af14a1d9fe989949b4edb",
+        "reference": "ghcr.io/kyverno/kyverno:v1.19.1@sha256:b31d8511ae5fd6010e2a01ea72ebae08eb82fa51d91af14a1d9fe989949b4edb"
+      },
+      "init": {
+        "repository": "ghcr.io/kyverno/kyvernopre",
+        "version": "v1.19.1",
+        "digest": "sha256:c25c47461f06f2845a48c319ae86fbbc1730a7b9ed5b701889c9dc1f9ee94b09",
+        "reference": "ghcr.io/kyverno/kyvernopre:v1.19.1@sha256:c25c47461f06f2845a48c319ae86fbbc1730a7b9ed5b701889c9dc1f9ee94b09"
+      },
+      "background": {
+        "repository": "ghcr.io/kyverno/background-controller",
+        "version": "v1.19.1",
+        "digest": "sha256:8f1e9143373a27578cafc2d28d2c66ba0926c63b4c77e63de8d2fdd4a122859f",
+        "reference": "ghcr.io/kyverno/background-controller:v1.19.1@sha256:8f1e9143373a27578cafc2d28d2c66ba0926c63b4c77e63de8d2fdd4a122859f"
+      },
+      "cleanup": {
+        "repository": "ghcr.io/kyverno/cleanup-controller",
+        "version": "v1.19.1",
+        "digest": "sha256:67a48e62a8d8f8120c86914ff822b90017c54054c7b64ef8a1555645e9d9761e",
+        "reference": "ghcr.io/kyverno/cleanup-controller:v1.19.1@sha256:67a48e62a8d8f8120c86914ff822b90017c54054c7b64ef8a1555645e9d9761e"
+      },
+      "reports": {
+        "repository": "ghcr.io/kyverno/reports-controller",
+        "version": "v1.19.1",
+        "digest": "sha256:c0eee97b9b44a0dd35805d56b358fa52548480f79d4944602b9609538eccd64c",
+        "reference": "ghcr.io/kyverno/reports-controller:v1.19.1@sha256:c0eee97b9b44a0dd35805d56b358fa52548480f79d4944602b9609538eccd64c"
+      },
+      "cli": {
+        "repository": "ghcr.io/kyverno/kyverno-cli",
+        "version": "v1.19.1",
+        "digest": "sha256:ced7b2be0b04250cabfe695f15307f69eb715fe23234816388af4f3812915b2a",
+        "reference": "ghcr.io/kyverno/kyverno-cli:v1.19.1@sha256:ced7b2be0b04250cabfe695f15307f69eb715fe23234816388af4f3812915b2a"
+      }
+    }
+  },
+  "charts": {
+    "kyverno": {
+      "version": "3.9.1",
+      "appVersion": "1.19.1",
+      "url": "https://kyverno.github.io/kyverno/kyverno-3.9.1.tgz",
+      "sha256": "7b7fe51a431b5b133b0ce7eb9dcb222b6a37fb967c163223cf480054ad14d752",
+      "checksumSource": "https://kyverno.github.io/kyverno/index.yaml"
+    }
+  },
+  "compatibility": {
+    "cosignClassic": {
+      "newBundleFormat": false,
+      "useSigningConfigLocal": false,
+      "tlogUploadLocal": false,
+    "reason": "Lab Cosign signatures and attestations use the classic format supported by ClusterPolicy verification; native GitHub provenance uses SigstoreBundle.",
+      "source": "https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/attest.go"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+# Local tooling and generated data.
+node_modules/
+__pycache__/
+*.py[cod]
+.tmp/
+.tools/
+coverage/
+
+# Credentials and local configuration.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Generated evidence and local working drafts.
+/implementacion/evidence/raw/
+/implementacion/evidence/packages/
+/implementacion/evidence/environment/
+/implementacion/pendiente/
