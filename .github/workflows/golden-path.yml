@@ -1,0 +1,81 @@
+name: Golden Path GitHub integration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: golden-path-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    defaults:
+      run:
+        shell: bash
+        working-directory: implementacion
+    steps:
+      - name: Check out the source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Read the pinned Node version
+        id: versions
+        run: |
+          source versions.env
+          printf 'node=%s\n' "$NODE_VERSION" >> "$GITHUB_OUTPUT"
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ steps.versions.outputs.node }}
+      - name: Install tools with checksum verification
+        run: |
+          sudo env PREFIX=/usr/local bash scripts/install-security-tools.sh --with-platform-tools
+          python3 --version
+          docker info > /dev/null
+      - name: Check the environment configuration
+        run: make test-env
+      - name: Build and prepare the delivery
+        id: prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/demo.sh github prepare
+      - name: Generate build provenance
+        id: provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        env:
+          DOCKER_CONFIG: ${{ steps.prepare.outputs.docker_config }}
+        with:
+          subject-name: ${{ steps.prepare.outputs.image }}
+          subject-digest: ${{ steps.prepare.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+      - name: Verify evidence and check L01 and F13
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GP_STATE_DIR: ${{ steps.prepare.outputs.state_dir }}
+        run: bash scripts/demo.sh github finish
+      - name: Collect evidence and clean up the lab
+        if: ${{ always() && steps.prepare.outputs.state_dir != '' }}
+        env:
+          GP_STATE_DIR: ${{ steps.prepare.outputs.state_dir }}
+        run: bash scripts/demo.sh github cleanup
+      - name: Retain the evaluation package
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: golden-path-${{ github.run_id }}-${{ github.run_attempt }}
+          path: implementacion/evidence/packages/**
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: false
