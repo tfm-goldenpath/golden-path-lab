@@ -121,7 +121,7 @@
   "compatibility": {
     "cosignClassic": {
       "newBundleFormat": false,
-      "useSigningConfigLocal": false,
+      "useSigningConfig": false,
       "tlogUploadLocal": false,
     "reason": "Lab Cosign signatures and attestations use the classic format supported by ClusterPolicy verification; native GitHub provenance uses SigstoreBundle.",
       "source": "https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/attest.go"

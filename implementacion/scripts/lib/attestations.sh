@@ -4,13 +4,13 @@
 
 attestations_verify_delivery() {
   record 'Sign and verify the image, SBOM and provenance'
-  sign_args=(--yes --new-bundle-format=false)
+  sign_args=(--yes --new-bundle-format=false --use-signing-config=false)
   verify_args=(--new-bundle-format=false)
   if [[ "$mode" == local ]]; then
     export COSIGN_PASSWORD=''
     cosign generate-key-pair --output-key-prefix "$private/cosign" >/dev/null
     cp "$private/cosign.pub" "$state_dir/development-public-key.pem"
-    sign_args+=(--key "$private/cosign.key" --use-signing-config=false --tlog-upload=false --allow-insecure-registry)
+    sign_args+=(--key "$private/cosign.key" --tlog-upload=false --allow-insecure-registry)
     verify_args+=(--key "$private/cosign.pub" --insecure-ignore-tlog --allow-insecure-registry)
     node "$contract" provenance "$repository" "$commit" "$(get sourceSnapshot)" "$(basename "$state_dir")" "$state_dir/provenance.json"
   else
