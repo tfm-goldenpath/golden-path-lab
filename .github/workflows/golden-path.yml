@@ -50,16 +50,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/demo.sh github prepare
+      - name: Authenticate GHCR for attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$GH_TOKEN" |
+            docker --config "$HOME/.docker" login ghcr.io \
+              --username "$GITHUB_ACTOR" --password-stdin
       - name: Generate build provenance
         id: provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
-        env:
-          DOCKER_CONFIG: ${{ steps.prepare.outputs.docker_config }}
         with:
           subject-name: ${{ steps.prepare.outputs.image }}
           subject-digest: ${{ steps.prepare.outputs.digest }}
           push-to-registry: true
           create-storage-record: false
+      - name: Remove attestation registry credentials
+        if: ${{ always() }}
+        run: docker --config "$HOME/.docker" logout ghcr.io
       - name: Verify evidence and check L01 and F13
         env:
           GH_TOKEN: ${{ github.token }}

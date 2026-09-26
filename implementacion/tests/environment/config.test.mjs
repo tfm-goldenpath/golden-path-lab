@@ -54,6 +54,26 @@ test('build references and checks use the same pinned versions', () => {
 });
 
 const codespacesConfigUrl = new URL('../.devcontainer/implementacion/devcontainer.json', root);
+test('hosted attestation authenticates in the default Docker config and always logs out', () => {
+  const workflow = read('../.github/workflows/golden-path.yml');
+  const steps = workflow.split(/^      - name: /m).slice(1);
+  const prepare = steps.findIndex(step => step.startsWith('Build and prepare the delivery\n'));
+  const login = steps.findIndex(step => step.startsWith('Authenticate GHCR for attestation\n'));
+  const attest = steps.findIndex(step => step.startsWith('Generate build provenance\n'));
+  const logout = steps.findIndex(step => step.startsWith('Remove attestation registry credentials\n'));
+  const finish = steps.findIndex(step => step.startsWith('Verify evidence and check L01 and F13\n'));
+  assert.ok(prepare >= 0 && login === prepare + 1 && attest === login + 1 && logout === attest + 1 && finish === logout + 1);
+  assert.ok(steps[login].includes('GH_TOKEN: ${{ github.token }}'));
+  assert.ok(steps[login].includes(`printf '%s' "$GH_TOKEN" |`));
+  assert.ok(steps[login].includes('docker --config "$HOME/.docker" login ghcr.io'));
+  assert.ok(steps[login].includes('--username "$GITHUB_ACTOR" --password-stdin'));
+  assert.ok(!steps[attest].includes('DOCKER_CONFIG:'));
+  assert.ok(steps[attest].includes('push-to-registry: true'));
+  assert.ok(steps[logout].includes('if: ${{ always() }}'));
+  assert.ok(steps[logout].includes('docker --config "$HOME/.docker" logout ghcr.io'));
+  assert.ok(read('scripts/lib/context.sh').includes('export DOCKER_CONFIG="$private/docker"'));
+});
+
 test('Codespaces reuses the build and versions from implementacion', {
   skip: !existsSync(codespacesConfigUrl) && process.env.CODESPACES !== 'true',
 }, () => {
