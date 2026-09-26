@@ -1,6 +1,7 @@
 **
 !.devcontainer/
 !.devcontainer/install-tools.sh
+!.devcontainer/debian.sources
 !versions.env
 !tools.lock.json
 !scripts/

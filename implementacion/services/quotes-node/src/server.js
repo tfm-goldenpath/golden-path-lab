@@ -26,6 +26,7 @@ function readJson(request) {
       if (settled) return;
       settled = true;
       chunks = [];
+      request.pause();
       reject(error);
     };
     request.on('data', (chunk) => {
@@ -80,7 +81,7 @@ export function createQuoteServer({ buildCommit = process.env.BUILD_COMMIT || 'u
       }
       const contentType = (request.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
       if (contentType !== 'application/json') {
-        request.resume();
+        request.pause();
         throw new RequestError('UNSUPPORTED_MEDIA_TYPE', 'Content-Type must be application/json.', 415);
       }
       const input = await readJson(request);
@@ -88,7 +89,9 @@ export function createQuoteServer({ buildCommit = process.env.BUILD_COMMIT || 'u
     } catch (error) {
       if (response.destroyed || response.writableEnded) return;
       if (error instanceof RequestError) {
-        reply(response, error.statusCode, { code: error.code, message: error.message });
+        const close = error.statusCode === 413 || error.statusCode === 415;
+        if (close) response.once('finish', () => request.destroy());
+        reply(response, error.statusCode, { code: error.code, message: error.message }, close ? { Connection: 'close' } : {});
       } else {
         reply(response, 500, { code: 'INTERNAL_ERROR' });
       }

@@ -29,5 +29,20 @@ test('a verified signature is insufficient for a different digest or predicate',
 test('an empty SBOM or a different format is insufficient evidence', () => {
   assert.throws(() => validateSbom({bomFormat:'SPDX'}));
   assert.throws(() => validateSbom({bomFormat:'CycloneDX',specVersion:'1.6',version:1,components:[]}));
-  assert.equal(validateSbom({bomFormat:'CycloneDX',specVersion:'1.6',version:1,metadata:{component:{}},components:[{}]}),'1.6');
+  const component = { name: 'synthetic', type: 'library' };
+  const bom = {bomFormat:'CycloneDX',specVersion:'1.6',version:1,metadata:{component},components:[component]};
+  assert.equal(validateSbom(bom), '1.6');
+  for (const invalid of [{}, null, {name:'synthetic'}, {type:'library'}, {name:'',type:'library'}]) {
+    assert.throws(() => validateSbom({...bom, components:[invalid]}));
+    assert.throws(() => validateSbom({...bom, metadata:{component:invalid}}));
+  }
+});
+
+test('statement matching rejects malformed SHA-256 inputs before predicate validation', () => {
+  for (const invalid of ['latest', '', 'a'.repeat(63), 'A'.repeat(64), 'sha256:latest', null]) {
+    const statement = {subject:[{digest:{sha256:invalid}}],predicateType:RESULTS_TYPE,predicate:valid()};
+    assert.throws(() => checkStatements(JSON.stringify(statement), invalid, RESULTS_TYPE, () => assert.fail('must not validate')));
+  }
+  const statement = {subject:[{digest:{sha256:digest}}],predicateType:RESULTS_TYPE,predicate:valid()};
+  assert.equal(checkStatements(JSON.stringify(statement), 'sha256:' + digest, RESULTS_TYPE, () => {}).predicateType, RESULTS_TYPE);
 });

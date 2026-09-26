@@ -25,7 +25,7 @@ make demo
 
 Omit the first command when opening `implementacion` directly. The devcontainer installs pinned versions of Node, Docker, kind, Trivy, Conftest, Cosign, Helm, Kyverno CLI and act. It requests 2 CPUs, 8 GB of memory and 32 GB of storage. Effective Codespaces quotas depend on the account and its usage.
 
-`make demo` creates an ephemeral laboratory. The expected successful final message is **PASS: L01 accepted; F13 and F11 rejected**. Cleanup removes the temporary cluster, registry and keys while retaining evidence.
+`make demo` creates an ephemeral laboratory. A successful run prints `== PASS: L01 accepted; F13 and F11 rejected. Evidence: <run-directory> ==`, followed by cleanup and packaging output. `<run-directory>` is the actual evidence directory for that run. Cleanup removes the temporary cluster, registry and keys while retaining evidence.
 
 ```mermaid
 flowchart LR

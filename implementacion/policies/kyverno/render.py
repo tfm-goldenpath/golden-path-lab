@@ -45,7 +45,7 @@ def policy(name, rules):
 
 def render(config):
     image_repository = config["image_repository"]
-    if not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]*", image_repository):
+    if not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]*", image_repository) or ":" in image_repository.rsplit("/", 1)[-1]:
         raise ValueError("image-repository must be a reference without a tag, digest or wildcards")
     if not re.fullmatch(r"[0-9a-f]{40}", config["commit"]):
         raise ValueError("commit must contain 40 hexadecimal characters")

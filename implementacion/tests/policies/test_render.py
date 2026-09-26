@@ -90,6 +90,16 @@ class RenderTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     renderer.render(config)
 
+    def test_repository_rejects_tags_but_allows_registry_ports(self):
+        for repository in ["registry.example/quotes-node:latest", "quotes-node:v1", "registry.example:5000/quotes-node:v1"]:
+            config = self.config()
+            config["image_repository"] = repository
+            with self.assertRaises(ValueError):
+                renderer.render(config)
+        config = self.config()
+        config["image_repository"] = "registry.example:5000/quotes-node"
+        self.assertEqual(len(renderer.render(config)["items"]), 5)
+
 
 if __name__ == "__main__":
     unittest.main()

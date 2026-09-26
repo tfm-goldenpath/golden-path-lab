@@ -2,6 +2,7 @@ FROM node:24.21.0-bookworm@sha256:b977d0f785d96029d8d4c0790b6bf1c2a4c72e0f263198
 
 USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+COPY .devcontainer/debian.sources /etc/apt/sources.list.d/debian.sources
 RUN test "$(dpkg --print-architecture)" = amd64 \
     && apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl git jq make python3 sudo \

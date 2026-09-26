@@ -30,8 +30,12 @@ export function manifest(image, namespace = 'tfm-golden', secret = false) {
   };
 }
 export function validateSbom(bom) {
+  const component = value => value !== null && typeof value === 'object' && !Array.isArray(value)
+    && typeof value.name === 'string' && value.name.trim().length > 0
+    && typeof value.type === 'string' && value.type.trim().length > 0;
   if (bom?.bomFormat !== 'CycloneDX' || !/^1\.[0-9]+$/.test(bom.specVersion) || !Number.isInteger(bom.version)
-    || !Array.isArray(bom.components) || bom.components.length === 0 || !bom.metadata?.component) {
+    || bom.version < 1 || !Array.isArray(bom.components) || bom.components.length === 0
+    || !component(bom.metadata?.component) || !bom.components.every(component)) {
     throw new Error('Incomplete CycloneDX SBOM: format, version, component metadata and components are required');
   }
   return bom.specVersion;
@@ -45,13 +49,18 @@ export function validateResults(value, repository, commit) {
   return value;
 }
 export function checkStatements(text, digest, predicateType, validate) {
+  if (typeof digest !== 'string' || !/^(?:sha256:)?[a-f0-9]{64}$/.test(digest)) {
+    throw new Error('A canonical SHA-256 digest is required');
+  }
+  const expectedDigest = digest.replace(/^sha256:/, '');
   // Cosign classic may print a JSON object per line or an array of verified envelopes.
   let values;
   try { const v = JSON.parse(text); values = Array.isArray(v) ? v : [v]; }
   catch { values = text.trim().split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line)); }
   for (const envelope of values) {
     const statement = envelope.payload ? JSON.parse(Buffer.from(envelope.payload, 'base64').toString('utf8')) : envelope;
-    if (statement.predicateType !== predicateType || !statement.subject?.some(s => s.digest?.sha256 === digest.replace(/^sha256:/, ''))) continue;
+    if (statement?.predicateType !== predicateType || !Array.isArray(statement.subject)
+      || !statement.subject.some(subject => subject?.digest?.sha256 === expectedDigest)) continue;
     try { validate(statement.predicate); return statement; } catch { /* Another verified attestation may match. */ }
   }
   throw new Error('No verified attestation has the required digest, type and content');

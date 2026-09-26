@@ -4,7 +4,7 @@ import { checkMissingResults } from '../../scripts/check-missing-results.mjs';
 import { RESULTS_TYPE } from '../../scripts/lab-contracts.mjs';
 
 const digest = 'sha256:' + 'a'.repeat(64);
-const bom = {bomFormat:'CycloneDX',specVersion:'1.6',version:1,metadata:{component:{name:'synthetic'}},components:[{name:'synthetic',type:'library'}]};
+const bom = {bomFormat:'CycloneDX',specVersion:'1.6',version:1,metadata:{component:{name:'synthetic',type:'container'}},components:[{name:'synthetic',type:'library'}]};
 function envelope(type = 'https://cyclonedx.org/bom', predicate = bom, hash = digest.slice(7)) {
   return {payloadType:'application/vnd.in-toto+json', signatures:[{sig:'synthetic-not-a-real-signature'}],
     payload:Buffer.from(JSON.stringify({_type:'https://in-toto.io/Statement/v1', subject:[{name:'registry.example/quotes',digest:{sha256:hash}}],predicateType:type,predicate})).toString('base64')};
@@ -28,6 +28,11 @@ test('an existing results attestation prevents attribution to missing results', 
   for (const result of ['PASS', 'FAIL']) {
     assert.throws(() => checkMissingResults(JSON.stringify([envelope(),envelope(RESULTS_TYPE,{result})]), digest));
   }
+});
+
+test('results for another digest do not hide missing authorization', () => {
+  const inventory = [envelope(), envelope(RESULTS_TYPE, {result:'PASS'}, 'b'.repeat(64))];
+  assert.equal(checkMissingResults(JSON.stringify(inventory), digest).reason, 'RESULTS_ATTESTATION_MISSING');
 });
 
 test('an empty or malformed inventory is not reported as F13 detection', () => {

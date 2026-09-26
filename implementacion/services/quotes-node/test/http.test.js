@@ -99,3 +99,27 @@ test('route, method and media type errors have distinct statuses', async () => {
   assert.equal(wrongType.status, 415);
   assert.equal(wrongType.body.code, 'UNSUPPORTED_MEDIA_TYPE');
 });
+
+for (const [type, size, status] of [['application/json', MAX_BODY_BYTES + 1, 413], ['text/plain', 1, 415]]) {
+  test(`unfinished ${type} upload receives ${status} and closes`, { timeout: 3000 }, async () => {
+    await new Promise((resolve, reject) => {
+      let receivedResponse = false;
+      const upload = request({ hostname: '127.0.0.1', port, path: '/quotes', method: 'POST',
+        headers: { 'Content-Type': type }, agent: false }, response => {
+        try {
+          assert.equal(response.statusCode, status);
+          assert.equal(response.headers.connection, 'close');
+          receivedResponse = true;
+        } catch (error) { reject(error); }
+        response.resume();
+        response.on('error', reject);
+      });
+      upload.on('error', reject);
+      upload.on('socket', socket => socket.on('close', () => {
+        if (receivedResponse) resolve();
+        else reject(new Error('Connection closed without the expected response'));
+      }));
+      upload.write(' '.repeat(size));
+    });
+  });
+}

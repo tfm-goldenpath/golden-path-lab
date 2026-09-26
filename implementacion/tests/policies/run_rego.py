@@ -26,6 +26,11 @@ def cases():
         return value["spec"]["template"]["spec"]
 
     add("manifest-namespace", "manifests", lambda value: value["metadata"].update(namespace="default"), "NAMESPACE")
+    add("manifest-missing-spec", "manifests", lambda value: value.pop("spec"), "WORKLOAD_SHAPE")
+    add("manifest-missing-template", "manifests", lambda value: value["spec"].pop("template"), "WORKLOAD_SHAPE")
+    add("manifest-missing-pod-spec", "manifests", lambda value: value["spec"]["template"].pop("spec"), "WORKLOAD_SHAPE")
+    for invalid in [None, [], "invalid"]:
+        add("manifest-pod-spec-" + str(invalid), "manifests", lambda value, invalid=invalid: value["spec"]["template"].update(spec=invalid), "WORKLOAD_SHAPE")
     add("manifest-tag", "manifests", lambda value: pod(value)["containers"][0].update(image="registry.example/quotes-node:latest"), "DIGEST")
     for field, unsafe, code in [("privileged", True, "PRIVILEGED"), ("allowPrivilegeEscalation", True, "ESCALATION"), ("runAsNonRoot", False, "NON_ROOT"), ("readOnlyRootFilesystem", False, "READ_ONLY")]:
         add("manifest-" + field, "manifests", lambda value, f=field, u=unsafe: pod(value)["containers"][0]["securityContext"].update({f: u}), code)
@@ -43,6 +48,13 @@ def cases():
     direct_pod = copy.deepcopy(base["manifests"])
     direct_pod.update(apiVersion="v1", kind="Pod", spec=direct_pod["spec"]["template"]["spec"])
     result.append(("pod-allow", "manifests", direct_pod, None))
+    for invalid in [None, [], "invalid"]:
+        malformed_pod = copy.deepcopy(direct_pod)
+        malformed_pod["spec"] = invalid
+        result.append(("pod-spec-" + str(invalid), "manifests", malformed_pod, "WORKLOAD_SHAPE"))
+    missing_pod = copy.deepcopy(direct_pod)
+    missing_pod.pop("spec")
+    result.append(("pod-missing-spec", "manifests", missing_pod, "WORKLOAD_SHAPE"))
     bad_pod = copy.deepcopy(direct_pod)
     bad_pod["spec"]["containers"][0]["securityContext"]["privileged"] = True
     result.append(("pod-privileged", "manifests", bad_pod, "PRIVILEGED"))
@@ -64,6 +76,12 @@ def cases():
     add("trivy-empty-results", "trivy", lambda value: value.update(Results=[]), "TRIVY_REPORT_INVALID")
     add("trivy-missing-results", "trivy", lambda value: value.pop("Results"), "TRIVY_REPORT_INVALID")
     add("trivy-object-vulnerabilities", "trivy", lambda value: value["Results"][0].update(Vulnerabilities={}), "TRIVY_RESULT_INVALID")
+    add("trivy-missing-type", "trivy", lambda value: value["Results"][0].pop("Type"), "TRIVY_RESULT_INVALID")
+    for invalid in [None, "", 42]:
+        add("trivy-type-" + str(invalid), "trivy", lambda value, invalid=invalid: value["Results"][0].update(Type=invalid), "TRIVY_RESULT_INVALID")
+    add("trivy-missing-vulnerabilities-allow", "trivy", lambda value: value["Results"][0].pop("Vulnerabilities"), None)
+    add("trivy-null-vulnerabilities-allow", "trivy", lambda value: value["Results"][0].update(Vulnerabilities=None), None)
+    add("trivy-invalid-fixed-version", "trivy", lambda value: value["Results"][0].update(Vulnerabilities=[{"VulnerabilityID":"CVE-SYNTHETIC", "PkgName":"fixture", "Severity":"LOW", "FixedVersion":42}]), "TRIVY_VULNERABILITY_INVALID")
     add("trivy-unknown-severity-spelling", "trivy", lambda value: value["Results"][0].update(Vulnerabilities=[{"VulnerabilityID": "CVE-SYNTHETIC", "PkgName": "fixture", "Severity": "high"}]), "TRIVY_VULNERABILITY_INVALID")
     result.append(("trivy-not-report", "trivy", {}, "TRIVY_REPORT_INVALID"))
     return result

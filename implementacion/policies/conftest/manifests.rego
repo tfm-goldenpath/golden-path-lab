@@ -7,6 +7,13 @@ workload if input.kind in {"Pod", "Deployment"}
 pod_spec := input.spec if input.kind == "Pod"
 pod_spec := input.spec.template.spec if input.kind == "Deployment"
 
+valid_pod_spec if is_object(pod_spec)
+
+deny contains "WORKLOAD_SHAPE: a Pod spec or Deployment template spec object is required" if {
+    workload
+    not valid_pod_spec
+}
+
 containers contains container if {
     some field in ["containers", "initContainers", "ephemeralContainers"]
     some container in object.get(pod_spec, field, [])

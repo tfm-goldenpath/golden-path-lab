@@ -14,6 +14,7 @@ test-unit:
 test-policies:
 	python3 -m unittest discover -s tests/policies -p 'test_*.py'
 	python3 tests/policies/run_rego.py
+	python3 tests/policies/run_kyverno.py
 	bash scripts/check-policies.sh
 
 test: test-env test-unit test-policies

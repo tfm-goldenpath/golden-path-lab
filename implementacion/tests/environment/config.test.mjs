@@ -12,6 +12,27 @@ const versions = Object.fromEntries(read('versions.env').split(/\r?\n/)
     return [line.slice(0, split), line.slice(split + 1)];
   }));
 
+test('Debian build dependencies use dated signed snapshot repositories', () => {
+  const sources = read('.devcontainer/debian.sources');
+  assert.match(sources, /archive\/debian\/20260921T000000Z\//);
+  assert.match(sources, /archive\/debian-security\/20260921T000000Z\//);
+  assert.equal((sources.match(/Signed-By: \/usr\/share\/keyrings\/debian-archive-keyring.gpg/g) || []).length, 2);
+  assert.ok(!sources.includes('trusted=yes'));
+  assert.match(read('.devcontainer/Dockerfile'), /COPY .devcontainer\/debian.sources \/etc\/apt\/sources.list.d\/debian.sources/);
+});
+
+test('every devcontainer COPY source is explicitly included in the restricted build context', () => {
+  const rules = read('.dockerignore').split(/\r?\n/).filter(line => line && !line.startsWith('#'));
+  assert.equal(rules[0], '**');
+  assert.ok(rules.slice(1).every(rule => rule.startsWith('!')), 'The context uses only explicit exceptions after its deny-all rule');
+  const sources = [...read('.devcontainer/Dockerfile').matchAll(/^COPY\s+(\S+)\s+/gm)].map(match => match[1]);
+  assert.ok(sources.includes('.devcontainer/debian.sources'));
+  for (const source of sources) {
+    assert.ok(existsSync(new URL(source, root)), `Missing COPY source: ${source}`);
+    assert.ok(rules.includes(`!${source}`), `COPY source excluded by .dockerignore: ${source}`);
+  }
+});
+
 test('build references and checks use the same pinned versions', () => {
   const config = JSON.parse(read('.devcontainer/devcontainer.json'));
   assert.ok(read('.devcontainer/Dockerfile').startsWith(`FROM ${versions.NODE_IMAGE}\n`));

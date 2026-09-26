@@ -19,6 +19,8 @@ valid_result(result) if {
     is_string(result.Target)
     result.Target != ""
     is_string(result.Class)
+    is_string(result.Type)
+    result.Type != ""
     vulnerabilities := object.get(result, "Vulnerabilities", [])
     is_array(vulnerabilities)
 }
@@ -27,6 +29,8 @@ valid_result(result) if {
     is_string(result.Target)
     result.Target != ""
     is_string(result.Class)
+    is_string(result.Type)
+    result.Type != ""
     object.get(result, "Vulnerabilities", []) == null
 }
 
@@ -43,6 +47,7 @@ valid_vulnerability(vulnerability) if {
     is_string(vulnerability.PkgName)
     vulnerability.PkgName != ""
     vulnerability.Severity in {"UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"}
+    is_string(object.get(vulnerability, "FixedVersion", ""))
 }
 
 deny contains "TRIVY_VULNERABILITY_INVALID: invalid vulnerability identifier, package or severity" if {
