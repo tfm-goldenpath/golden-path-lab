@@ -112,6 +112,10 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 
 ## Extensions, only after completing and reviewing the baseline
 
+- [ ] Assess the [deferred migration to Cosign Sigstore bundles](docs/EN/cosign-bundle-migration.md) ([Spanish](docs/ES/cosign-bundle-migration.md)): adapt evidence parsing and admission consumers, validate both trust profiles, preserve the independent image-signature requirement and update documentation before adopting a new evaluation baseline. The proposal records confirmed findings, conditional changes and real-integration acceptance criteria; migration has not been implemented.
+
+The independent baseline defect was confirmed in hosted run `36277828157`: its inventory mixes GitHub provenance bundles with classic SBOM attestations. F13 now normalizes the observed v0.3 bundle envelopes and retains the same validation and digest checks. This parser correction does not implement the deferred signing/admission migration; a fresh hosted integration run remains necessary.
+
 The proposed order prioritizes additional coverage of the prototype's guarantees, the consequences of incorrect acceptance and preparation effort. It is not an industry attack-frequency ranking. Unit or integration tests needed to support guarantees already claimed belong to the baseline; the extension consists of turning these conditions into independent measured scenarios in a later campaign.
 
 | Priority | Campaign extension | Rationale |

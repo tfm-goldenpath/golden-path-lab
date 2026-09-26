@@ -5,6 +5,48 @@ import { RESULTS_TYPE, validateSbom } from './lab-contracts.mjs';
 const SBOM_TYPE = 'https://cyclonedx.org/bom';
 const STATEMENT_TYPES = new Set(['https://in-toto.io/Statement/v0.1', 'https://in-toto.io/Statement/v1']);
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+const text = value => typeof value === 'string' && value.length > 0;
+const bytes = value => text(value) && Buffer.from(value, 'base64').toString('base64') === value;
+const integer = value => (Number.isSafeInteger(value) && value >= 0)
+  || (typeof value === 'string' && value.length <= 19 && /^(0|[1-9][0-9]*)$/.test(value) && BigInt(value) <= 9223372036854775807n);
+const list = validate => value => Array.isArray(value) && value.every(validate);
+
+function fields(value, required, optional = {}) {
+  return object(value)
+    && Object.keys(value).every(key => Object.hasOwn(required, key) || Object.hasOwn(optional, key))
+    && Object.entries(required).every(([key, validate]) => Object.hasOwn(value, key) && validate(value[key]))
+    && Object.entries(optional).every(([key, validate]) => !Object.hasOwn(value, key) || validate(value[key]));
+}
+
+const certificate = value => fields(value, {rawBytes:bytes});
+const inclusionProof = value => fields(value, {
+  logIndex:integer, hashes:list(bytes), rootHash:bytes, treeSize:integer,
+  checkpoint:checkpoint => fields(checkpoint, {envelope:text}),
+});
+const logEntry = value => fields(value, {
+  logIndex:integer, integratedTime:integer,
+  logId:logId => fields(logId, {keyId:bytes}),
+  kindVersion:kindVersion => fields(kindVersion, {kind:text, version:text}),
+  inclusionProof,
+}, {
+  canonicalizedBody:bytes,
+  inclusionPromise:promise => fields(promise, {signedEntryTimestamp:bytes}),
+});
+
+function validateVerificationMaterial(material) {
+  const keyTypes = ['certificate', 'publicKey', 'x509CertificateChain'];
+  if (!fields(material, {}, {
+    certificate,
+    publicKey:key => fields(key, {}, {hint:hint => typeof hint === 'string'}),
+    x509CertificateChain:chain => fields(chain, {certificates:value => list(certificate)(value) && value.length > 0}),
+    tlogEntries:list(logEntry),
+    timestampVerificationData:data => fields(data, {}, {
+      rfc3161Timestamps:list(timestamp => fields(timestamp, {signedTimestamp:bytes})),
+    }),
+  }) || keyTypes.filter(key => Object.hasOwn(material, key)).length !== 1) {
+    throw new Error('Incomplete or unsupported bundle verification material');
+  }
+}
 
 function parseEnvelopes(text) {
   if (typeof text !== 'string' || !text.trim()) throw new Error('Empty attestation inventory');
@@ -20,7 +62,20 @@ function parseEnvelopes(text) {
     }
   }
   if (!envelopes.length) throw new Error('The inventory contains no attestations');
-  return envelopes.map(envelope => {
+  return envelopes.map(entry => {
+    let envelope = entry;
+    if (object(entry) && ['mediaType', 'dsseEnvelope', 'verificationMaterial'].some(key => Object.hasOwn(entry, key))) {
+      if (entry.mediaType !== 'application/vnd.dev.sigstore.bundle.v0.3+json'
+        || !object(entry.dsseEnvelope)
+        || ['payload', 'payloadType', 'signatures', 'messageSignature'].some(key => Object.hasOwn(entry, key))) {
+        throw new Error('Incomplete or unsupported Sigstore attestation bundle');
+      }
+      validateVerificationMaterial(entry.verificationMaterial);
+      envelope = entry.dsseEnvelope;
+      if (!Array.isArray(envelope.signatures) || envelope.signatures.length !== 1) {
+        throw new Error('A Sigstore attestation bundle must contain exactly one DSSE signature');
+      }
+    }
     if (!object(envelope) || envelope.payloadType !== 'application/vnd.in-toto+json'
       || typeof envelope.payload !== 'string' || !envelope.payload
       || !Array.isArray(envelope.signatures) || !envelope.signatures.length
