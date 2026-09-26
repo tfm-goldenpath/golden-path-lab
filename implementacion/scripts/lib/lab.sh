@@ -5,9 +5,13 @@
 k() { kubectl --request-timeout=60s --kubeconfig "$private/kubeconfig" --context "kind-$cluster" "$@"; }
 actor() { local ns=$1; shift; k --as="system:serviceaccount:$ns:deployer" "$@"; }
 cleanup() {
-  local package_status=0
+  local package_status=0 marker temporary_marker
+  marker="$state_dir/.evidence-packaged"
   [[ -z "$port_pid" ]] || { kill "$port_pid" 2>/dev/null || true; wait "$port_pid" 2>/dev/null || true; }
-  if [[ -n "$state_dir" && -d "$state_dir" && ! -f "$state_dir/.evidence-packaged" ]]; then
+  if [[ -n "$state_dir" && -d "$state_dir" ]] && [[ -L "$marker" || ( -e "$marker" && ! -f "$marker" ) ]]; then
+    printf 'ERROR: refusing unsafe evidence marker: %s\n' "$marker" >&2
+    package_status=1
+  elif [[ -n "$state_dir" && -d "$state_dir" && ! -e "$marker" ]]; then
     if [[ "$mode" == local && -n "$registry" ]]; then
       docker logs --tail 100 "$registry" > "$state_dir/registry.log" 2>&1 || true
     fi
@@ -18,7 +22,12 @@ cleanup() {
     local status=FAIL
     [[ -f "$state_dir/result.json" ]] && status=$(jq -r '.status' "$state_dir/result.json")
     if python3 scripts/package-evidence.py "$state_dir" "$root/evidence/packages" "$status"; then
-      touch "$state_dir/.evidence-packaged" || package_status=1
+      if temporary_marker=$(mktemp "$state_dir/.evidence-marker-XXXXXXXX"); then
+        ln -T -- "$temporary_marker" "$marker" || package_status=1
+        rm -f -- "$temporary_marker" || package_status=1
+      else
+        package_status=1
+      fi
     else
       package_status=1
     fi

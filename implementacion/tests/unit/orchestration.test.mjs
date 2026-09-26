@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -131,6 +131,57 @@ function run(f, args, extra = {}) {
 }
 
 const stages = (result) => result.events.map((entry) => entry.stage);
+
+for (const dangling of [false, true]) {
+  test(`cleanup rejects a ${dangling ? 'dangling' : 'live'} symlinked evidence marker`, t => {
+    const fixtureState = fixture(t, {stubs:false});
+    const target = join(fixtureState.root, 'outside.txt');
+    if (!dangling) writeFileSync(target, 'preserve me');
+    const marker = join(fixtureState.state, '.evidence-packaged');
+    try { symlinkSync(target, marker); }
+    catch (error) {
+      if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Windows symlink privilege required');
+      throw error;
+    }
+    const result = run(fixtureState, ['-c', String.raw`
+set -Eeuo pipefail
+source "$GP_FIXTURE_ROOT/scripts/lib/lab.sh"
+root="$GP_FIXTURE_ROOT"; state_dir="$GP_FIXTURE_STATE"; private=''
+port_pid=''; mode=github; registry=''; builder=''; cluster=fixture
+python3() { printf 'unexpected-package\n' >> "$GP_EVENTS"; }
+kind() { printf 'remove-cluster\n' >> "$GP_EVENTS"; }
+cleanup
+`]);
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stderr, /refusing unsafe evidence marker/);
+    assert.deepEqual(stages(result), ['remove-cluster']);
+    assert.ok(lstatSync(marker).isSymbolicLink());
+    assert.equal(existsSync(target), !dangling);
+    if (!dangling) assert.equal(readFileSync(target, 'utf8'), 'preserve me');
+  });
+}
+
+test('cleanup refuses a marker symlink introduced during packaging', t => {
+  const fixtureState = fixture(t, {stubs:false});
+  const target = join(fixtureState.root, 'outside.txt');
+  const link = join(fixtureState.root, 'prepared-link');
+  try { symlinkSync(target, link); }
+  catch (error) {
+    if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Windows symlink privilege required');
+    throw error;
+  }
+  const result = run(fixtureState, ['-c', String.raw`
+set -Eeuo pipefail
+source "$GP_FIXTURE_ROOT/scripts/lib/lab.sh"
+root="$GP_FIXTURE_ROOT"; state_dir="$GP_FIXTURE_STATE"; private=''
+port_pid=''; mode=github; registry=''; builder=''; cluster=''
+python3() { mv -- "$GP_FIXTURE_ROOT/prepared-link" "$state_dir/.evidence-packaged"; }
+cleanup
+`]);
+  assert.equal(result.status, 1, result.stderr);
+  assert.ok(!existsSync(target));
+  assert.ok(lstatSync(join(fixtureState.state, '.evidence-packaged')).isSymbolicLink());
+});
 
 test('repeated cleanup preserves diagnostic files and the first package', t => {
   const fixtureState = fixture(t, {stubs:false});
