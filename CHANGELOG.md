@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Address baseline review findings in HTTP upload handling, evidence packaging, digest/SBOM contracts, Conftest and Kyverno validation, repeated cleanup and bilingual runbooks.
+- Use dated Debian package sources, verify security-tool versions against the lock, and include Kyverno CLI regression checks in `make test`.
 - Import the existing `quotes-node` laboratory, modular delivery scripts, policies, tests and pinned development environment.
 - Include the existing CI and manual GitHub integration workflow definitions.
 - Derive the GHCR image name from the source repository to distinguish this laboratory from other repositories in the organization.

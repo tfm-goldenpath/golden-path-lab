@@ -17,7 +17,7 @@ make test
 make demo
 ```
 
-The expected successful demo ends with `PASS: L01 accepted; F13 and F11 rejected`. It creates an ephemeral kind cluster and registry, verifies delivery evidence and removes the resources it created. Evidence packages remain locally under `implementacion/evidence/packages/`.
+The expected successful demo prints `== PASS: L01 accepted; F13 and F11 rejected. Evidence: <run-directory> ==`, followed by cleanup and packaging output. It creates an ephemeral kind cluster and registry, verifies delivery evidence and removes the resources it created. Evidence packages remain locally under `implementacion/evidence/packages/`.
 
 The [execution guide](implementacion/docs/EN/cases/L01-F13/runbook.md) explains prerequisites, expected responses and troubleshooting. A [Spanish guide](implementacion/docs/ES/cases/L01-F13/runbook.md) is also available. Tool versions and checksums are fixed in `implementacion/versions.env` and `implementacion/tools.lock.json`; the actual Codespaces quota depends on the account.
 

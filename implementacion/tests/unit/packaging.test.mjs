@@ -17,8 +17,8 @@ function fixture(t) {
   fs.mkdirSync(source);
   fs.writeFileSync(path.join(source, 'result.json'), '{"status":"PASS"}\n');
   fs.writeFileSync(path.join(source, 'run.log'), 'synthetic run: accepted\n');
-  for (const name of ['state.json', 'config.json', 'kubeconfig', 'cosign.key']) {
-    fs.writeFileSync(path.join(source, name), 'PRIVATE TEST FIXTURE\n');
+  for (const name of ['state.json', 'config.json', 'kubeconfig', 'cosign.key', 'private-key.pem', 'private-key.txt']) {
+    fs.writeFileSync(path.join(source, name), '-----BEGIN PRIVATE KEY-----\nSYNTHETIC\n-----END PRIVATE KEY-----\n');
   }
   return { source, output };
 }
@@ -48,10 +48,26 @@ test('the package preserves verifiable hashes and excludes state and credentials
   const result = inspectArchive(path.join(output, 'run-test.tar.gz'));
   assert.deepEqual(result.mismatches, []);
   assert.ok(result.names.includes('run-test/result.json'));
-  for (const name of ['state.json', 'config.json', 'kubeconfig', 'cosign.key']) {
+  for (const name of ['state.json', 'config.json', 'kubeconfig', 'cosign.key', 'private-key.pem', 'private-key.txt']) {
     assert.ok(!result.names.includes('run-test/' + name));
   }
 });
+
+for (const name of ['execution-summary.json', 'SHA256SUMS.txt']) {
+  test(`packaging rejects a symlinked ${name} without changing its target`, t => {
+    const { source, output } = fixture(t);
+    const target = path.join(path.dirname(source), 'outside.txt');
+    fs.writeFileSync(target, 'preserve me');
+    try { fs.symlinkSync(target, path.join(source, name)); }
+    catch (error) {
+      if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Windows symlink privilege required');
+      throw error;
+    }
+    assert.throws(() => execFileSync(python, [script, source, output, 'PASS'], {stdio:'pipe'}));
+    assert.equal(fs.readFileSync(target, 'utf8'), 'preserve me');
+    assert.ok(!fs.existsSync(path.join(output, 'run-test.tar.gz')));
+  });
+}
 
 test('packaging twice preserves correct hashes and avoids duplicate members', t => {
   const { source, output } = fixture(t);

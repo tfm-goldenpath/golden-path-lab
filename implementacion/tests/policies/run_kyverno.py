@@ -56,7 +56,7 @@ def main():
             if counts:
                 passed, denied, _, errors = map(int, counts.groups())
                 if expected_rule:
-                    success = result.returncode != 0 and denied > 0 and errors == 0 and expected_rule in output
+                    success = result.returncode in (0, 1) and denied > 0 and errors == 0 and expected_rule in output
                 else:
                     success = result.returncode == 0 and passed > 0 and denied == 0 and errors == 0
             print(("PASS " if success else "FAIL ") + name, flush=True)

@@ -60,7 +60,7 @@ La orquestación coordina el recorrido. Las flechas representan datos y dependen
 
 La atestación de resultados utiliza un predicado propio versionado y no se presenta como implementación conforme de VSA. VSA sirve como referencia conceptual de una evaluación asociada a una política. Los [contratos de la entrega integrada](delivery-contracts.md) concretan el formato y las comprobaciones implementadas. [Especificación VSA](https://slsa.dev/verification_summary/v1).
 
-Conftest utiliza políticas Rego y Kyverno sus recursos declarativos. Se comprobará la coherencia de las propiedades compartidas mediante entradas válidas e inválidas y expectativas comunes, adaptando la representación de cada entrada a su consumidor. No se presupone que ambos ejecuten el mismo archivo ni que toda regla temprana tenga una réplica en admisión. [Conftest](https://www.conftest.dev/), [Kyverno: verificación de imágenes](https://kyverno.io/docs/policy-types/cluster-policy/verify-images/).
+Conftest utiliza políticas Rego y Kyverno utiliza sus propios recursos declarativos. Se comprobará la coherencia de las propiedades compartidas mediante entradas válidas e inválidas y expectativas comunes, adaptando la representación de cada entrada a su consumidor. No se presupone que ambos ejecuten el mismo archivo ni que toda regla temprana tenga una réplica en admisión. [Conftest](https://www.conftest.dev/), [Kyverno: verificación de imágenes](https://kyverno.io/docs/policy-types/cluster-policy/verify-images/).
 
 ## Dos vías de ejecución
 

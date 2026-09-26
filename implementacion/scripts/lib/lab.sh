@@ -7,7 +7,7 @@ actor() { local ns=$1; shift; k --as="system:serviceaccount:$ns:deployer" "$@"; 
 cleanup() {
   local package_status=0
   [[ -z "$port_pid" ]] || { kill "$port_pid" 2>/dev/null || true; wait "$port_pid" 2>/dev/null || true; }
-  if [[ -n "$state_dir" && -d "$state_dir" ]]; then
+  if [[ -n "$state_dir" && -d "$state_dir" && ! -f "$state_dir/.evidence-packaged" ]]; then
     if [[ "$mode" == local && -n "$registry" ]]; then
       docker logs --tail 100 "$registry" > "$state_dir/registry.log" 2>&1 || true
     fi
@@ -17,7 +17,11 @@ cleanup() {
     fi
     local status=FAIL
     [[ -f "$state_dir/result.json" ]] && status=$(jq -r '.status' "$state_dir/result.json")
-    python3 scripts/package-evidence.py "$state_dir" "$root/evidence/packages" "$status" || package_status=1
+    if python3 scripts/package-evidence.py "$state_dir" "$root/evidence/packages" "$status"; then
+      touch "$state_dir/.evidence-packaged" || package_status=1
+    else
+      package_status=1
+    fi
   fi
   [[ -z "$builder" ]] || docker buildx rm "$builder" >/dev/null 2>&1 || true
   [[ -z "$cluster" ]] || kind delete cluster --name "$cluster" >/dev/null 2>&1 || true

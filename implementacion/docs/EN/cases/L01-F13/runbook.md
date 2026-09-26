@@ -27,7 +27,7 @@ repository-root/
 
 In GitHub Codespaces, choose **Golden Path - implementation**, located under `.devcontainer/implementacion/`. In VS Code, open the repository root, run **Dev Containers: Reopen in Container** and select that configuration. Opening only `implementacion` uses its internal configuration for local development; GitHub workflows must still remain at the repository root.
 
-Run the following in the devcontainer's **Linux terminal**, from `implementacion/`. They are not instructions for running the complete laboratory directly in Windows PowerShell or Git Bash.
+Run the following in the devcontainer's **Linux terminal**, starting at the repository root. If the terminal already opens in `implementacion/`, omit `cd implementacion`. They are not instructions for running the complete laboratory directly in Windows PowerShell or Git Bash.
 
 ```bash
 cd implementacion
@@ -78,10 +78,10 @@ Expected sequence:
 7. F11 is checked through early policy and a directed admission update. A legitimate update is also checked.
 8. Diagnostics and an evidence package are retained, and temporary laboratory resources are removed.
 
-Expected final message:
+Expected summary before cleanup and packaging output (`<run-directory>` is the actual evidence directory):
 
 ```text
-PASS: L01 accepted; F13 and F11 rejected
+== PASS: L01 accepted; F13 and F11 rejected. Evidence: <run-directory> ==
 ```
 
 F13 is a negative test: **rejection by the expected rule is the correct test result**. A network failure, unavailable webhook, failed download or unrelated signature failure does not demonstrate F13 and fails the demonstration. If Trivy reports HIGH/CRITICAL findings, G stops; the control is not bypassed to manufacture a passing demo.

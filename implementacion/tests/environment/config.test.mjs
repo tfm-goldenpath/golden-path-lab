@@ -12,6 +12,15 @@ const versions = Object.fromEntries(read('versions.env').split(/\r?\n/)
     return [line.slice(0, split), line.slice(split + 1)];
   }));
 
+test('Debian build dependencies use dated signed snapshot repositories', () => {
+  const sources = read('.devcontainer/debian.sources');
+  assert.match(sources, /archive\/debian\/20260921T000000Z\//);
+  assert.match(sources, /archive\/debian-security\/20260921T000000Z\//);
+  assert.equal((sources.match(/Signed-By: \/usr\/share\/keyrings\/debian-archive-keyring.gpg/g) || []).length, 2);
+  assert.ok(!sources.includes('trusted=yes'));
+  assert.match(read('.devcontainer/Dockerfile'), /COPY .devcontainer\/debian.sources \/etc\/apt\/sources.list.d\/debian.sources/);
+});
+
 test('build references and checks use the same pinned versions', () => {
   const config = JSON.parse(read('.devcontainer/devcontainer.json'));
   assert.ok(read('.devcontainer/Dockerfile').startsWith(`FROM ${versions.NODE_IMAGE}\n`));

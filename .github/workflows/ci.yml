@@ -49,4 +49,6 @@ jobs:
           PREFIX="$HOME/.local" bash scripts/install-security-tools.sh
           printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Run service and policy tests
-        run: make test
+        run: |
+          python3 scripts/check-tool-versions.py
+          make test

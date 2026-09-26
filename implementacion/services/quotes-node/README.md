@@ -28,6 +28,7 @@ Selection references: [official Node image variants](https://github.com/nodejs/d
 
 ```bash
 docker build --platform linux/amd64 --build-arg BUILD_COMMIT="$(git rev-parse HEAD)" -t quotes-node:dev .
+docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges --mount "type=bind,source=$(pwd)/test,target=/app/test,readonly" quotes-node:dev node --test 'test/*.test.js'
 docker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges --publish 127.0.0.1:3000:3000 quotes-node:dev
 ```
 

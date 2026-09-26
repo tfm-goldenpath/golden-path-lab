@@ -28,7 +28,7 @@ raíz del repositorio/
 
 En GitHub Codespaces, selecciona la configuración **Golden Path - implementation**, situada en `.devcontainer/implementacion/`. En VS Code, abre la raíz del repositorio, ejecuta **Dev Containers: Reopen in Container** y selecciona esa misma configuración. Si abres únicamente la carpeta `implementacion`, su configuración interna permite desarrollar localmente, pero los workflows de GitHub deben permanecer en `.github/workflows` de la raíz del repositorio.
 
-Los siguientes comandos se ejecutan en la terminal **Linux del devcontainer**, desde `implementacion/`. No son comandos para PowerShell ni para ejecutar todo el laboratorio directamente en Git Bash de Windows.
+Los siguientes comandos se ejecutan en la terminal **Linux del devcontainer**, desde la raíz del repositorio. Si la terminal ya está en `implementacion/`, omite `cd implementacion`. No son comandos para PowerShell ni para ejecutar todo el laboratorio directamente en Git Bash de Windows.
 
 ```bash
 cd implementacion
@@ -79,7 +79,7 @@ La secuencia observable esperada es:
 7. F11 se comprueba como entrada prohibida en la política temprana y mediante una actualización dirigida en admisión. También se comprueba una actualización legítima de la carga.
 8. Se conservan los diagnósticos y el paquete de evidencias; el laboratorio temporal se retira.
 
-El mensaje final esperado de una ejecución satisfactoria es **PASS: L01 accepted; F13 and F11 rejected**. Se conserva en inglés para coincidir con la salida real del programa.
+El resumen esperado es `== PASS: L01 accepted; F13 and F11 rejected. Evidence: <directorio-de-evidencias> ==`, seguido de la salida de limpieza y empaquetado. El marcador representa el directorio real de esa ejecución. Se conserva en inglés para coincidir con la salida del programa.
 
 F13 es una prueba negativa: **su rechazo por la regla prevista es el resultado correcto del test**. Un error de red, una descarga fallida, un webhook no disponible o una firma diferente no demuestran F13 y hacen fallar la demostración. Si Trivy detecta HIGH/CRITICAL, el flujo G se detiene; no se omite ese control para forzar una demostración satisfactoria.
 

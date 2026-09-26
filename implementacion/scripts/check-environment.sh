@@ -19,6 +19,7 @@ check kubectl "$(kubectl version --client=true --output=json | jq -r .clientVers
 check Docker-CLI "$(docker --version | awk '{gsub(/,/, "", $3); print $3}')" "$DOCKER_VERSION"
 check dockerd "$(dockerd --version | awk '{gsub(/,/, "", $3); print $3}')" "$DOCKER_VERSION"
 check Buildx "$(docker buildx version | awk '{print $2}')" "v$BUILDX_VERSION"
+python3 "$root/scripts/check-tool-versions.py"
 node --test "$root/tests/environment/probe.test.mjs" "$root/tests/environment/config.test.mjs"
 printf 'Tools: Node %s, npm %s, Docker %s, Buildx %s, kind %s, kubectl %s\n' \
   "$NODE_VERSION" "$NPM_VERSION" "$DOCKER_VERSION" "$BUILDX_VERSION" "$KIND_VERSION" "$KUBERNETES_VERSION"

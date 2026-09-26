@@ -45,7 +45,8 @@ function parseEnvelopes(text) {
 export function checkMissingResults(text, digest) {
   if (!/^sha256:[a-f0-9]{64}$/.test(digest)) throw new Error('The expected sha256 digest is required');
   const statements = parseEnvelopes(text);
-  if (statements.some(statement => statement.predicateType === RESULTS_TYPE)) {
+  if (statements.some(statement => statement.predicateType === RESULTS_TYPE
+    && statement.subject.some(subject => subject.digest.sha256 === digest.slice(7)))) {
     throw new Error('F13 is not ready: a results attestation already exists');
   }
   const sboms = statements.filter(statement => statement.predicateType === SBOM_TYPE

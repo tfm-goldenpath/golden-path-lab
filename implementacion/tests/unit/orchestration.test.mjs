@@ -132,6 +132,26 @@ function run(f, args, extra = {}) {
 
 const stages = (result) => result.events.map((entry) => entry.stage);
 
+test('repeated cleanup preserves diagnostic files and the first package', t => {
+  const fixtureState = fixture(t, {stubs:false});
+  writeFileSync(join(fixtureState.privateDir, 'kubeconfig'), 'fixture');
+  const result = run(fixtureState, ['-c', String.raw`
+set -Eeuo pipefail
+source "$GP_FIXTURE_ROOT/scripts/lib/lab.sh"
+root="$GP_FIXTURE_ROOT"; state_dir="$GP_FIXTURE_STATE"; private="$GP_FIXTURE_PRIVATE"
+port_pid=''; mode=github; registry=''; builder=''; cluster=''
+k() { printf 'first diagnostics\n'; }
+python3() { printf 'package\n' >> "$GP_EVENTS"; }
+cleanup
+k() { printf 'cluster is gone\n'; return 1; }
+cleanup
+`]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.events.length, 1);
+  assert.equal(readFileSync(join(fixtureState.state, 'cluster-pods.txt'), 'utf8'), 'first diagnostics\n');
+  assert.equal(readFileSync(join(fixtureState.state, 'cluster-events.txt'), 'utf8'), 'first diagnostics\n');
+});
+
 test('sourcing the real modules does not run tools or change cwd, options or traps', (t) => {
   const f = fixture(t, { stubs: false });
   const result = run(f, ['-c', String.raw`
