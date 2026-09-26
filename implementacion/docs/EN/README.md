@@ -14,6 +14,7 @@ English is the primary language for implementation and technical contribution. S
 | [GitHub configuration](github-configuration.md) | Proposed repository protections and hosted integration settings; documentation does not activate those settings. |
 | [Implementation plan](implementation-plan.md) | Incremental milestones and their acceptance criteria; consult the runbook for current commands. |
 | [Baseline review follow-up](baseline-review-follow-up.md) | Disposition of all comments on baseline PRs 01–08 and remaining integration checks. |
+| [Future Cosign bundle migration](cosign-bundle-migration.md) | Deferred compatibility proposal, repository/documentation impact and acceptance criteria; not an implemented migration. |
 
 Start with the [implementation README](../../README.md) for commands and the [TODO](../../TODO.md) for current progress. Use the [original validation records](../../registros/) to distinguish completed checks from pending integration work.
 

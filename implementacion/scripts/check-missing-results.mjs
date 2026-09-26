@@ -20,7 +20,17 @@ function parseEnvelopes(text) {
     }
   }
   if (!envelopes.length) throw new Error('The inventory contains no attestations');
-  return envelopes.map(envelope => {
+  return envelopes.map(entry => {
+    let envelope = entry;
+    if (object(entry) && ['mediaType', 'dsseEnvelope', 'verificationMaterial'].some(key => Object.hasOwn(entry, key))) {
+      if (entry.mediaType !== 'application/vnd.dev.sigstore.bundle.v0.3+json'
+        || !object(entry.verificationMaterial) || !Object.keys(entry.verificationMaterial).length
+        || !object(entry.dsseEnvelope)
+        || ['payload', 'payloadType', 'signatures', 'messageSignature'].some(key => Object.hasOwn(entry, key))) {
+        throw new Error('Incomplete or unsupported Sigstore attestation bundle');
+      }
+      envelope = entry.dsseEnvelope;
+    }
     if (!object(envelope) || envelope.payloadType !== 'application/vnd.in-toto+json'
       || typeof envelope.payload !== 'string' || !envelope.payload
       || !Array.isArray(envelope.signatures) || !envelope.signatures.length
