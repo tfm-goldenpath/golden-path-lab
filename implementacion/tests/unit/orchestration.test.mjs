@@ -183,6 +183,70 @@ cleanup
   assert.ok(lstatSync(join(fixtureState.state, '.evidence-packaged')).isSymbolicLink());
 });
 
+for (const name of ['registry.log', 'cluster-pods.txt', 'cluster-events.txt']) {
+  for (const dangling of [false, true]) {
+    test(`cleanup rejects a ${dangling ? 'dangling' : 'live'} diagnostic symlink for ${name}`, t => {
+      const fixtureState = fixture(t, { stubs: false });
+      const target = join(fixtureState.root, 'outside.txt');
+      if (!dangling) writeFileSync(target, 'preserve me');
+      writeFileSync(join(fixtureState.privateDir, 'kubeconfig'), 'fixture');
+      try { symlinkSync(target, join(fixtureState.state, name)); }
+      catch (error) {
+        if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Windows symlink privilege required');
+        throw error;
+      }
+      const result = run(fixtureState, ['-c', String.raw`
+set -Eeuo pipefail
+source "$GP_FIXTURE_ROOT/scripts/lib/lab.sh"
+root="$GP_FIXTURE_ROOT"; state_dir="$GP_FIXTURE_STATE"; private="$GP_FIXTURE_PRIVATE"
+port_pid=''; mode=local; registry=fixture; builder=''; cluster=fixture
+k() { printf 'diagnostics\n'; }
+docker() { if [[ "$1" == logs ]]; then printf 'registry diagnostics\n'; else printf 'remove-registry\n' >> "$GP_EVENTS"; fi; }
+kind() { printf 'remove-cluster\n' >> "$GP_EVENTS"; }
+python3() { printf 'unexpected-package\n' >> "$GP_EVENTS"; }
+cleanup
+`]);
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, /refusing unsafe diagnostic output/);
+      assert.deepEqual(stages(result), ['remove-cluster', 'remove-registry']);
+      assert.equal(existsSync(target), !dangling);
+      if (!dangling) assert.equal(readFileSync(target, 'utf8'), 'preserve me');
+      assert.ok(lstatSync(join(fixtureState.state, name)).isSymbolicLink());
+      assert.ok(!existsSync(join(fixtureState.state, '.evidence-packaged')));
+    });
+  }
+}
+
+test('cleanup atomically replaces a diagnostic symlink introduced during collection', t => {
+  const fixtureState = fixture(t, { stubs: false });
+  const target = join(fixtureState.root, 'outside.txt');
+  writeFileSync(target, 'preserve me');
+  try { symlinkSync(target, join(fixtureState.root, 'prepared-link')); }
+  catch (error) {
+    if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Windows symlink privilege required');
+    throw error;
+  }
+  writeFileSync(join(fixtureState.privateDir, 'kubeconfig'), 'fixture');
+  const result = run(fixtureState, ['-c', String.raw`
+set -Eeuo pipefail
+source "$GP_FIXTURE_ROOT/scripts/lib/lab.sh"
+root="$GP_FIXTURE_ROOT"; state_dir="$GP_FIXTURE_STATE"; private="$GP_FIXTURE_PRIVATE"
+port_pid=''; mode=github; registry=''; builder=''; cluster=''
+k() {
+  if [[ "$2" == pods ]]; then mv -- "$GP_FIXTURE_ROOT/prepared-link" "$state_dir/cluster-pods.txt"; fi
+  printf 'diagnostics\n'
+  return 1
+}
+python3() { printf 'package\n' >> "$GP_EVENTS"; }
+cleanup
+`]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(readFileSync(target, 'utf8'), 'preserve me');
+  assert.ok(!lstatSync(join(fixtureState.state, 'cluster-pods.txt')).isSymbolicLink());
+  assert.equal(readFileSync(join(fixtureState.state, 'cluster-pods.txt'), 'utf8'), 'diagnostics\n');
+  assert.deepEqual(stages(result), ['package']);
+});
+
 test('repeated cleanup preserves diagnostic files and the first package', t => {
   const fixtureState = fixture(t, {stubs:false});
   writeFileSync(join(fixtureState.privateDir, 'kubeconfig'), 'fixture');

@@ -28,6 +28,13 @@ Trivy's pinned [report definition](https://github.com/aquasecurity/trivy/blob/v0
 
 ## Validation and remaining integration work
 
+### PR09 security follow-up
+
+- The archive and checksum output finding is fixed: reject existing live or dangling output symlinks and non-regular destinations, build the archive through a securely created temporary file, hash that same open file, and atomically replace each output. Neither publication opens the destination for writing. Tests also introduce symlinks after validation to exercise the replacement boundary.
+- A related issue found in cleanup diagnostic collection is fixed: registry, pod and event logs no longer redirect commands directly into existing evidence paths. Collection uses a private temporary directory and atomic replacement. Unsafe diagnostic destinations fail packaging without preventing infrastructure cleanup.
+- The focused source security scan covered evidence packaging, saved-state/cleanup handling, tool downloads, workflow permissions and credentials, attestation validation, admission-policy generation, and service request validation. The service lockfile contains no third-party npm dependencies. Existing checksum checks, pinned workflow actions and explicit attestation identity checks remain in place.
+- This is a source review with regression tests, not a vulnerability-database scan, penetration test or certification. No claim is made that the repository is vulnerability-free. Workspaces, ancestor directories and active/resumed run state must remain under the trusted operator's control; these fixes protect output leaf paths, not against an attacker concurrently replacing whole directories or tampering with the orchestrator's inputs. Packaging is not a general-purpose secret scanner. Archive and checksum publication are individually atomic, not a transactional pair; an interrupted run must be rerun before using its evidence.
+
 The PR description records the commands and observed counts for this revision. Unit and CLI checks establish the specified regressions; they do not establish live signature verification, hosted OIDC, GHCR publication or Kubernetes admission.
 
 Rebuild the devcontainer to validate the dated Debian layer. Snapshot dates must be advanced deliberately for package security updates. The snapshot controls this Dockerfile's direct apt dependencies; the Docker-in-Docker feature and external services retain their own installation and availability constraints. See [Debian snapshot usage](https://snapshot.debian.org/#usage).

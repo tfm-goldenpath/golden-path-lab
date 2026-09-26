@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 
 const script = fileURLToPath(new URL('../../scripts/package-evidence.py', import.meta.url));
 const python = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
@@ -69,6 +70,67 @@ for (const name of ['execution-summary.json', 'SHA256SUMS.txt']) {
   });
 }
 
+for (const name of ['run-test.tar.gz', 'run-test.tar.gz.sha256']) {
+  for (const dangling of [false, true]) {
+    test(`packaging rejects a ${dangling ? 'dangling' : 'live'} output symlink for ${name}`, t => {
+      const { source, output } = fixture(t);
+      fs.mkdirSync(output);
+      const target = path.join(path.dirname(source), 'outside.txt');
+      if (!dangling) fs.writeFileSync(target, 'preserve me');
+      const other = path.join(output, name.endsWith('.sha256') ? 'run-test.tar.gz' : 'run-test.tar.gz.sha256');
+      fs.writeFileSync(other, 'previous output');
+      try { fs.symlinkSync(target, path.join(output, name)); }
+      catch (error) {
+        if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Windows symlink privilege required');
+        throw error;
+      }
+      assert.throws(() => execFileSync(python, [script, source, output, 'PASS'], { stdio: 'pipe' }));
+      assert.equal(fs.existsSync(target), !dangling);
+      if (!dangling) assert.equal(fs.readFileSync(target, 'utf8'), 'preserve me');
+      assert.ok(fs.lstatSync(path.join(output, name)).isSymbolicLink());
+      assert.equal(fs.readFileSync(other, 'utf8'), 'previous output');
+      assert.deepEqual(fs.readdirSync(output).sort(), ['run-test.tar.gz', 'run-test.tar.gz.sha256']);
+    });
+  }
+}
+
+for (const name of ['run-test.tar.gz', 'run-test.tar.gz.sha256']) {
+  test(`atomic publication does not follow a ${name} symlink introduced after validation`, t => {
+    const { source, output } = fixture(t);
+    const target = path.join(path.dirname(source), 'outside.txt');
+    const probe = path.join(path.dirname(source), 'probe');
+    fs.writeFileSync(target, 'preserve me');
+    try { fs.symlinkSync(target, probe); }
+    catch (error) {
+      if (process.platform === 'win32' && error.code === 'EPERM') return t.skip('Windows symlink privilege required');
+      throw error;
+    }
+    fs.unlinkSync(probe);
+    const code = String.raw`
+import importlib.util, os, sys
+from pathlib import Path
+from unittest.mock import patch
+spec = importlib.util.spec_from_file_location('packager', sys.argv[1])
+packager = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(packager)
+replace = os.replace
+def raced_replace(temporary, destination):
+    if Path(destination).name == sys.argv[5]:
+        os.symlink(sys.argv[4], destination)
+    replace(temporary, destination)
+with patch.object(packager.os, 'replace', side_effect=raced_replace):
+    packager.package(sys.argv[2], sys.argv[3], 'PASS')
+`;
+    execFileSync(python, ['-B', '-c', code, script, source, output, target, name]);
+    assert.equal(fs.readFileSync(target, 'utf8'), 'preserve me');
+    assert.ok(!fs.lstatSync(path.join(output, name)).isSymbolicLink());
+    const archive = path.join(output, 'run-test.tar.gz');
+    const digest = createHash('sha256').update(fs.readFileSync(archive)).digest('hex');
+    assert.equal(fs.readFileSync(`${archive}.sha256`, 'utf8'), `${digest}  run-test.tar.gz\n`);
+    assert.deepEqual(inspectArchive(archive).mismatches, []);
+  });
+}
+
 test('packaging twice preserves correct hashes and avoids duplicate members', t => {
   const { source, output } = fixture(t);
   execFileSync(python, [script, source, output, 'FAIL']);
@@ -76,4 +138,8 @@ test('packaging twice preserves correct hashes and avoids duplicate members', t 
   const result = inspectArchive(path.join(output, 'run-test.tar.gz'));
   assert.equal(new Set(result.names).size, result.names.length, 'The hash manifest must appear exactly once');
   assert.deepEqual(result.mismatches, []);
+  const archive = path.join(output, 'run-test.tar.gz');
+  const digest = createHash('sha256').update(fs.readFileSync(archive)).digest('hex');
+  assert.equal(fs.readFileSync(`${archive}.sha256`, 'utf8'), `${digest}  run-test.tar.gz\n`);
+  assert.deepEqual(fs.readdirSync(output).sort(), ['run-test.tar.gz', 'run-test.tar.gz.sha256']);
 });

@@ -4,6 +4,20 @@
 
 k() { kubectl --request-timeout=60s --kubeconfig "$private/kubeconfig" --context "kind-$cluster" "$@"; }
 actor() { local ns=$1; shift; k --as="system:serviceaccount:$ns:deployer" "$@"; }
+capture_diagnostic() {
+  local destination=$1 temporary status=0
+  shift
+  if [[ -L "$destination" || ( -e "$destination" && ! -f "$destination" ) ]]; then
+    printf 'ERROR: refusing unsafe diagnostic output: %s\n' "$destination" >&2
+    return 1
+  fi
+  temporary=$(mktemp -d "$state_dir/.diagnostic-XXXXXXXX") || return 1
+  "$@" > "$temporary/output" 2>&1 || true
+  mv -fT -- "$temporary/output" "$destination" || status=1
+  rm -f -- "$temporary/output" || status=1
+  rmdir -- "$temporary" || status=1
+  return "$status"
+}
 cleanup() {
   local package_status=0 marker temporary_marker
   marker="$state_dir/.evidence-packaged"
@@ -13,15 +27,15 @@ cleanup() {
     package_status=1
   elif [[ -n "$state_dir" && -d "$state_dir" && ! -e "$marker" ]]; then
     if [[ "$mode" == local && -n "$registry" ]]; then
-      docker logs --tail 100 "$registry" > "$state_dir/registry.log" 2>&1 || true
+      capture_diagnostic "$state_dir/registry.log" docker logs --tail 100 "$registry" || package_status=1
     fi
     if [[ -n "$private" && -f "$private/kubeconfig" ]]; then
-      k get pods -A -o wide > "$state_dir/cluster-pods.txt" 2>&1 || true
-      k get events -A --sort-by=.lastTimestamp > "$state_dir/cluster-events.txt" 2>&1 || true
+      capture_diagnostic "$state_dir/cluster-pods.txt" k get pods -A -o wide || package_status=1
+      capture_diagnostic "$state_dir/cluster-events.txt" k get events -A --sort-by=.lastTimestamp || package_status=1
     fi
     local status=FAIL
     [[ -f "$state_dir/result.json" ]] && status=$(jq -r '.status' "$state_dir/result.json")
-    if python3 scripts/package-evidence.py "$state_dir" "$root/evidence/packages" "$status"; then
+    if [[ "$package_status" == 0 ]] && python3 scripts/package-evidence.py "$state_dir" "$root/evidence/packages" "$status"; then
       if temporary_marker=$(mktemp "$state_dir/.evidence-marker-XXXXXXXX"); then
         ln -T -- "$temporary_marker" "$marker" || package_status=1
         rm -f -- "$temporary_marker" || package_status=1

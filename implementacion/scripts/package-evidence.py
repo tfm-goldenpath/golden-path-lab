@@ -14,7 +14,7 @@ def write_metadata(destination, text):
         raise ValueError('Refusing symlinked evidence metadata: ' + destination.name)
     descriptor, temporary = tempfile.mkstemp(dir=destination.parent)
     try:
-        with os.fdopen(descriptor, 'w', encoding='utf-8') as stream:
+        with os.fdopen(descriptor, 'w', encoding='utf-8', newline='\n') as stream:
             stream.write(text)
         os.replace(temporary, destination)
     finally:
@@ -32,6 +32,11 @@ def package(source, output, status):
                 continue
             files.append(file)
     output.mkdir(parents=True, exist_ok=True)
+    target = output / (source.name + '.tar.gz')
+    checksum = output / (target.name + '.sha256')
+    for destination in (target, checksum):
+        if destination.is_symlink() or (destination.exists() and not destination.is_file()):
+            raise ValueError('Refusing unsafe evidence output: ' + destination.name)
     summary = source / 'execution-summary.json'
     sums = source / 'SHA256SUMS.txt'
     for metadata in (summary, sums):
@@ -42,11 +47,21 @@ def package(source, output, status):
         'secretsIncluded': False}, indent=2) + '\n')
     files = [p for p in files if p != summary] + [summary]
     write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.name + '\n' for p in files))
-    target = output / (source.name + '.tar.gz')
-    with tarfile.open(target, 'w:gz') as archive:
-        for file in files + [sums]:
-            archive.add(file, arcname=source.name + '/' + file.name, recursive=False)
-    (output / (target.name + '.sha256')).write_text(hashlib.sha256(target.read_bytes()).hexdigest() + '  ' + target.name + '\n', encoding='utf-8')
+    descriptor, temporary = tempfile.mkstemp(dir=output)
+    try:
+        with os.fdopen(descriptor, 'w+b') as stream:
+            with tarfile.open(fileobj=stream, mode='w:gz') as archive:
+                for file in files + [sums]:
+                    archive.add(file, arcname=source.name + '/' + file.name, recursive=False)
+            stream.seek(0)
+            digest = hashlib.sha256()
+            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                digest.update(chunk)
+        os.replace(temporary, target)
+        write_metadata(checksum, digest.hexdigest() + '  ' + target.name + '\n')
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
     print(target)
 
 if __name__ == '__main__':
