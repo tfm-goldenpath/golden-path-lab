@@ -1,0 +1,25 @@
+{
+  "name": "Golden Path - initial environment",
+  "build": { "dockerfile": "Dockerfile", "context": ".." },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:4.1.0": {
+      "version": "29.8.0",
+      "moby": false,
+      "installDockerBuildx": false,
+      "dockerDashComposeVersion": "none",
+      "installDockerComposeSwitch": false
+    }
+  },
+  "remoteUser": "node",
+  "containerEnv": { "KIND_EXPERIMENTAL_PROVIDER": "docker" },
+  "hostRequirements": { "cpus": 2, "memory": "8gb", "storage": "32gb" },
+  "postCreateCommand": "bash scripts/check-environment.sh --tools-only",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.eol": "\n"
+      }
+    }
+  }
+}
