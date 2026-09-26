@@ -1,0 +1,44 @@
+{
+  "manifests": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {"name": "quotes-node", "namespace": "tfm-golden"},
+    "spec": {
+      "template": {
+        "spec": {
+          "securityContext": {"seccompProfile": {"type": "RuntimeDefault"}},
+          "containers": [{
+            "name": "quotes-node",
+            "image": "registry.example/quotes-node@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "securityContext": {
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "runAsNonRoot": true,
+              "readOnlyRootFilesystem": true,
+              "capabilities": {"drop": ["ALL"]}
+            }
+          }]
+        }
+      }
+    }
+  },
+  "workflow": {
+    "name": "Synthetic test fixture: hashes only test syntax",
+    "on": {"workflow_dispatch": {}},
+    "permissions": {"contents": "read"},
+    "jobs": {
+      "delivery": {
+        "runs-on": "ubuntu-latest",
+        "permissions": {"contents": "read", "packages": "write", "id-token": "write", "attestations": "write"},
+        "steps": [{"uses": "actions/checkout@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]
+      }
+    }
+  },
+  "trivy": {
+    "SchemaVersion": 2,
+    "ArtifactName": "registry.example/quotes-node@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "ArtifactType": "container_image",
+    "Metadata": {},
+    "Results": [{"Target": "synthetic fixture", "Class": "os-pkgs", "Type": "debian", "Vulnerabilities": []}]
+  }
+}
