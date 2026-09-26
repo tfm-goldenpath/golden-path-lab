@@ -12,8 +12,67 @@ function envelope(type = 'https://cyclonedx.org/bom', predicate = bom, hash = di
 
 function bundle(dsseEnvelope = envelope()) {
   return {mediaType:'application/vnd.dev.sigstore.bundle.v0.3+json',
-    verificationMaterial:{certificate:{rawBytes:'synthetic-not-a-real-certificate'}},dsseEnvelope};
+    verificationMaterial:{certificate:{rawBytes:Buffer.from('synthetic-not-a-real-certificate').toString('base64')}},dsseEnvelope};
 }
+
+const syntheticBytes = Buffer.from('synthetic bytes, not cryptographic evidence').toString('base64');
+const logEntry = () => ({logIndex:'1',logId:{keyId:syntheticBytes},kindVersion:{kind:'dsse',version:'0.0.1'},
+  integratedTime:'1',canonicalizedBody:syntheticBytes,inclusionPromise:{signedEntryTimestamp:syntheticBytes},
+  inclusionProof:{logIndex:'1',treeSize:'2',rootHash:syntheticBytes,hashes:[syntheticBytes],checkpoint:{envelope:'synthetic checkpoint'}}});
+
+test('accepts defined verification-material shapes without claiming authentication', () => {
+  const defaultFields = logEntry();
+  delete defaultFields.logIndex;
+  delete defaultFields.integratedTime;
+  delete defaultFields.inclusionProof.logIndex;
+  delete defaultFields.inclusionProof.hashes;
+  for (const verificationMaterial of [
+    {certificate:{rawBytes:syntheticBytes}},
+    {publicKey:{hint:'out-of-band-key'}},
+    {publicKey:{}},
+    {x509CertificateChain:{certificates:[{rawBytes:syntheticBytes}]}},
+    {certificate:{rawBytes:syntheticBytes},tlogEntries:[],timestampVerificationData:{}},
+    {certificate:{rawBytes:syntheticBytes},tlogEntries:[defaultFields],timestampVerificationData:{rfc3161Timestamps:[]}},
+    {certificate:{rawBytes:syntheticBytes},tlogEntries:[logEntry()],
+      timestampVerificationData:{rfc3161Timestamps:[{signedTimestamp:syntheticBytes}]}},
+  ]) {
+    assert.equal(checkMissingResults(JSON.stringify({...bundle(), verificationMaterial}), digest).reason, 'RESULTS_ATTESTATION_MISSING');
+  }
+});
+
+test('rejects malformed verification material even alongside a valid classic SBOM', () => {
+  const certificate = {rawBytes:syntheticBytes};
+  const malformed = [
+    {bogus:true}, {certificate:null}, {certificate:[]}, {certificate:{}},
+    {certificate:{rawBytes:1}}, {certificate:{rawBytes:''}}, {certificate:{rawBytes:'not-base64'}},
+    {certificate:{...certificate,bogus:true}}, {certificate,bogus:true},
+    {publicKey:'key'}, {publicKey:{hint:42}}, {publicKey:{bogus:true}},
+    {certificate,publicKey:{hint:'key'}}, {x509CertificateChain:{}},
+    {x509CertificateChain:{certificates:[]}}, {x509CertificateChain:{certificates:[{}]}},
+    {certificate,tlogEntries:{}}, {certificate,tlogEntries:[null]}, {certificate,tlogEntries:[{}]},
+    {certificate,timestampVerificationData:[]}, {certificate,timestampVerificationData:{bogus:true}},
+    {certificate,timestampVerificationData:{rfc3161Timestamps:'bad'}},
+    {certificate,timestampVerificationData:{rfc3161Timestamps:[{}]}},
+    {certificate,timestampVerificationData:{rfc3161Timestamps:[{signedTimestamp:42}]}},
+  ];
+  for (const [field, value] of [
+    ['logIndex',true], ['logIndex','-1'], ['logIndex','9223372036854775808'],
+    ['logId',{keyId:42}], ['kindVersion',{kind:42,version:'1'}],
+    ['integratedTime',1.5], ['canonicalizedBody','not-base64'],
+    ['inclusionPromise',{signedEntryTimestamp:[]}], ['inclusionProof',{}],
+  ]) malformed.push({certificate,tlogEntries:[{...logEntry(),[field]:value}]});
+  for (const [field, value] of [
+    ['logIndex',null], ['treeSize',-1], ['rootHash',42], ['hashes',['not-base64']], ['checkpoint',{envelope:42}],
+  ]) {
+    const entry = logEntry();
+    entry.inclusionProof[field] = value;
+    malformed.push({certificate,tlogEntries:[entry]});
+  }
+  for (const verificationMaterial of malformed) {
+    const inventory = [envelope(), {...bundle(),verificationMaterial}];
+    assert.throws(() => checkMissingResults(JSON.stringify(inventory), digest), /verification material/, JSON.stringify(verificationMaterial));
+  }
+});
 
 test('accepts v0.3 bundles and mixed hosted inventories in JSON and JSONL', () => {
   const provenance = bundle(envelope('https://slsa.dev/provenance/v1', {buildDefinition:{}}));
