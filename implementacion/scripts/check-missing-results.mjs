@@ -20,14 +20,16 @@ function fields(value, required, optional = {}) {
 
 const certificate = value => fields(value, {rawBytes:bytes});
 const inclusionProof = value => fields(value, {
-  rootHash:bytes, treeSize:integer, checkpoint:checkpoint => fields(checkpoint, {envelope:text}),
-}, {logIndex:integer, hashes:list(bytes)});
+  logIndex:integer, hashes:list(bytes), rootHash:bytes, treeSize:integer,
+  checkpoint:checkpoint => fields(checkpoint, {envelope:text}),
+});
 const logEntry = value => fields(value, {
+  logIndex:integer, integratedTime:integer,
   logId:logId => fields(logId, {keyId:bytes}),
   kindVersion:kindVersion => fields(kindVersion, {kind:text, version:text}),
   inclusionProof,
 }, {
-  logIndex:integer, integratedTime:integer, canonicalizedBody:bytes,
+  canonicalizedBody:bytes,
   inclusionPromise:promise => fields(promise, {signedEntryTimestamp:bytes}),
 });
 
@@ -70,6 +72,9 @@ function parseEnvelopes(text) {
       }
       validateVerificationMaterial(entry.verificationMaterial);
       envelope = entry.dsseEnvelope;
+      if (!Array.isArray(envelope.signatures) || envelope.signatures.length !== 1) {
+        throw new Error('A Sigstore attestation bundle must contain exactly one DSSE signature');
+      }
     }
     if (!object(envelope) || envelope.payloadType !== 'application/vnd.in-toto+json'
       || typeof envelope.payload !== 'string' || !envelope.payload

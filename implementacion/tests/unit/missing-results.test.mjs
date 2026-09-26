@@ -22,10 +22,10 @@ const logEntry = () => ({logIndex:'1',logId:{keyId:syntheticBytes},kindVersion:{
 
 test('accepts defined verification-material shapes without claiming authentication', () => {
   const defaultFields = logEntry();
-  delete defaultFields.logIndex;
-  delete defaultFields.integratedTime;
-  delete defaultFields.inclusionProof.logIndex;
-  delete defaultFields.inclusionProof.hashes;
+  defaultFields.logIndex = '0';
+  defaultFields.integratedTime = 0;
+  defaultFields.inclusionProof.logIndex = 0;
+  defaultFields.inclusionProof.hashes = [];
   for (const verificationMaterial of [
     {certificate:{rawBytes:syntheticBytes}},
     {publicKey:{hint:'out-of-band-key'}},
@@ -82,6 +82,31 @@ test('accepts v0.3 bundles and mixed hosted inventories in JSON and JSONL', () =
     }
   }
   assert.equal(checkMissingResults(JSON.stringify(bundle()), digest).reason, 'RESULTS_ATTESTATION_MISSING');
+});
+
+test('required transparency-log and proof fields cannot be omitted', () => {
+  for (const [section, required] of [
+    ['entry', ['logIndex', 'integratedTime', 'logId', 'kindVersion', 'inclusionProof']],
+    ['proof', ['logIndex', 'hashes', 'rootHash', 'treeSize', 'checkpoint']],
+  ]) {
+    for (const field of required) {
+      const entry = logEntry();
+      delete (section === 'entry' ? entry : entry.inclusionProof)[field];
+      const value = bundle();
+      value.verificationMaterial.tlogEntries = [entry];
+      assert.throws(() => checkMissingResults(JSON.stringify([envelope(), value]), digest),
+        /verification material/, `${section}.${field} must be present`);
+    }
+  }
+});
+
+test('bundles require exactly one DSSE signature without restricting classic envelopes', () => {
+  for (const count of [0, 2, 3]) {
+    const value = envelope();
+    value.signatures = Array.from({length:count}, () => ({sig:'synthetic-not-a-real-signature'}));
+    assert.throws(() => checkMissingResults(JSON.stringify([envelope(), bundle(value)]), digest), /exactly one DSSE signature/);
+    if (count > 0) assert.equal(checkMissingResults(JSON.stringify(value), digest).reason, 'RESULTS_ATTESTATION_MISSING');
+  }
 });
 
 test('bundled results for the expected digest block F13 regardless of their result', () => {
