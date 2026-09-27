@@ -5,9 +5,15 @@
 # Shared with F11, sourced after this file by demo.sh. Only one identified
 # policy/rule rejection may be attributed to a scenario. Preserve the original
 # log separately; normalize only YAML string quoting and continuation whitespace.
+# kubectl UPDATE errors include a patch and a "to:" preamble. Start reading
+# policies only at the complete Kyverno denial marker for the protected workload.
 scenario_admission_single_reason() {
   awk -v expected_policy="$2" -v expected_rule="$3" '
-    /was blocked due to the following policies/ { blocked = 1 }
+    /^resource (Deployment|Pod)\/tfm-golden\/quotes-node was blocked due to the following policies[[:space:]]*$/ {
+      blocked++
+      next
+    }
+    !blocked { next }
     /^[[:alnum:]_.-]+:[[:space:]]*$/ {
       policies++
       policy = $0
@@ -27,7 +33,7 @@ scenario_admission_single_reason() {
     }
     rules { reason = reason " " $0 }
     END {
-      if (!blocked || invalid || policies != 1 || rules != 1) exit 1
+      if (blocked != 1 || invalid || policies != 1 || rules != 1) exit 1
       gsub(/[[:space:]]+/, " ", reason)
       sub(/^ /, "", reason)
       sub(/ $/, "", reason)

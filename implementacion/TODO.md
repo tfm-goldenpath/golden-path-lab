@@ -19,6 +19,7 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) specifies t
 - [x] Complete an end-to-end lane A execution: `run-8N59m8xw`, L01 admitted and functional, F13 and F11 rejected by their rules, and package verified. This used a local compatibility environment; review by the responsible person and repetition in Codespaces remain pending.
 - [ ] Complete and review an end-to-end lane B execution with OIDC, GHCR, native provenance and actual verification by Kyverno.
 - [x] Implement hosted classic certificate-chain completion from authenticated Fulcio TUF material, preserving root trust and signed content, with regression coverage.
+- [x] Observe the corrected chains and results verified in hosted admission in [run 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179), commit `1ae111fc6e1614b32ee86461771836ada60e1d42`: F13 correctly rejected, L01 admitted and healthy, F11 correctly denied by Kyverno. The overall run failed because the rejection parser counted kubectl's preamble `to:` as an extra policy; the final legitimate update was not reached.
 - [ ] Validate this correction on a published fix branch: certificate chains accepted, F13 rejected solely for missing results, then L01 accepted, F11 rejected for its intended rule and legitimate update accepted. Preserve the exact commit and evidence package; do not count a certificate error as detection.
 - [ ] Review the download and preservation of the hosted execution package and record the observed result.
 

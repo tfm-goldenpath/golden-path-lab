@@ -16,6 +16,11 @@ const shellPath = (value) => value.replaceAll('\\', '/');
 const missingResults = (trust = 'keyless') => `image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: .attestations[0].attestors[0].entries[0].${trust}: attestions not found for predicate type ${resultsType}`;
 const runtimeReason = (rule = 'autogen-restricted-containers', field = 'privileged') => `validation failure: validation error: RUNTIME: all containers must be unprivileged, without privilege escalation or capabilities. rule ${rule} failed at path /securityContext/${field}/`;
 const denial = (policy, rule, reason) => `Error from server: admission webhook "validate.kyverno.svc-fail" denied the request:\n\nresource Deployment/tfm-golden/quotes-node was blocked due to the following policies\n\n${policy}:\n  ${rule}: '${reason}'\n`;
+// Recorded kubectl response with Actions prefixes and trailing whitespace removed:
+// https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179/job/108576831438
+// Source commit: 1ae111fc6e1614b32ee86461771836ada60e1d42.
+// Contains public image metadata and a Secret name, never Secret contents.
+const hostedUpdateDenial = readFileSync(join(sourceRoot, 'tests/unit/fixtures/f11-update-kyverno-1.19.1.log'), 'utf8');
 
 function runScenario(t, scenario, output, status = 1) {
   const root = mkdtempSync(join(tmpdir(), 'gp-admission-classification-'));
@@ -54,8 +59,9 @@ const accepted = [
   ['F13', 'wrapped YAML reason', denial('tfm-results', 'autogen-require-results', missingResults()).replace('requiredCount: 1, error:', '\n    requiredCount: 1, error:')],
   ['F11', 'privileged Deployment denial', denial('tfm-runtime', 'autogen-restricted-containers', runtimeReason())],
   ['F11', 'privilege escalation denial', denial('tfm-runtime', 'autogen-restricted-containers', runtimeReason(undefined, 'allowPrivilegeEscalation'))],
-  ['F11', 'direct Pod denial', denial('tfm-runtime', 'restricted-containers', runtimeReason('restricted-containers'))],
+  ['F11', 'direct Pod denial', denial('tfm-runtime', 'restricted-containers', runtimeReason('restricted-containers')).replace('resource Deployment/', 'resource Pod/')],
   ['F11', 'wrapped YAML reason', denial('tfm-runtime', 'autogen-restricted-containers', runtimeReason()).replace('without privilege', '\n    without privilege')],
+  ['F11', 'recorded hosted PATCH denial with the kubectl preamble', hostedUpdateDenial],
 ];
 for (const [scenario, label, output] of accepted) {
   test(`${scenario} attributes only the intended rejection: ${label}`, (t) => {
@@ -85,6 +91,15 @@ const rejected = [
   ['F11', 'unknown result format', runtimeDenial('UNKNOWN integration failure')],
   ['F11', 'additional runtime rule failure', runtimeDenial(runtimeReason()) + '  no-host-path: HOST_PATH: volume denied\n'],
   ['F11', 'wrong rule inside message', runtimeDenial(runtimeReason('another-rule'))],
+  ['F11', 'recorded PATCH response with a second policy failure', hostedUpdateDenial + 'tfm-signature:\n  verify-signature: x509: certificate signed by unknown authority\n'],
+  ['F11', 'recorded PATCH response with an unrelated rule failure', hostedUpdateDenial.replace('  autogen-restricted-containers:', '  autogen-authorized-image-repository:')],
+  ['F11', 'recorded PATCH response with a rule execution error', hostedUpdateDenial.replace('failed at path /securityContext/allowPrivilegeEscalation/', 'execution error: failed to evaluate expression')],
+  ['F11', 'missing denial marker', runtimeDenial(runtimeReason()).replace(/^resource .*\n/m, '')],
+  ['F11', 'marker text embedded in a quoted patch value', runtimeDenial(runtimeReason()).replace(/^resource (.*)$/m, '{"annotation":"resource $1"}')],
+  ['F11', 'unrelated resource kind in the marker', runtimeDenial(runtimeReason()).replace('resource Deployment/', 'resource ConfigMap/')],
+  ['F11', 'unrelated namespace in the marker', runtimeDenial(runtimeReason()).replace('resource Deployment/tfm-golden/', 'resource Deployment/tfm-reference/')],
+  ['F11', 'unrelated workload in the marker', runtimeDenial(runtimeReason()).replace('resource Deployment/tfm-golden/quotes-node', 'resource Deployment/tfm-golden/another-service')],
+  ['F11', 'repeated denial marker', runtimeDenial(runtimeReason()).replace(/^resource (.*)$/m, 'resource $1\nresource $1')],
   ['F13', 'transport error before policy evaluation', 'Unable to connect to the server: context deadline exceeded\n'],
   ['F11', 'transport error before policy evaluation', 'Unable to connect to the server: context deadline exceeded\n'],
 ];
