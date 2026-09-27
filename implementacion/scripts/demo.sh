@@ -53,6 +53,7 @@ if [[ "$phase" != finish ]]; then
   delivery_check_manifest
   scenario_f11_early
   delivery_analyze
+  scenario_l01_prepare_update
   if [[ "$phase" == prepare ]]; then
     printf 'image=%s\ndigest=%s\n' "$image_repo" "$digest" >> "$GITHUB_OUTPUT"
     preserve=1
@@ -71,5 +72,6 @@ scenario_l01_accept
 scenario_f11_admission
 scenario_l01_update
 jq -n --arg image "$image" --arg mode "$mode" --arg repo "$repository" --arg commit "$commit" \
-  '{status:"PASS",mode:$mode,image:$image,source:{repository:$repo,commit:$commit},reference:"healthy",L01:"accepted-and-healthy",F13:"denied-by-require-results",F11:{early:"denied",admissionUpdate:"denied"},legitimateUpdate:"accepted",measurement:"functional-integration-only"}' > "$state_dir/result.json"
+  --slurpfile update "$state_dir/L01-image-update.json" \
+  '{status:"PASS",mode:$mode,image:$image,source:{repository:$repo,commit:$commit},reference:"healthy",L01:"accepted-and-healthy",F13:"denied-by-require-results",F11:{early:"denied",admissionUpdate:"denied"},legitimateUpdate:$update[0],measurement:"functional-integration-only"}' > "$state_dir/result.json"
 record "PASS: L01 accepted; F13 and F11 rejected. Evidence: $state_dir"

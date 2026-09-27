@@ -2,7 +2,7 @@
 
 [English](cosign-bundle-migration.md) · [Español](../ES/cosign-bundle-migration.md) · [Documentation index](README.md)
 
-**Status: deferred proposal.** This document records the compatibility analysis and impact of a future migration. It does not change the active signing configuration, policies or evaluation baseline. Adoption requires the integration checks below.
+**Status: bundle migration deferred.** This document records the compatibility analysis and impact of a future migration, alongside separate corrections to the current baseline. Bundle adoption requires the integration checks below.
 
 ## Purpose and current baseline
 
@@ -11,6 +11,19 @@ The proposed improvement is to use Cosign's default Sigstore bundle representati
 The reviewed tool combination is Cosign **3.1.3**, Kyverno **1.19.1** and Kyverno chart **3.9.1**. The [tool lock](../../tools.lock.json) remains authoritative for the active configuration. Current signing explicitly uses `--new-bundle-format=false --use-signing-config=false`; verification selects the classic format. The signing-configuration correction and this future format migration are separate changes.
 
 The [delivery contracts](delivery-contracts.md) distinguish local development-key trust in lane A from GitHub OIDC identity and transparency verification in lane B. That separation must remain after migration. A shared bundle format does not make the two producers equally trusted.
+
+## Deprecation handling in the current baseline
+
+The [policy renderer](../../policies/kyverno/render.py) uses `verifyImages[].attestations[].type` for the expected predicate URI in both classic and bundle verification. Kyverno 1.19.1's [attestation API](https://github.com/kyverno/kyverno/blob/v1.19.1/api/kyverno/v1/image_verification_types.go) defines this field as the replacement for `predicateType`; its [engine](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go) already normalizes the old field to `type` before selecting and checking predicates. This removes the deprecated policy-field usage while retaining the selected verification method, authorized signer and predicate conditions. The in-toto statement itself still uses `predicateType`; that signed-content field is a different contract. Renderer tests cover both trust profiles and the separate SBOM, provenance and results predicates; a new hosted run must confirm the updated policies in admission.
+
+Two warnings require a broader migration and remain visible:
+
+- **Cosign `--new-bundle-format=false`:** Cosign 3.1.3 defaults this option to `true` for [signing](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go) and [verification](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/verify.go). Deleting the option would change the evidence format and consumer behaviour. The explicit classic selection remains until the producer/consumer migration passes the checks below; standard error is not suppressed.
+- **Kyverno `ClusterPolicy`:** replacing this deprecated resource requires migrating runtime and image-verification policies to the supported policy families, including their match scope, enforcement, trust, readiness and rejection classification. The [official migration guide](https://kyverno.io/docs/guides/migration-to-cel/) schedules removal in 1.20: the current policies must not be carried into that upgrade unchanged. Renaming an API kind or merely switching the signature format cannot establish equivalent behaviour; the laboratory must repeat its positive and negative integration checks before adoption.
+
+Lane A also emits a deprecation warning for `--tlog-upload=false`. Its replacement is a signing configuration without transparency-log services, tested as part of bundle migration. Preserve local development-key verification and the local-only trust boundary; do not apply this exception to lane B, where identity and transparency verification remain mandatory. Local warnings about explicitly skipping transparency verification describe that existing development profile and are not hidden.
+
+These are recorded compatibility constraints of the pinned baseline, not claims that the deprecated interfaces will remain supported indefinitely. In particular, the predicate-field correction does not complete either migration.
 
 ## Confirmed findings and remaining uncertainty
 
@@ -47,6 +60,8 @@ Regression tests exercise real generated certificate signatures and mocked regis
 
 **Subsequent hosted observation:** [run 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179/job/108576831438), on `fix/fulcio-chain` at commit `1ae111fc6e1614b32ee86461771836ada60e1d42`, passed the chain-completion/verification steps. Kyverno rejected F13 only for the missing results predicate, then admitted L01 after results issuance; the deployment became healthy and its functional comparison passed. It also denied F11 at `/securityContext/allowPrivilegeEscalation/`. The overall run is **FAIL**, because the classifier counted the standalone `to:` in kubectl's UPDATE preamble as a policy before reading the actual denial block. The parser correction scopes interpretation to that block and retains the exact expected reason checks. The final legitimate update and overall PASS still require a new hosted execution; the previous failed run remains valid historical evidence and is not relabelled as successful. Bundle migration remains deferred.
 
+**Completed baseline integration:** [run 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700/job/108596721755), on `main` at commit `21f8fc46b158ae209c657c33f9376254223d62df`, subsequently completed the classic-profile sequence with `PASS`: F13 was denied for the missing results predicate, L01 was admitted and healthy after results issuance, and F11 was denied for privilege escalation. Its final legitimate update changed a Deployment annotation; it did not test delivery of a new image version. This observation closes the earlier baseline integration gap, not the later predicate-field correction, a bundle migration, a policy-family migration or the twenty-scenario campaign.
+
 ## Repository impact
 
 Paths below are relative to `implementacion/`, except where explicitly stated.
@@ -76,7 +91,7 @@ Record the implementation and its actual validation in the changelog and a new v
 
 ## Deferred work and acceptance criteria
 
-- [x] Inspect the actual hosted inventory and correct the independent F13 representation failure, with mixed-format and fail-closed regressions. A fresh full hosted integration remains pending.
+- [x] Inspect the actual hosted inventory and correct the independent F13 representation failure, with mixed-format and fail-closed regressions. The classic baseline subsequently passed hosted run `36310983700`; the migration checks below remain open.
 - [ ] Run a small compatibility experiment using the pinned versions and fresh, isolated test images. Confirm that new bundles are present and fetched; successful CLI verification alone can fall back to classic evidence.
 - [ ] Adapt producers, inventory handling and consumers in a focused migration PR with tests. Keep unverified compatibility claims out of the operational guides.
 - [ ] Remove the classic chain-completion adapter from the migrated path and confirm that independently verified bundles carry the required evidence without relying on residual classic manifests. Compare authenticated certificate-chain handling explicitly.

@@ -22,7 +22,7 @@ delivery_build() {
   node_image=${GP_NODE_IMAGE:-$SERVICE_NODE_IMAGE}
   [[ "$node_image" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'The base image must be pinned by digest.'
   put nodeImage "$node_image"
-  record 'Build a single image for paths R and G'
+  record "Build image $id"
   docker buildx build --builder "$builder" --platform linux/amd64 --provenance=false --sbom=false --push \
     --build-arg "NODE_IMAGE=$node_image" --build-arg "BUILD_COMMIT=$commit" --label "tfm.lab.run=$id" \
     --tag "$image_repo:$id" --metadata-file "$state_dir/build-metadata.json" services/quotes-node

@@ -62,9 +62,9 @@ Esta opción configura `failCgroupV1: false` en el kubelet de los nodos **tempor
 make demo
 ```
 
-Esta entrada utiliza `scripts/demo.sh` para preparar un laboratorio aislado con **kind, zot y claves locales de desarrollo**. Construye una imagen `linux/amd64`, conserva su digest y ejecuta la secuencia de referencia y controles. Las claves de desarrollo no se guardan en Git ni son identidades válidas para la vía GitHub.
+Esta entrada utiliza `scripts/demo.sh` para preparar un laboratorio aislado con **kind, zot y claves locales de desarrollo**. Construye primero una imagen `linux/amd64` compartida por la referencia y la vía protegida, y prepara otra para el UPDATE legítimo de L01. Ambas usan el mismo commit fuente; una etiqueta de construcción del laboratorio diferente cambia el segundo digest sin cambiar el comportamiento de la aplicación. Las claves de desarrollo no se guardan en Git ni son identidades válidas para la vía GitHub.
 
-La imagen de ejecución de `quotes-node` usa **Node 24.21.0 sobre Alpine 3.24**, fijada por digest en `SERVICE_NODE_IMAGE`, separada de la imagen Debian del devcontainer. El servicio no tiene dependencias npm de producción; por ello su Dockerfile retira npm, npx y Yarn de la imagen entregada y conserva el runtime Node necesario. Trivy sigue analizando la imagen resultante y sus componentes: esta reducción no implica ausencia de vulnerabilidades ni elimina el umbral HIGH/CRITICAL.
+La imagen de ejecución de `quotes-node` usa **Node 24.21.0 sobre Alpine 3.23**, fijada por digest en `SERVICE_NODE_IMAGE`, separada de la imagen Debian del devcontainer. Esta rama `main` de Alpine conserva soporte y aparece en los metadatos de fin de soporte de Trivy 0.74.0; véase la [decisión de compatibilidad](../../environment.md). El servicio no tiene dependencias npm de producción; por ello su Dockerfile retira npm, npx y Yarn de la imagen entregada y conserva el runtime Node necesario. Trivy sigue analizando la imagen resultante y sus componentes: esta reducción no implica ausencia de vulnerabilidades ni elimina el umbral HIGH/CRITICAL.
 
 Cuando se ejecuta una copia local fuera de un repositorio Git, el campo de commit utiliza cuarenta ceros como **sentinela de commit no disponible**. La procedencia local lo indica mediante `gitCommitAvailable: false` y conserva `sourceSnapshotSha256`, calculado sobre los archivos de origen seleccionados por el script. Esa huella permite relacionar esa copia de trabajo con la ejecución; no representa un commit real, no cubre automáticamente todos los archivos del repositorio y no acredita procedencia GitHub. En la vía B se utiliza el commit real de la ejecución alojada. Los [contratos de entrega](../../delivery-contracts.md) detallan las diferencias.
 
@@ -76,7 +76,7 @@ La secuencia observable esperada es:
 4. G firma la imagen y produce/verifica las evidencias de SBOM y procedencia correspondientes a la vía local.
 5. Antes de emitir el resumen de resultados, se comprueba su ausencia para F13 y se realiza un ensayo dirigido de la barrera posterior: Kyverno en `tfm-golden` debe rechazar la petición por esa atestación ausente, manteniendo válidas las demás evidencias. El ensayo dirigido no cuenta como un escenario adicional.
 6. Tras verificar los controles previos, se emite y firma el resumen satisfactorio. L01 debe ser admitido y el servicio desplegado debe responder con el resultado funcional esperado.
-7. F11 se comprueba como entrada prohibida en la política temprana y mediante una actualización dirigida en admisión. También se comprueba una actualización legítima de la carga.
+7. F11 se comprueba como entrada prohibida en la política temprana y mediante una actualización dirigida en admisión. Después, L01 aplica otro digest con su propio informe Trivy, SBOM, firma, procedencia y resultados firmados. El UPDATE debe superar la admisión, completar el despliegue y dejar Pods preparados que informen del nuevo digest en ejecución y conserven la cotización de referencia. Comprueba una sustitución de imagen, no una actualización funcional.
 8. Se conservan los diagnósticos y el paquete de evidencias; el laboratorio temporal se retira.
 
 El resumen esperado es `== PASS: L01 accepted; F13 and F11 rejected. Evidence: <directorio-de-evidencias> ==`, seguido de la salida de limpieza y empaquetado. El marcador representa el directorio real de esa ejecución. Se conserva en inglés para coincidir con la salida del programa.
@@ -99,7 +99,7 @@ make reference
 
 R utiliza la misma API y construcción funcional, con despliegue en su namespace de referencia. No exige las políticas experimentales ni las evidencias que autorizan G. Persisten los controles ordinarios de Kubernetes y las comprobaciones funcionales: R no representa un equipo sin automatización.
 
-La demostración completa reutiliza el mismo digest para comparar el comportamiento funcional y la decisión de admisión. **No es una pareja de la campaña temporal**, porque construir una sola vez y reutilizar su artefacto no mide dos construcciones independientes. Los tiempos del ensayo sirven para diagnóstico; no se presentarán como la sobrecarga experimental definitiva.
+La comparación inicial R/G reutiliza el mismo digest. La sustitución posterior de L01 emplea un segundo digest solo en G. **No es una pareja de la campaña temporal**: la construcción adicional de UPDATE no proporciona construcciones independientes de referencia y protegida. Los tiempos del ensayo sirven para diagnóstico; no se presentarán como la sobrecarga experimental definitiva.
 
 ## 4. Ejecutar la integración real de GitHub: vía B
 
@@ -108,7 +108,7 @@ Publica tú mismo el contenido en tu repositorio, conservando `.github/workflows
 1. Abre **Actions** en GitHub.
 2. Selecciona **Golden Path GitHub integration**, definido en `.github/workflows/golden-path.yml`.
 3. Usa **Run workflow** sobre la revisión que deseas probar. El workflow manual debe existir en la rama predeterminada para aparecer en la interfaz de ejecución.
-4. Revisa los pasos de preparación, emisión de procedencia con `actions/attest` y finalización de la demostración.
+4. Revisa la preparación de los dos digests, los dos pasos de procedencia nativa con `actions/attest` y la finalización. La sustitución utiliza `update_image` y `update_digest` de la preparación y necesita su propia procedencia verificada.
 5. Descarga el artefacto **`golden-path-<run-id>-<attempt>`** y conserva una copia fuera de Codespaces. El workflow configura una retención de 14 días; la copia local evita depender de esa caducidad.
 
 El runner crea su propio clúster kind. **No necesita acceder al API del clúster del Codespace**. Publica en GHCR, firma mediante la identidad OIDC del workflow y genera procedencia alojada como bundle de Sigstore. La admisión debe verificar el emisor y la identidad autorizados, el digest y los predicados aplicables. La preparación local usa un contrato de procedencia de laboratorio; no sustituye esta prueba de emisión y consumo reales.
@@ -169,11 +169,13 @@ Para las evidencias clásicas de Cosign de la vía alojada, el proceso exporta a
 
 Revisa `sigstore-trusted-root.json`, `image-chain.json`, `sbom-chain.json` y `results-chain.json` en el paquete cuando se hayan alcanzado sus respectivos pasos. Los informes de cadena conservan las huellas de certificados y los manifiestos de evidencias originales y completados para poder revisar el ajuste de metadatos. Que el adaptador termine correctamente no demuestra por sí solo una admisión satisfactoria.
 
-La [ejecución alojada 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179/job/108576831438) verificó las cadenas completadas, el rechazo aislado de F13, la admisión y disponibilidad de L01 y el rechazo previsto de F11. Quedó en rojo porque el analizador del escenario interpretó incorrectamente el preámbulo UPDATE de kubectl; no llegó a la actualización legítima final. Tras aplicar la corrección del analizador, inicia una nueva ejecución. Los rechazos previstos se contabilizan como pruebas negativas satisfactorias; el workflow completo debe terminar en verde si todo funciona. La secuencia sigue siendo F13 rechazado **únicamente** por resultados ausentes, resultados firmados que permiten L01, rechazo de la actualización F11 y aceptación de la actualización legítima. Conserva los fallos adicionales de firma, procedencia o red como errores de integración.
+La [ejecución alojada 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700/job/108596721755) superó la verificación de cadenas y la demostración inicial L01/F13/F11. Su UPDATE legítimo final solo cambió una anotación; no valida el nuevo recorrido de sustitución de imagen. Inicia una ejecución sobre el commit revisado para comprobar la segunda emisión de procedencia y su admisión. El workflow completo debe terminar en verde si F13 se rechaza **únicamente** por resultados ausentes, los resultados firmados permiten L01, se rechaza el UPDATE prohibido de F11 y el UPDATE de L01 a otra imagen queda preparado. Conserva los fallos adicionales de firma, procedencia o red como errores de integración.
 
 ## 5. Evidencias y limpieza
 
 Los resultados de ejecución se guardan bajo `evidence/raw/` y los paquetes bajo `evidence/packages/`. Ambas rutas están excluidas de Git. Conserva el identificador de ejecución y la referencia inmutable de imagen para relacionar informes, firmas, respuesta de admisión y prueba HTTP.
+
+Dentro de cada ejecución, `L01-update/` conserva la construcción de sustitución, los informes y atestaciones de esa imagen, el diagnóstico de admisión, el Deployment y los Pods. `L01-image-update.json`, en el directorio padre, registra las referencias original y nueva, la generación observada del Deployment y los identificadores de imagen de los Pods preparados; `result.json` lo incluye como `legitimateUpdate`. El paquete de evaluación incorpora las evidencias de ambas imágenes.
 
 El paquete debe permitir distinguir al menos:
 
@@ -202,5 +204,6 @@ Los informes de vulnerabilidades y SBOM pueden revelar componentes y versiones. 
 | F13 se acepta | Falla el requisito: revisa la aplicación de la política, su ámbito y la ausencia real de la atestación en ese digest. |
 | F13 se rechaza por firma, procedencia o red | La prueba no ha aislado la condición esperada. Primero resuelve esa causa; no cuentes el rechazo como éxito. |
 | F13 se rechaza correctamente pero L01 no se admite | Revisa emisión, publicación y verificación del resumen, identidad, commit y versión de política; conserva ambas respuestas. |
+| Se admite la sustitución de L01 pero falla la comprobación del despliegue | Revisa `L01-update/deployment.json`, `pods.json` y los diagnósticos funcionales. Los Pods anteriores, el digest antiguo o la preparación incompleta no satisfacen el oráculo UPDATE. |
 | GitHub no muestra Run workflow | Comprueba la ubicación raíz, la presencia del workflow manual en la rama predeterminada y que Actions está habilitado. |
 | GHCR o la atestación rechazan permisos | Revisa permisos del job y restricciones de organización/repositorio. No añadas credenciales de larga duración al código como solución rápida. |

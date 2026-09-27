@@ -16,6 +16,7 @@ La primera prueba utiliza una sonda de infraestructura independiente de `quotes-
 |---|---|---|
 | Node / npm | 24.21.0 / 11.19.0 | Rama LTS y pruebas nativas sin un framework adicional. [Publicación de Node](https://nodejs.org/en/blog/release/v24.21.0), [npm incluido](https://github.com/nodejs/node/blob/v24.21.0/deps/npm/package.json). |
 | Imagen base | `node:24.21.0-bookworm`, manifiesto AMD64 por SHA-256 | [Imagen oficial Node](https://hub.docker.com/_/node). Referencia completa en `versions.env`. |
+| Imagen de ejecución del servicio | Node 24.21.0 / Alpine 3.23, manifiesto AMD64 por SHA-256 | Rama `main` de Alpine con soporte y reconocida por los metadatos de fin de soporte de Trivy 0.74.0. Referencia `SERVICE_NODE_IMAGE` en [versions.env](../../versions.env) y [justificación de compatibilidad](../../services/quotes-node/README.md). |
 | Docker Engine y CLI | 29.8.0 | [Publicación oficial](https://docs.docker.com/engine/release-notes/29/#2980). Instalación desde el repositorio de Docker para Debian. |
 | Feature Docker-in-Docker | 4.1.0 con archivo de bloqueo | [Feature oficial](https://github.com/devcontainers/features/tree/main/src/docker-in-docker). Identificador con etiqueta en `devcontainer.json` y digest en `devcontainer-lock.json`; Buildx y Compose automáticos desactivados. |
 | Buildx | 0.37.1 | [Publicación oficial](https://github.com/docker/buildx/releases/tag/v0.37.1). Descarga AMD64 con SHA-256 fijado. |
@@ -26,6 +27,8 @@ La primera prueba utiliza una sonda de infraestructura independiente de `quotes-
 El instalador compara las descargas de kind, kubectl y Buildx con huellas incluidas en `versions.env`. La imagen Node y el nodo kind se identifican por digest. La feature utiliza `docker-in-docker:4.1.0` como identificador compatible con el editor; su referencia resuelta e integridad se conservan en `devcontainer-lock.json`, junto a cada configuración. Ambos archivos de bloqueo forman parte del repositorio. [Especificación de lockfiles](https://github.com/devcontainers/spec/blob/main/docs/specs/devcontainer-lockfile.md). Un hash fijo detecta cambios en el objeto descargado; no demuestra por sí mismo la seguridad de su productor.
 
 Las dependencias transitivas de los paquetes Debian y Docker no están congeladas mediante un repositorio histórico. El entorno fija las herramientas principales y registra los paquetes efectivos; no se presenta como una reconstrucción idéntica bit a bit. Antes del piloto se revisan y conservan también las versiones de las integraciones añadidas.
+
+Trivy 0.74.0 omite Alpine 3.24 en su [tabla de fin de soporte](https://github.com/aquasecurity/trivy/blob/v0.74.0/pkg/detector/ospkg/alpine/alpine.go). El aviso indica una carencia de esos metadatos, no que Alpine 3.24 haya dejado de recibir soporte. La imagen del servicio conserva Node 24.21.0 y usa Alpine 3.23, cuya rama `main` tiene [soporte hasta el 1 de noviembre de 2027](https://alpinelinux.org/releases/); `community` ya no lo tiene. Añadir paquetes de `community` exige revisar esta decisión. La actualización a 3.24 queda condicionada a una versión publicada del analizador que la reconozca y a repetir la construcción, las pruebas del servicio y el análisis real, sin ocultar avisos ni rebajar el umbral HIGH/CRITICAL.
 
 ## Recursos y apertura
 

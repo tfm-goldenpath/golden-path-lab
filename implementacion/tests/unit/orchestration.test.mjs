@@ -55,6 +55,12 @@ workload_reference() { step reference; }
 delivery_check_manifest() { step check-manifest; }
 scenario_f11_early() { step f11-early; }
 delivery_analyze() { step analyze; }
+scenario_l01_prepare_update() {
+  step prepare-update
+  if [[ "$mode" == github ]]; then
+    printf 'update_image=%s\nupdate_digest=sha256:%064d\n' "$image_repo" 1 >> "$GITHUB_OUTPUT"
+  fi
+}
 attestations_verify_delivery() { step verify; }
 scenario_f13_prepare() { step f13-prepare; }
 lab_install_admission() { step admission; }
@@ -139,6 +145,7 @@ for (const [mode, ref, failChain = 0] of [
   test(`${mode}/${ref} signing preserves chain completion, identity and classic verification (failure ${failChain})`, t => {
     const fixtureState = fixture(t, { stubs: false });
     writeFileSync(join(fixtureState.privateDir, 'cosign.pub'), 'fixture public key');
+    writeFileSync(join(fixtureState.privateDir, 'cosign.key'), 'fixture private key');
     const identity = `https://github.com/example/lab/.github/workflows/golden-path.yml@refs/heads/${ref}`;
     const result = run(fixtureState, ['-c', String.raw`
 set -Eeuo pipefail
@@ -387,7 +394,7 @@ printf '%s' "$PWD" > "$GP_FIXTURE_ROOT/cwd-after"
   assert.equal(readFileSync(join(f.root, 'trap-fired'), 'utf8'), 'sentinel');
 });
 
-for (const [stage, status, cleanupStatus] of [['analyze', 37, 0], ['verify', 41, 19], ['f13-deny', 42, 19]]) {
+for (const [stage, status, cleanupStatus] of [['analyze', 37, 0], ['prepare-update', 38, 0], ['verify', 41, 19], ['f13-deny', 42, 19]]) {
   test(`a mandatory failure in ${stage} prevents authorization and preserves exit code ${status}`, (t) => {
     const f = fixture(t);
     const result = run(f, ['scripts/demo.sh', 'local'], {
@@ -411,6 +418,7 @@ test('prepare publishes outputs and preserves resources without authorizing resu
   const outputs = Object.fromEntries(readFileSync(f.output, 'utf8').trim().split('\n').map((line) => line.split('=')));
   assert.deepEqual(outputs, {
     state_dir: shellPath(f.state), docker_config: `${shellPath(f.privateDir)}/docker`, image: repository, digest,
+    update_image: repository, update_digest: `sha256:${'0'.repeat(63)}1`,
   });
   assert.ok(stages(result).includes('analyze'));
   assert.ok(!stages(result).includes('cleanup'));

@@ -61,9 +61,9 @@ This sets `failCgroupV1: false` in the kubelet of the **temporary kind nodes** a
 make demo
 ```
 
-`scripts/demo.sh` prepares an isolated laboratory with **kind, zot and local development keys**. It builds one `linux/amd64` image, retains its digest and executes the reference and protected paths. Development keys are neither committed nor trusted by the GitHub lane.
+`scripts/demo.sh` prepares an isolated laboratory with **kind, zot and local development keys**. It first builds one `linux/amd64` image shared by the reference and protected paths, then prepares a distinct image for L01's legitimate UPDATE. Both use the same source commit; a different laboratory build label changes the second digest without changing application behavior. Development keys are neither committed nor trusted by the GitHub lane.
 
-The service runtime uses **Node 24.21.0 on Alpine 3.24**, pinned by digest through `SERVICE_NODE_IMAGE` and separated from the Debian devcontainer. The service has no production npm dependencies, so its Dockerfile removes npm, npx and Yarn from the delivered image. Trivy still analyzes the remaining components; this reduction does not guarantee no vulnerabilities or relax the HIGH/CRITICAL threshold.
+The service runtime uses **Node 24.21.0 on Alpine 3.23**, pinned by digest through `SERVICE_NODE_IMAGE` and separated from the Debian devcontainer. This supported Alpine `main` branch is recognized by Trivy 0.74.0's EOL metadata; see the [compatibility decision](../../../../services/quotes-node/README.md). The service has no production npm dependencies, so its Dockerfile removes npm, npx and Yarn from the delivered image. Trivy still analyzes the remaining components; this reduction does not guarantee no vulnerabilities or relax the HIGH/CRITICAL threshold.
 
 Outside a Git checkout, the local commit field contains forty zeros as an **unavailable-commit sentinel**. Local provenance records `gitCommitAvailable: false` and a `sourceSnapshotSha256` hash of selected source files. This links a working copy to a run, but is not a real commit, does not automatically cover every repository file and does not establish GitHub provenance. Lane B uses the hosted run's actual commit. See [delivery contracts](../../delivery-contracts.md).
 
@@ -75,7 +75,7 @@ Expected sequence:
 4. G signs the image and produces/verifies the local SBOM and provenance evidence.
 5. Before results authorization is issued, F13 confirms its absence and directly exercises the later barrier: Kyverno in `tfm-golden` must reject the request for that missing attestation while other evidence remains valid. This directed check is not an additional catalogue scenario.
 6. After previous mandatory checks succeed, the successful summary is issued and signed. L01 must be admitted and return the expected functional response.
-7. F11 is checked through early policy and a directed admission update. A legitimate update is also checked.
+7. F11 is checked through early policy and a directed admission update. L01 then applies the replacement digest, with its own Trivy report, SBOM, signature, provenance and signed results. The UPDATE must pass admission, complete rollout, leave ready Pods reporting that runtime digest and preserve the reference quote. This tests image replacement, not a functional upgrade.
 8. Diagnostics and an evidence package are retained, and temporary laboratory resources are removed.
 
 Expected summary before cleanup and packaging output (`<run-directory>` is the actual evidence directory):
@@ -102,7 +102,7 @@ make reference
 
 R uses the same API and functional build, deployed to its reference namespace. It does not require G's experimental policies or authorizing evidence. Ordinary Kubernetes validation and functional checks remain: R does not represent a team without automation.
 
-The complete demonstration reuses one digest to compare functional behavior and admission decisions. **It is not a timing-campaign pair**: building once does not measure two independent builds. Recorded times are diagnostics, not the final experimental overhead.
+The initial R/G comparison reuses one digest. The later L01 replacement uses a second digest only in G. **This is not a timing-campaign pair**: the extra UPDATE build does not provide independent reference and protected builds. Recorded times are diagnostics, not the final experimental overhead.
 
 ## 4. Run real GitHub integration: lane B
 
@@ -111,7 +111,7 @@ The content must be published to the repository with `.github/workflows` at its 
 1. Open **Actions**.
 2. Select **Golden Path GitHub integration**, defined in `.github/workflows/golden-path.yml`.
 3. Choose **Run workflow** for the revision being tested. The manual workflow must exist on the default branch to appear in this interface.
-4. Review preparation, native provenance issuance through `actions/attest`, and finalization.
+4. Review preparation of both image digests, the two native provenance steps through `actions/attest`, and finalization. The replacement uses `update_image` and `update_digest` from preparation and requires its own verified provenance.
 5. Download **`golden-path-<run-id>-<attempt>`** and retain a copy outside Codespaces. The workflow sets 14-day retention.
 
 The runner creates its own kind cluster; **it does not need access to the Codespace cluster API**. It publishes to GHCR, signs through workflow OIDC identity and generates hosted provenance as a Sigstore bundle. Admission must verify the trusted issuer and identity, digest and required predicates. Local development provenance does not replace this issuance-and-consumption test.
@@ -172,11 +172,13 @@ For hosted classic Cosign evidence, the delivery code exports Sigstore trust mat
 
 Inspect `sigstore-trusted-root.json`, `image-chain.json`, `sbom-chain.json` and `results-chain.json` in the package when the corresponding steps have been reached. The chain reports record certificate fingerprints and the original/completed evidence manifests, allowing the metadata adjustment to be reviewed. A successful helper result alone does not establish successful admission.
 
-The [hosted run 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179/job/108576831438) verified the completed chains, isolated F13 rejection, L01 admission and health, and the intended F11 policy denial. It remained red because the scenario parser misread kubectl's UPDATE preamble; the final legitimate update was not reached. After applying the parser correction, start a new dispatch. Expected scenario denials must be handled as passing negative tests; the complete successful workflow should be green. The acceptance sequence remains F13 rejected **only** for missing results, signed results permitting L01, the prohibited F11 update rejected, and the legitimate update accepted. Preserve unrelated signature, provenance or network failures as integration failures.
+The [hosted run 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700/job/108596721755) passed certificate-chain verification and the initial L01/F13/F11 demonstration. Its final legitimate UPDATE changed an annotation only; it does not validate the new image-replacement flow. Start a new dispatch on the revised commit to exercise the second provenance issuance and replacement admission. The complete workflow should be green when F13 is rejected **only** for missing results, signed results permit L01, the prohibited F11 update is rejected and the distinct-image L01 update becomes ready. Preserve unrelated signature, provenance or network failures as integration failures.
 
 ## 5. Evidence and cleanup
 
 Raw results go under `evidence/raw/`; packages go under `evidence/packages/`. Both are ignored by Git. Retain the run identifier and immutable image reference to relate reports, signatures, admission responses and HTTP checks.
+
+Within each run, `L01-update/` retains the replacement build, image-specific reports and attestations, admission log, Deployment and Pods. `L01-image-update.json` in the parent records the original and replacement references, observed Deployment generation and ready Pods' runtime image IDs; `result.json` includes it as `legitimateUpdate`. Both images' evidence is included in the evaluation package.
 
 Evidence must distinguish legitimate acceptance, attributable F13 rejection and a technical failure or earlier control that prevented the test from being reached. A package's existence alone does not prove a passing run.
 
@@ -201,5 +203,6 @@ SBOMs and vulnerability reports can expose component names and versions. Review 
 | F13 is accepted | The requirement failed. Review policy application/scope and whether the attestation was truly absent for that digest. |
 | F13 is rejected for signature, provenance or network reasons | The expected condition was not isolated. Resolve the preparation issue before counting success. |
 | F13 is correctly rejected but L01 is not admitted | Review summary issuance/publication, verification, identity, commit and policy version. Preserve both responses. |
+| L01 replacement is admitted but rollout verification fails | Inspect `L01-update/deployment.json`, `pods.json` and probe diagnostics. Old Pods, the old digest or incomplete readiness do not satisfy the UPDATE oracle. |
 | Run workflow is absent | Check the root location, default-branch presence and Actions enablement. |
 | GHCR or attestation permissions fail | Review job and organization/repository permissions; do not add long-lived credentials to the code. |

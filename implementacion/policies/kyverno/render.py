@@ -139,7 +139,7 @@ def render(config):
         if bundle:
             check["type"] = "SigstoreBundle"
         descriptor = {"attestors": copy.deepcopy(attestors), "conditions": [{"all": conditions}]}
-        descriptor["type" if bundle else "predicateType"] = predicate_type
+        descriptor["type"] = predicate_type
         check["attestations"] = [descriptor]
         return policy(name, [{"name": rule, "match": match_resources(), "verifyImages": [check]}])
 
