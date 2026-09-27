@@ -122,6 +122,58 @@ Attestation availability and Actions quotas depend on repository visibility and 
 
 `act` can check compatible workflow steps, but does not provide GitHub's hosted OIDC identity and services. Use `make demo` for the first complete local run; actual lane B requires GitHub.
 
+### Test a correction before merging it
+
+Once the manual workflow is registered on the default branch, a new dispatch can select the workflow and source from a published correction branch. The correction does not need to be merged first. The following commands can run in **Git Bash on Windows** with authenticated GitHub CLI; they request a hosted run, rather than running the laboratory on Windows. Create and publish `fix/fulcio-chain` yourself before using this example, or replace it with the actual branch name. [GitHub manual dispatch](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [workflow reference selection](https://cli.github.com/manual/gh_workflow_run).
+
+```bash
+gh workflow run golden-path.yml \
+  --repo tfm-goldenpath/golden-path-lab \
+  --ref fix/fulcio-chain
+```
+
+Identify the new run and check that `headBranch` and `headSha` match the branch and committed correction you intend to validate. If it is not visible immediately, repeat the list command; do not dispatch another run merely to refresh the list.
+
+```bash
+gh run list \
+  --repo tfm-goldenpath/golden-path-lab \
+  --workflow golden-path.yml \
+  --branch fix/fulcio-chain \
+  --event workflow_dispatch \
+  --limit 10 \
+  --json databaseId,headSha,headBranch,status,conclusion,url
+```
+
+Replace `RUN_ID` below with that run's numeric `databaseId`, then wait for completion. The command returns a failing exit status when the run fails; retain that result.
+
+```bash
+gh run watch RUN_ID \
+  --repo tfm-goldenpath/golden-path-lab \
+  --exit-status
+```
+
+After completion, download any produced artifact even if the run failed. Replace `RUN_ID` in both the command and destination. This destination is outside the repository; the package remains subject to the custody guidance below.
+
+```bash
+gh run download RUN_ID \
+  --repo tfm-goldenpath/golden-path-lab \
+  --dir "$HOME/golden-path-evidence/run-RUN_ID"
+```
+
+An early failure may produce no artifact; retain the run URL and logs in that case. See the CLI references for [listing](https://cli.github.com/manual/gh_run_list), [watching](https://cli.github.com/manual/gh_run_watch) and [downloading](https://cli.github.com/manual/gh_run_download) runs.
+
+Do not use **Re-run jobs** on an older `main` run to test a newly pushed correction: a rerun retains the original commit and ref. Start a new dispatch on the correction branch. [GitHub rerun semantics](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs).
+
+The temporary cluster authorizes the exact workflow identity for the selected branch, for example `https://github.com/tfm-goldenpath/golden-path-lab/.github/workflows/golden-path.yml@refs/heads/fix/fulcio-chain`, and the corresponding source commit. It does not use a wildcard or present the branch as an approved production release. This workflow currently references no GitHub environment; repository and organization permissions still apply. It publishes to the shared GHCR package, using a per-run image label and digest; cleanup does not remove those remote images or their evidence. After review and merge, validate the resulting `main` revision separately.
+
+### Fulcio certificate-chain compatibility and acceptance
+
+For hosted classic Cosign evidence, the delivery code exports Sigstore trust material authenticated through Cosign's TUF client to `sigstore-trusted-root.json`. The [chain-completion helper](../../../../scripts/complete-classic-chain.mjs) fills the public certificate-chain annotation of the classic `.sig` and `.att` evidence manifests from that authenticated material. It preserves the application image digest, signed payloads and signatures, and the configured roots of trust. The evidence manifest digest may change because its chain annotation changes. GitHub's native provenance bundle and local development signing are outside this adjustment; normal Cosign and Kyverno verification remain mandatory.
+
+Inspect `sigstore-trusted-root.json`, `image-chain.json`, `sbom-chain.json` and `results-chain.json` in the package when the corresponding steps have been reached. The chain reports record certificate fingerprints and the original/completed evidence manifests, allowing the metadata adjustment to be reviewed. A successful helper result alone does not establish successful admission.
+
+Live admission validation of this correction remains pending: Docker was unavailable in the environment used to prepare it. The acceptance sequence is unchanged: F13 must be rejected **only** for the missing results attestation, then signed results must permit L01, the prohibited F11 update must be rejected, and the legitimate update must be accepted. Preserve any unrelated signature, provenance or network failure as an integration failure, not as a successful F13 result.
+
 ## 5. Evidence and cleanup
 
 Raw results go under `evidence/raw/`; packages go under `evidence/packages/`. Both are ignored by Git. Retain the run identifier and immutable image reference to relate reports, signatures, admission responses and HTTP checks.

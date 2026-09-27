@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Complete hosted classic Cosign certificate-chain metadata from authenticated Fulcio material, preserve signed content and admission trust, and retain before/after evidence. Hosted admission validation remains required.
+- Tighten F13/F11 rejection attribution and document branch-based integration testing and the impact on the deferred bundle migration.
 - Address baseline review findings in HTTP upload handling, evidence packaging, digest/SBOM contracts, Conftest and Kyverno validation, repeated cleanup and bilingual runbooks.
 - Use dated Debian package sources, verify security-tool versions against the lock, and include Kyverno CLI regression checks in `make test`.
 - Import the existing `quotes-node` laboratory, modular delivery scripts, policies, tests and pinned development environment.

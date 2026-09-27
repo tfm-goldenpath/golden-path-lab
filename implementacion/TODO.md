@@ -18,6 +18,8 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) specifies t
 - [x] Successfully run the included unit and contract tests; keep their scope distinct from real integration.
 - [x] Complete an end-to-end lane A execution: `run-8N59m8xw`, L01 admitted and functional, F13 and F11 rejected by their rules, and package verified. This used a local compatibility environment; review by the responsible person and repetition in Codespaces remain pending.
 - [ ] Complete and review an end-to-end lane B execution with OIDC, GHCR, native provenance and actual verification by Kyverno.
+- [x] Implement hosted classic certificate-chain completion from authenticated Fulcio TUF material, preserving root trust and signed content, with regression coverage.
+- [ ] Validate this correction on a published fix branch: certificate chains accepted, F13 rejected solely for missing results, then L01 accepted, F11 rejected for its intended rule and legitimate update accepted. Preserve the exact commit and evidence package; do not count a certificate error as detection.
 - [ ] Review the download and preservation of the hosted execution package and record the observed result.
 
 Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md). The [contracts and limitations](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Checkboxes in the following milestones may remain open even when their files have been prepared: completion requires all stated execution and review conditions to be met. This section does not establish a history of red-green TDD cycles or claim that all twenty scenarios have been executed; policy tests and directed checks do not replace completion of their full scenario records.

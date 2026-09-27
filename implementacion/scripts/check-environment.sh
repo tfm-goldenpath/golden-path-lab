@@ -8,7 +8,7 @@ mode=${1:-}
 }
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 [[ "$(uname -s)/$(uname -m)" == Linux/x86_64 ]] || fail 'This environment requires Linux AMD64.'
-for tool in node npm docker dockerd kind kubectl git curl jq make sha256sum python3 trivy conftest cosign helm kyverno act; do
+for tool in node npm docker dockerd kind kubectl git curl jq make openssl sha256sum python3 trivy conftest cosign helm kyverno act; do
   command -v "$tool" >/dev/null || fail "Missing $tool; rebuild the devcontainer."
 done
 check() { [[ "$2" == "$3" ]] || fail "$1: expected $3, found $2. Rebuild the environment."; }
