@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Real offline Cosign checks. This does not test OCI publication or admission.
+# Real offline Cosign checks with synthetic attest-blob predicates.
+# This does not exercise the cosign sign image producer, OCI publication or admission.
 set -euo pipefail
 umask 077
 
@@ -80,13 +81,13 @@ results_type='https://tfm-goldenpath.dev/attestations/verification-results/v1'
 sign_args=(--yes --key "$probe_dir/local.key" --signing-config "$probe_dir/signing-config.json" --trusted-root "$probe_dir/trusted-root.json")
 verify_args=(--key "$probe_dir/local.pub" --insecure-ignore-tlog --digest "$digest" --digestAlg sha256)
 
-run 'signed image-signature predicate' cosign attest-blob "${sign_args[@]}" --type "$signature_type" \
+run 'signed synthetic image-signature predicate' cosign attest-blob "${sign_args[@]}" --type "$signature_type" \
   --predicate "$probe_dir/signature-predicate.json" --bundle "$probe_dir/signature.json" "$probe_dir/artifact.bin"
 run 'signed SBOM predicate' cosign attest-blob "${sign_args[@]}" --type "$sbom_type" \
   --predicate "$probe_dir/sbom-predicate.json" --bundle "$probe_dir/sbom.json" "$probe_dir/artifact.bin"
 run 'signed results predicate' cosign attest-blob "${sign_args[@]}" --type "$results_type" \
   --predicate "$probe_dir/results-predicate.json" --bundle "$probe_dir/results.json" "$probe_dir/artifact.bin"
-run 'image-signature bundle cryptography, predicate and subject' cosign verify-blob-attestation \
+run 'synthetic image-signature bundle cryptography, predicate and subject' cosign verify-blob-attestation \
   "${verify_args[@]}" --type "$signature_type" --bundle "$probe_dir/signature.json"
 run 'SBOM bundle cryptography, predicate and subject' cosign verify-blob-attestation \
   "${verify_args[@]}" --type "$sbom_type" --bundle "$probe_dir/sbom.json"
@@ -124,4 +125,4 @@ fs.writeFileSync(process.argv[3], JSON.stringify(bundle) + '\n');
 NODE
 reject 'F08 controlled signature-byte alteration' 'accepted signatures do not match threshold' \
   cosign verify-blob-attestation "${verify_args[@]}" --type "$signature_type" --bundle "$probe_dir/tampered.json"
-printf 'PASS: local bundle cryptography checks; OCI registry, OIDC and admission are separate integration checks.\n'
+printf 'PASS: synthetic attest-blob cryptography checks; cosign sign, OCI registry, OIDC and admission are separate integration checks.\n'

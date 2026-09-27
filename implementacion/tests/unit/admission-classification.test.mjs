@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -30,6 +31,19 @@ function bundle(type, predicate = {}, hash = digest.slice(7)) {
 const inventory = () => [bundle('https://sigstore.dev/cosign/sign/v1'),
   bundle('https://cyclonedx.org/bom', sbom), bundle('https://slsa.dev/provenance/v1')];
 const inventoryText = value => typeof value === 'string' ? value : JSON.stringify(value);
+function registrySnapshot(values) {
+  const hash = data => 'sha256:' + createHash('sha256').update(data).digest('hex');
+  return {image, descriptors:(Array.isArray(values) ? values : inventory()).map(value => {
+    const blob = Buffer.from(JSON.stringify(value));
+    const manifest = Buffer.from(JSON.stringify({schemaVersion:2, mediaType:'application/vnd.oci.image.manifest.v1+json',
+      artifactType:'application/vnd.dev.sigstore.bundle.v0.3+json',
+      config:{mediaType:'application/vnd.oci.empty.v1+json',digest:hash('{}'),size:2},
+      subject:{mediaType:'application/vnd.oci.image.manifest.v1+json',digest,size:123},
+      layers:[{mediaType:'application/vnd.dev.sigstore.bundle.v0.3+json',digest:hash(blob),size:blob.length}]}));
+    return {digest:hash(manifest),size:manifest.length,mediaType:'application/vnd.oci.image.manifest.v1+json',
+      artifactType:'application/vnd.dev.sigstore.bundle.v0.3+json'};
+  })};
+}
 const runtimeReason = (rule = 'autogen-restricted-containers', field = 'privileged') => `validation failure: validation error: RUNTIME: all containers must be unprivileged, without privilege escalation or capabilities. rule ${rule} failed at path /securityContext/${field}/`;
 const denial = (policy, rule, reason) => `Error from server: admission webhook "validate.kyverno.svc-fail" denied the request:\n\nresource Deployment/tfm-golden/quotes-node was blocked due to the following policies\n\n${policy}:\n  ${rule}: '${reason}'\n`;
 // Recorded kubectl response with Actions prefixes and trailing whitespace removed:
@@ -46,10 +60,18 @@ function runScenario(t, scenario, output, status = 1, options = {}) {
     rmSync(root, { recursive: true, force: true });
   });
   writeFileSync(join(root, 'response.log'), output);
+  const before = options.before ?? inventory();
+  const after = options.after ?? inventory();
   if (!options.absentPreflight) {
-    writeFileSync(join(root, 'attestation-inventory-before-results.json'), inventoryText(options.before ?? inventory()));
+    writeFileSync(join(root, 'attestation-inventory-before-results.json'), inventoryText(before));
   }
-  writeFileSync(join(root, 'download.json'), inventoryText(options.after ?? inventory()));
+  if (!options.absentBeforeRegistry) {
+    writeFileSync(join(root, 'registry-inventory-before-results.json'), inventoryText(
+      Object.hasOwn(options, 'beforeRegistry') ? options.beforeRegistry : registrySnapshot(before)));
+  }
+  writeFileSync(join(root, 'download.json'), inventoryText(after));
+  writeFileSync(join(root, 'download-registry.json'), inventoryText(
+    Object.hasOwn(options, 'afterRegistry') ? options.afterRegistry : registrySnapshot(after)));
   // A stale report must never substitute for revalidating the actual inventory.
   writeFileSync(join(root, 'F13-early.json'), JSON.stringify({scenario:'F13', decision:'DENY'}));
   const env = {
@@ -57,6 +79,7 @@ function runScenario(t, scenario, output, status = 1, options = {}) {
     GP_SOURCE_ROOT: shellPath(sourceRoot), GP_TEST_STATE: shellPath(root),
     GP_SCENARIO_FUNCTION: `scenario_${scenario.toLowerCase()}_${options.prepare ? 'prepare' : 'admission'}`, GP_ACTOR_STATUS: String(status),
     GP_DOWNLOAD_STATUS: String(options.downloadStatus ?? 0), GP_MODE: options.mode ?? 'local',
+    GP_DOWNLOAD_METADATA: options.absentAfterRegistry ? '0' : '1',
     GP_IMAGE: image, GP_DIGEST: digest,
   };
   delete env.BASH_ENV;
@@ -77,6 +100,7 @@ actor() { printf called > "$state_dir/actor.called"; cat "$state_dir/response.lo
 node() {
   if [[ "$1" == scripts/download-bundle-inventory.mjs ]]; then
     printf '%s\n' "$*" >> "$state_dir/download.log"
+    [[ "$GP_DOWNLOAD_METADATA" != 1 ]] || cp "$state_dir/download-registry.json" "$4"
     cat "$state_dir/download.json"
     return "$GP_DOWNLOAD_STATUS"
   fi
@@ -114,6 +138,8 @@ for (const [scenario, label, output] of accepted) {
       for (const file of ['F13-early.json', 'F13-after-denial.json']) {
         assert.equal(JSON.parse(readFileSync(join(result.stateDir, file), 'utf8')).reason, 'RESULTS_ATTESTATION_MISSING');
       }
+      assert.equal(JSON.parse(readFileSync(join(result.stateDir, 'F13-inventory-consistency.json'), 'utf8')).check,
+        'unchanged-referrer-descriptors');
     }
   });
 }
@@ -209,6 +235,32 @@ test('F13 rejects failed registry retrieval after denial even when stdout looks 
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stderr, /could not retrieve the inventory after denial/);
 });
+
+test('F13 accepts reordered referrers without treating order as changed evidence', (t) => {
+  const result = runScenario(t, 'F13', resultsDenial(missingBundle), 1, {after:inventory().reverse()});
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+const changedSignature = inventory();
+changedSignature[0].dsseEnvelope.signatures[0].sig = Buffer.from('changed synthetic signature bytes').toString('base64');
+for (const [label, options] of [
+  ['changed image-signature bundle', {after:changedSignature}],
+  ['added unrelated referrer', {after:[...inventory(), bundle('https://example.test/other/v1')]}],
+  ['removed unrelated referrer', {before:[...inventory(), bundle('https://example.test/other/v1')]}],
+  ['missing original registry snapshot', {absentBeforeRegistry:true}],
+  ['missing new registry snapshot', {absentAfterRegistry:true}],
+  ['malformed original registry snapshot', {beforeRegistry:'{'}],
+  ['malformed new registry snapshot', {afterRegistry:'{'}],
+  ['original snapshot for another image', {beforeRegistry:{...registrySnapshot(inventory()),image:image.replace('quotes-node','other')}}],
+  ['new snapshot for another image', {afterRegistry:{...registrySnapshot(inventory()),image:image.replace('quotes-node','other')}}],
+]) {
+  test(`F13 refuses attribution with ${label} despite valid predicate inventories`, (t) => {
+    const result = runScenario(t, 'F13', resultsDenial(missingBundle), 1, options);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /F13 registry evidence changed or its snapshots are unavailable/);
+    assert.equal(existsSync(join(result.stateDir, 'actor.called')), true);
+  });
+}
 
 for (const mode of ['local', 'github']) {
   test(`F13 ${mode} preflight retains complete bundle and missing-results reports`, (t) => {

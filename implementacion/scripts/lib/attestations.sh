@@ -3,7 +3,7 @@
 # Sourced by demo.sh; definitions only. See docs/EN/architecture.md.
 
 attestations_verify_bundle() {
-  local file=$1 type=$2 report=$3 arg status
+  local file=$1 type=$2 report=$3 content=$4 arg status
   local -a bundle_args=()
   for arg in "${verify_args[@]}"; do
     [[ "$arg" == --allow-insecure-registry ]] || bundle_args+=("$arg")
@@ -12,7 +12,9 @@ attestations_verify_bundle() {
   # evidence. It authenticates the saved bundle and binds its subject and type.
   if cosign verify-blob-attestation "${bundle_args[@]}" --bundle "$state_dir/$file" \
       --digest "${digest#sha256:}" --digestAlg sha256 --type "$type" > "$state_dir/$report" 2>&1; then
-    return 0
+    # Validate and retain the payload from the same authenticated file. OCI
+    # verify-attestation can fall back to classic evidence on retrieval errors.
+    node scripts/verified-bundle-statement.mjs "$state_dir/$file" "$digest" "$type" "$repository" "$commit" > "$state_dir/$content"
   else
     status=$?; cat "$state_dir/$report" >&2; return "$status"
   fi
@@ -48,20 +50,12 @@ attestations_verify_delivery() {
   # in bundle mode; sign-blob's messageSignature is a different operation.
   # https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/sign/sign.go
   cosign sign "${sign_args[@]}" --bundle "$state_dir/image.bundle.json" "$image"
-  attestations_verify_bundle image.bundle.json https://sigstore.dev/cosign/sign/v1 verified-image-bundle.txt
-  # Generic bundle verification can accept other predicates. Require the
-  # independent image-signature statement, just as admission does for F07.
-  cosign verify-attestation "${verify_args[@]}" --type https://sigstore.dev/cosign/sign/v1 "$image" > "$state_dir/verified-signature.json"
-  node "$contract" verify-statement "$state_dir/verified-signature.json" "$digest" https://sigstore.dev/cosign/sign/v1 "$repository" "$commit"
+  attestations_verify_bundle image.bundle.json https://sigstore.dev/cosign/sign/v1 verified-image-bundle.txt verified-signature.json
   cosign attest "${sign_args[@]}" --bundle "$state_dir/sbom.bundle.json" --type cyclonedx --predicate "$state_dir/sbom.cdx.json" "$image"
-  attestations_verify_bundle sbom.bundle.json https://cyclonedx.org/bom verified-sbom-bundle.txt
-  cosign verify-attestation "${verify_args[@]}" --type cyclonedx "$image" > "$state_dir/verified-sbom.json"
-  node "$contract" verify-statement "$state_dir/verified-sbom.json" "$digest" https://cyclonedx.org/bom "$repository" "$commit"
+  attestations_verify_bundle sbom.bundle.json https://cyclonedx.org/bom verified-sbom-bundle.txt verified-sbom.json
   if [[ "$mode" == local ]]; then
     cosign attest "${sign_args[@]}" --bundle "$state_dir/provenance.bundle.json" --type slsaprovenance1 --predicate "$state_dir/provenance.json" "$image"
-    attestations_verify_bundle provenance.bundle.json https://slsa.dev/provenance/v1 verified-provenance-bundle.txt
-    cosign verify-attestation "${verify_args[@]}" --type slsaprovenance1 "$image" > "$state_dir/verified-provenance.json"
-    node "$contract" verify-statement "$state_dir/verified-provenance.json" "$digest" https://slsa.dev/provenance/v1 "$repository" "$commit"
+    attestations_verify_bundle provenance.bundle.json https://slsa.dev/provenance/v1 verified-provenance-bundle.txt verified-provenance.json
   else
     need gh
     gh --version > "$state_dir/github-cli-version.txt"
@@ -75,9 +69,7 @@ attestations_verify_delivery() {
 attestations_authorize_results() {
   node "$contract" results "$state_dir" "$repository" "$commit" "$state_dir/results-predicate.json"
   cosign attest "${sign_args[@]}" --bundle "$state_dir/results.bundle.json" --type "$results_type" --predicate "$state_dir/results-predicate.json" "$image"
-  attestations_verify_bundle results.bundle.json "$results_type" verified-results-bundle.txt
-  cosign verify-attestation "${verify_args[@]}" --type "$results_type" "$image" > "$state_dir/verified-results.json"
-  node "$contract" verify-statement "$state_dir/verified-results.json" "$digest" "$results_type" "$repository" "$commit"
+  attestations_verify_bundle results.bundle.json "$results_type" verified-results-bundle.txt verified-results.json
   node scripts/download-bundle-inventory.mjs "$mode" "$image" "$state_dir/registry-inventory-authorized.json" > "$state_dir/bundle-inventory-authorized.json"
   node scripts/check-bundle-profile.mjs "$state_dir/bundle-inventory-authorized.json" "$digest" authorized > "$state_dir/evidence-profile.json"
 }

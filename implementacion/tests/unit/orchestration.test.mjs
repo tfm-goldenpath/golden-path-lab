@@ -195,9 +195,9 @@ attestations_authorize_results
       assert.ok(command.includes('--trusted-root'));
     }
     const verification = commands.filter(command => command[0] === 'cosign' && command[1].startsWith('verify'));
-    assert.equal(verification.length, mode === 'local' ? 8 : 6);
+    assert.equal(verification.length, mode === 'local' ? 4 : 3);
     for (const command of verification) {
-      assert.notEqual(command[1], 'verify', 'generic image verification is not sufficient for F07');
+      assert.equal(command[1], 'verify-blob-attestation', 'only the saved bundle can authenticate content checks');
       assert.equal(command.includes('--insecure-ignore-tlog'), mode === 'local');
       if (mode === 'github') {
         assert.equal(command[command.indexOf('--certificate-identity') + 1], identity);
@@ -207,6 +207,12 @@ attestations_authorize_results
         assert.equal(command.includes('--allow-insecure-registry'), false);
         assert.equal(command[command.indexOf('--digest') + 1], digest.slice(7));
       }
+      const content = commands[commands.indexOf(command) + 1];
+      assert.equal(content[0], 'node');
+      assert.equal(content[1], 'scripts/verified-bundle-statement.mjs');
+      assert.equal(content[2], command[command.indexOf('--bundle') + 1]);
+      assert.equal(content[3], digest);
+      assert.equal(content[4], command[command.indexOf('--type') + 1]);
     }
     assert.equal(verification[0][verification[0].indexOf('--type') + 1], 'https://sigstore.dev/cosign/sign/v1');
     const provenance = commands.find(command => command[0] === 'gh' && command[1] === 'attestation');

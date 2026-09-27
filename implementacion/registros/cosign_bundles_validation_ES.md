@@ -33,9 +33,9 @@ Las ejecuciones anteriores `run-MyEM7tG1` y `run-6AyCNm7h` superaron firma y adm
 
 `make test` pasó en el contenedor Linux con herramientas fijadas y la red deshabilitada:
 
-- 6 pruebas de entorno y 247 de servicio, contratos, interpretación de evidencias, orquestación, clasificación y empaquetado.
+- 6 pruebas de entorno y 247 de servicio, contratos, interpretación de evidencias, orquestación, clasificación y empaquetado: **253 pruebas Node** de la implementación bundle inicial incorporada después a `82728c5`. Este total histórico no son las 270 observadas en `947684e` tras añadir 17 pruebas; véase el [registro de revisión por commit](pr15_review_ES.md).
 - 15 pruebas Python de políticas y configuración, 52 decisiones Conftest, 9 comprobaciones con el motor Kyverno y 32 comprobaciones sobre archivos de entrada reales.
-- 15 pasos de comprobación criptográfica con Cosign real: verificación válida de firma de imagen, SBOM y resultados, y rechazo de sustituciones por SBOM/resultados, firma alterada, digest diferente y clave de desarrollo no autorizada. El recuento incluye preparación; no equivale a quince escenarios del catálogo.
+- 15 pasos de comprobación criptográfica con Cosign real mediante `attest-blob` y predicados sintéticos de firma de imagen, SBOM y resultados, con rechazo de sustituciones por SBOM/resultados, firma alterada, digest diferente y clave de desarrollo no autorizada. No ejercita el productor real `cosign sign`, la publicación OCI ni la admisión. El recuento incluye preparación; no equivale a quince escenarios del catálogo.
 
 Las pruebas del recuperador contemplan una referencia ilegible o malformada, incoherencias de contenido y digest, paginación y alternativa por etiqueta, cambios de inventario y redirecciones HTTPS sin transferir credenciales. Interpretar JSON no autentica al registro. Las salidas se conservan localmente en `.tmp/bundle-tests-strict.log`, `.tmp/bundle-integration-strict.log` y el `run.log` empaquetado.
 

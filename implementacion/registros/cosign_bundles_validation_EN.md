@@ -33,9 +33,9 @@ Earlier runs `run-MyEM7tG1` and `run-6AyCNm7h` passed the bundle signing/admissi
 
 `make test` passed in the pinned Linux tool container with network disabled:
 
-- 6 environment tests and 247 service, contract, parser, orchestration, classification and packaging tests.
+- 6 environment tests and 247 service, contract, parser, orchestration, classification and packaging tests: **253 Node tests** in the initial bundle implementation later committed as `82728c5`. This historical total is not the 270 observed at `947684e` after 17 added tests; see the [revision-specific review record](pr15_review_EN.md).
 - 15 Python policy/configuration tests, 52 Conftest decisions, 9 Kyverno engine checks and 32 checks against actual policy input files.
-- 15 steps in the real Cosign cryptography probe, including successful image-signature, SBOM and results verification, plus rejection of SBOM/results substitution, an altered signature, a different digest and an untrusted development key. Setup steps are included in this count; this is not fifteen catalogue scenarios.
+- 15 steps in the real Cosign cryptography probe, using `attest-blob` with synthetic image-signature, SBOM and results predicates, plus rejection of SBOM/results substitution, an altered signature, a different digest and an untrusted development key. It does not exercise the actual `cosign sign` producer, OCI publication or admission. Setup steps are included in this count; this is not fifteen catalogue scenarios.
 
 The registry-helper tests cover a single unreadable or malformed referrer, inconsistent bytes/digests, pagination/fallback, changing listings and credential-free HTTPS storage redirects. They do not authenticate a registry by parsing its JSON. Full test output is retained locally in `.tmp/bundle-tests-strict.log`; the integration output is `.tmp/bundle-integration-strict.log` and the packaged `run.log`.
 

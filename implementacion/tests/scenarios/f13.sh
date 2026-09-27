@@ -79,6 +79,10 @@ scenario_f13_admission() {
   node scripts/download-bundle-inventory.mjs "$mode" "$image" "$state_dir/registry-inventory-after-denial.json" > "$state_dir/attestation-inventory-after-denial.json" || fail 'F13 could not retrieve the inventory after denial.'
   node scripts/check-bundle-profile.mjs "$state_dir/attestation-inventory-after-denial.json" "$digest" before-results > "$state_dir/bundle-profile-after-denial.json" || fail 'F13 has no valid bundle inventory after denial.'
   node scripts/check-missing-results.mjs "$state_dir/attestation-inventory-after-denial.json" "$digest" > "$state_dir/F13-after-denial.json" || fail 'F13 results absence was not confirmed after denial.'
+  node scripts/check-inventory-consistency.mjs "$state_dir/registry-inventory-before-results.json" "$state_dir/registry-inventory-after-denial.json" "$image" > "$state_dir/F13-inventory-consistency.json" || fail 'F13 registry evidence changed or its snapshots are unavailable; this does not count as detection.'
+  # This detects observed changes, not changes made and reverted between reads.
+  # The controlled trial assumes no other publisher for this run image during
+  # F13; the snapshots do not provide an atomic view of admission's registry reads.
   # Inventory parsing is not signature verification. The other three admission
   # policies must pass, and L01 must subsequently accept this digest with valid
   # results before the overall execution can be reported as PASS.
