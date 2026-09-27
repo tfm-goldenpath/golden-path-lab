@@ -119,6 +119,58 @@ La disponibilidad de atestaciones y las cuotas de Actions dependen de la visibil
 
 `act` puede ayudar a revisar pasos compatibles de workflows. No proporciona la identidad OIDC ni los servicios alojados de GitHub y, por tanto, no cierra la vía B. Para la primera prueba local completa se utiliza `make demo`.
 
+### Probar una corrección antes de fusionarla
+
+Cuando el workflow manual está registrado en la rama predeterminada, una nueva ejecución puede seleccionar el workflow y el código de una rama de corrección publicada. No es necesario fusionar primero la corrección. Estos comandos se pueden ejecutar desde **Git Bash en Windows** con GitHub CLI autenticado: solicitan una ejecución alojada, no ejecutan el laboratorio en Windows. Crea y publica tú mismo `fix/fulcio-chain` antes de usar este ejemplo, o sustituye el nombre por el de la rama real. [Ejecución manual en GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [selección de la referencia](https://cli.github.com/manual/gh_workflow_run).
+
+```bash
+gh workflow run golden-path.yml \
+  --repo tfm-goldenpath/golden-path-lab \
+  --ref fix/fulcio-chain
+```
+
+Identifica la nueva ejecución y comprueba que `headBranch` y `headSha` corresponden a la rama y al commit de la corrección que quieres validar. Si todavía no aparece, repite el comando de consulta; no lances otra ejecución solo para actualizar la lista.
+
+```bash
+gh run list \
+  --repo tfm-goldenpath/golden-path-lab \
+  --workflow golden-path.yml \
+  --branch fix/fulcio-chain \
+  --event workflow_dispatch \
+  --limit 10 \
+  --json databaseId,headSha,headBranch,status,conclusion,url
+```
+
+Sustituye `RUN_ID` por el `databaseId` numérico de esa ejecución y espera a que termine. El comando devuelve un código de error si la ejecución falla; conserva ese resultado.
+
+```bash
+gh run watch RUN_ID \
+  --repo tfm-goldenpath/golden-path-lab \
+  --exit-status
+```
+
+Una vez terminada, descarga cualquier artefacto generado aunque el resultado haya sido desfavorable. Sustituye `RUN_ID` tanto en el comando como en el destino. Esta carpeta queda fuera del repositorio; al paquete se le aplican las indicaciones de custodia del apartado siguiente.
+
+```bash
+gh run download RUN_ID \
+  --repo tfm-goldenpath/golden-path-lab \
+  --dir "$HOME/golden-path-evidence/run-RUN_ID"
+```
+
+Un fallo temprano puede impedir que se genere un artefacto; conserva entonces la URL y los registros de la ejecución. Referencias de CLI para [consultar](https://cli.github.com/manual/gh_run_list), [seguir](https://cli.github.com/manual/gh_run_watch) y [descargar](https://cli.github.com/manual/gh_run_download) ejecuciones.
+
+No uses **Re-run jobs** sobre una ejecución antigua de `main` para probar una corrección recién publicada: la repetición conserva el commit y la referencia originales. Inicia una nueva ejecución sobre la rama de corrección. [Comportamiento de las repeticiones en GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs).
+
+El clúster temporal autoriza la identidad exacta del workflow de la rama seleccionada, por ejemplo `https://github.com/tfm-goldenpath/golden-path-lab/.github/workflows/golden-path.yml@refs/heads/fix/fulcio-chain`, y su commit de origen. No utiliza un comodín ni presenta esa rama como una entrega aprobada para producción. El workflow actual no referencia ningún entorno de GitHub; los permisos del repositorio y de la organización siguen siendo aplicables. Publica en el paquete GHCR compartido, con una etiqueta de imagen y un digest propios de cada ejecución; la limpieza no elimina esas imágenes remotas ni sus evidencias. Después de revisar y fusionar la corrección, valida por separado la revisión resultante de `main`.
+
+### Compatibilidad de la cadena de certificados Fulcio y aceptación
+
+Para las evidencias clásicas de Cosign de la vía alojada, el proceso exporta a `sigstore-trusted-root.json` el material de confianza de Sigstore autenticado mediante el cliente TUF de Cosign. El [adaptador de la cadena](../../../../scripts/complete-classic-chain.mjs) completa, a partir de ese material autenticado, la anotación pública de la cadena de certificados en los manifiestos de evidencias clásicas `.sig` y `.att`. Conserva el digest de la imagen de aplicación, los contenidos firmados, las firmas y las raíces de confianza configuradas. El digest del manifiesto de evidencias sí puede cambiar al cambiar su anotación. El bundle nativo de procedencia de GitHub y la firma local de desarrollo quedan fuera de este ajuste; las verificaciones normales de Cosign y Kyverno siguen siendo obligatorias.
+
+Revisa `sigstore-trusted-root.json`, `image-chain.json`, `sbom-chain.json` y `results-chain.json` en el paquete cuando se hayan alcanzado sus respectivos pasos. Los informes de cadena conservan las huellas de certificados y los manifiestos de evidencias originales y completados para poder revisar el ajuste de metadatos. Que el adaptador termine correctamente no demuestra por sí solo una admisión satisfactoria.
+
+La [ejecución alojada 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179/job/108576831438) verificó las cadenas completadas, el rechazo aislado de F13, la admisión y disponibilidad de L01 y el rechazo previsto de F11. Quedó en rojo porque el analizador del escenario interpretó incorrectamente el preámbulo UPDATE de kubectl; no llegó a la actualización legítima final. Tras aplicar la corrección del analizador, inicia una nueva ejecución. Los rechazos previstos se contabilizan como pruebas negativas satisfactorias; el workflow completo debe terminar en verde si todo funciona. La secuencia sigue siendo F13 rechazado **únicamente** por resultados ausentes, resultados firmados que permiten L01, rechazo de la actualización F11 y aceptación de la actualización legítima. Conserva los fallos adicionales de firma, procedencia o red como errores de integración.
+
 ## 5. Evidencias y limpieza
 
 Los resultados de ejecución se guardan bajo `evidence/raw/` y los paquetes bajo `evidence/packages/`. Ambas rutas están excluidas de Git. Conserva el identificador de ejecución y la referencia inmutable de imagen para relacionar informes, firmas, respuesta de admisión y prueba HTTP.

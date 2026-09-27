@@ -132,11 +132,14 @@ function run(f, args, extra = {}) {
 
 const stages = (result) => result.events.map((entry) => entry.stage);
 
-for (const mode of ['local', 'github']) {
-  test(`${mode} signing uses compatible classic flags without weakening hosted verification`, t => {
+for (const [mode, ref, failChain = 0] of [
+  ['local', 'main'], ['github', 'main'], ['github', 'fix/fulcio-chain'],
+  ...[1, 2, 3].map(stage => ['github', 'fix/fulcio-chain', stage]),
+]) {
+  test(`${mode}/${ref} signing preserves chain completion, identity and classic verification (failure ${failChain})`, t => {
     const fixtureState = fixture(t, { stubs: false });
     writeFileSync(join(fixtureState.privateDir, 'cosign.pub'), 'fixture public key');
-    const identity = 'https://github.com/example/lab/.github/workflows/golden-path.yml@refs/heads/main';
+    const identity = `https://github.com/example/lab/.github/workflows/golden-path.yml@refs/heads/${ref}`;
     const result = run(fixtureState, ['-c', String.raw`
 set -Eeuo pipefail
 source "$GP_FIXTURE_ROOT/scripts/lib/attestations.sh"
@@ -144,20 +147,34 @@ mode="$GP_SIGNING_MODE"; state_dir="$GP_FIXTURE_STATE"; private="$GP_FIXTURE_PRI
 contract=fixture; repository=https://github.com/example/lab; commit=fixture
 image_repo="$GP_IMAGE_REPO"; digest="$GP_DIGEST"; image="$image_repo@$digest"
 results_type=https://tfm-goldenpath.dev/attestations/verification-results/v1
-GITHUB_REPOSITORY=example/lab; GITHUB_REF=refs/heads/main
+GITHUB_REPOSITORY=example/lab; GITHUB_REF="$GP_SIGNING_REF"
 record() { :; }
 need() { :; }
 get() { printf '%s' "$GP_SIGNING_IDENTITY"; }
-node() { :; }
 capture() { printf '%s\0' "$@" >> "$GP_FIXTURE_ROOT/signing-commands"; printf '\0' >> "$GP_FIXTURE_ROOT/signing-commands"; }
+chain_count=0
+node() {
+  capture node "$@"
+  if [[ "$1" == scripts/complete-classic-chain.mjs ]]; then
+    chain_count=$((chain_count + 1))
+    if [[ "$chain_count" == "$GP_FAIL_CHAIN" ]]; then return 19; fi
+  fi
+  return 0
+}
 cosign() { capture cosign "$@"; }
 gh() { capture gh "$@"; }
 attestations_verify_delivery
 attestations_authorize_results
-`], { GP_SIGNING_MODE: mode, GP_SIGNING_IDENTITY: identity });
-    assert.equal(result.status, 0, result.stderr);
+`], { GP_SIGNING_MODE: mode, GP_SIGNING_IDENTITY: identity, GP_SIGNING_REF: `refs/heads/${ref}`, GP_FAIL_CHAIN: String(failChain) });
+    assert.equal(result.status, failChain ? 19 : 0, result.stderr);
     const commands = readFileSync(join(fixtureState.root, 'signing-commands'), 'utf8')
       .split('\0\0').filter(Boolean).map(command => command.split('\0'));
+    if (failChain) {
+      assert.equal(commands.at(-1)[1], 'scripts/complete-classic-chain.mjs');
+      assert.equal(commands.filter(command => command[1] === 'scripts/complete-classic-chain.mjs').length, failChain);
+      assert.equal(commands.filter(command => command[0] === 'cosign' && ['verify', 'verify-attestation'].includes(command[1])).length, failChain - 1);
+      return;
+    }
     const signing = commands.filter(command => command[0] === 'cosign' && ['sign', 'attest'].includes(command[1]));
     assert.equal(signing.length, mode === 'local' ? 4 : 3);
     assert.ok(signing.some(command => command.includes('cyclonedx')));
@@ -169,6 +186,7 @@ attestations_authorize_results
       assert.equal(command.includes('--key'), mode === 'local');
       assert.equal(command.includes('--tlog-upload=false'), mode === 'local');
       assert.equal(command.includes('--allow-insecure-registry'), mode === 'local');
+      assert.equal(command.includes('--trusted-root'), mode === 'github');
     }
     const verification = commands.filter(command => command[0] === 'cosign' && ['verify', 'verify-attestation'].includes(command[1]));
     assert.equal(verification.length, mode === 'local' ? 4 : 3);
@@ -181,11 +199,25 @@ attestations_authorize_results
       }
     }
     const provenance = commands.find(command => command[0] === 'gh' && command[1] === 'attestation');
+    const completion = commands.filter(command => command[0] === 'node' && command[1] === 'scripts/complete-classic-chain.mjs');
     if (mode === 'github') {
+      assert.equal(commands[0].slice(0, 4).join(' '), 'cosign trusted-root create --with-default-services');
+      assert.deepEqual(completion.map(command => command[3]), ['sig', 'att', 'att']);
+      for (const command of completion) {
+        assert.equal(command[2], image);
+        assert.ok(command[4].endsWith('/sigstore-trusted-root.json'));
+        const i = commands.indexOf(command);
+        assert.ok(['sign', 'attest'].includes(commands[i - 1][1]));
+        assert.ok(['verify', 'verify-attestation'].includes(commands[i + 1][1]));
+      }
       assert.ok(provenance.includes('--bundle-from-oci'));
       assert.ok(provenance.includes('--deny-self-hosted-runners'));
       assert.equal(provenance[provenance.indexOf('--cert-identity') + 1], identity);
-    } else assert.equal(provenance, undefined);
+      assert.equal(provenance[provenance.indexOf('--source-ref') + 1], `refs/heads/${ref}`);
+    } else {
+      assert.equal(provenance, undefined);
+      assert.equal(completion.length, 0);
+    }
   });
 }
 

@@ -5,7 +5,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY .devcontainer/debian.sources /etc/apt/sources.list.d/debian.sources
 RUN test "$(dpkg --print-architecture)" = amd64 \
     && apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl git jq make python3 sudo \
+    && apt-get install -y --no-install-recommends ca-certificates curl git jq make openssl python3 sudo \
     && rm -rf /var/lib/apt/lists/* \
     && printf 'node ALL=(root) NOPASSWD:ALL\n' > /etc/sudoers.d/node \
     && chmod 0440 /etc/sudoers.d/node

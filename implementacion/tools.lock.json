@@ -123,6 +123,7 @@
       "newBundleFormat": false,
       "useSigningConfig": false,
       "tlogUploadLocal": false,
+      "hostedCertificateChain": "Complete classic OCI chain annotations from authenticated Fulcio TUF material; preserve verifier trust roots.",
     "reason": "Lab Cosign signatures and attestations use the classic format supported by ClusterPolicy verification; native GitHub provenance uses SigstoreBundle.",
       "source": "https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/attest.go"
     }

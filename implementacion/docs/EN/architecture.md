@@ -82,6 +82,7 @@ The [initial plan](implementation-plan.md) retains earlier proposed directories;
 | [Laboratory](../../scripts/lib/lab.sh) | Context/versions → kind, zot, builder, namespaces, Kyverno, diagnostics and cleanup. Real resource operations need integration. |
 | [Delivery](../../scripts/lib/delivery.sh) | Sources/context → tests, early checks, image, Trivy reports and manifests. Rule unit tests do not replace a real image scan. |
 | [Attestations](../../scripts/lib/attestations.sh) | Image/identities → signing, verification and results issuance. Separate cryptography, content and policy authorization. |
+| [Classic chain adapter](../../scripts/complete-classic-chain.mjs) | Hosted classic OCI manifests + authenticated Fulcio material → complete public CA chain annotation and before/after report. Preserve payloads, signatures, identities and verifier roots; subsequent Cosign/admission verification remains mandatory. Temporary compatibility support, separate from the [deferred bundle migration](cosign-bundle-migration.md). |
 | [Workload](../../scripts/lib/workload.sh) | Manifest/image → deployment request and HTTP check. Admission and functional response are distinct observations. |
 | [Scenarios](../../tests/scenarios/) | Delivery context → L01/F13/F11 preparation and expectations. Attribute a rejection to its intended condition. |
 | [Conftest policies](../../policies/conftest/) | Workflow, manifest or Trivy JSON → Rego decisions. [Policy fixtures](../../tests/policies/run_rego.py) and [real-file checks](../../scripts/check-policies.sh) exercise the rules. |
