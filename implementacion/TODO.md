@@ -1,29 +1,23 @@
 # Incremental implementation plan
 
-This plan organizes incremental adoption, tasks and completion criteria. Checkboxes indicate completed work; file preparation and execution are recorded separately.
+This plan organizes incremental adoption, tasks and completion criteria. Checkboxes distinguish implemented files, observed execution and pending acceptance; one does not imply the others. Current baseline: merged PR #15 at `dd381d3`, published as the **v0.2.0 prerelease**. The next milestone is **Scenario coverage and pilot**, not the campaign itself.
 
-The [modular architecture](docs/EN/architecture.md) separates orchestration, policies and evidence through verifiable contracts. Planned directories are introduced together with their components and tests.
+The [modular architecture](docs/EN/architecture.md) separates orchestration, policies and evidence through verifiable contracts.
 
-The [first integrated baseline plan](docs/EN/implementation-plan.md) specifies the functional contract and expected tests. Its H0–H6 milestones elaborate increments 0–3 in this TODO: environment, service and R, first local barrier, lane B integration, complete G and demonstration. Milestones are delivery conditions, not another task log; the checkboxes below track progress.
+The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the functional contract and H0–H6 acceptance conditions behind increments 0–3. This checklist tracks implementation and acceptance separately.
 
 ## Available increment: L01/F13 demonstration and F11 checks
 
-- [x] Implement `quotes-node` with separate transport, validation and calculation, a deterministic HTTP contract and automated tests.
-- [x] Add Conftest policies, the Kyverno policy generator and tests of their contracts and synthetic inputs.
-- [x] Implement validators for SBOMs, subjects and predicates, custom results and authorization of provenance verified by GitHub CLI.
-- [x] Prepare the installer with pinned versions and hashes, plus the zot registry and Kyverno chart/images identified by digest.
-- [x] Implement `make demo` and `make reference` with a temporary laboratory, build/publication by digest, reports and evidence packages.
-- [x] Prepare the L01/F13 sequence and early and directed F11 checks, distinguishing attributable rejection from operational error.
-- [x] Prepare CI without publication permissions and the manual GitHub integration workflow, with native provenance and a results artifact.
+- [x] Implement `quotes-node`, policies, evidence validators and pinned tools, detailed in increments 0–3.
+- [x] Provide `make demo`, `make reference`, CI and manual hosted integration, with digest-based delivery, L01/F13, directed F11 checks and evidence packages.
 - [x] Successfully run the included unit and contract tests; keep their scope distinct from real integration.
 - [x] Complete an end-to-end lane A execution: `run-8N59m8xw`, L01 admitted and functional, F13 and F11 rejected by their rules, and package verified. This used a local compatibility environment; review by the responsible person and repetition in Codespaces remain pending.
-- [x] Observe a complete classic-profile lane B execution with OIDC, GHCR, native provenance and actual Kyverno verification in [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654), commit `4f8fe77`, included in v0.1.0. This does not validate the later bundle profile.
+- [x] Observe complete classic-profile lane B, including independent L01 image replacement, in [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654), commit `4f8fe77`, included in v0.1.0. This does not validate the later bundle profile.
 - [x] Implement hosted classic certificate-chain completion from authenticated Fulcio TUF material, preserving root trust and signed content, with regression coverage.
 - [x] Observe the corrected chains and results verified in hosted admission in [run 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179), commit `1ae111fc6e1614b32ee86461771836ada60e1d42`: F13 correctly rejected, L01 admitted and healthy, F11 correctly denied by Kyverno. The overall run failed because the rejection parser counted kubectl's preamble `to:` as an extra policy; the final legitimate update was not reached.
-- [x] Validate the classic correction and independent L01 image replacement in that hosted run: certificate chains accepted, F13 rejected solely for missing results, then L01 accepted and F11 rejected for its intended rule. Preserve the exact executed commit and evidence package.
-- [ ] Review the download and preservation of the hosted execution package and record the observed result.
+- [x] Review the downloaded hosted bundle package at `82728c5`: archive checksum, 103 internal hashes and eight independently verified bundles. Preserve that scope in the [review record](registros/pr15_review_EN.md); the latest main-run package still needs its own audit.
 
-Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md). The [contracts and limitations](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Checkboxes in the following milestones may remain open even when their files have been prepared: completion requires all stated execution and review conditions to be met. This section does not establish a history of red-green TDD cycles or claim that all twenty scenarios have been executed; policy tests and directed checks do not replace completion of their full scenario records.
+Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md); the [delivery contracts](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Executable scenario modules cover L01/F13 and directed F11 checks. Policy tests and cryptographic probes do not complete the twenty scenario records, establish TDD history or constitute pilot measurements.
 
 ## 0. Preparation and environment
 
@@ -40,29 +34,27 @@ Current commands are in the [README](README.md) and [execution guide](docs/EN/ca
 
 ## 1. Minimum functional baseline
 
-- [ ] Finalize the minimum `quotes-node` contract: health, version and a deterministic quotation operation using synthetic data. Link it to a story and acceptance criteria.
-- [ ] Separate HTTP transport, validation and functional logic in the service; keep reusable commands and explicit parameters for automation.
-- [ ] Use Node LTS and `node:test` for the service; record dependencies and the lockfile when introduced.
-- [ ] Write and run the first test before implementing the behavior; continue with necessary input validation and regression tests.
+- [x] Implement the minimum `quotes-node` contract: health, version and a deterministic quotation operation using synthetic data, with input-validation and regression tests.
+- [x] Separate HTTP transport, validation and functional logic; provide reusable commands with explicit parameters.
+- [x] Use pinned Node LTS and `node:test`; retain the dependency-free service's package manifest and lockfile.
+- [ ] Link the contract to the operational story and record human acceptance. Preserve available TDD evidence without reconstructing an undocumented red-green history; use test-first changes for subsequent behavior.
 - [ ] Confirm initial environment resources and Codespaces quotas if used; add tools according to each increment's needs.
-- [ ] Build and test a `linux/amd64` image using verified references. Preserve its digest and distinguish the OCI index from the manifest if both appear.
-- [ ] Prepare kind, a dedicated namespace and a minimal workload; check health and valid create/update operations. Do not attribute protection to policies that do not yet exist.
-- [ ] Add zot and complete R: publish the image, pull it by digest from kind, deploy it to `tfm-reference` and verify health, version and quotation. Use the same service and functional build that G will use.
-- [ ] Give the service its own Docker context and `.dockerignore`; keep the environment probe separate.
-- [ ] Record human review in the story and brief evidence of the TDD cycle.
+- [x] Build the `linux/amd64` service from verified references and retain its digest; observed integration includes image analysis, deployment and functional checks.
+- [x] Prepare kind and dedicated namespaces; exercise healthy creation and independently verified image replacement in L01.
+- [x] Implement zot-backed R: publish and pull by digest, deploy to `tfm-reference`, then verify health, version and quotation. The functional demonstration shares its initial image with G; this is not a measured R/G pair.
+- [x] Give the service its own Docker context and `.dockerignore`; keep the environment probe separate.
 
 **Outcome:** a tested minimal service and automated R path, with an identified image, a real registry pull and a verified functional response. This does not constitute the complete L01 scenario or pilot completion.
 
 ## 2. Early provenance and admission integration
 
-- [ ] First prepare a limited local barrier: Kyverno in `tfm-golden`, a development key, admission of a signed image and rejection of an unsigned image. Check registry access from the client, node and Kyverno; do not confuse this with the complete Golden Path.
+- [x] Implement Kyverno in `tfm-golden` with development-key trust and demonstrate signed delivery plus registry access from the client, node and controller.
+- [ ] Complete the isolated unsigned-image admission check F07, keeping the other required attestations valid; positive delivery alone does not establish this rejection.
 - [ ] Finalize the relevant scenario records before testing: acceptance of valid provenance, missing provenance F09 and unauthorized origin F10; distinguish partial checks from complete scenarios.
-- [ ] Prepare the reusable workflow and Kyverno configuration with the implementation repository's specific versions and identities.
-- [ ] Place workflows in `.github/workflows/` at the repository root; have them coordinate components in `implementacion/` without concentrating rules in their YAML.
-- [ ] Check the contract between the image, provenance and authorized object: format, storage, retrieval, signature, issuer, source repository, workflow/builder, commit and digest.
-- [ ] Configure permissions, OIDC identity and repository references for hosted integration.
-- [ ] Build with a real OIDC identity on GitHub and verify provenance directly with Kyverno in the laboratory cluster. CLI-only verification does not complete this task.
-- [ ] Test acceptance and attributable rejections without substituting format, network or API errors. Collect evidence of matching digests.
+- [x] Prepare pinned Kyverno configuration and root `.github/workflows/` orchestration with repository-specific identities and reusable commands in `implementacion/`. The hosted entry point is manual `workflow_dispatch`, not a reusable `workflow_call` interface.
+- [x] Implement image/provenance contracts for format, retrieval, signature, issuer, source, workflow, commit and digest, with positive and negative contract tests.
+- [x] Configure hosted permissions/OIDC and observe native provenance consumed by actual Kyverno in the recorded hosted runs. See the migration section for exact revisions and remaining evidence review.
+- [ ] Exercise the remaining F09/F10 acceptance/rejection records with matching digests and attributable causes; format, network or API errors do not count as detection.
 - [ ] If a material incompatibility appears, document it and assess the BuildKit + Cosign alternative before changing the solution. Do not implement both by default or automatically claim SLSA L3.
 
 **Outcome:** verified critical integration or a specific incompatibility that supports a decision about adaptation. `act` and local signing do not replace this hosted verification.
@@ -71,37 +63,44 @@ Current commands are in the [README](README.md) and [execution guide](docs/EN/ca
 
 Prepare the scenario record and tests for each behavior first. Include acceptance, rejection and regression checks without postponing testing until the end.
 
-- [ ] Complete lane A with `act`, zot, kind and a development key, checking actual registry connectivity from the cluster and keeping its trust model distinct from lane B.
-- [ ] Add Conftest for workflows and manifests with separate inputs and policies. Exercise F01/F02/F11/F12 and their legitimate inputs. Test F01 as configuration without enabling privileged execution of untrusted code.
-- [ ] Add local hooks only once the preceding commands work and have tests. Repeat mandatory controls in CI; check that skipping a hook cannot bypass them.
-- [ ] Add Trivy: preserve the original CycloneDX JSON SBOM and a separate real scan report; validate the schema and retain tool/database versions. Test the rule with identified synthetic reports and integration with real reports.
+- [x] Exercise lane A with zot, kind and a development key in the documented compatibility environment, keeping its trust model distinct from lane B.
+- [ ] Exercise compatible workflow portions with `act` and record their limits; local signing and `act` do not establish hosted OIDC behavior.
+- [x] Add Conftest workflow/manifest policies, legitimate inputs and independently mutated policy fixtures; exercise early and directed F11 rejection.
+- [ ] Complete operational F01/F02/F11/F12 records and remaining injections. Test F01 as configuration without enabling privileged execution of untrusted code.
+- [ ] Assess optional local hooks once the preceding commands work and have tests. Introduce them only for useful early feedback; mandatory controls remain in CI, and skipping a hook must not bypass them. Hooks are not a pilot prerequisite.
+- [x] Integrate Trivy with separate original CycloneDX JSON and real scan reports, tool/database identification, synthetic policy tests and observed image scans.
+- [ ] Complete full SBOM schema validation; current checks validate selected contract fields, not full schema or inventory completeness.
 - [ ] Prepare real inputs for F03/F04/L02, giving flexible priority to a direct production Node dependency for F03. Confirm severity, fix availability and a functional upgrade before fixing the scenario.
-- [ ] Sign the image and SBOM attestation with Cosign; check identity, type, content and digest. Implement F05–F08, including controlled alteration of a well-formed signature in F08.
-- [ ] Add an automatically signed results attestation with a custom versioned predicate: issue success only after all mandatory pre-admission controls pass. Link the execution, commit, digest, policies and reports; record the admission response afterwards without requiring it to issue the summary that admission must verify.
-- [ ] Complete admission with that attestation and direct checks, the protected namespace and relevant workload operations. Test F13/F14 and complete L01 acceptance.
-- [ ] Define and test the contracts for the image, SBOM, report, provenance, results attestation and control decision. Distinguish acceptance, attributable rejection and error.
-- [ ] Add negative unit or integration tests for mandatory properties: unauthorized identity, unrelated digest, unsuccessful result, unsupported type/schema and missing required fields. Do not defer these guarantees because the twenty-scenario campaign has no additional scenario for them.
+- [x] Sign and verify image/SBOM bundles with explicit identity, predicate, content and digest checks; retain actual cryptographic negative probes, including signature-byte alteration.
+- [ ] Complete operational F05–F08, including isolated live F07 and well-formed altered-signature F08. Synthetic cryptographic probes do not complete these scenario executions.
+- [x] Issue a signed versioned results predicate only after successful mandatory pre-admission controls, retain report hashes and record the later admission response separately.
+- [x] Implement direct admission and results checks for the protected namespace and selected CREATE/UPDATE operations; observe L01/F13 and F11 in the recorded integrations.
+- [ ] Complete remaining F13/F14 operational acceptance and scope checks; retain the same-digest positive control and distinguish attributable rejection from operational failure.
+- [x] Test image, SBOM, scan, provenance, results and decision contracts, including unauthorized identity/key, wrong digest, unsuccessful results, unsupported types and missing fields at their documented test levels.
+- [ ] Complete remaining live negative guarantees and link each to its evidence; parser, policy-construction and offline cryptographic tests cannot substitute for admission checks.
 - [ ] Check properties shared by Conftest and Kyverno with consistent inputs and expectations adapted to each tool; do not assume equivalence merely because rule names match.
-- [ ] Check that the protected step is blocked when a mandatory control cannot be completed, without an exception path in the baseline.
-- [ ] Implement directed checks of later barriers and operational tests kept separate from the corpus count.
-- [ ] Complete the shared R/G commands and initial demonstration: legitimate delivery, early and directed F11 checks, missing signature F07, provenance F09/F10 and missing summary F13, isolating each condition and preserving its diagnosis.
-- [ ] Test the compatible workflow portions with act and the real identity with GitHub Actions; publish the result as a run artifact and verify its download. Identify these runs as integration tests rather than campaign executions.
+- [x] Test mandatory-stage failure propagation and implement directed F11/F13 checks with strict rejection attribution; retain operational tests separately from the corpus count.
+- [ ] Complete the remaining directed barriers and operational failures in the scenario records, including F07/F09/F10. Do not infer a later barrier was reached from an earlier rejection.
 
 **Outcome:** a complete verifiable path with the selected controls and observable causes of acceptance/rejection. Favorable results for every scenario in the future corpus are not required.
 
-## 4. Evaluation preparation and pilot completion
+## 4. Next milestone: Scenario coverage and pilot
 
-- [ ] Complete the 20 scenario records in a single operational catalogue, reusing the template. Fix the expected detection phase and latest blocking point for each scenario before measurement; review the coverage matrix and actor capabilities.
-- [ ] Prepare R/G with the same legitimate path, resources and platform. List the controls retained by each configuration.
-- [ ] Replace the old fault driver with an implementation that prepares the actual alteration and records structured causes. Do not use generic text searches or automatic administrative merges.
+Use small PRs in this order; sections 1–3 retain the detailed control and acceptance gaps. The thesis already defines F01–F14/L01–L06: operationalize that catalogue rather than creating a second academic catalogue.
+
+- [x] **1. Prepare lightweight AI collaboration guidance:** `AGENTS.md`, Copilot instructions, one scenario-change skill, `CONTRIBUTING.md`, PR template, [EN/ES guidance](docs/EN/ai-assisted-development.md) and CI triggers covering their changes. Files are prepared locally; runtime loading and human review remain below.
+- [ ] Verify instruction/skill loading in the intended tools and record human review of the guidance; file availability alone does not establish runtime behavior or approval.
+- [ ] **2. Fix operational records and close migration acceptance:** complete the 20 records in one catalogue using the [template](templates/ficha_escenario.md) and the identified thesis revision. Set actor capabilities, injection, expected detection phase, latest blocking point and evidence before measurement; prioritize live F07 and the migration follow-up below.
+- [ ] **3. Complete control-family PRs:** evidence/provenance/results, workflow/runtime, then real vulnerability/remediation inputs, with legitimate counterparts and attributable negative cases. Reuse existing L01/F11/F13 modules and policy tests; complete all twenty operational cases without counting directed checks as extra scenarios.
+- [ ] **4. Implement the paired R/G runner and measurement:** use the same legitimate path, resources, platform and frozen source revision, with explicit retained controls and separate comparable builds. Replace the old fault-driver approach with actual alterations and structured causes; no generic error matching or automatic administrative merges.
 - [ ] Identify tool, policy, image and vulnerability database versions and comparable cache conditions. Record infrastructure preparation separately from the main measurement interval.
-- [ ] Run four pilot pairs in a balanced random order and keep their data separate. Review the provisional ten campaign pairs based on the pilot.
-- [ ] Calibrate the six manual tasks: F03/F10/F11 in R/G, conventional tools during measurement, equal per-scenario limits in both configurations and an approximately balanced order.
 - [ ] Check result classification: valid favorable/unfavorable, invalid for an evidenced cause, or indeterminate. Apply one retry to evidenced external failures according to the protocol without removing unfavorable results.
 - [ ] Verify measurement of total time to the admission response, phases, detection and blocking. Distinguish elapsed time from summed job minutes and applicable monetary cost.
-- [ ] Prepare an Actions results artifact, a versioned package associated with a release and a local copy outside Codespaces, reusing the existing procedure. Verify download and table reconstruction during hosted integration.
+- [ ] Extend existing Actions artifacts and checksummed packages to measurement data, associate the reviewed package with its release, and preserve a local copy outside Codespaces. Verify download and table reconstruction; current functional archives do not contain campaign measurements.
 - [ ] Document disclosure risks associated with SBOMs, vulnerabilities and logs; review the files to be shared. Do not add encryption or a custody service.
-- [ ] Close the pilot based on operational readiness and traceability. An instrumentation defect that prevents interpretation requires correction; a genuine control failure may remain an unfavorable result.
+- [ ] **5. Run four pilot pairs** in a balanced random order and keep their data separate. Review the provisional ten campaign pairs based on the pilot.
+- [ ] Calibrate the six manual tasks: F03/F10/F11 in R/G, conventional tools during measurement, equal per-scenario limits in both configurations and an approximately balanced order.
+- [ ] **6. Review and close the pilot**, then freeze the campaign candidate, provisionally **v0.3.0**. Require operational readiness and traceability; fix instrumentation defects that prevent interpretation, while preserving genuine control failures as unfavorable results.
 
 **Outcome:** an executable, interpretable protocol with identified versions and preservable data. Perfect detection and satisfaction of a fixed time threshold are not required.
 
@@ -113,7 +112,7 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [ ] Relate European insurance-sector needs to controls, scenarios, evidence and limitations. Do not treat a documentary mapping as compliance certification.
 - [ ] Integrate design, implementation, results and review evidence into the thesis.
 
-## Current increment: Cosign bundles before campaign freeze
+## Bundle migration: observed integration and remaining acceptance
 
 - [x] Preserve v0.1.0 and prepare `feat/cosign-bundles` with default Cosign bundles, predicate-specific verification and Kyverno `SigstoreBundle` consumers. Keep the pinned versions.
 - [x] Preserve distinct local and hosted trust profiles, raw bundles, public verification material, verifier outputs and EN/ES documentation.
@@ -121,11 +120,14 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [x] Run regression and actual Cosign cryptographic checks, including SBOM/results substitution, altered signatures, wrong digests and unauthorized development keys.
 - [x] Record a fresh local end-to-end run with strict retrieval, F13/F11 attribution, L01 creation and independent image replacement, and verified archive checksums: [run-De88fpWy](registros/cosign_bundles_validation_EN.md), on the documented cgroup-v1 compatibility host. This is not a campaign measurement.
 - [x] Run and review the published migration branch in real GitHub Actions at `82728c5`: [run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827), including native provenance, exact identity, certificate/SCT, transparency and L01/F13/F11. See the [review record](registros/pr15_review_EN.md); later source corrections require their own run.
-- [ ] Revalidate the PR #15 config-blob and packaging corrections in local/hosted integration on the exact published revision.
+- [x] Merge PR #15 into `main` at `dd381d3` and publish the [v0.2.0 prerelease](https://github.com/tfm-goldenpath/golden-path-lab/releases/tag/v0.2.0). Release availability does not close the remaining acceptance checks.
+- [x] Observe all steps successful in main [run 36332256483](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36332256483) at `dd381d3`, with artifact `golden-path-36332256483-1` available. This is hosted integration of the merged review corrections, not a local repeat or a package-content audit.
+- [ ] Download, preserve and audit that exact main-run package: verify its checksum, internal hashes, bundle verification, F13 consistency report and L01 replacement evidence; record the observed result and synchronize current-status paragraphs in migration/runbooks while preserving historical observations.
+- [ ] Repeat affected local integration on the adopted revision and retain its environment and evidence. Earlier compatibility runs do not establish current local or Codespaces acceptance.
 - [ ] Complete the remaining directed admission checks in the [migration acceptance list](docs/EN/cosign-bundle-migration.md), including valid attestations without the independent image-signature predicate. Cryptographic and policy-construction tests alone do not complete these live checks.
-- [ ] Review, merge and validate the resulting `main` revision, then repeat affected pilot checks before fixing the campaign version.
+- [ ] Review the remaining migration acceptance with the responsible person and carry affected checks into pilot validation before campaign freeze.
 
-The [migration guide](docs/EN/cosign-bundle-migration.md) ([Spanish](docs/ES/cosign-bundle-migration.md)) retains the classic compatibility history. The twenty scenarios and comparison of R/G remain applicable. Run both configurations from the same frozen revision; R may omit the additional controls. Earlier classic development measurements are not pooled with the bundle campaign. Kyverno's deprecated policy API remains a separate future migration; the classic chain helper is retained as inactive historical support pending hosted acceptance.
+The [migration guide](docs/EN/cosign-bundle-migration.md) ([Spanish](docs/ES/cosign-bundle-migration.md)) retains the classic compatibility history. Run R/G from the same frozen revision; R omits the declared additional controls. Do not pool classic development timings with bundle campaign measurements. Kyverno's deprecated policy API remains separate future work; the classic chain helper is inactive historical support, whose removal should be assessed after the remaining acceptance review.
 
 ## Extensions, only after completing and reviewing the baseline
 

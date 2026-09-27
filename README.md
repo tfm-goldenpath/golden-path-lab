@@ -27,9 +27,15 @@ English is the primary language for the implementation and technical documentati
 
 Code, comments, tests, project-generated messages, workflow labels and the primary technical guides use English. The [documentation index](implementacion/docs/README.md) groups primary guides under `docs/EN/` and supporting guides under `docs/ES/`. The [Spanish entry point](README.es.md) supports thesis readers. Historical validation records under `implementacion/registros/` and the external-proposal review retain their original language and observations.
 
-Maintain one implementation per scenario: `F13` has the same inputs, identifiers and acceptance criteria in both languages. Case documentation lives under `docs/EN/cases/L01-F13/` and its Spanish counterpart; executable scenarios remain shared in `tests/scenarios/`. Prefer English for commits, PR descriptions and future contributor or AI-assistance instructions. Keep executable paths, JSON fields, error codes and rule IDs stable. When behavior changes, update the English guide and the affected Spanish commands and expected outputs in the same change; explicitly mark any explanation that has not yet been synchronized. Translations must not rewrite historical logs or evidence packages.
+Maintain one implementation per scenario: `F13` has the same inputs, identifiers and acceptance criteria in both languages. Case documentation lives under `docs/EN/cases/L01-F13/` and its Spanish counterpart; executable scenarios remain shared in `tests/scenarios/`. Prefer English for commits, PR descriptions and contributor or AI-assistance instructions. Keep executable paths, JSON fields, error codes and rule IDs stable. When behavior changes, update the English guide and the affected Spanish commands and expected outputs in the same change; explicitly mark any explanation that has not yet been synchronized. Translations must not rewrite historical logs or evidence packages.
 
 The [language revision validation](implementacion/registros/language_normalization_EN.md) records passing checks and the remaining Windows Conftest runtime limitation.
+
+## Contributing with or without AI
+
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for scoped changes, actual test commands and truthful contribution records. The [AI-assisted development guide](implementacion/docs/EN/ai-assisted-development.md) explains the [shared agent instructions](AGENTS.md), [Copilot instructions](.github/copilot-instructions.md) and [scenario-change skill](.github/skills/scenario-change/SKILL.md). People own requirements, expected outcomes and review; deterministic controls decide delivery authorization. AI is excluded from the six measured manual tasks.
+
+These files guide assistants; tests, permissions and configured repository rules enforce their respective controls. No hooks, MCP connections, custom agents or remote permissions are installed by this guidance. The laboratory remains usable without AI.
 
 ## Evaluation configurations and execution lanes
 
@@ -43,8 +49,10 @@ The current demo is a functional integration check, not the complete twenty-scen
 | Path | Responsibility |
 |---|---|
 | `.devcontainer/implementacion/` | Repository-level Codespaces entry point. |
-| `.github/workflows/ci.yml` | Existing service, unit and policy tests on relevant PR/push changes. |
+| `.github/workflows/ci.yml` | Shared service, unit, policy and offline cryptographic checks on every PR and push. |
 | `.github/workflows/golden-path.yml` | Manual hosted build, evidence verification and admission demonstration. |
+| `CONTRIBUTING.md`, `.github/pull_request_template.md` | Contribution process, verification and assistance/review record. |
+| `AGENTS.md`, `.github/copilot-instructions.md`, `.github/skills/scenario-change/` | Assistant guidance and the reusable scenario-change procedure. |
 | `implementacion/services/quotes-node/` | Synthetic API, tests and image definition. |
 | `implementacion/scripts/` | Delivery entry points, reusable modules and evidence processing. |
 | `implementacion/policies/` | Conftest and Kyverno controls. |
@@ -67,7 +75,7 @@ The [GitHub configuration guide](implementacion/docs/EN/github-configuration.md)
 
 The released **v0.1.0** baseline is at `9f1999e`. Classic hosted [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654) passed on `4f8fe77`, including independently verified L01 image replacement; that change is included in the release. The run is evidence for its recorded commit and classic profile.
 
-This branch contains a [Cosign bundle migration candidate](implementacion/docs/EN/cosign-bundle-migration.md), with [local compatibility PASS](implementacion/registros/cosign_bundles_validation_EN.md) in `run-De88fpWy`, including strict inventory retrieval; hosted L01/F13/F11 also passed at `82728c5` in [run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827). Actual F07 negative admission and integration of the subsequent PR review corrections remain pending. Cosign 3.1.3 and Kyverno 1.19.1 remain pinned; all evidence consumers select `SigstoreBundle` with an independent image-signature predicate and separate local/hosted trust. The [import record](implementacion/registros/validacion_importacion_ES.md) and earlier [integration observations](implementacion/registros/validacion_integracion.md) retain their historical scope.
+The published **v0.2.0** at `dd381d3` includes PR #15's [Cosign bundle migration](implementacion/docs/EN/cosign-bundle-migration.md). All steps of [hosted run 36332256483](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36332256483) completed successfully on that revision and an evidence artifact is available; its archive contents have not yet been audited. Actual F07 negative admission and a local repeat of the final released revision remain pending. Cosign 3.1.3 and Kyverno 1.19.1 remain pinned; all evidence consumers select `SigstoreBundle` with an independent image-signature predicate and separate local/hosted trust. Earlier [local compatibility](implementacion/registros/cosign_bundles_validation_EN.md), [hosted review](implementacion/registros/pr15_review_EN.md) and [import](implementacion/registros/validacion_importacion_ES.md) records retain their exact revisions and limitations.
 
 Complete the bundle acceptance checks and affected pilot before freezing the adopted campaign profile; keep classic development timings separate from bundle campaign measurements. Continue the remaining scenario fixtures and evaluation runner under the unchanged twenty-scenario method. Short-lived branches merge into `main`; scenarios remain versioned tests. Preserve results from later corrections as separate revisions.
 

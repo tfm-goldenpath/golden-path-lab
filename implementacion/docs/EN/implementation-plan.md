@@ -180,7 +180,7 @@ Raw evidence is ignored under `evidence/raw/<run-id>/`; reviewed summaries may g
 
 Before B, verify the published repository/ref, workflow paths, authorized identities and GHCR permissions. No private keys or long-lived credentials belong in Git. A's ignored local keys are not trusted by B. Pin each integration's version/source/checksum, review its license and retain compatibility evidence. Student quotas are not unlimited capacity; no paid service is introduced to complete this base.
 
-Copilot assistance follows the approved method: human requirements/oracles, bounded assignments, automated checks and human review. Assistance drafts remain excluded from this imported base; reviewed instructions enter through the dedicated collaboration increment. This plan does not install agents, hooks or MCP integrations, or present automatic review as human review.
+Copilot assistance follows the approved method: human requirements/oracles, bounded assignments, automated checks and human review. The repository now provides [contribution guidance](../../../CONTRIBUTING.md), root `AGENTS.md`, Copilot instructions and a scoped scenario-change skill. The [assistance guide](ai-assisted-development.md) explains their use and the lightweight evidence record. Check that the intended Copilot client loads these files and validate the process on a bounded task before marking operational adoption complete. Historical drafts are not active configuration; hooks, custom agents and MCP integrations remain optional. Automatic review does not count as human review, and AI remains excluded from measured manual tasks and runtime authorization.
 
 ## 10. Completion and next work
 

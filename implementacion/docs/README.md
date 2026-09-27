@@ -5,6 +5,8 @@ Choose a language:
 - [English — primary technical documentation](EN/README.md)
 - [Español — documentación de apoyo](ES/README.md)
 
+Start a contribution with the root [contribution guide](../../CONTRIBUTING.md). AI-assisted development has matching [English](EN/ai-assisted-development.md) and [Spanish](ES/ai-assisted-development.md) guides; the same requirements and deterministic checks apply with or without an assistant.
+
 ## Organization
 
 Shared topics have the same filename in each language directory. Each language index identifies the available guides; a missing translation is linked to its English version instead of copied as an untranslated Spanish document.
@@ -14,6 +16,7 @@ docs/
 ├── README.md
 ├── EN/
 │   ├── README.md
+│   ├── ai-assisted-development.md
 │   ├── architecture.md
 │   ├── delivery-contracts.md
 │   ├── environment.md
@@ -24,6 +27,7 @@ docs/
 │       └── runbook.md
 └── ES/
     ├── README.md
+    ├── ai-assisted-development.md
     ├── architecture.md
     ├── delivery-contracts.md
     ├── environment.md
