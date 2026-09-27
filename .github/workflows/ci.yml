@@ -2,17 +2,7 @@ name: Golden Path tests
 
 on:
   pull_request:
-    paths:
-      - 'implementacion/**'
-      - '.devcontainer/implementacion/**'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/golden-path.yml'
   push:
-    paths:
-      - 'implementacion/**'
-      - '.devcontainer/implementacion/**'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/golden-path.yml'
 
 permissions:
   contents: read

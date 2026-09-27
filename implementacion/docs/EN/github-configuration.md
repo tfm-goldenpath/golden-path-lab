@@ -66,7 +66,7 @@ Target the default branch and set enforcement to **Active** after the initial ch
 
 Do not enable **Restrict updates** on `main`: that is different from requiring reviewed PRs and can prevent normal updates by everyone except bypass actors. Administrators able to edit settings remain a trust assumption. A ruleset does not protect against complete administrative compromise. [Available rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
 
-The required CI must run on every PR, without workflow-level path filters. A skipped required workflow can leave the check pending. Remove the existing filters before making either `tests` or `quality` required, so documentation-only PRs also receive the required checks. [Required-check troubleshooting](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
+The required CI must run on every PR, without workflow-level path filters. `ci.yml` now triggers on every PR and push, including changes limited to documentation or AI guidance. Preserve this coverage when changing triggers: a skipped required workflow can leave the check pending. Only make checks required after they exist and have run successfully; `quality` remains planned. This source change does not configure a repository ruleset. [Required-check troubleshooting](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
 
 ### `release-tags`
 
