@@ -4,6 +4,10 @@
 
 Laboratorio reproducible de comprobaciones tempranas de políticas y entrega verificable a Kubernetes. La implementación acompaña al TFM **Golden Path para la entrega cloud-native: verificación temprana de políticas e integridad en el flujo CI/CD**. La memoria, el catálogo académico y las decisiones de investigación se mantienen en el [repositorio del TFM](https://github.com/tfm-goldenpath/golden-path).
 
+La base clásica **v0.1.0** está publicada en `9f1999e`. La [ejecución alojada 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654) superó L01/F13/F11 y la sustitución de imagen en `4f8fe77`, cambio incluido en esa versión. Su evidencia corresponde al commit ejecutado y al perfil clásico.
+
+Esta rama contiene el [candidato de migración a bundles de Cosign](implementacion/docs/ES/cosign-bundle-migration.md), con [PASS local de compatibilidad](implementacion/registros/cosign_bundles_validation_ES.md) en `run-De88fpWy`, incluida la recuperación estricta del inventario; siguen pendientes la admisión negativa real de F07 y OIDC, SCT y registro de transparencia reales en la vía alojada. Mantiene Cosign 3.1.3, Kyverno 1.19.1 y la confianza diferenciada de A/B. El método de veinte escenarios no cambia: fija el perfil adoptado tras el piloto y no mezcles tiempos de desarrollo clásico con mediciones de campaña bundle.
+
 ## Por qué se utiliza inglés
 
 La implementación y su documentación técnica principal utilizan inglés para facilitar la contribución internacional, la reutilización y la coherencia con la terminología del ecosistema cloud-native. Se adopta como convención habitual de la industria, no como una norma técnica obligatoria. Un ejemplo es [Kubernetes, que mantiene documentación original en inglés y traducciones comunitarias](https://kubernetes.io/docs/contribute/localization/). La memoria y la justificación académica permanecen en español.

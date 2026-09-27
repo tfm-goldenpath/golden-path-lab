@@ -138,11 +138,11 @@ function run(f, args, extra = {}) {
 
 const stages = (result) => result.events.map((entry) => entry.stage);
 
-for (const [mode, ref, failChain = 0] of [
-  ['local', 'main'], ['github', 'main'], ['github', 'fix/fulcio-chain'],
-  ...[1, 2, 3].map(stage => ['github', 'fix/fulcio-chain', stage]),
+for (const [mode, ref, failBundle = 0] of [
+  ['local', 'main'], ['github', 'main'], ['github', 'feat/cosign-bundles'],
+  ...[1, 2, 3].map(stage => ['github', 'feat/cosign-bundles', stage]),
 ]) {
-  test(`${mode}/${ref} signing preserves chain completion, identity and classic verification (failure ${failChain})`, t => {
+  test(`${mode}/${ref} requires bundles and preserves explicit trust (failure ${failBundle})`, t => {
     const fixtureState = fixture(t, { stubs: false });
     writeFileSync(join(fixtureState.privateDir, 'cosign.pub'), 'fixture public key');
     writeFileSync(join(fixtureState.privateDir, 'cosign.key'), 'fixture private key');
@@ -159,72 +159,71 @@ record() { :; }
 need() { :; }
 get() { printf '%s' "$GP_SIGNING_IDENTITY"; }
 capture() { printf '%s\0' "$@" >> "$GP_FIXTURE_ROOT/signing-commands"; printf '\0' >> "$GP_FIXTURE_ROOT/signing-commands"; }
-chain_count=0
-node() {
-  capture node "$@"
-  if [[ "$1" == scripts/complete-classic-chain.mjs ]]; then
-    chain_count=$((chain_count + 1))
-    if [[ "$chain_count" == "$GP_FAIL_CHAIN" ]]; then return 19; fi
+node() { capture node "$@"; }
+bundle_count=0
+cosign() {
+  capture cosign "$@"
+  if [[ "$1" == verify-blob-attestation ]]; then
+    bundle_count=$((bundle_count + 1))
+    if [[ "$bundle_count" == "$GP_FAIL_BUNDLE" ]]; then return 19; fi
   fi
-  return 0
 }
-cosign() { capture cosign "$@"; }
 gh() { capture gh "$@"; }
 attestations_verify_delivery
 attestations_authorize_results
-`], { GP_SIGNING_MODE: mode, GP_SIGNING_IDENTITY: identity, GP_SIGNING_REF: `refs/heads/${ref}`, GP_FAIL_CHAIN: String(failChain) });
-    assert.equal(result.status, failChain ? 19 : 0, result.stderr);
+`], { GP_SIGNING_MODE: mode, GP_SIGNING_IDENTITY: identity, GP_SIGNING_REF: `refs/heads/${ref}`, GP_FAIL_BUNDLE: String(failBundle) });
+    assert.equal(result.status, failBundle ? 19 : 0, result.stderr);
     const commands = readFileSync(join(fixtureState.root, 'signing-commands'), 'utf8')
       .split('\0\0').filter(Boolean).map(command => command.split('\0'));
-    if (failChain) {
-      assert.equal(commands.at(-1)[1], 'scripts/complete-classic-chain.mjs');
-      assert.equal(commands.filter(command => command[1] === 'scripts/complete-classic-chain.mjs').length, failChain);
-      assert.equal(commands.filter(command => command[0] === 'cosign' && ['verify', 'verify-attestation'].includes(command[1])).length, failChain - 1);
+    assert.ok(!commands.some(command => command.includes('scripts/complete-classic-chain.mjs')));
+    assert.ok(!commands.some(command => command[0] === 'cosign' && command[1] === 'download'));
+    assert.ok(!commands.flat().some(arg => /--new-bundle-format|--use-signing-config|--tlog-upload/.test(arg)));
+    if (failBundle) {
+      assert.equal(commands.at(-1)[1], 'verify-blob-attestation');
+      assert.equal(commands.filter(command => command[1] === 'verify-blob-attestation').length, failBundle);
       return;
     }
     const signing = commands.filter(command => command[0] === 'cosign' && ['sign', 'attest'].includes(command[1]));
     assert.equal(signing.length, mode === 'local' ? 4 : 3);
-    assert.ok(signing.some(command => command.includes('cyclonedx')));
-    assert.ok(signing.some(command => command.includes('https://tfm-goldenpath.dev/attestations/verification-results/v1')));
+    assert.equal(new Set(signing.map(command => command[command.indexOf('--bundle') + 1])).size, signing.length);
     for (const command of signing) {
-      assert.equal(command.filter(arg => arg === '--new-bundle-format=false').length, 1);
-      assert.equal(command.filter(arg => arg === '--use-signing-config=false').length, 1);
       assert.equal(command.at(-1), image);
+      assert.ok(command[command.indexOf('--bundle') + 1].endsWith('.bundle.json'));
       assert.equal(command.includes('--key'), mode === 'local');
-      assert.equal(command.includes('--tlog-upload=false'), mode === 'local');
+      assert.equal(command.includes('--signing-config'), mode === 'local');
       assert.equal(command.includes('--allow-insecure-registry'), mode === 'local');
-      assert.equal(command.includes('--trusted-root'), mode === 'github');
+      assert.ok(command.includes('--trusted-root'));
     }
-    const verification = commands.filter(command => command[0] === 'cosign' && ['verify', 'verify-attestation'].includes(command[1]));
-    assert.equal(verification.length, mode === 'local' ? 4 : 3);
+    const verification = commands.filter(command => command[0] === 'cosign' && command[1].startsWith('verify'));
+    assert.equal(verification.length, mode === 'local' ? 8 : 6);
     for (const command of verification) {
-      assert.ok(command.includes('--new-bundle-format=false'));
+      assert.notEqual(command[1], 'verify', 'generic image verification is not sufficient for F07');
       assert.equal(command.includes('--insecure-ignore-tlog'), mode === 'local');
       if (mode === 'github') {
         assert.equal(command[command.indexOf('--certificate-identity') + 1], identity);
         assert.equal(command[command.indexOf('--certificate-oidc-issuer') + 1], 'https://token.actions.githubusercontent.com');
       }
+      if (command[1] === 'verify-blob-attestation') {
+        assert.equal(command.includes('--allow-insecure-registry'), false);
+        assert.equal(command[command.indexOf('--digest') + 1], digest.slice(7));
+      }
     }
+    assert.equal(verification[0][verification[0].indexOf('--type') + 1], 'https://sigstore.dev/cosign/sign/v1');
     const provenance = commands.find(command => command[0] === 'gh' && command[1] === 'attestation');
-    const completion = commands.filter(command => command[0] === 'node' && command[1] === 'scripts/complete-classic-chain.mjs');
     if (mode === 'github') {
       assert.equal(commands[0].slice(0, 4).join(' '), 'cosign trusted-root create --with-default-services');
-      assert.deepEqual(completion.map(command => command[3]), ['sig', 'att', 'att']);
-      for (const command of completion) {
-        assert.equal(command[2], image);
-        assert.ok(command[4].endsWith('/sigstore-trusted-root.json'));
-        const i = commands.indexOf(command);
-        assert.ok(['sign', 'attest'].includes(commands[i - 1][1]));
-        assert.ok(['verify', 'verify-attestation'].includes(commands[i + 1][1]));
-      }
       assert.ok(provenance.includes('--bundle-from-oci'));
       assert.ok(provenance.includes('--deny-self-hosted-runners'));
       assert.equal(provenance[provenance.indexOf('--cert-identity') + 1], identity);
       assert.equal(provenance[provenance.indexOf('--source-ref') + 1], `refs/heads/${ref}`);
     } else {
       assert.equal(provenance, undefined);
-      assert.equal(completion.length, 0);
+      assert.deepEqual(commands[0], ['cosign', 'signing-config', 'create']);
+      assert.deepEqual(commands[1], ['cosign', 'trusted-root', 'create']);
     }
+    assert.ok(commands.some(command => command[1] === 'scripts/check-bundle-profile.mjs' && command.at(-1) === 'authorized'));
+    assert.ok(commands.some(command => command[1] === 'scripts/download-bundle-inventory.mjs'
+      && command[2] === mode && command[3] === image && command.at(-1).endsWith('/registry-inventory-authorized.json')));
   });
 }
 

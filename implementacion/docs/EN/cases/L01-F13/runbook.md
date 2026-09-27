@@ -6,7 +6,7 @@
 
 The first demonstration integrates `quotes-node`, an image registry, early policies, vulnerability scanning, an SBOM, signatures, provenance and Kubernetes admission. It combines **L01**, a complete legitimate delivery, with **F13**, a missing mandatory results attestation. The [case specification](README.md) defines the oracle and limitations.
 
-Outputs below are **expected results**, not a claim that a new run has been performed. Unit tests alone do not establish Docker/Kubernetes integration, and the local lane does not establish GitHub OIDC identity. Each run's evidence records its observed result.
+Outputs below are **expected results**, not a claim that a new run has been performed. The bundle profile on `feat/cosign-bundles` passed the local compatibility run with strict inventory retrieval recorded below; full acceptance remains pending real hosted OIDC, SCT and transparency-log validation. Unit tests alone do not establish Docker/Kubernetes integration, and the local lane does not establish GitHub OIDC identity. Each run's evidence records its observed result.
 
 ## 1. Open the correct environment
 
@@ -102,6 +102,8 @@ make reference
 
 R uses the same API and functional build, deployed to its reference namespace. It does not require G's experimental policies or authorizing evidence. Ordinary Kubernetes validation and functional checks remain: R does not represent a team without automation.
 
+After the bundle pilot passes, freeze the adopted revision and profile before campaign measurements. Do not pool classic development timings with bundle campaign measurements; the twenty-scenario method remains unchanged.
+
 The initial R/G comparison reuses one digest. The later L01 replacement uses a second digest only in G. **This is not a timing-campaign pair**: the extra UPDATE build does not provide independent reference and protected builds. Recorded times are diagnostics, not the final experimental overhead.
 
 ## 4. Run real GitHub integration: lane B
@@ -122,14 +124,14 @@ Attestation availability and Actions quotas depend on repository visibility and 
 
 `act` can check compatible workflow steps, but does not provide GitHub's hosted OIDC identity and services. Use `make demo` for the first complete local run; actual lane B requires GitHub.
 
-### Test a correction before merging it
+### Test the bundle candidate before merging it
 
-Once the manual workflow is registered on the default branch, a new dispatch can select the workflow and source from a published correction branch. The correction does not need to be merged first. The following commands can run in **Git Bash on Windows** with authenticated GitHub CLI; they request a hosted run, rather than running the laboratory on Windows. Create and publish `fix/fulcio-chain` yourself before using this example, or replace it with the actual branch name. [GitHub manual dispatch](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [workflow reference selection](https://cli.github.com/manual/gh_workflow_run).
+Once the manual workflow is registered on the default branch, a new dispatch can select the workflow and source from a published correction branch. The correction does not need to be merged first. The following commands can run in **Git Bash on Windows** with authenticated GitHub CLI; they request a hosted run, rather than running the laboratory on Windows. Create and publish `feat/cosign-bundles` yourself before using this example, or replace it with the actual branch name. [GitHub manual dispatch](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [workflow reference selection](https://cli.github.com/manual/gh_workflow_run).
 
 ```bash
 gh workflow run golden-path.yml \
   --repo tfm-goldenpath/golden-path-lab \
-  --ref fix/fulcio-chain
+  --ref feat/cosign-bundles
 ```
 
 Identify the new run and check that `headBranch` and `headSha` match the branch and committed correction you intend to validate. If it is not visible immediately, repeat the list command; do not dispatch another run merely to refresh the list.
@@ -138,7 +140,7 @@ Identify the new run and check that `headBranch` and `headSha` match the branch 
 gh run list \
   --repo tfm-goldenpath/golden-path-lab \
   --workflow golden-path.yml \
-  --branch fix/fulcio-chain \
+  --branch feat/cosign-bundles \
   --event workflow_dispatch \
   --limit 10 \
   --json databaseId,headSha,headBranch,status,conclusion,url
@@ -164,19 +166,29 @@ An early failure may produce no artifact; retain the run URL and logs in that ca
 
 Do not use **Re-run jobs** on an older `main` run to test a newly pushed correction: a rerun retains the original commit and ref. Start a new dispatch on the correction branch. [GitHub rerun semantics](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs).
 
-The temporary cluster authorizes the exact workflow identity for the selected branch, for example `https://github.com/tfm-goldenpath/golden-path-lab/.github/workflows/golden-path.yml@refs/heads/fix/fulcio-chain`, and the corresponding source commit. It does not use a wildcard or present the branch as an approved production release. This workflow currently references no GitHub environment; repository and organization permissions still apply. It publishes to the shared GHCR package, using a per-run image label and digest; cleanup does not remove those remote images or their evidence. After review and merge, validate the resulting `main` revision separately.
+The temporary cluster authorizes the exact workflow identity for the selected branch, for example `https://github.com/tfm-goldenpath/golden-path-lab/.github/workflows/golden-path.yml@refs/heads/feat/cosign-bundles`, and the corresponding source commit. It does not use a wildcard or present the branch as an approved production release. This workflow currently references no GitHub environment; repository and organization permissions still apply. It publishes to the shared GHCR package, using a per-run image label and digest; cleanup does not remove those remote images or their evidence. After review and merge, validate the resulting `main` revision separately.
 
-### Fulcio certificate-chain compatibility and acceptance
+### Bundle compatibility and acceptance
 
-For hosted classic Cosign evidence, the delivery code exports Sigstore trust material authenticated through Cosign's TUF client to `sigstore-trusted-root.json`. The [chain-completion helper](../../../../scripts/complete-classic-chain.mjs) fills the public certificate-chain annotation of the classic `.sig` and `.att` evidence manifests from that authenticated material. It preserves the application image digest, signed payloads and signatures, and the configured roots of trust. The evidence manifest digest may change because its chain annotation changes. GitHub's native provenance bundle and local development signing are outside this adjustment; normal Cosign and Kyverno verification remain mandatory.
+This branch uses the candidate bundle profile described in the [migration guide](../../cosign-bundle-migration.md), with Cosign 3.1.3 and Kyverno 1.19.1 unchanged. All image evidence rules use `SigstoreBundle`; `tfm-signature` independently requires `https://sigstore.dev/cosign/sign/v1`. The active path does not complete classic certificate-chain annotations or silently retry classic verification.
 
-Inspect `sigstore-trusted-root.json`, `image-chain.json`, `sbom-chain.json` and `results-chain.json` in the package when the corresponding steps have been reached. The chain reports record certificate fingerprints and the original/completed evidence manifests, allowing the metadata adjustment to be reviewed. A successful helper result alone does not establish successful admission.
+Lane A uses `local-signing-config.json` without public signing/log services and `local-trusted-root.json` without hosted CA/log material; the development public key supplies trust. Only A permits no-log/no-SCT verification and isolated HTTP registry access. Lane B retains authenticated `sigstore-trusted-root.json`, exact GitHub identity and issuer, certificate trust and required transparency/timestamp checks. Do not copy A's exceptions into B to obtain a successful run.
 
-The [hosted run 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700/job/108596721755) passed certificate-chain verification and the initial L01/F13/F11 demonstration. Its final legitimate UPDATE changed an annotation only; it does not validate the new image-replacement flow. Start a new dispatch on the revised commit to exercise the second provenance issuance and replacement admission. The complete workflow should be green when F13 is rejected **only** for missing results, signed results permit L01, the prohibited F11 update is rejected and the distinct-image L01 update becomes ready. Preserve unrelated signature, provenance or network failures as integration failures.
+The classic [run 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700) validated the earlier annotation-only UPDATE. The later classic [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654), on `4f8fe77`, passed L01/F13/F11 and independently verified image replacement; its artifacts were audited. The released v0.1.0 is at `9f1999e`, which includes that change. Neither classic run validates this bundle candidate or a different commit.
+
+Start a fresh dispatch on the published `feat/cosign-bundles` commit and verify its `headSha` before interpreting the result. Acceptance requires F13 rejection **only** for missing results, L01 admission after results issuance, F11 rejection and a ready replacement digest with its own verified evidence. In addition, the migration acceptance checks must show that other valid bundles cannot substitute for the independent image-signature predicate, and reject tampering, unauthorized trust and wrong digests. Preserve retrieval, signature, provenance and network failures as integration failures.
+
+[Local bundle run `run-De88fpWy`](../../../../registros/cosign_bundles_validation_EN.md) passed with pinned tools, fresh zot/kind and strict inventory retrieval: attributed F13/F11 rejections, L01 admission and rollout of the independently verified replacement digest. The host used Docker Engine 24.0.5/cgroup v1 with explicit `GP_CGROUP_V1_COMPAT=1`. This is compatibility evidence, not the campaign environment or a timing measurement. The run used the modified working tree based on `9f1999e`, identified by the source snapshot in the linked record. Real hosted OIDC, SCT and transparency-log validation and actual F07 negative admission remain pending; the migration is not fully accepted. Keep raw bundles, verifier outputs and applied policies proving the profile exercised.
+
+Kyverno 1.19.1's bundle verifier reports `no matching signatures found` both for missing predicates and some trust failures. F13 therefore requires exactly one identified `tfm-results`/`require-results` rejection (including its generated Deployment rule), valid bundle-only inventories captured before and after denial, with the original preflight revalidated before the request, absent results and present image-signature/SBOM/provenance predicates for the same digest. Other admission policies must pass, and L01 must subsequently admit that same digest after results issuance before the overall run can pass. Inventory parsing is structural evidence, not signature authentication. Additional rules, malformed or unavailable inventories and unrelated verification errors fail the test.
+
+The [strict inventory retriever](../../../../scripts/download-bundle-inventory.mjs) replaces any assumption that successful Cosign download output contains every bundle. It performs read-only OCI referrer retrieval with bounded pagination/fallback, checks manifest/blob digests and sizes, validates all expected bundles and requires a matching second listing. It fails on unreadable, malformed, unsupported or changing inventory instead of interpreting missing output as missing results. Local HTTP is confined to A; GHCR uses a fixed repository pull scope. Retain `registry-inventory-before-results.json`, `registry-inventory-after-denial.json` and `registry-inventory-authorized.json` with their bundle arrays. Retrieval integrity is separate from cryptographic trust; see the [migration rationale](../../cosign-bundle-migration.md#strict-registry-inventory-retrieval).
 
 ## 5. Evidence and cleanup
 
-Raw results go under `evidence/raw/`; packages go under `evidence/packages/`. Both are ignored by Git. Retain the run identifier and immutable image reference to relate reports, signatures, admission responses and HTTP checks.
+Raw results go under `evidence/raw/`; packages go under `evidence/packages/`. Both are ignored by Git. Retain the run identifier and immutable image reference to relate reports, signatures, admission responses and HTTP checks. The after-denial snapshot is `attestation-inventory-after-denial.json`; retain `bundle-profile-before-results.json`, `bundle-profile-after-denial.json`, `F13-early.json` and `F13-after-denial.json` with the original admission log. `development-public-key.pem` is retained for reproducible local verification; private keys remain excluded.
+
+For each image, retain `image.bundle.json`, `sbom.bundle.json`, `results.bundle.json` and, in A, `provenance.bundle.json`, alongside successful Cosign/GitHub verifier outputs. B's native provenance is retained in the complete inventories. Preserve `attestation-inventory-before-results.json` for F13 and `bundle-inventory-authorized.json` after authorization. `evidence-profile.json` records the `sigstore-bundle-v0.3` representation, digest, phase and predicates; its structural checks are not cryptographic verification. Keep original CycloneDX JSON and trust material as well. Files from unreached steps may be absent in failed runs; document that failure.
 
 Within each run, `L01-update/` retains the replacement build, image-specific reports and attestations, admission log, Deployment and Pods. `L01-image-update.json` in the parent records the original and replacement references, observed Deployment generation and ready Pods' runtime image IDs; `result.json` includes it as `legitimateUpdate`. Both images' evidence is included in the evaluation package.
 

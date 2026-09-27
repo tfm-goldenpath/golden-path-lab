@@ -53,7 +53,8 @@ export function checkStatements(text, digest, predicateType, validate) {
     throw new Error('A canonical SHA-256 digest is required');
   }
   const expectedDigest = digest.replace(/^sha256:/, '');
-  // Cosign classic may print a JSON object per line or an array of verified envelopes.
+  // Consume authenticated CLI output, not raw unverified bundles. The pinned CLI
+  // prints verified envelopes/statements as JSON or JSONL for both profiles.
   let values;
   try { const v = JSON.parse(text); values = Array.isArray(v) ? v : [v]; }
   catch { values = text.trim().split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line)); }
@@ -103,6 +104,9 @@ function main([command, ...args]) {
       checkStatements(fs.readFileSync(file, 'utf8'), digest, type, predicate => {
         if (type === RESULTS_TYPE) validateResults(predicate, repository, commit);
         else if (type === 'https://cyclonedx.org/bom') validateSbom(predicate);
+        else if (type === 'https://sigstore.dev/cosign/sign/v1') {
+          if (!predicate || typeof predicate !== 'object' || Array.isArray(predicate)) throw new Error('Invalid image-signature predicate');
+        }
         else if (predicate.buildDefinition?.externalParameters?.workflow?.repository !== repository
           || predicate.buildDefinition?.resolvedDependencies?.[0]?.digest?.gitCommit !== commit) throw new Error('Incorrect build origin');
       }); break;

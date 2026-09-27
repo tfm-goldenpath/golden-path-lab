@@ -10,6 +10,7 @@ from pathlib import Path
 RESULTS_TYPE = "https://tfm-goldenpath.dev/attestations/verification-results/v1"
 PROVENANCE_TYPE = "https://slsa.dev/provenance/v1"
 SBOM_TYPE = "https://cyclonedx.org/bom"
+SIGNATURE_TYPE = "https://sigstore.dev/cosign/sign/v1"
 CHECKS = (
     "unitTests", "manifestPolicy", "workflowPolicy", "vulnerabilityPolicy",
     "signature", "sbom", "provenance",
@@ -57,7 +58,12 @@ def render(config):
         public_key = config["public_key"]
         if "-----BEGIN PUBLIC KEY-----" not in public_key or "-----END PUBLIC KEY-----" not in public_key:
             raise ValueError("The development PEM public key is required")
-        attestor = {"keys": {"publicKeys": public_key, "rekor": {"ignoreTlog": True}}}
+        # Timestamp-free development keys need both exceptions in Kyverno's
+        # bundle verifier. Neither exception belongs in the hosted OIDC profile.
+        attestor = {"keys": {
+            "publicKeys": public_key, "rekor": {"ignoreTlog": True},
+            "ctlog": {"ignoreSCT": True},
+        }}
     elif config["mode"] == "github":
         identity = config["identity"]
         if not identity.startswith(config["repository"] + "/.github/workflows/") or "@refs/" not in identity:
@@ -127,27 +133,25 @@ def render(config):
 
     def verifier():
         result = {
-            "type": "Cosign", "imageReferences": [image_repository + "@sha256:*"],
+            "type": "SigstoreBundle", "imageReferences": [image_repository + "@sha256:*"],
             "mutateDigest": False, "verifyDigest": True, "required": True,
         }
         if config.get("registry_secret"):
             result["imageRegistryCredentials"] = {"secrets": [config["registry_secret"]]}
         return result
 
-    def attestation_policy(name, rule, predicate_type, conditions, bundle=False):
+    def attestation_policy(name, rule, predicate_type, conditions=()):
         check = verifier()
-        if bundle:
-            check["type"] = "SigstoreBundle"
-        descriptor = {"attestors": copy.deepcopy(attestors), "conditions": [{"all": conditions}]}
-        descriptor["type"] = predicate_type
+        descriptor = {"type": predicate_type, "attestors": copy.deepcopy(attestors)}
+        if conditions:
+            descriptor["conditions"] = [{"all": conditions}]
         check["attestations"] = [descriptor]
         return policy(name, [{"name": rule, "match": match_resources(), "verifyImages": [check]}])
 
-    signature_check = verifier()
-    signature_check["attestors"] = copy.deepcopy(attestors)
-    signature = policy("tfm-signature", [{
-        "name": "require-image-signature", "match": match_resources(), "verifyImages": [signature_check],
-    }])
+    # Generic bundle signature verification can accept any signed predicate for
+    # the digest. Require Cosign's own image-signing statement independently so
+    # SBOM, provenance or results alone cannot satisfy the F07 barrier.
+    signature = attestation_policy("tfm-signature", "require-image-signature", SIGNATURE_TYPE)
     sbom = attestation_policy("tfm-sbom", "require-sbom", SBOM_TYPE, [
         condition("bomFormat", "CycloneDX"), condition("specVersion", config["sbom_version"]),
     ])
@@ -156,7 +160,7 @@ def render(config):
                   if config["mode"] == "github" else "https://tfm-goldenpath.dev/buildtypes/local/v1"),
         condition("buildDefinition.externalParameters.workflow.repository", config["repository"]),
         condition("buildDefinition.resolvedDependencies[0].digest.gitCommit", config["commit"]),
-    ], bundle=config["mode"] == "github")
+    ])
     results = attestation_policy("tfm-results", "require-results", RESULTS_TYPE, [
         condition("policyVersion", config.get("policy_version", "golden-path-v1")),
         condition("source.repository", config["repository"]), condition("source.commit", config["commit"]),

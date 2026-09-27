@@ -1,41 +1,59 @@
-# Future improvement: migration to Cosign Sigstore bundles
+# Cosign Sigstore bundle migration
 
 [English](cosign-bundle-migration.md) · [Español](../ES/cosign-bundle-migration.md) · [Documentation index](README.md)
 
-**Status: bundle migration deferred.** This document records the compatibility analysis and impact of a future migration, alongside separate corrections to the current baseline. Bundle adoption requires the integration checks below.
+**Status: local compatibility PASS including strict inventory retrieval. Full acceptance remains pending real hosted OIDC, SCT and transparency-log validation, and the actual F07 negative admission check.** This branch changes producers and consumers together. Configuration and regression checks do not establish registry or admission interoperability. The released classic baseline is **v0.1.0**, commit `9f1999e`; its observations are not bundle validation.
 
-## Purpose and current baseline
+[Local run `run-De88fpWy`](../../registros/cosign_bundles_validation_EN.md) passed with pinned tools, fresh zot/kind and strict inventory retrieval: F13 and F11 were rejected for their expected reasons, L01 was admitted, and its independently verified replacement digest completed rollout. The host used Docker Engine 24.0.5 with cgroup v1 and explicit `GP_CGROUP_V1_COMPAT=1`. This is compatibility evidence, not the prescribed campaign environment or a timing measurement. The run validates the modified working tree based on `9f1999e`, with source snapshot `8d79c68d46569c826fb43d693c03dc767631c715f039021717642d3d2991cc0a`; it is not an execution of unchanged v0.1.0. Hosted trust and actual F07 negative admission remain separate pending checks.
 
-The proposed improvement is to use Cosign's default Sigstore bundle representation for the image signature, CycloneDX SBOM, local provenance and signed results. Native GitHub provenance already uses a Sigstore bundle. Following the supported default reduces dependence on a deprecated format option; it does not, by itself, increase the demonstrated SLSA level or prove stronger control effectiveness.
+## Selected profile
 
-The reviewed tool combination is Cosign **3.1.3**, Kyverno **1.19.1** and Kyverno chart **3.9.1**. The [tool lock](../../tools.lock.json) remains authoritative for the active configuration. Current signing explicitly uses `--new-bundle-format=false --use-signing-config=false`; verification selects the classic format. The signing-configuration correction and this future format migration are separate changes.
+Cosign **3.1.3**, Kyverno **1.19.1** and chart **3.9.1** remain pinned by the [tool lock](../../tools.lock.json). Cosign emits its default Sigstore bundles for the image signature, original CycloneDX SBOM, local provenance and signed results. Native GitHub provenance remains an `actions/attest` bundle. The active path removes classic-format overrides and classic certificate-chain metadata completion; it has no silent classic fallback.
 
-The [delivery contracts](delivery-contracts.md) distinguish local development-key trust in lane A from GitHub OIDC identity and transparency verification in lane B. That separation must remain after migration. A shared bundle format does not make the two producers equally trusted.
+All image evidence policies select `verifyImages.type=SigstoreBundle`. The independent image-signature rule explicitly requires `https://sigstore.dev/cosign/sign/v1`: a valid SBOM, provenance or results bundle must not satisfy that requirement. The in-toto statement's `predicateType` and Kyverno's `attestations[].type` remain distinct fields. Source, digest, predicate, policy and successful-check conditions still apply.
 
-## Deprecation handling in the current baseline
-
-The [policy renderer](../../policies/kyverno/render.py) uses `verifyImages[].attestations[].type` for the expected predicate URI in both classic and bundle verification. Kyverno 1.19.1's [attestation API](https://github.com/kyverno/kyverno/blob/v1.19.1/api/kyverno/v1/image_verification_types.go) defines this field as the replacement for `predicateType`; its [engine](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go) already normalizes the old field to `type` before selecting and checking predicates. This removes the deprecated policy-field usage while retaining the selected verification method, authorized signer and predicate conditions. The in-toto statement itself still uses `predicateType`; that signed-content field is a different contract. Renderer tests cover both trust profiles and the separate SBOM, provenance and results predicates; a new hosted run must confirm the updated policies in admission.
-
-Two warnings require a broader migration and remain visible:
-
-- **Cosign `--new-bundle-format=false`:** Cosign 3.1.3 defaults this option to `true` for [signing](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go) and [verification](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/verify.go). Deleting the option would change the evidence format and consumer behaviour. The explicit classic selection remains until the producer/consumer migration passes the checks below; standard error is not suppressed.
-- **Kyverno `ClusterPolicy`:** replacing this deprecated resource requires migrating runtime and image-verification policies to the supported policy families, including their match scope, enforcement, trust, readiness and rejection classification. The [official migration guide](https://kyverno.io/docs/guides/migration-to-cel/) schedules removal in 1.20: the current policies must not be carried into that upgrade unchanged. Renaming an API kind or merely switching the signature format cannot establish equivalent behaviour; the laboratory must repeat its positive and negative integration checks before adoption.
-
-Lane A also emits a deprecation warning for `--tlog-upload=false`. Its replacement is a signing configuration without transparency-log services, tested as part of bundle migration. Preserve local development-key verification and the local-only trust boundary; do not apply this exception to lane B, where identity and transparency verification remain mandatory. Local warnings about explicitly skipping transparency verification describe that existing development profile and are not hidden.
-
-These are recorded compatibility constraints of the pinned baseline, not claims that the deprecated interfaces will remain supported indefinitely. In particular, the predicate-field correction does not complete either migration.
-
-## Confirmed findings and remaining uncertainty
-
-| Finding | Evidence | Migration consequence |
+| Lane | Producer and trust | Consumer requirements |
 | --- | --- | --- |
-| F13 previously required a classic DSSE envelope at the top level. | Hosted run `36277828157` failed on a mixed inventory containing v0.3 GitHub provenance and a classic SBOM. The retained inventory reproduces the failure. | The baseline parser now unwraps supported v0.3 `dsseEnvelope` entries before applying the existing validation. This corrects representation handling, not cryptographic verification or admission. |
-| Cosign 3.1.3 `download attestation` already retrieves bundles and classic attestations. | The pinned implementation tries `GetBundles`, emits bundle JSON and then retrieves classic attestations [1]. | The command need not be replaced solely because of the migration; its output consumer must understand the returned representations. |
-| The current Kyverno `Cosign` configuration selects classic verification. | The pinned ClusterPolicy adapter builds classic options; `SigstoreBundle` selects a separate verifier [3][4]. | Changing only the producer flags would leave consumers misconfigured. |
-| Kyverno 1.19.1 has a bundle path for public keys and OIDC certificate identities. | The bundle policy and trusted-material builders support both configurations [4]. | There is no established need to replace Kyverno or change policy families solely to support bundles. Actual integration remains unverified. |
-| The current local trust settings are incomplete for timestamp-free bundles. | The renderer sets `keys.rekor.ignoreTlog`, but an absent CT-log configuration leaves `IgnoreSCT=false`. The bundle verifier then requests an observer timestamp [4][5]. | For local development-key bundles without log timestamps, explicitly configure both `keys.rekor.ignoreTlog: true` and `keys.ctlog.ignoreSCT: true`. Keep these exceptions out of lane B. |
-| A generic bundle signature check does not enforce the separate image-signature predicate. | The bundle signature path can accept a valid bundle for the digest without filtering its predicate. Cosign's image-signing predicate is `https://sigstore.dev/cosign/sign/v1` [2][3][4]. | Require that predicate explicitly for the independent image-signature control. A signed SBOM or provenance must not satisfy it accidentally. |
-| Raw bundle parsing and verified CLI output are different interfaces. | `lab-contracts.mjs` accepts classic envelopes and decoded statements, but not a raw bundle wrapper. This alone does not establish the shape of successful `verify-attestation` output. | Inspect output from the pinned CLI before changing this parser. Process content only after successful cryptographic verification. |
+| A: local development | Ephemeral development key; explicit signing configuration without public transparency-log services. | Verify with that public key. Only A permits `keys.rekor.ignoreTlog: true` and `keys.ctlog.ignoreSCT: true`, matching bundles without public log timestamps. The isolated registry may use HTTP. |
+| B: GitHub | GitHub OIDC and the hosted default signing configuration; authenticated Sigstore trust material and native GitHub provenance. | Exact workflow identity and issuer, certificate trust, digest and required predicates; retain transparency and applicable timestamp/SCT verification. No local trust exceptions, wildcard identities or insecure registry transport. |
+
+The [delivery contracts](delivery-contracts.md) define the trust boundary. A common representation does not give a local development key GitHub authority. Parsing downloaded JSON is not cryptographic verification; content checks consume successful verifier output. Raw downloaded bundles and verified outputs are separate retained artifacts.
+
+`ClusterPolicy` remains in this candidate. Its deprecation and a future policy-family migration are separate work, requiring scope, readiness, enforcement and rejection-attribution checks before a Kyverno upgrade that removes it. Warnings are not hidden. The old [classic chain helper](../../scripts/complete-classic-chain.mjs) and its tests remain historical compatibility support pending full hosted bundle acceptance; the migrated path does not call it or apply `.sig`/`.att` annotations to bundles.
+
+## Strict registry inventory retrieval
+
+Cosign 3.1.3's [`GetBundles`](https://github.com/sigstore/cosign/blob/v3.1.3/pkg/cosign/verify.go) skips individual referrers that cannot be read or parsed as bundles. Successful `cosign download attestation` output therefore cannot establish a complete inventory or prove that results are absent.
+
+The new [read-only inventory helper](../../scripts/download-bundle-inventory.mjs) retrieves OCI referrers directly, using bounded pagination and the specified fallback index when needed; see the [OCI Distribution 1.1 referrers contract](https://github.com/opencontainers/distribution-spec/blob/v1.1.0/spec.md#listing-referrers). It verifies manifest/blob sizes and digests, validates every expected bundle and requires an unchanged second listing. Missing, malformed, unsupported, over-limit or changed retrieval stops the check; entries are not silently discarded. Local HTTP remains isolated to A; hosted access uses HTTPS and a fixed GHCR repository pull scope.
+
+The helper emits the bundle array and `registry-inventory-before-results.json`, `registry-inventory-after-denial.json` or `registry-inventory-authorized.json` alongside the corresponding content/profile reports. These records establish the checked retrieval from the configured registry, not signature trust or an atomic, independently complete view of a potentially dishonest registry. Cosign/GitHub and admission still authenticate evidence separately. The complete strict-retrieval path passed local compatibility run `run-De88fpWy`; hosted retrieval and trust still require their own execution.
+
+## Acceptance and evidence
+
+Run the [local and branch-hosted acceptance sequence](cases/L01-F13/runbook.md) on the exact candidate commit, using fresh per-run image digests. Do not infer bundle use from a generic successful verification when residual classic evidence could be present.
+
+- [x] Verify actual publication, strict inventory retrieval and cryptographic verification in A: compatibility run `run-De88fpWy`, with fresh zot/kind and no classic fallback.
+- [ ] Verify B on GitHub/GHCR with real OIDC, the exact authorized workflow identity, authenticated certificate trust and required transparency/timestamp material.
+- [ ] Repeat in B the F13 missing-results attribution and subsequent L01 admission for the same digest. Local run `run-De88fpWy` passed the sequence with strict before/after retrieval and same-digest L01 acceptance.
+- [ ] Repeat in B the F11 rejection and independently verified L01 replacement, including rollout and functional comparison. Local run `run-De88fpWy` passed both checks with strict inventory retrieval.
+- [ ] Complete the actual F07 negative admission check: retain valid SBOM/provenance/results but omit the image-signature predicate; admission must reject it. Passing cryptographic probes and policy regressions do not replace this check. Retain the negative-check contracts for altered signatures, unauthorized keys/identities, wrong digests and incompatible or unsuccessful results; retrieval/verifier failure must stop the mandatory check.
+- [x] Preserve both local image evidence sets and verify the archive plus all 111 internal hashes: [validation record](../../registros/cosign_bundles_validation_EN.md). Eight raw bundles, public development keys, original CycloneDX JSON, verifier outputs, profiles, policies and admission responses are included; credentials and private keys are excluded.
+- [ ] Repeat package preservation and checksum verification for B, including authenticated hosted trust material and native provenance.
+- [x] Record the local working-tree snapshot, base commit, versions, run identifier and limitations in the validation record.
+- [ ] Record the actual hosted commit and results, then repeat affected pilot checks before freezing the adopted bundle profile for campaign measurement.
+
+The public commands remain `make test`, `make demo` and manual `golden-path.yml`; preparing this candidate does not dispatch GitHub or publish a branch. The candidate is ready for maintainer publication and hosted validation after review; publish the intended revision and dispatch that exact commit. Actual F07 negative admission remains an acceptance task. A failed integration is retained as such; it does not justify weakening the hosted trust profile.
+
+## Experimental scope
+
+The thesis method and twenty-scenario catalogue remain unchanged: F07 concerns independent image signing, F13 missing authorization and F14 incompatible policy. CycloneDX remains the mandatory SBOM, and results remain a custom VSA-inspired predicate. Bundle adoption alone establishes neither VSA conformance nor a higher SLSA level.
+
+Freeze the adopted implementation, trust profile and tool versions after the pilot, before collecting campaign measurements. Run R and G from that same frozen revision; R omits G's experimental signing, attestation and admission controls while retaining ordinary Kubernetes and functional checks. Keep classic development timings and bundle campaign measurements separate. Preserve v0.1.0, prior PR descriptions and [historical records](../../registros/); report later corrections as different revisions. Thesis editing is a separate task.
+
+## Historical classic compatibility findings
+
+The following chronology preserves observations and pending work **as recorded at the time**. References below to an active classic adapter or a deferred migration describe that historical baseline, not this branch's bundle path.
 
 **Baseline correction independent of migration:** [hosted run 36277828157](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36277828157/job/108503864945) confirmed the mixed-inventory failure after successful signing and verification. The correction accepts classic DSSE and `application/vnd.dev.sigstore.bundle.v0.3+json` attestation bundles, preserves digest/predicate/SBOM checks and rejects malformed, ambiguous or unsupported wrappers. Bundled results for the expected digest still prevent F13 attribution. Verification material must select exactly one certificate, certificate-chain or public-key-identifier shape; nested log and timestamp fields are checked for supported structure, field types and byte encoding. These checks follow the [v0.3 material definition](https://github.com/sigstore/protobuf-specs/blob/main/protos/sigstore_bundle.proto), not certificate trust or cryptographic validity: parsing is not authentication. The original inventory is replayed offline after checking the retained archive's checksum. This does not establish completion of the subsequent live admission checks.
 
@@ -62,54 +80,15 @@ Regression tests exercise real generated certificate signatures and mocked regis
 
 **Completed baseline integration:** [run 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700/job/108596721755), on `main` at commit `21f8fc46b158ae209c657c33f9376254223d62df`, subsequently completed the classic-profile sequence with `PASS`: F13 was denied for the missing results predicate, L01 was admitted and healthy after results issuance, and F11 was denied for privilege escalation. Its final legitimate update changed a Deployment annotation; it did not test delivery of a new image version. This observation closes the earlier baseline integration gap, not the later predicate-field correction, a bundle migration, a policy-family migration or the twenty-scenario campaign.
 
-## Repository impact
+## Later classic image-replacement observation
 
-Paths below are relative to `implementacion/`, except where explicitly stated.
-
-| Component | Planned work | Scope |
-| --- | --- | --- |
-| [Signing module](../../scripts/lib/attestations.sh) | Remove classic-format overrides from signing and verification. Use the hosted default signing configuration while preserving the local development-key/no-log profile. Retain exact hosted identity and issuer checks. | Required. Bundle representation and choice of signing services are separate decisions. |
-| [Classic chain adapter](../../scripts/complete-classic-chain.mjs) | Remove calls to the classic `.sig`/`.att` metadata adapter only after the new producer/consumer combination passes real verification. Replace its reports with original bundle and trust-verification evidence. | Required on migration; never apply the classic manifest adapter to a bundle or use it as a fallback that hides failed bundle verification. |
-| [F13 parser](../../scripts/check-missing-results.mjs) and [scenario](../../tests/scenarios/f13.sh) | Retain the implemented classic/v0.3 mixed-inventory handling, complete inventory and same-digest checks. Validate future image-signature and other bundle shapes against real CLI output; malformed data or failed retrieval must remain errors. | Baseline wrapper handling is fixed. Additional migration work depends on observed output; inventory inspection remains separate from cryptographic verification. |
-| [Statement contracts](../../scripts/lab-contracts.mjs) | Validate real verified-output fixtures and add an adapter only if the CLI output requires one. Preserve predicate, source and digest checks. | Conditional parser change. SBOM validation and the logical results predicate remain applicable. |
-| [Kyverno renderer](../../policies/kyverno/render.py) | Select bundle consumers, use explicit predicate types and apply the local timestamp settings above. Preserve scope, blocking behaviour and all authorization conditions. | Required. Test the image-signature requirement separately from SBOM/provenance/results. |
-| [Laboratory setup](../../scripts/lib/lab.sh) | Keep the current policy family if it satisfies the contracts. If a different API is selected, update readiness, deployment-actor permission checks and rejection attribution. | Conditional; a policy-family migration is not assumed. |
-| [Tool lock](../../tools.lock.json) | Replace the classic compatibility declaration with the validated bundle configuration. Update tool/controller/chart pins and checksums together only if required. | Required declaration update; no automatic dependency upgrade. |
-| [Evidence packager](../../scripts/package-evidence.py) | Preserve original bundles alongside verification results and original CycloneDX JSON. Record versions and the evidence profile used. | Top-level `.json` files are already included. Different extensions or nested directories require packaging changes and tests. |
-| [Unit tests](../../tests/unit/) and [policy tests](../../tests/policies/) | Cover actual output shapes, mixed inventories, malformed evidence, distinct predicates, authorization and both trust profiles. Add real CLI and integration checks beyond orchestration stubs. | Required. Synthetic unit tests do not establish cryptographic compatibility. |
-| [Hosted workflow](../../../.github/workflows/golden-path.yml) | Re-run hosted integration and retain the resulting bundles and verification evidence. Keep native GitHub provenance and its existing validator unless an observed compatibility issue requires adaptation. | Existing workflow permissions need no blanket expansion. Workflow edits depend on evidence retention needs. |
-
-The service, Trivy vulnerability threshold, CycloneDX content and R/G experimental purpose do not depend on the signature packaging choice. Any changed execution cost must nevertheless be measured using the adopted implementation.
-
-## Documentation and thesis impact
-
-Update both language versions of [delivery contracts](delivery-contracts.md), the [policy guide](../../policies/README.md), and the interoperability sections of the [implementation plan](implementation-plan.md). Update the [L01/F13 specification](cases/L01-F13/README.md), [runbook](cases/L01-F13/runbook.md) and architecture diagram only where evidence paths, commands or consumer responsibilities change.
-
-Add a concise decision and compatibility explanation to the thesis implementation/results sections. Describe the representation, the two trust profiles, direct admission verification and observed limitations. The research method, regulatory mapping and twenty-scenario selection remain applicable; adjust concrete scenario setup/evidence instructions where necessary. Bundle adoption does not establish full VSA conformance or a higher SLSA level.
-
-Record the implementation and its actual validation in the changelog and a new validation record. Preserve historical baseline PR descriptions, logs and previous evidence packages. If a campaign has already started, evaluate the migrated revision separately rather than mixing its measurements with the original baseline.
-
-## Deferred work and acceptance criteria
-
-- [x] Inspect the actual hosted inventory and correct the independent F13 representation failure, with mixed-format and fail-closed regressions. The classic baseline subsequently passed hosted run `36310983700`; the migration checks below remain open.
-- [ ] Run a small compatibility experiment using the pinned versions and fresh, isolated test images. Confirm that new bundles are present and fetched; successful CLI verification alone can fall back to classic evidence.
-- [ ] Adapt producers, inventory handling and consumers in a focused migration PR with tests. Keep unverified compatibility claims out of the operational guides.
-- [ ] Remove the classic chain-completion adapter from the migrated path and confirm that independently verified bundles carry the required evidence without relying on residual classic manifests. Compare authenticated certificate-chain handling explicitly.
-- [ ] Verify lane A with a development public key, local registry access and the intended absence of public signing/logging services.
-- [ ] Verify lane B with real GitHub OIDC, the exact authorized workflow identity, transparency/timestamp material and GHCR retrieval by Kyverno. Do not disable hosted trust checks to make the migration pass.
-- [ ] Demonstrate F13 rejection solely for missing results while the image signature, SBOM and provenance remain valid; publish valid results and demonstrate L01 acceptance for the same digest, including the relevant update operation.
-- [ ] Test the F07 distinction: valid SBOM/provenance/results remain present, but the image-signature statement is absent. Admission must reject the delivery for that missing requirement.
-- [ ] Confirm rejection of a controlled signature alteration, unauthorized identity, wrong digest and incompatible or unsuccessful results; an unavailable mandatory control must still stop delivery.
-- [ ] Retain the original bundles, verification outputs, applied policies and attributed admission results in the evaluation package. Exclude credentials and private keys, and verify the downloaded package.
-- [ ] Update English and Spanish documentation, repeat the affected pilot checks and fix the adopted version before campaign measurement. Keep corrections and later measurements separately identifiable.
-
-The outcome is either a validated migration or a documented incompatibility supporting continued use of the pinned classic profile. Upstream support and successful unit tests alone are not sufficient acceptance evidence.
+[Hosted run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654) completed on `4f8fe77` with PASS, including the independently verified replacement image, both native provenance steps and the L01/F13/F11 checks. Its artifacts were audited. The subsequent v0.1.0 release is at `9f1999e`, which includes that change; do not relabel the earlier run as an execution of the release commit. These are classic-profile observations and do not validate the bundle candidate.
 
 ## Sources
 
 1. [Cosign 3.1.3: downloading bundles and classic attestations](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/download/attestation.go).
 2. [Cosign 3.1.3: image-signing predicate](https://github.com/sigstore/cosign/blob/v3.1.3/pkg/types/predicate.go).
-3. [Kyverno 1.19.1: signature and attestation verification paths](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/image/verifiers/cpol/cosign/verifier.go) and [classic verification options](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/image/verifiers/cpol/cosign/cosign.go).
+3. [Kyverno 1.19.1: signature and attestation verification paths](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/image/verifiers/cpol/cosign/verifier.go).
 4. [Kyverno 1.19.1: bundle retrieval, trust and timestamp requirements](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/image/verifiers/cpol/cosign/sigstore.go), with [upstream tests](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/image/verifiers/cpol/cosign/sigstore_test.go).
-5. [Kyverno 1.19.1: mapping policy fields to verifier options](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go).
-6. [Sigstore bundle specification overview](https://docs.sigstore.dev/about/bundle/) and [Cosign 3.1.3 signing defaults](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go).
+5. [Kyverno 1.19.1: policy fields and verifier options](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go).
+6. [Sigstore bundle specification](https://docs.sigstore.dev/about/bundle/) and [Cosign 3.1.3 signing defaults](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go).

@@ -1,4 +1,4 @@
-.PHONY: doctor smoke-env test-env test test-unit test-policies demo reference
+.PHONY: doctor smoke-env test-env test test-unit test-policies test-bundles demo reference
 doctor:
 	bash scripts/check-environment.sh
 
@@ -17,7 +17,10 @@ test-policies:
 	python3 tests/policies/run_kyverno.py
 	bash scripts/check-policies.sh
 
-test: test-env test-unit test-policies
+test-bundles:
+	bash tests/integration/bundle-crypto.sh
+
+test: test-env test-unit test-policies test-bundles
 
 demo:
 	bash scripts/demo.sh local

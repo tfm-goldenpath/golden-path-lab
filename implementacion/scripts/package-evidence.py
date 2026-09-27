@@ -33,7 +33,7 @@ def package(source, output, status):
     if replacement.is_dir():
         candidates.extend(replacement.iterdir())
     for file in sorted(candidates):
-        if file.is_file() and not file.is_symlink() and file.suffix in allowed and file.name not in excluded:
+        if file.is_file() and not file.is_symlink() and (file.suffix in allowed or file.name == 'development-public-key.pem') and file.name not in excluded:
             if re.search(rb'-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----', file.read_bytes()):
                 continue
             files.append(file)

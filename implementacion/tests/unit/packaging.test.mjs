@@ -59,6 +59,12 @@ test('replacement evidence is retained with separate hashes and excludes its cre
   const update = path.join(source, 'L01-update');
   fs.mkdirSync(update);
   fs.writeFileSync(path.join(update, 'verified-results.json'), '{"replacement":true}\n');
+  for (const directory of [source, update]) {
+    for (const name of ['image.bundle.json', 'sbom.bundle.json', 'provenance.bundle.json', 'results.bundle.json', 'evidence-profile.json']) {
+      fs.writeFileSync(path.join(directory, name), JSON.stringify({ synthetic: true, file: name, directory: path.basename(directory) }));
+    }
+    fs.writeFileSync(path.join(directory, 'development-public-key.pem'), '-----BEGIN PUBLIC KEY-----\nsynthetic\n-----END PUBLIC KEY-----\n');
+  }
   fs.writeFileSync(path.join(update, 'state.json'), '{"private":"fixture"}');
   fs.writeFileSync(path.join(update, 'secret.log'), '-----BEGIN PRIVATE KEY-----\nfixture');
   const unrelated = path.join(source, 'unrelated');
@@ -68,6 +74,11 @@ test('replacement evidence is retained with separate hashes and excludes its cre
   const result = inspectArchive(path.join(output, 'run-test.tar.gz'));
   assert.deepEqual(result.mismatches, []);
   assert.ok(result.names.includes('run-test/L01-update/verified-results.json'));
+  for (const directory of ['run-test', 'run-test/L01-update']) {
+    for (const name of ['image.bundle.json', 'sbom.bundle.json', 'provenance.bundle.json', 'results.bundle.json', 'evidence-profile.json', 'development-public-key.pem']) {
+      assert.ok(result.names.includes(`${directory}/${name}`), `${directory}/${name}`);
+    }
+  }
   assert.ok(!result.names.includes('run-test/L01-update/state.json'));
   assert.ok(!result.names.includes('run-test/L01-update/secret.log'));
   assert.ok(!result.names.some(name => name.includes('/unrelated/')));

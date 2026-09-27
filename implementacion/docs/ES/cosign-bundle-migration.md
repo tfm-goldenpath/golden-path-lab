@@ -1,39 +1,59 @@
-# Propuesta de migración al formato bundle de Cosign
+# Migración a bundles de Sigstore con Cosign
 
 [Documentación en español](README.md) · [English version](../EN/cosign-bundle-migration.md)
 
-**Estado: mejora futura, pendiente de decisión e implementación.** Este documento recoge el alcance de una posible migración con Cosign 3.1.3 y Kyverno 1.19.1. La revisión del código y las comprobaciones sintéticas no acreditan una integración criptográfica completa ni una campaña experimental.
+**Estado: PASS local de compatibilidad, incluida la recuperación estricta del inventario. La aceptación completa sigue pendiente de OIDC, SCT y registro de transparencia reales en B, y de la admisión negativa real de F07.** La rama cambia conjuntamente productores y consumidores. Las pruebas de configuración y regresión no acreditan la interoperabilidad con el registro ni la admisión. La base clásica publicada es **v0.1.0**, commit `9f1999e`; sus resultados no validan bundles.
 
-## Base actual y objetivo
+La [ejecución local `run-De88fpWy`](../../registros/cosign_bundles_validation_ES.md) terminó con PASS, herramientas fijadas, zot/kind nuevos y recuperación estricta del inventario: F13 y F11 se rechazaron por los motivos previstos, L01 fue admitido y la sustitución por otro digest verificado completó el despliegue. El anfitrión utilizó Docker Engine 24.0.5, cgroup v1 y `GP_CGROUP_V1_COMPAT=1` explícito. Es evidencia de compatibilidad, no el entorno prescrito de campaña ni una medición temporal. El intento valida el árbol de trabajo modificado sobre `9f1999e`, con huella fuente `8d79c68d46569c826fb43d693c03dc767631c715f039021717642d3d2991cc0a`; no ejecuta v0.1.0 sin cambios. La confianza alojada y la admisión negativa real de F07 siguen siendo comprobaciones separadas pendientes.
 
-La base conserva el formato clásico para las firmas de imagen y las atestaciones emitidas con Cosign. La configuración compartida de firma ya incluye `--new-bundle-format=false` y `--use-signing-config=false`; la propuesta no describe esas opciones como un fallo pendiente. La procedencia nativa de GitHub utiliza su consumidor `SigstoreBundle`. Los [contratos de entrega](delivery-contracts.md) describen esta combinación.
+## Perfil seleccionado
 
-## Tratamiento de las obsolescencias en la base actual
+Se mantienen Cosign **3.1.3**, Kyverno **1.19.1** y chart **3.9.1**, fijados en el [lock de herramientas](../../tools.lock.json). Cosign genera sus bundles de Sigstore predeterminados para la firma de imagen, el SBOM CycloneDX original, la procedencia local y los resultados firmados. La procedencia nativa de GitHub sigue siendo un bundle de `actions/attest`. El recorrido activo retira las opciones de formato clásico y la compleción de metadatos de su cadena de certificados; no recurre silenciosamente al formato anterior.
 
-El [generador de políticas](../../policies/kyverno/render.py) utiliza `verifyImages[].attestations[].type` para el URI del predicado esperado, tanto con verificación clásica como con bundles. La [API de atestaciones de Kyverno 1.19.1](https://github.com/kyverno/kyverno/blob/v1.19.1/api/kyverno/v1/image_verification_types.go) define ese campo como sustituto de `predicateType`; su [motor](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go) ya transforma el campo antiguo en `type` antes de seleccionar y comprobar los predicados. Se elimina así el uso del campo obsoleto de la política, conservando el método de verificación, el firmante autorizado y las condiciones del predicado. El documento in-toto firmado sigue utilizando `predicateType`: es un contrato diferente. Las pruebas del generador cubren ambos perfiles de confianza y los predicados separados de SBOM, procedencia y resultados; una nueva ejecución alojada debe comprobar estas políticas actualizadas en admisión.
+Todas las políticas de evidencias de imagen seleccionan `verifyImages.type=SigstoreBundle`. La regla de firma de imagen exige expresamente `https://sigstore.dev/cosign/sign/v1`: un bundle válido de SBOM, procedencia o resultados no debe satisfacer esa condición. `predicateType` en el documento in-toto y `attestations[].type` en Kyverno son campos diferentes. Se conservan los requisitos de origen, digest, predicado, política y comprobaciones satisfactorias.
 
-Dos avisos requieren una migración más amplia y siguen siendo visibles:
+| Vía | Productor y confianza | Requisitos del consumidor |
+| --- | --- | --- |
+| A: desarrollo local | Clave efímera de desarrollo; configuración explícita de firma sin servicios públicos de transparencia. | Verificación con esa clave pública. Solo A permite `keys.rekor.ignoreTlog: true` y `keys.ctlog.ignoreSCT: true`, coherentes con bundles sin sellos de registros públicos. El registro aislado puede usar HTTP. |
+| B: GitHub | OIDC de GitHub y configuración alojada predeterminada; material de confianza Sigstore autenticado y procedencia nativa de GitHub. | Identidad y emisor exactos del workflow, confianza del certificado, digest y predicados exigidos; se conservan transparencia y verificación temporal/SCT aplicable. Sin excepciones locales, identidades comodín ni transporte inseguro del registro. |
 
-- **Cosign `--new-bundle-format=false`:** en Cosign 3.1.3 el valor predeterminado es `true`, tanto en [firma](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go) como en [verificación](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/verify.go). Eliminar la opción cambiaría el formato de las evidencias y el comportamiento del consumidor. Se conserva la selección clásica explícita hasta superar las comprobaciones de migración indicadas más adelante; no se oculta la salida de error.
-- **Kyverno `ClusterPolicy`:** sustituir este recurso obsoleto exige migrar las políticas de ejecución y verificación de imágenes a las familias de políticas admitidas, conservando ámbito, bloqueo, confianza, preparación y clasificación de rechazos. La [guía oficial de migración](https://kyverno.io/docs/guides/migration-to-cel/) prevé su retirada en 1.20: no deben trasladarse las políticas actuales sin cambios a esa actualización. Renombrar el tipo de recurso o cambiar únicamente el formato de firma no demuestra equivalencia; antes de adoptar la migración deben repetirse las comprobaciones de integración positivas y negativas.
+Los [contratos de entrega](delivery-contracts.md) delimitan la confianza. Compartir representación no otorga autoridad GitHub a una clave local. Analizar JSON descargado no verifica criptografía; las comprobaciones de contenido consumen la salida de verificaciones satisfactorias. Los bundles originales y las salidas verificadas se conservan como evidencias distintas.
 
-La vía A también muestra un aviso de obsolescencia para `--tlog-upload=false`. Su sustitución es una configuración de firma sin servicios de transparencia, que se probará junto con la migración a bundles. Deben conservarse la verificación mediante clave de desarrollo y el límite de confianza local; esta excepción no se aplicará a B, donde siguen siendo obligatorias la identidad y la transparencia. Los avisos locales sobre omitir explícitamente la verificación de transparencia describen ese perfil de desarrollo existente y no se ocultan.
+El candidato conserva `ClusterPolicy`. Su obsolescencia y la futura migración de familias de políticas son otro trabajo, que debe comprobar ámbito, preparación, bloqueo y atribución de rechazos antes de actualizar a una versión de Kyverno que lo retire. No se ocultan los avisos. El [adaptador de cadena clásica](../../scripts/complete-classic-chain.mjs) y sus pruebas se conservan como compatibilidad histórica hasta completar la aceptación alojada; el recorrido nuevo no lo llama ni aplica anotaciones `.sig`/`.att` a bundles.
 
-Son límites de compatibilidad registrados para la base con versiones fijadas, no una garantía de soporte indefinido. La corrección del campo del predicado no completa ninguna de esas dos migraciones.
+## Recuperación estricta del inventario del registro
 
-La mejora consistiría en adoptar el formato bundle de Cosign para las evidencias propias, conservando las condiciones exigidas: firma válida, identidad autorizada, digest correcto, tipo y esquema admitidos, política compatible y resultado satisfactorio. La migración debe abarcar publicación, descubrimiento, verificación, admisión y conservación de evidencias; retirar dos opciones del comando no demuestra su compatibilidad.
+[`GetBundles` de Cosign 3.1.3](https://github.com/sigstore/cosign/blob/v3.1.3/pkg/cosign/verify.go) omite referencias individuales que no puede leer o interpretar como bundles. Una salida satisfactoria de `cosign download attestation` no demuestra un inventario completo ni acredita por sí sola la ausencia de resultados.
 
-## Hallazgos de la revisión
+El nuevo [auxiliar de inventario de solo lectura](../../scripts/download-bundle-inventory.mjs) recupera directamente las referencias OCI, con paginación acotada e índice alternativo especificado cuando corresponde; véase el [contrato de referencias de OCI Distribution 1.1](https://github.com/opencontainers/distribution-spec/blob/v1.1.0/spec.md#listing-referrers). Comprueba tamaños y digests de manifiestos/blobs, valida cada bundle esperado y exige una segunda lista sin cambios. Recuperaciones incompletas, malformadas, no admitidas, fuera de límites o cambiantes detienen la comprobación; no se descartan entradas silenciosamente. HTTP queda limitado a A; B usa HTTPS y permiso GHCR de lectura limitado al repositorio fijado.
 
-| Aspecto | Hallazgo y consecuencia |
-| --- | --- |
-| Inventario de F13 | La ejecución alojada `36277828157` confirmó el rechazo de un inventario mixto: procedencia GitHub en bundle v0.3 y SBOM clásico. La corrección de la base normaliza `dsseEnvelope` y mantiene la validación existente; no modifica firma ni admisión. |
-| Salida de verificación | El código de Cosign indica que la salida de `verify-attestation` puede conservar una representación consumible por parte de los validadores actuales. Debe comprobarse con salidas reales; el inventario descargado y la salida de una verificación satisfactoria no son intercambiables. |
-| Admisión con ClusterPolicy | El adaptador clásico y el adaptador `SigstoreBundle` son recorridos distintos. El segundo tiene soporte de clave pública e identidad keyless; su existencia no acredita que las políticas actuales seleccionen o configuren ese recorrido correctamente. |
-| Vía A sin registro de transparencia | Para el futuro perfil bundle local, el recorrido inspeccionado requiere revisar conjuntamente `keys.rekor.ignoreTlog: true` y `keys.ctlog.ignoreSCT: true`. La omisión del segundo puede exigir evidencia temporal que la firma local sin registro no aporta. Esta configuración se limita a la vía A. |
-| Firma de imagen independiente | Una verificación genérica de bundles puede aceptar otro predicado firmado para la imagen. Se debe exigir específicamente `https://sigstore.dev/cosign/sign/v1` para conservar el control de firma independiente del SBOM, la procedencia y los resultados. |
-| Vía B | Deben conservarse identidad OIDC autorizada, confianza del certificado y verificación de transparencia. La compatibilidad con los servicios y sellos temporales seleccionados por la configuración de firma de Cosign requiere una comprobación real; no se resolverá desactivando controles de B. |
-| ImageValidatingPolicy | Ofrece otra ruta con detección de bundles. Cambiar de familia de políticas no es un requisito demostrado de esta migración y tampoco garantiza, por sí mismo, distinguir una firma de imagen de otro predicado válido. |
+El auxiliar produce el array de bundles y `registry-inventory-before-results.json`, `registry-inventory-after-denial.json` o `registry-inventory-authorized.json`, junto a los informes de contenido/perfil correspondientes. Estos registros acreditan la recuperación comprobada del registro configurado, no la confianza de las firmas ni una vista atómica y completa de forma independiente frente a un registro deshonesto. Cosign/GitHub y admisión autentican las evidencias por separado. El recorrido completo con recuperación estricta superó la ejecución local `run-De88fpWy`; recuperación y confianza alojadas requieren su propia ejecución.
+
+## Aceptación y evidencias
+
+Ejecuta la [secuencia local y alojada sobre la rama](cases/L01-F13/runbook.md) en el commit exacto, con digests distintos por intento. Una verificación genérica satisfactoria no demuestra consumo de bundles si puede haber evidencias clásicas residuales.
+
+- [x] Comprobar publicación, recuperación estricta del inventario y verificación criptográfica reales en A: ejecución de compatibilidad `run-De88fpWy`, con zot/kind nuevos y sin alternativa clásica.
+- [ ] Comprobar B en GitHub/GHCR con OIDC real, identidad exacta autorizada, confianza autenticada del certificado y transparencia/evidencia temporal exigida.
+- [ ] Repetir en B la atribución de F13 a resultados ausentes y la admisión posterior de L01 para el mismo digest. El intento local `run-De88fpWy` superó la secuencia con recuperación estricta antes/después y aceptación L01 del mismo digest.
+- [ ] Repetir en B el rechazo F11 y la sustitución L01 con evidencias propias, despliegue completado y comparación funcional. El intento local `run-De88fpWy` superó ambas comprobaciones con recuperación estricta del inventario.
+- [ ] Completar la admisión negativa real de F07: mantener SBOM/procedencia/resultados válidos pero omitir el predicado de firma; admisión debe rechazarlo. Las sondas criptográficas y regresiones de políticas satisfactorias no sustituyen esta comprobación. Conservar los contratos negativos de firmas alteradas, claves/identidades no autorizadas, digests ajenos y resultados incompatibles o fallidos; un error de recuperación/verificación detiene el paso obligatorio.
+- [x] Conservar las evidencias de ambas imágenes locales y verificar el archivo y sus 111 huellas internas: [registro de validación](../../registros/cosign_bundles_validation_ES.md). Incluye ocho bundles, claves públicas de desarrollo, CycloneDX original, salidas de verificadores, perfiles, políticas y respuestas de admisión; excluye credenciales y claves privadas.
+- [ ] Repetir conservación y verificación de hashes para B, incluido el material de confianza autenticado y la procedencia nativa.
+- [x] Registrar la huella del árbol local, commit base, versiones, identificador de ejecución y límites.
+- [ ] Registrar commit y resultados alojados, y repetir el piloto afectado antes de fijar el perfil bundle adoptado para las mediciones.
+
+Se mantienen `make test`, `make demo` y el workflow manual `golden-path.yml`; preparar el candidato no publica la rama ni ejecuta GitHub. El candidato está preparado para publicación por el mantenedor y validación alojada tras la revisión: publica la revisión prevista y ejecuta ese commit exacto. La admisión negativa real de F07 sigue siendo una tarea de aceptación. Una integración fallida se conserva como tal y no justifica rebajar la confianza de B.
+
+## Relación con la evaluación y la memoria
+
+La metodología y el catálogo de veinte escenarios no cambian: F07 comprueba la firma independiente, F13 la autorización ausente y F14 una política incompatible. CycloneDX sigue siendo el SBOM obligatorio y los resultados conservan su predicado propio inspirado en VSA. El formato bundle no acredita por sí solo conformidad VSA ni un nivel SLSA superior.
+
+Fija implementación, perfil de confianza y versiones tras el piloto, antes de medir la campaña. Ejecuta R y G desde esa misma revisión fijada; R omite los controles experimentales de firma, atestación y admisión de G, conservando las comprobaciones ordinarias de Kubernetes y funcionamiento. No mezcles tiempos de desarrollo clásico con mediciones de campaña bundle. Conserva v0.1.0, las descripciones de PR anteriores y los [registros históricos](../../registros/); identifica las correcciones posteriores con otra revisión. La edición de la memoria es una tarea separada.
+
+## Antecedentes de compatibilidad clásica
+
+La cronología siguiente conserva las observaciones y comprobaciones pendientes **tal como se registraron entonces**. Las menciones a un adaptador clásico activo o a una migración aplazada describen esa base histórica, no el recorrido bundle de esta rama.
 
 La [ejecución alojada 36277828157](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36277828157/job/108503864945) confirmó este fallo tras completar la firma y verificación. La corrección acepta DSSE clásico y bundles de atestación `application/vnd.dev.sigstore.bundle.v0.3+json`, conserva las comprobaciones de digest, predicado y SBOM y rechaza estructuras malformadas, ambiguas o no admitidas. Los resultados encapsulados para el digest esperado siguen impidiendo atribuir F13 a su ausencia. El material de verificación debe seleccionar exactamente una estructura de certificado, cadena de certificados o identificador de clave pública; también se comprueban estructura, tipos y codificación de bytes de los registros y sellos temporales según la [definición v0.3](https://github.com/sigstore/protobuf-specs/blob/main/protos/sigstore_bundle.proto). Estas comprobaciones no autentican la entrada ni validan la confianza del certificado. Se reproduce el inventario original sin conexión, comprobando previamente el hash del archivo conservado; esto no demuestra la finalización de los controles de admisión posteriores.
 
@@ -57,50 +77,8 @@ Las pruebas de regresión utilizan certificados generados con firmas reales y un
 
 **Integración de la base completada:** la [ejecución 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700/job/108596721755), en `main` y commit `21f8fc46b158ae209c657c33f9376254223d62df`, completó posteriormente el recorrido clásico con `PASS`: F13 fue rechazado por ausencia del predicado de resultados, L01 fue admitido y quedó disponible tras emitirlos, y F11 fue rechazado por escalada de privilegios. La actualización legítima final modificó una anotación del Deployment; no probó la entrega de otra versión de imagen. Esta observación cierra la comprobación pendiente de la base anterior, no la corrección posterior del campo del predicado, la migración a bundles, el cambio de familia de políticas ni la campaña de veinte escenarios.
 
-## Impacto previsto en el repositorio
+## Observación posterior de sustitución de imagen con perfil clásico
 
-| Componente | Tipo de cambio | Alcance |
-| --- | --- | --- |
-| [Firma y atestaciones](../../scripts/lib/attestations.sh) | Necesario | Seleccionar y documentar el nuevo perfil; revisar emisión, publicación, recuperación y verificación en A y B. |
-| [Adaptador de cadena clásica](../../scripts/complete-classic-chain.mjs) | Necesario al migrar | Retirar sus llamadas tras verificar realmente los bundles. Sustituir sus informes por bundles originales y evidencia de confianza; no aplicar el adaptador clásico a bundles ni utilizarlo como alternativa silenciosa que oculte errores. |
-| [Inventario de F13](../../scripts/check-missing-results.mjs) y [pruebas](../../tests/unit/missing-results.test.mjs) | Base corregida; ampliación condicionada | Conservar el soporte clásico/v0.3 y las pruebas mixtas. Validar las futuras representaciones de firma de imagen y otros bundles con salidas reales, sin confundir ausencia con entrada malformada o error de recuperación. |
-| [Generador Kyverno](../../policies/kyverno/render.py) y [pruebas](../../tests/policies/test_render.py) | Necesario | Seleccionar el consumidor bundle, mantener predicados independientes y adaptar la confianza local sin extender sus excepciones a B. |
-| [Opciones de compatibilidad](../../tools.lock.json) | Necesario | Sustituir `compatibility.cosignClassic` y su justificación por la configuración efectivamente adoptada. La versión de Cosign ya es 3.1.3. |
-| [Validadores de contratos](../../scripts/lab-contracts.mjs) y [adaptador GitHub](../../scripts/github-attestation.mjs) | Condicionado | Cambiar solo si la salida verificada real modifica las entradas que consumen; conservar la separación entre verificación criptográfica y validación de contenido. |
-| [Empaquetado](../../scripts/package-evidence.py) y [pruebas](../../tests/unit/packaging.test.mjs) | Condicionado | Conservar los nuevos ficheros y sus hashes si cambia la representación, manteniendo las exclusiones de claves y credenciales. |
-| [Workflow alojado](../../../.github/workflows/golden-path.yml) y [orquestación](../../scripts/demo.sh) | Condicionado | Ajustar parámetros o recogida de evidencias solo si lo exige la integración; no ampliar permisos por defecto. |
-| [Contratos EN](../EN/delivery-contracts.md), [contratos ES](delivery-contracts.md) y [README de políticas](../../policies/README.md) | Necesario | Reemplazar las afirmaciones explícitas sobre formato clásico y describir productor, representación, consumidor y confianza de cada evidencia. |
-| Planes, arquitectura y guías L01/F13 en [EN](../EN/README.md) y [ES](README.md) | Condicionado | Actualizar las explicaciones de almacenamiento, inventario y diagnóstico que cambien. Mantener comandos públicos cuando sigan siendo válidos. |
+La [ejecución alojada 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654), en `4f8fe77`, terminó con PASS, incluida la sustitución de imagen verificada de forma independiente, las dos emisiones de procedencia nativa y L01/F13/F11. Sus artefactos se auditaron. La publicación posterior v0.1.0 apunta a `9f1999e` e incluye ese cambio; no se atribuye la ejecución anterior al commit de publicación. Son resultados del perfil clásico y no validan el candidato bundle.
 
-Los ocho PR de incorporación de la base constituyen un antecedente ya revisado. La migración tendría su propio PR y registro de validación. No se reescribirán sus descripciones ni los [registros históricos](../../registros/) como si hubieran utilizado el formato nuevo.
-
-## Relación con la memoria
-
-La metodología y la selección de los veinte escenarios se basan en propiedades de seguridad, no en el almacenamiento clásico de Cosign. No necesitan una reformulación por este cambio. CycloneDX seguirá siendo el SBOM obligatorio, conservado como fichero original y dentro de una atestación; el resumen seguirá siendo un contrato propio inspirado en VSA, sin atribuir conformidad completa.
-
-Cuando exista una decisión implementada y verificada, bastará con explicarla en el capítulo de resultados, dentro de integridad y evidencias del proceso de entrega y admisión en Kubernetes. Se identificarán representación, versiones, consumidores, límites y evidencia obtenida. La versión personal de la memoria mantiene su edición independiente; no se presupone una sincronización automática con la principal.
-
-F13 seguirá comprobando ausencia del resumen y F14 una política no admitida. F07 deberá seguir detectando la ausencia de la firma de imagen aunque las demás atestaciones sean válidas. Estos criterios no deben relajarse para conseguir que la migración pase.
-
-## Alcance de las comprobaciones disponibles
-
-La revisión previa incluyó **ocho diagnósticos sintéticos del inventario**, **once pruebas unitarias del auxiliar** y **diez pruebas de generación de políticas**. Estos resultados permiten identificar incompatibilidades de representación y comprobar el comportamiento de los auxiliares, no demostrar firmas reales ni la aceptación de bundles por un clúster.
-
-No se ejecutó Docker para esta revisión ni una integración completa de A o B. Tampoco se realizó una campaña nueva, una verificación alojada de identidad o una medición de sobrecarga. Las salidas sintéticas no deben reutilizarse como evidencias experimentales de esas propiedades.
-
-## Secuencia de una futura migración
-
-- [ ] Fijar el perfil de bundle, publicación, recuperación y confianza para cada vía con las versiones seleccionadas; registrar la decisión y las referencias.
-- [ ] Preparar fixtures nuevos de inventarios clásicos, bundles y mezclas; incluir entradas malformadas, digest ajeno y ausencia o presencia del predicado requerido.
-- [x] Corregir el inventario mixto actual de F13 y añadir pruebas antes de cambiar el flujo de firma. La base clásica superó después la ejecución alojada `36310983700`; siguen pendientes las comprobaciones de la futura migración.
-- [ ] Adaptar firma, verificación y políticas, exigiendo el predicado de firma de imagen separado de SBOM, procedencia y resultados.
-- [ ] Retirar la corrección de anotaciones clásicas del recorrido migrado y comprobar expresamente la cadena de confianza autenticada sin depender de manifiestos clásicos residuales.
-- [ ] Verificar realmente la vía A con clave de desarrollo: publicación y recuperación de bundles, aceptación de L01 y rechazo de F13 por el motivo previsto.
-- [ ] Comprobar F07 con las demás atestaciones válidas y sin el predicado de firma; comprobar firma alterada, clave o identidad no admitida y digest incorrecto.
-- [ ] Verificar la vía B en GitHub Actions y GHCR con identidad OIDC real, transparencia y evidencia temporal válida, incluyendo L01 y F13 ante Kyverno.
-- [ ] Comprobar que errores de recuperación o verificación detienen el paso obligatorio y se distinguen de un rechazo por política.
-- [ ] Confirmar que la aceptación utiliza bundles reales y que ninguna evidencia clásica residual o caché oculta una incompatibilidad; el perfil no debe recurrir silenciosamente al formato anterior.
-- [ ] Revisar el paquete generado, conservar la versión y sus evidencias fuera del entorno temporal, actualizar las guías y registrar el resultado observado.
-- [ ] Fijar una nueva revisión antes de evaluar. Conservar las ejecuciones anteriores sin mezclar mediciones de formatos distintos dentro de una misma campaña.
-
-La mejora permanecerá pendiente hasta completar estas comprobaciones. La compatibilidad deducida del código de las herramientas justifica realizar el piloto; no sustituye sus resultados.
+La revisión previa incluyó ocho diagnósticos sintéticos del inventario, once pruebas del auxiliar y diez de generación de políticas. Docker no estaba disponible durante esa revisión: las salidas sintéticas no prueban firma real, admisión ni sobrecarga experimental. Las [fuentes técnicas y criterios equivalentes en inglés](../EN/cosign-bundle-migration.md#sources) completan esta explicación.

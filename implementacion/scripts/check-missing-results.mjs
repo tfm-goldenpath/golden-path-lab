@@ -20,15 +20,17 @@ function fields(value, required, optional = {}) {
 
 const certificate = value => fields(value, {rawBytes:bytes});
 const inclusionProof = value => fields(value, {
-  logIndex:integer, hashes:list(bytes), rootHash:bytes, treeSize:integer,
+  rootHash:bytes, treeSize:integer,
   checkpoint:checkpoint => fields(checkpoint, {envelope:text}),
-});
+}, {logIndex:integer, hashes:list(bytes)});
 const logEntry = value => fields(value, {
-  logIndex:integer, integratedTime:integer,
   logId:logId => fields(logId, {keyId:bytes}),
   kindVersion:kindVersion => fields(kindVersion, {kind:text, version:text}),
   inclusionProof,
 }, {
+  // Protobuf JSON omits zero/default values. In particular Rekor v2 has no
+  // integratedTime; cryptographic time/proof validation belongs to the verifier.
+  logIndex:integer, integratedTime:integer,
   canonicalizedBody:bytes,
   inclusionPromise:promise => fields(promise, {signedEntryTimestamp:bytes}),
 });
@@ -48,7 +50,7 @@ function validateVerificationMaterial(material) {
   }
 }
 
-function parseEnvelopes(text) {
+export function parseEnvelopes(text, { bundlesOnly = false } = {}) {
   if (typeof text !== 'string' || !text.trim()) throw new Error('Empty attestation inventory');
   let envelopes;
   try {
@@ -64,6 +66,9 @@ function parseEnvelopes(text) {
   if (!envelopes.length) throw new Error('The inventory contains no attestations');
   return envelopes.map(entry => {
     let envelope = entry;
+    if (bundlesOnly && entry?.mediaType !== 'application/vnd.dev.sigstore.bundle.v0.3+json') {
+      throw new Error('Only Sigstore bundles are allowed in the migrated inventory');
+    }
     if (object(entry) && ['mediaType', 'dsseEnvelope', 'verificationMaterial'].some(key => Object.hasOwn(entry, key))) {
       if (entry.mediaType !== 'application/vnd.dev.sigstore.bundle.v0.3+json'
         || !object(entry.dsseEnvelope)
@@ -74,6 +79,9 @@ function parseEnvelopes(text) {
       envelope = entry.dsseEnvelope;
       if (!Array.isArray(envelope.signatures) || envelope.signatures.length !== 1) {
         throw new Error('A Sigstore attestation bundle must contain exactly one DSSE signature');
+      }
+      if (!fields(envelope.signatures[0], {sig:bytes}, {keyid:value => typeof value === 'string'})) {
+        throw new Error('Malformed bundle DSSE signature: base64 bytes and an optional string keyid are required');
       }
     }
     if (!object(envelope) || envelope.payloadType !== 'application/vnd.in-toto+json'
