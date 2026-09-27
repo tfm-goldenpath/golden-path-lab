@@ -8,6 +8,8 @@ La primera demostración integra `quotes-node`, registro de imágenes, política
 
 Las salidas indicadas son **resultados esperados**. Una prueba unitaria satisfactoria no acredita la integración Docker/Kubernetes, y la vía local no acredita la identidad OIDC de GitHub. El resultado observado de cada ejecución queda en sus evidencias.
 
+El perfil bundle superó la compatibilidad local y la [validación alojada de OIDC/SCT/transparencia en `82728c5`](../../../../registros/pr15_review_ES.md); las correcciones posteriores requieren integración en su revisión exacta y sigue pendiente F07 negativo real en admisión. Los resultados clásicos anteriores no acreditan esta representación.
+
 ## 1. Abrir el entorno correcto
 
 La estructura del repositorio debe conservar estas posiciones:
@@ -99,6 +101,8 @@ make reference
 
 R utiliza la misma API y construcción funcional, con despliegue en su namespace de referencia. No exige las políticas experimentales ni las evidencias que autorizan G. Persisten los controles ordinarios de Kubernetes y las comprobaciones funcionales: R no representa un equipo sin automatización.
 
+Tras superar el piloto bundle, fija la revisión y el perfil adoptados antes de medir la campaña. No mezcles tiempos de desarrollo clásico con mediciones de campaña bundle; la metodología de veinte escenarios permanece igual.
+
 La comparación inicial R/G reutiliza el mismo digest. La sustitución posterior de L01 emplea un segundo digest solo en G. **No es una pareja de la campaña temporal**: la construcción adicional de UPDATE no proporciona construcciones independientes de referencia y protegida. Los tiempos del ensayo sirven para diagnóstico; no se presentarán como la sobrecarga experimental definitiva.
 
 ## 4. Ejecutar la integración real de GitHub: vía B
@@ -119,14 +123,14 @@ La disponibilidad de atestaciones y las cuotas de Actions dependen de la visibil
 
 `act` puede ayudar a revisar pasos compatibles de workflows. No proporciona la identidad OIDC ni los servicios alojados de GitHub y, por tanto, no cierra la vía B. Para la primera prueba local completa se utiliza `make demo`.
 
-### Probar una corrección antes de fusionarla
+### Probar el candidato bundle antes de fusionarlo
 
-Cuando el workflow manual está registrado en la rama predeterminada, una nueva ejecución puede seleccionar el workflow y el código de una rama de corrección publicada. No es necesario fusionar primero la corrección. Estos comandos se pueden ejecutar desde **Git Bash en Windows** con GitHub CLI autenticado: solicitan una ejecución alojada, no ejecutan el laboratorio en Windows. Crea y publica tú mismo `fix/fulcio-chain` antes de usar este ejemplo, o sustituye el nombre por el de la rama real. [Ejecución manual en GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [selección de la referencia](https://cli.github.com/manual/gh_workflow_run).
+Cuando el workflow manual está registrado en la rama predeterminada, una nueva ejecución puede seleccionar el workflow y el código de una rama de corrección publicada. No es necesario fusionar primero la corrección. Estos comandos se pueden ejecutar desde **Git Bash en Windows** con GitHub CLI autenticado: solicitan una ejecución alojada, no ejecutan el laboratorio en Windows. Crea y publica tú mismo `feat/cosign-bundles` antes de usar este ejemplo, o sustituye el nombre por el de la rama real. [Ejecución manual en GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [selección de la referencia](https://cli.github.com/manual/gh_workflow_run).
 
 ```bash
 gh workflow run golden-path.yml \
   --repo tfm-goldenpath/golden-path-lab \
-  --ref fix/fulcio-chain
+  --ref feat/cosign-bundles
 ```
 
 Identifica la nueva ejecución y comprueba que `headBranch` y `headSha` corresponden a la rama y al commit de la corrección que quieres validar. Si todavía no aparece, repite el comando de consulta; no lances otra ejecución solo para actualizar la lista.
@@ -135,7 +139,7 @@ Identifica la nueva ejecución y comprueba que `headBranch` y `headSha` correspo
 gh run list \
   --repo tfm-goldenpath/golden-path-lab \
   --workflow golden-path.yml \
-  --branch fix/fulcio-chain \
+  --branch feat/cosign-bundles \
   --event workflow_dispatch \
   --limit 10 \
   --json databaseId,headSha,headBranch,status,conclusion,url
@@ -161,17 +165,29 @@ Un fallo temprano puede impedir que se genere un artefacto; conserva entonces la
 
 No uses **Re-run jobs** sobre una ejecución antigua de `main` para probar una corrección recién publicada: la repetición conserva el commit y la referencia originales. Inicia una nueva ejecución sobre la rama de corrección. [Comportamiento de las repeticiones en GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs).
 
-El clúster temporal autoriza la identidad exacta del workflow de la rama seleccionada, por ejemplo `https://github.com/tfm-goldenpath/golden-path-lab/.github/workflows/golden-path.yml@refs/heads/fix/fulcio-chain`, y su commit de origen. No utiliza un comodín ni presenta esa rama como una entrega aprobada para producción. El workflow actual no referencia ningún entorno de GitHub; los permisos del repositorio y de la organización siguen siendo aplicables. Publica en el paquete GHCR compartido, con una etiqueta de imagen y un digest propios de cada ejecución; la limpieza no elimina esas imágenes remotas ni sus evidencias. Después de revisar y fusionar la corrección, valida por separado la revisión resultante de `main`.
+El clúster temporal autoriza la identidad exacta del workflow de la rama seleccionada, por ejemplo `https://github.com/tfm-goldenpath/golden-path-lab/.github/workflows/golden-path.yml@refs/heads/feat/cosign-bundles`, y su commit de origen. No utiliza un comodín ni presenta esa rama como una entrega aprobada para producción. El workflow actual no referencia ningún entorno de GitHub; los permisos del repositorio y de la organización siguen siendo aplicables. Publica en el paquete GHCR compartido, con una etiqueta de imagen y un digest propios de cada ejecución; la limpieza no elimina esas imágenes remotas ni sus evidencias. Después de revisar y fusionar la corrección, valida por separado la revisión resultante de `main`.
 
-### Compatibilidad de la cadena de certificados Fulcio y aceptación
+### Compatibilidad y aceptación del perfil bundle
 
-Para las evidencias clásicas de Cosign de la vía alojada, el proceso exporta a `sigstore-trusted-root.json` el material de confianza de Sigstore autenticado mediante el cliente TUF de Cosign. El [adaptador de la cadena](../../../../scripts/complete-classic-chain.mjs) completa, a partir de ese material autenticado, la anotación pública de la cadena de certificados en los manifiestos de evidencias clásicas `.sig` y `.att`. Conserva el digest de la imagen de aplicación, los contenidos firmados, las firmas y las raíces de confianza configuradas. El digest del manifiesto de evidencias sí puede cambiar al cambiar su anotación. El bundle nativo de procedencia de GitHub y la firma local de desarrollo quedan fuera de este ajuste; las verificaciones normales de Cosign y Kyverno siguen siendo obligatorias.
+Esta rama utiliza el candidato descrito en la [guía de migración](../../cosign-bundle-migration.md), manteniendo Cosign 3.1.3 y Kyverno 1.19.1. Todas las reglas de evidencias usan `SigstoreBundle`; `tfm-signature` exige de forma independiente `https://sigstore.dev/cosign/sign/v1`. El recorrido activo no completa anotaciones clásicas de cadena ni reintenta silenciosamente la verificación clásica.
 
-Revisa `sigstore-trusted-root.json`, `image-chain.json`, `sbom-chain.json` y `results-chain.json` en el paquete cuando se hayan alcanzado sus respectivos pasos. Los informes de cadena conservan las huellas de certificados y los manifiestos de evidencias originales y completados para poder revisar el ajuste de metadatos. Que el adaptador termine correctamente no demuestra por sí solo una admisión satisfactoria.
+A usa `local-signing-config.json` sin servicios públicos de firma/transparencia y `local-trusted-root.json` sin CA ni registros alojados; la clave pública de desarrollo aporta la confianza. Solo A permite verificación sin registro/SCT y acceso HTTP al registro aislado. B conserva `sigstore-trusted-root.json` autenticado, identidad y emisor GitHub exactos, confianza del certificado y transparencia/evidencia temporal exigidas. No copies las excepciones de A para conseguir un resultado satisfactorio en B.
 
-La [ejecución alojada 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700/job/108596721755) superó la verificación de cadenas y la demostración inicial L01/F13/F11. Su UPDATE legítimo final solo cambió una anotación; no valida el nuevo recorrido de sustitución de imagen. Inicia una ejecución sobre el commit revisado para comprobar la segunda emisión de procedencia y su admisión. El workflow completo debe terminar en verde si F13 se rechaza **únicamente** por resultados ausentes, los resultados firmados permiten L01, se rechaza el UPDATE prohibido de F11 y el UPDATE de L01 a otra imagen queda preparado. Conserva los fallos adicionales de firma, procedencia o red como errores de integración.
+La [ejecución clásica 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36310983700) validó el UPDATE anterior que solo cambiaba una anotación. La [ejecución clásica 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654), en `4f8fe77`, superó L01/F13/F11 y la sustitución de imagen con evidencias propias; sus artefactos se auditaron. La versión publicada v0.1.0 apunta a `9f1999e` e incluye ese cambio. Ninguna ejecución clásica valida este candidato bundle ni otro commit.
+
+Inicia una ejecución nueva en el commit publicado de `feat/cosign-bundles` y comprueba su `headSha` antes de interpretar el resultado. La aceptación exige rechazo de F13 **únicamente** por resultados ausentes, admisión de L01 tras emitirlos, rechazo de F11 y sustitución preparada con su propio digest y evidencias verificadas. Además, los criterios de migración deben mostrar que otros bundles válidos no sustituyen al predicado de firma independiente y que se rechazan alteraciones, confianza no autorizada y digests ajenos. Conserva los fallos de recuperación, firma, procedencia o red como errores de integración.
+
+La [ejecución local bundle `run-De88fpWy`](../../../../registros/cosign_bundles_validation_ES.md) terminó con PASS, herramientas fijadas, zot/kind nuevos y recuperación estricta del inventario: rechazos atribuidos de F13/F11, admisión de L01 y sustitución por otro digest verificado con despliegue completado. El anfitrión usó Docker Engine 24.0.5/cgroup v1 con `GP_CGROUP_V1_COMPAT=1` explícito. Es evidencia de compatibilidad, no el entorno de campaña ni una medición temporal. El intento utilizó el árbol de trabajo modificado sobre `9f1999e`, identificado por la huella fuente del registro enlazado. La validación alojada pasó después en `82728c5`; siguen pendientes la integración de las correcciones posteriores y la admisión negativa real de F07. Conserva bundles originales, salidas de verificación y políticas que permitan comprobar el perfil utilizado.
+
+El verificador bundle de Kyverno 1.19.1 puede mostrar `no matching signatures found` tanto por un predicado ausente como por fallos de confianza. Por ello, F13 exige un único rechazo identificado de `tfm-results`/`require-results` (incluida su regla generada para Deployment), inventarios válidos exclusivamente de bundles obtenidos antes y después, revalidando el original previo antes de la petición, resultados ausentes y predicados de firma/SBOM/procedencia presentes para el mismo digest. Las demás políticas deben superar la admisión y L01 debe admitir después ese mismo digest tras emitir resultados antes de considerar satisfactorio el intento completo. Analizar el inventario aporta evidencia estructural, no autentica firmas. Reglas adicionales, inventarios malformados o inaccesibles y errores de verificación ajenos hacen fallar la prueba.
+
+Conserva `F13-inventory-consistency.json`, que compara los conjuntos estrictos de descriptores anteriores y posteriores. Falla ante descriptores añadidos, eliminados o cambiados e ignora el orden. Utiliza un digest nuevo con un único publicador controlado y sin cambios de evidencias durante la petición. No es una garantía atómica del registro ni excluye cambios transitorios entre observaciones; sigue siendo obligatoria la admisión L01 posterior del mismo digest.
+
+El [recuperador estricto del inventario](../../../../scripts/download-bundle-inventory.mjs) elimina la suposición de que una descarga Cosign satisfactoria contiene todos los bundles. Recupera referencias OCI en modo de solo lectura, con paginación/alternativa acotadas; comprueba digests y tamaños de manifiestos/blobs, valida todos los bundles esperados y exige una segunda lista coincidente. Un inventario ilegible, malformado, no admitido o cambiante detiene la prueba, sin interpretar datos omitidos como resultados ausentes. HTTP queda limitado a A; GHCR utiliza permiso de lectura para el repositorio fijado. Conserva `registry-inventory-before-results.json`, `registry-inventory-after-denial.json` y `registry-inventory-authorized.json` con sus arrays de bundles. Integridad de recuperación y confianza criptográfica son comprobaciones distintas; véase la [justificación de la migración](../../cosign-bundle-migration.md#recuperación-estricta-del-inventario-del-registro).
 
 ## 5. Evidencias y limpieza
+
+Para cada imagen, conserva `image.bundle.json`, `sbom.bundle.json`, `results.bundle.json` y, en A, `provenance.bundle.json`, junto con las salidas satisfactorias de los verificadores Cosign/GitHub. La procedencia nativa de B queda en los inventarios completos. Conserva `attestation-inventory-before-results.json` para F13 y `bundle-inventory-authorized.json` tras autorizar. `evidence-profile.json` identifica `sigstore-bundle-v0.3`, digest, fase y predicados; sus comprobaciones estructurales no verifican criptografía. Incluye CycloneDX original y material de confianza. Un intento fallido puede carecer de archivos de etapas no alcanzadas; documenta ese fallo. La instantánea posterior es `attestation-inventory-after-denial.json`; conserva `bundle-profile-before-results.json`, `bundle-profile-after-denial.json`, `F13-early.json` y `F13-after-denial.json` junto al registro original de admisión. Se conserva `development-public-key.pem` para reproducir la verificación local; las claves privadas quedan excluidas.
 
 Los resultados de ejecución se guardan bajo `evidence/raw/` y los paquetes bajo `evidence/packages/`. Ambas rutas están excluidas de Git. Conserva el identificador de ejecución y la referencia inmutable de imagen para relacionar informes, firmas, respuesta de admisión y prueba HTTP.
 

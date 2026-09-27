@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Package only allow-listed evidence, never credentials, kubeconfig or run state."""
+import base64
+import binascii
 import hashlib
 import json
 import os
@@ -8,6 +10,20 @@ import sys
 import tarfile
 import tempfile
 from pathlib import Path
+
+def is_public_key_pem(content):
+    # Archive boundary only: actual key validity/trust belongs to Cosign.
+    match = re.fullmatch(
+        rb'-----BEGIN PUBLIC KEY-----\r?\n((?:[A-Za-z0-9+/=]+\r?\n)+)'
+        rb'-----END PUBLIC KEY-----(?:\r?\n)?', content)
+    if not match:
+        return False
+    encoded = match.group(1).replace(b'\r', b'').replace(b'\n', b'')
+    try:
+        decoded = base64.b64decode(encoded, validate=True)
+    except binascii.Error:
+        return False
+    return bool(decoded) and base64.b64encode(decoded) == encoded
 
 def write_metadata(destination, text):
     if destination.is_symlink():
@@ -33,8 +49,11 @@ def package(source, output, status):
     if replacement.is_dir():
         candidates.extend(replacement.iterdir())
     for file in sorted(candidates):
-        if file.is_file() and not file.is_symlink() and file.suffix in allowed and file.name not in excluded:
-            if re.search(rb'-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----', file.read_bytes()):
+        if file.is_file() and not file.is_symlink() and (file.suffix in allowed or file.name == 'development-public-key.pem') and file.name not in excluded:
+            content = file.read_bytes()
+            if re.search(rb'-----BEGIN [^\r\n]*PRIVATE KEY-----', content):
+                continue
+            if file.name == 'development-public-key.pem' and not is_public_key_pem(content):
                 continue
             files.append(file)
     output.mkdir(parents=True, exist_ok=True)

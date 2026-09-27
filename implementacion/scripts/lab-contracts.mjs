@@ -48,12 +48,22 @@ export function validateResults(value, repository, commit) {
   }
   return value;
 }
+export function validateStatementPredicate(predicate, type, repository, commit) {
+  if (type === RESULTS_TYPE) validateResults(predicate, repository, commit);
+  else if (type === 'https://cyclonedx.org/bom') validateSbom(predicate);
+  else if (type === 'https://sigstore.dev/cosign/sign/v1') {
+    if (!predicate || typeof predicate !== 'object' || Array.isArray(predicate)) throw new Error('Invalid image-signature predicate');
+  }
+  else if (predicate.buildDefinition?.externalParameters?.workflow?.repository !== repository
+    || predicate.buildDefinition?.resolvedDependencies?.[0]?.digest?.gitCommit !== commit) throw new Error('Incorrect build origin');
+}
 export function checkStatements(text, digest, predicateType, validate) {
   if (typeof digest !== 'string' || !/^(?:sha256:)?[a-f0-9]{64}$/.test(digest)) {
     throw new Error('A canonical SHA-256 digest is required');
   }
   const expectedDigest = digest.replace(/^sha256:/, '');
-  // Cosign classic may print a JSON object per line or an array of verified envelopes.
+  // Authentication is a prerequisite. Callers supply verified CLI output or the
+  // statement extracted from the same saved bundle after its authentication.
   let values;
   try { const v = JSON.parse(text); values = Array.isArray(v) ? v : [v]; }
   catch { values = text.trim().split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line)); }
@@ -100,12 +110,8 @@ function main([command, ...args]) {
     }
     case 'verify-statement': {
       const [file, digest, type, repository, commit] = args;
-      checkStatements(fs.readFileSync(file, 'utf8'), digest, type, predicate => {
-        if (type === RESULTS_TYPE) validateResults(predicate, repository, commit);
-        else if (type === 'https://cyclonedx.org/bom') validateSbom(predicate);
-        else if (predicate.buildDefinition?.externalParameters?.workflow?.repository !== repository
-          || predicate.buildDefinition?.resolvedDependencies?.[0]?.digest?.gitCommit !== commit) throw new Error('Incorrect build origin');
-      }); break;
+      checkStatements(fs.readFileSync(file, 'utf8'), digest, type,
+        predicate => validateStatementPredicate(predicate, type, repository, commit)); break;
     }
     case 'response': {
       const [health, quote, version, commit] = args;

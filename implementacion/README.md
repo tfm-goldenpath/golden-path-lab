@@ -4,7 +4,9 @@ This laboratory uses **quotes-node**, a synthetic quotation service without prod
 
 The [execution guide](docs/EN/cases/L01-F13/runbook.md) covers Codespaces, Dev Containers and GitHub, including expected results and troubleshooting. The [L01/F13 case](docs/EN/cases/L01-F13/README.md) explains the experimental claim. Historical [validation records](registros/validacion_integracion.md) distinguish observed runs from pending work and retain their original Spanish wording.
 
-The [image-replacement validation](registros/l01_image_update_validation_EN.md) records the local integration result and the remaining hosted check.
+The [image-replacement validation](registros/l01_image_update_validation_EN.md) records the earlier local result. Classic hosted [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654) subsequently passed on `4f8fe77`, including independent image replacement; released v0.1.0 at `9f1999e` includes that change. Preserve the recorded commit and profile for each observation.
+
+This branch is a [bundle migration candidate](docs/EN/cosign-bundle-migration.md), with [local compatibility PASS](registros/cosign_bundles_validation_EN.md) in `run-De88fpWy`, including strict inventory retrieval; hosted L01/F13/F11 also passed at `82728c5` in [run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827). Actual F07 negative admission and integration of the subsequent PR review corrections remain pending. Cosign 3.1.3 emits default Sigstore bundles and Kyverno 1.19.1 consumes them for each distinct evidence requirement, including the independent image-signature predicate. The classic chain adapter is outside the active path; local development-key trust and hosted OIDC/transparency remain separate. Freeze the adopted profile after the pilot, and keep classic development timings separate from bundle campaign measurements.
 
 ## Documentation language
 

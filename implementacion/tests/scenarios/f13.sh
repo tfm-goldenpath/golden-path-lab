@@ -47,30 +47,44 @@ scenario_admission_single_reason() {
 }
 
 scenario_f13_prepare() {
-  local -a download_args=()
   record 'F13: preflight check that results authorization is missing'
-  [[ "$mode" != local ]] || download_args+=(--allow-insecure-registry)
-  cosign download attestation "${download_args[@]}" "$image" > "$state_dir/attestation-inventory-before-results.json"
+  # Cosign's downloader can silently skip unreadable referrers. Retrieve every
+  # advertised bundle strictly before concluding that a predicate is absent.
+  node scripts/download-bundle-inventory.mjs "$mode" "$image" "$state_dir/registry-inventory-before-results.json" > "$state_dir/attestation-inventory-before-results.json"
+  node scripts/check-bundle-profile.mjs "$state_dir/attestation-inventory-before-results.json" "$digest" before-results > "$state_dir/bundle-profile-before-results.json"
   node scripts/check-missing-results.mjs "$state_dir/attestation-inventory-before-results.json" "$digest" > "$state_dir/F13-early.json"
 }
 
 scenario_f13_admission() {
-  local rejection reason prefix
+  local rejection reason
   record 'F13: rejection because the results attestation is missing'
+  # Re-read the original inventory, not just a cached success report. Both
+  # helpers fail closed for malformed data, wrong digests or present results.
+  node scripts/check-bundle-profile.mjs "$state_dir/attestation-inventory-before-results.json" "$digest" before-results > "$state_dir/bundle-profile-before-results.json" || fail 'F13 has no valid bundle preflight inventory.'
+  node scripts/check-missing-results.mjs "$state_dir/attestation-inventory-before-results.json" "$digest" > "$state_dir/F13-early.json" || fail 'F13 has no valid missing-results preflight.'
   if actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/F13-admission.log" 2>&1; then fail 'F13 was accepted without results authorization.'; fi
   rejection="$(scenario_admission_single_reason "$state_dir/F13-admission.log" tfm-results require-results)" || {
     cat "$state_dir/F13-admission.log"
     fail 'F13 has an unidentified or additional rejection; this does not count as detection.'
   }
   reason="${rejection#*$'\t'}"
-  # Kyverno v1.19.1 pkg/engine/internal/imageverifier.go verifyAttestation:
-  # "attestions" is the upstream spelling. A generic "no matching attestations"
-  # can wrap certificate/registry errors and is not proof of a missing predicate.
-  prefix='image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: .attestations[0].attestors[0].entries[0]'
-  if [[ "$reason" != "$prefix.keyless: attestions not found for predicate type $results_type" &&
-        "$reason" != "$prefix.keys: attestions not found for predicate type $results_type" ]]; then
+  # Kyverno 1.19.1's bundle verifier shares this error between an absent
+  # predicate and failed trust. The exact singleton results-rule rejection is
+  # attributable only with complete inventories bracketing the denial: results
+  # absent, image-signature/SBOM/provenance present for this same image digest.
+  if [[ "$reason" != 'image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: sigstore bundle verification failed: no matching signatures found' ]]; then
     cat "$state_dir/F13-admission.log"
-    fail 'F13 did not identify the missing results predicate; resolve the integration before attributing detection.'
+    fail 'F13 did not identify the expected bundle rejection; resolve the integration before attributing detection.'
   fi
+  node scripts/download-bundle-inventory.mjs "$mode" "$image" "$state_dir/registry-inventory-after-denial.json" > "$state_dir/attestation-inventory-after-denial.json" || fail 'F13 could not retrieve the inventory after denial.'
+  node scripts/check-bundle-profile.mjs "$state_dir/attestation-inventory-after-denial.json" "$digest" before-results > "$state_dir/bundle-profile-after-denial.json" || fail 'F13 has no valid bundle inventory after denial.'
+  node scripts/check-missing-results.mjs "$state_dir/attestation-inventory-after-denial.json" "$digest" > "$state_dir/F13-after-denial.json" || fail 'F13 results absence was not confirmed after denial.'
+  node scripts/check-inventory-consistency.mjs "$state_dir/registry-inventory-before-results.json" "$state_dir/registry-inventory-after-denial.json" "$image" > "$state_dir/F13-inventory-consistency.json" || fail 'F13 registry evidence changed or its snapshots are unavailable; this does not count as detection.'
+  # This detects observed changes, not changes made and reverted between reads.
+  # The controlled trial assumes no other publisher for this run image during
+  # F13; the snapshots do not provide an atomic view of admission's registry reads.
+  # Inventory parsing is not signature verification. The other three admission
+  # policies must pass, and L01 must subsequently accept this digest with valid
+  # results before the overall execution can be reported as PASS.
   cat "$state_dir/F13-admission.log"
 }

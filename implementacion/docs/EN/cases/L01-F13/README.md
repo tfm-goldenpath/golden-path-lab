@@ -61,7 +61,7 @@ L01 also replaces the running image. A second build uses the same source commit 
 | Controlled workflow use | Selected rules for pinned actions, events and permissions | Conftest diagnostics for evaluated workflows. |
 | Vulnerability threshold | Trivy, blocking HIGH/CRITICAL even without a fix | Original report and policy decision. |
 | Inventory linked to artifact | Original CycloneDX JSON inside a signed attestation | Retained SBOM, type, version, subject and verification. |
-| Image authenticity | Cosign image signature | Valid signature for the authorized digest and identity. |
+| Image authenticity | Cosign image-signature bundle with `https://sigstore.dev/cosign/sign/v1` | Valid independent signature for the authorized digest and identity; other signed predicates cannot substitute for it. |
 | Verifiable provenance | Signed local contract in A; GitHub hosted attestation consumed as Sigstore bundle in B | Repository, commit, build and allowed identity correspondence. |
 | Results authorization | Versioned custom summary inspired by VSA, signed with Cosign | Predicate type, subject, policy, previous results and identity. |
 | Condition enforcement | Kyverno in the protected namespace, retaining direct checks | Attributable F13 rejection and L01 acceptance. |
@@ -85,6 +85,8 @@ The directed F11 check sets `privileged=true` together with `allowPrivilegeEscal
 
 Success is not inferred from a generic `kubectl` exit code. Retain the diagnostic and identify the responsible rule. An evidence package's existence does not imply every step succeeded.
 
+Kyverno 1.19.1's bundle verifier reports `no matching signatures found` both for missing predicates and some trust failures. F13 therefore requires exactly one identified `tfm-results`/`require-results` rejection (including its generated Deployment rule), valid bundle-only inventories captured before and after denial, with the original preflight revalidated before the request, absent results and present image-signature/SBOM/provenance predicates for the same digest. Other admission policies must pass, and L01 must subsequently admit that same digest after results issuance before the overall run can pass. Inventory parsing is structural evidence, not signature authentication. Additional rules, malformed or unavailable inventories and unrelated verification errors fail the test.
+
 ## Comparison and limitations
 
 R and G initially share the service and digest. L01 then exercises a second digest only in G to check a legitimate image replacement. The initial comparison exposes G's additional conditions and shows that R does not require the experimental summary. The extra UPDATE build is not an independent R/G pair: this illustration neither establishes a general detection rate nor covers all twenty scenarios or a valid timing campaign.
@@ -92,3 +94,5 @@ R and G initially share the service and digest. L01 then exercises a second dige
 Omitting the summary is a controlled fault modeling incomplete delivery or a route lacking required authorization. It does not demonstrate resistance to complete administrator, authorized-runner or trust-root compromise. It also does not establish absence of malware or complete regulatory compliance. Traceability can support technical evidence for risk/change management; applying it to an insurer requires organizational context and additional controls.
 
 The [execution guide](runbook.md) separates local commands, hosted workflow, expected outputs and preparation failures. The subsequent pilot must establish interoperability, resource use and reproducibility before campaign conditions are fixed.
+
+The current [bundle migration candidate](../../cosign-bundle-migration.md) retains these oracles and all twenty scenario definitions. It uses `SigstoreBundle` consumers in A and B, with local development-key trust separated from hosted OIDC/transparency. [Local bundle compatibility run `run-De88fpWy`](../../../../registros/cosign_bundles_validation_EN.md) passed strict inventory retrieval, L01/F13/F11 and independent image replacement on Docker Engine 24.0.5/cgroup v1 with explicit `GP_CGROUP_V1_COMPAT=1`. Actual F07 negative admission and real hosted OIDC, SCT and transparency-log validation remain required; neither this compatibility run nor classic baseline success establishes campaign results. After the affected pilot passes, freeze the adopted revision and keep classic development timings separate from bundle campaign measurements.

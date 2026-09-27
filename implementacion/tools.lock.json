@@ -62,7 +62,7 @@
     "buildkit": {
       "reference": "moby/buildkit@sha256:28a898719c18a33f4e8000685287fa36fd0dd9560c6440227d3a732d79bb41d8",
       "source": "https://hub.docker.com/r/moby/buildkit",
-    "note": "Verified digest of the engine downloaded by Buildx during local validation."
+      "note": "Verified digest of the engine downloaded by Buildx during local validation."
     },
     "zot": {
       "repository": "ghcr.io/project-zot/zot-linux-amd64",
@@ -119,13 +119,14 @@
     }
   },
   "compatibility": {
-    "cosignClassic": {
-      "newBundleFormat": false,
-      "useSigningConfig": false,
-      "tlogUploadLocal": false,
-      "hostedCertificateChain": "Complete classic OCI chain annotations from authenticated Fulcio TUF material; preserve verifier trust roots.",
-    "reason": "Lab Cosign signatures and attestations use the classic format supported by ClusterPolicy verification; native GitHub provenance uses SigstoreBundle.",
-      "source": "https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/attest.go"
+    "cosignBundles": {
+      "format": "application/vnd.dev.sigstore.bundle.v0.3+json",
+      "imageSignaturePredicate": "https://sigstore.dev/cosign/sign/v1",
+      "localSigningServices": "none; explicit development key and empty signing/trusted-root configuration",
+      "hostedTrust": "Exact GitHub workflow identity, issuer and transparency verified with authenticated Sigstore trust material.",
+      "admission": "Kyverno 1.19.1 ClusterPolicy SigstoreBundle; policy API migration remains separate.",
+      "validation": "Migration candidate: record local and hosted acceptance separately before campaign freeze.",
+      "source": "https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go"
     }
   }
 }

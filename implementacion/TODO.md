@@ -17,10 +17,10 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) specifies t
 - [x] Prepare CI without publication permissions and the manual GitHub integration workflow, with native provenance and a results artifact.
 - [x] Successfully run the included unit and contract tests; keep their scope distinct from real integration.
 - [x] Complete an end-to-end lane A execution: `run-8N59m8xw`, L01 admitted and functional, F13 and F11 rejected by their rules, and package verified. This used a local compatibility environment; review by the responsible person and repetition in Codespaces remain pending.
-- [ ] Complete and review an end-to-end lane B execution with OIDC, GHCR, native provenance and actual verification by Kyverno.
+- [x] Observe a complete classic-profile lane B execution with OIDC, GHCR, native provenance and actual Kyverno verification in [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654), commit `4f8fe77`, included in v0.1.0. This does not validate the later bundle profile.
 - [x] Implement hosted classic certificate-chain completion from authenticated Fulcio TUF material, preserving root trust and signed content, with regression coverage.
 - [x] Observe the corrected chains and results verified in hosted admission in [run 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179), commit `1ae111fc6e1614b32ee86461771836ada60e1d42`: F13 correctly rejected, L01 admitted and healthy, F11 correctly denied by Kyverno. The overall run failed because the rejection parser counted kubectl's preamble `to:` as an extra policy; the final legitimate update was not reached.
-- [ ] Validate this correction on a published fix branch: certificate chains accepted, F13 rejected solely for missing results, then L01 accepted, F11 rejected for its intended rule and legitimate update accepted. Preserve the exact commit and evidence package; do not count a certificate error as detection.
+- [x] Validate the classic correction and independent L01 image replacement in that hosted run: certificate chains accepted, F13 rejected solely for missing results, then L01 accepted and F11 rejected for its intended rule. Preserve the exact executed commit and evidence package.
 - [ ] Review the download and preservation of the hosted execution package and record the observed result.
 
 Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md). The [contracts and limitations](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Checkboxes in the following milestones may remain open even when their files have been prepared: completion requires all stated execution and review conditions to be met. This section does not establish a history of red-green TDD cycles or claim that all twenty scenarios have been executed; policy tests and directed checks do not replace completion of their full scenario records.
@@ -113,11 +113,21 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [ ] Relate European insurance-sector needs to controls, scenarios, evidence and limitations. Do not treat a documentary mapping as compliance certification.
 - [ ] Integrate design, implementation, results and review evidence into the thesis.
 
+## Current increment: Cosign bundles before campaign freeze
+
+- [x] Preserve v0.1.0 and prepare `feat/cosign-bundles` with default Cosign bundles, predicate-specific verification and Kyverno `SigstoreBundle` consumers. Keep the pinned versions.
+- [x] Preserve distinct local and hosted trust profiles, raw bundles, public verification material, verifier outputs and EN/ES documentation.
+- [x] Require strict OCI referrer retrieval before attributing missing results; unreadable evidence and changing inventories are integration failures.
+- [x] Run regression and actual Cosign cryptographic checks, including SBOM/results substitution, altered signatures, wrong digests and unauthorized development keys.
+- [x] Record a fresh local end-to-end run with strict retrieval, F13/F11 attribution, L01 creation and independent image replacement, and verified archive checksums: [run-De88fpWy](registros/cosign_bundles_validation_EN.md), on the documented cgroup-v1 compatibility host. This is not a campaign measurement.
+- [x] Run and review the published migration branch in real GitHub Actions at `82728c5`: [run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827), including native provenance, exact identity, certificate/SCT, transparency and L01/F13/F11. See the [review record](registros/pr15_review_EN.md); later source corrections require their own run.
+- [ ] Revalidate the PR #15 config-blob and packaging corrections in local/hosted integration on the exact published revision.
+- [ ] Complete the remaining directed admission checks in the [migration acceptance list](docs/EN/cosign-bundle-migration.md), including valid attestations without the independent image-signature predicate. Cryptographic and policy-construction tests alone do not complete these live checks.
+- [ ] Review, merge and validate the resulting `main` revision, then repeat affected pilot checks before fixing the campaign version.
+
+The [migration guide](docs/EN/cosign-bundle-migration.md) ([Spanish](docs/ES/cosign-bundle-migration.md)) retains the classic compatibility history. The twenty scenarios and comparison of R/G remain applicable. Run both configurations from the same frozen revision; R may omit the additional controls. Earlier classic development measurements are not pooled with the bundle campaign. Kyverno's deprecated policy API remains a separate future migration; the classic chain helper is retained as inactive historical support pending hosted acceptance.
+
 ## Extensions, only after completing and reviewing the baseline
-
-- [ ] Assess the [deferred migration to Cosign Sigstore bundles](docs/EN/cosign-bundle-migration.md) ([Spanish](docs/ES/cosign-bundle-migration.md)): adapt evidence parsing and admission consumers, validate both trust profiles, preserve the independent image-signature requirement and update documentation before adopting a new evaluation baseline. The proposal records confirmed findings, conditional changes and real-integration acceptance criteria; migration has not been implemented.
-
-The independent baseline defect was confirmed in hosted run `36277828157`: its inventory mixes GitHub provenance bundles with classic SBOM attestations. F13 now normalizes the observed v0.3 bundle envelopes and retains the same validation and digest checks. This parser correction does not implement the deferred signing/admission migration; a fresh hosted integration run remains necessary.
 
 The proposed order prioritizes additional coverage of the prototype's guarantees, the consequences of incorrect acceptance and preparation effort. It is not an industry attack-frequency ranking. Unit or integration tests needed to support guarantees already claimed belong to the baseline; the extension consists of turning these conditions into independent measured scenarios in a later campaign.
 

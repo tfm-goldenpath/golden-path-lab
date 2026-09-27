@@ -6,7 +6,7 @@ import { RESULTS_TYPE } from '../../scripts/lab-contracts.mjs';
 const digest = 'sha256:' + 'a'.repeat(64);
 const bom = {bomFormat:'CycloneDX',specVersion:'1.6',version:1,metadata:{component:{name:'synthetic',type:'container'}},components:[{name:'synthetic',type:'library'}]};
 function envelope(type = 'https://cyclonedx.org/bom', predicate = bom, hash = digest.slice(7)) {
-  return {payloadType:'application/vnd.in-toto+json', signatures:[{sig:'synthetic-not-a-real-signature'}],
+  return {payloadType:'application/vnd.in-toto+json', signatures:[{sig:Buffer.from('synthetic-not-a-real-signature').toString('base64')}],
     payload:Buffer.from(JSON.stringify({_type:'https://in-toto.io/Statement/v1', subject:[{name:'registry.example/quotes',digest:{sha256:hash}}],predicateType:type,predicate})).toString('base64')};
 }
 
@@ -19,6 +19,25 @@ const syntheticBytes = Buffer.from('synthetic bytes, not cryptographic evidence'
 const logEntry = () => ({logIndex:'1',logId:{keyId:syntheticBytes},kindVersion:{kind:'dsse',version:'0.0.1'},
   integratedTime:'1',canonicalizedBody:syntheticBytes,inclusionPromise:{signedEntryTimestamp:syntheticBytes},
   inclusionProof:{logIndex:'1',treeSize:'2',rootHash:syntheticBytes,hashes:[syntheticBytes],checkpoint:{envelope:'synthetic checkpoint'}}});
+
+test('bundle signatures require protobuf bytes and a string keyid without changing the classic parser', () => {
+  for (const signature of [
+    {sig:'%%%NOT-BASE64%%%'}, {sig:''}, {sig:42}, {sig:syntheticBytes,keyid:42},
+    {sig:syntheticBytes,keyid:null}, {sig:syntheticBytes,unknown:true},
+  ]) {
+    const value = bundle();
+    value.dsseEnvelope.signatures = [signature];
+    assert.throws(() => checkMissingResults(JSON.stringify(value), digest), /Malformed bundle DSSE signature/);
+  }
+  for (const signature of [{sig:syntheticBytes}, {sig:syntheticBytes,keyid:''}, {sig:syntheticBytes,keyid:'synthetic-key'}]) {
+    const value = bundle();
+    value.dsseEnvelope.signatures = [signature];
+    assert.equal(checkMissingResults(JSON.stringify(value), digest).reason, 'RESULTS_ATTESTATION_MISSING');
+  }
+  const classic = envelope();
+  classic.signatures = [{sig:'synthetic-not-a-real-signature'}];
+  assert.equal(checkMissingResults(JSON.stringify(classic), digest).reason, 'RESULTS_ATTESTATION_MISSING');
+});
 
 test('accepts defined verification-material shapes without claiming authentication', () => {
   const defaultFields = logEntry();
@@ -86,8 +105,8 @@ test('accepts v0.3 bundles and mixed hosted inventories in JSON and JSONL', () =
 
 test('required transparency-log and proof fields cannot be omitted', () => {
   for (const [section, required] of [
-    ['entry', ['logIndex', 'integratedTime', 'logId', 'kindVersion', 'inclusionProof']],
-    ['proof', ['logIndex', 'hashes', 'rootHash', 'treeSize', 'checkpoint']],
+    ['entry', ['logId', 'kindVersion', 'inclusionProof']],
+    ['proof', ['rootHash', 'treeSize', 'checkpoint']],
   ]) {
     for (const field of required) {
       const entry = logEntry();
@@ -98,6 +117,19 @@ test('required transparency-log and proof fields cannot be omitted', () => {
         /verification material/, `${section}.${field} must be present`);
     }
   }
+});
+
+test('protobuf JSON defaults permit Rekor v2 and first-leaf proof representations', () => {
+  const value = bundle();
+  const entry = logEntry();
+  delete entry.integratedTime;
+  delete entry.logIndex;
+  delete entry.inclusionProof.logIndex;
+  delete entry.inclusionProof.hashes;
+  value.verificationMaterial.tlogEntries = [entry];
+  assert.equal(checkMissingResults(JSON.stringify(value), digest).reason, 'RESULTS_ATTESTATION_MISSING');
+  entry.logIndex = null;
+  assert.throws(() => checkMissingResults(JSON.stringify(value), digest), /verification material/);
 });
 
 test('bundles require exactly one DSSE signature without restricting classic envelopes', () => {

@@ -41,14 +41,16 @@ For GitHub, replace `--mode local --public-key ...` with `--mode github --identi
 | Policy | Verified property |
 | --- | --- |
 | `tfm-runtime` | Exact OCI repository, digest and restricted configuration for all containers; no hostPath. Explicit rejection of added ephemeral debug containers. |
-| `tfm-signature` / `require-image-signature` | Valid image signature using the development key or authorized OIDC identity. |
+| `tfm-signature` / `require-image-signature` | Valid independent image-signature bundle with predicate `https://sigstore.dev/cosign/sign/v1`, using the development key or authorized OIDC identity. Other attestation predicates cannot satisfy this rule. |
 | `tfm-sbom` / `require-sbom` | Signed CycloneDX attestation with the correct format and selected schema version. |
 | `tfm-provenance` / `require-provenance` | Signed SLSA v1 provenance with the expected build type, source repository and commit. |
 | `tfm-results` / `require-results` | Signed results attestation with the expected policy version, repository and commit, and a `PASS` result for every mandatory check. |
 
 Pod rules are generated and Kyverno autogenerates their Deployment equivalents. The demonstration must check both levels and retain the `require-results` rejection for F13. A network failure or invalid signature is not a substitute for that specific rejection. Workload updates are also evaluated; this configuration does not provide continuous monitoring of already admitted Pods.
 
-Tag-to-digest mutation is disabled: manifests must already specify a digest. Signature and attestation checks use `required=true`, `verifyDigest=true`, `Enforce` mode and `failurePolicy=Fail`. The installer must disable the Kyverno verification cache (`--imageVerifyCacheEnabled=false`) so that a previous result cannot hide the F13 injection. HTTP registry access is enabled only in the isolated local lane; the GitHub lane retains HTTPS and Rekor transparency.
+Tag-to-digest mutation is disabled: manifests must already specify a digest. Signature and attestation checks use `required=true`, `verifyDigest=true`, `Enforce` mode and `failurePolicy=Fail`. The installer must disable the Kyverno verification cache (`--imageVerifyCacheEnabled=false`) so that a previous result cannot hide the F13 injection. HTTP registry access is enabled only in the isolated local lane. Only that lane permits `keys.rekor.ignoreTlog: true` and `keys.ctlog.ignoreSCT: true` for development-key bundles without public log timestamps. The GitHub lane retains HTTPS, exact OIDC identity/issuer, certificate trust, transparency and applicable timestamp/SCT checks.
+
+Kyverno 1.19.1's bundle verifier reports `no matching signatures found` both for missing predicates and some trust failures. F13 therefore requires exactly one identified `tfm-results`/`require-results` rejection (including its generated Deployment rule), valid bundle-only inventories captured before and after denial, with the original preflight revalidated before the request, absent results and present image-signature/SBOM/provenance predicates for the same digest. Other admission policies must pass, and L01 must subsequently admit that same digest after results issuance before the overall run can pass. Inventory parsing is structural evidence, not signature authentication. Additional rules, malformed or unavailable inventories and unrelated verification errors fail the test.
 
 ## Attestation formats
 
@@ -77,9 +79,11 @@ Lane A uses a local key and the provenance build type `https://tfm-goldenpath.de
 
 ## Compatibility and sources
 
-The baseline uses `ClusterPolicy`/`verifyImages`, an API still supported by the pinned Kyverno version although marked as deprecated in its current documentation. This choice allows the two lanes to be compared using explicit, known checks; migration to `ImageValidatingPolicy` is a later improvement that requires repeating the tests.
+The bundle candidate retains `ClusterPolicy`/`verifyImages` with pinned Kyverno 1.19.1. Its deprecation remains visible; migration to a different policy family is separate work requiring equivalent runtime scope, enforcement, trust, readiness and rejection attribution. Changing the evidence format does not complete that migration.
 
-Storage formats are distinct: the signature, SBOM and results summary are published in a Cosign format compatible with `verifyImages.type=Cosign`; native GitHub provenance is verified using `type=SigstoreBundle`. With Cosign 3, the automation explicitly selects the compatible format (`--new-bundle-format=false`) for the former evidence items. A GitHub bundle is not assumed to be interchangeable with a classic attestation.
+All required image evidence uses `verifyImages.type=SigstoreBundle`: image signature, SBOM, local or native GitHub provenance, and results. Cosign 3.1.3 producers use their default bundle format. Each control requires its own `attestations[].type`; in particular the image-signature predicate is distinct from the other signed attestations. The signed in-toto statement still uses `predicateType`. The active bundle path does not use the historical classic chain-completion helper.
+
+This is a [migration candidate](../docs/EN/cosign-bundle-migration.md), with [local compatibility PASS](../registros/cosign_bundles_validation_EN.md) in `run-De88fpWy`, including strict inventory retrieval; actual F07 negative admission and real hosted OIDC, SCT and transparency-log verification remain pending. Generated policies and unit checks do not prove registry retrieval, cryptographic trust or admission. The acceptance checks must reject a missing image-signature predicate even when SBOM/provenance/results bundles are valid, and retain F13's specific missing-results attribution. Preserve raw bundles, verified outputs, `evidence-profile.json` and applied policies for each digest; a structural profile report is not cryptographic proof. Keep the twenty-scenario method and prior classic results distinct, and freeze the adopted bundle profile after the pilot.
 
 - [Conftest and Rego](https://www.conftest.dev/).
 - [Kyverno: verifyImages, required, verifyDigest and caching](https://kyverno.io/docs/policy-types/cluster-policy/verify-images/overview/).
