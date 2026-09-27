@@ -1,8 +1,10 @@
 # Golden Path: verifiable delivery laboratory
 
-This laboratory uses **quotes-node**, a synthetic quotation service without production dependencies. **L01** demonstrates a complete legitimate delivery. **F13** checks that a missing signed results attestation prevents deployment. An additional **F11** check rejects a privileged workload before deployment and during a Kubernetes update.
+This laboratory uses **quotes-node**, a synthetic quotation service without production dependencies. **L01** demonstrates a legitimate delivery followed by replacement with a different, independently verified image digest. **F13** checks that a missing signed results attestation prevents deployment. An additional **F11** check rejects a privileged workload before deployment and during a Kubernetes update.
 
 The [execution guide](docs/EN/cases/L01-F13/runbook.md) covers Codespaces, Dev Containers and GitHub, including expected results and troubleshooting. The [L01/F13 case](docs/EN/cases/L01-F13/README.md) explains the experimental claim. Historical [validation records](registros/validacion_integracion.md) distinguish observed runs from pending work and retain their original Spanish wording.
+
+The [image-replacement validation](registros/l01_image_update_validation_EN.md) records the local integration result and the remaining hosted check.
 
 ## Documentation language
 
@@ -38,6 +40,8 @@ flowchart LR
   F --> G[Kyverno verifies evidence]
   G --> H[L01: admission and HTTP check]
   H --> I[F11: privileged update is rejected]
+  I --> J[L01: verify and authorize replacement image]
+  J --> K[Admission, rollout and running image digest]
 ```
 
 A HIGH/CRITICAL finding blocks delivery even when no fix is available. An incomplete mandatory check also stops delivery. Scan results may change when the vulnerability database changes.
@@ -78,7 +82,7 @@ The local lane uses development keys and provenance. `act` can exercise compatib
 | `services/quotes-node/` | API, validation, calculation, tests and its own Docker context. |
 | `policies/conftest/` | Manifest, workflow and vulnerability rules. |
 | `policies/kyverno/` | Policies with explicit trust for `tfm-golden`. |
-| `scripts/demo.sh` | CLI entry point, execution order and sole owner of the cleanup `trap`. |
+| `scripts/demo.sh` | CLI entry point, execution order and owner of infrastructure cleanup. |
 | `scripts/lib/context.sh` | Run context, state between phases, identity and traceability. |
 | `scripts/lib/lab.sh` | kind, zot registry, builder, namespaces, Kyverno admission, diagnostics and cleanup. |
 | `scripts/lib/delivery.sh` | Tests, early policies, build, Trivy and manifest generation. |
@@ -88,6 +92,7 @@ The local lane uses development keys and provenance. `act` can exercise compatib
 | `scripts/lab-contracts.mjs` | Manifest, SBOM, provenance and results contracts. |
 | `scripts/github-attestation.mjs` | Validate content already cryptographically verified by GitHub CLI. |
 | `scripts/check-missing-results.mjs` | Check that F13 is prepared against the correct digest. |
+| `scripts/check-image-rollout.mjs` | Check the replacement Deployment generation, readiness and running Pods' image digests. |
 | `scripts/package-evidence.py` | Package evidence and its hashes. |
 | `tests/` | Environment, contracts, orchestration, scenarios and positive/negative policy inputs. |
 | `.devcontainer/` | Linux environment and checksum-checked installation. |

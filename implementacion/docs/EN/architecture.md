@@ -66,9 +66,9 @@ Conftest uses Rego while Kyverno uses declarative resources. Shared properties r
 
 **Lane A** runs in the devcontainer with kind, zot and development signing. `make demo` directly invokes `demo.sh`; `act` additionally exercises compatible workflow steps. **Lane B** uses Actions, GHCR, real OIDC and keyless signing to validate hosted integration and identity. Reuse analysis commands where practical while keeping publication and trust configuration distinct.
 
-**R/G** identifies the control configuration; **A/B** identifies execution environment and trust. A local rule test does not establish hosted OIDC behavior. Root `.github/workflows/` refers to `implementacion/`: CI runs on PR/push, while B uses manual `workflow_dispatch`, not yet reusable `workflow_call`. Historical [validation records](../../registros/validacion_integracion.md) retain observed local execution and distinguish pending hosted validation; they are not evidence that the imported repository has already passed B.
+**R/G** identifies the control configuration; **A/B** identifies execution environment and trust. A local rule test does not establish hosted OIDC behavior. Root `.github/workflows/` refers to `implementacion/`: CI runs on PR/push, while B uses manual `workflow_dispatch`, not yet reusable `workflow_call`. Historical [validation records](../../registros/validacion_integracion.md) describe their recorded scope. The [runbook](cases/L01-F13/runbook.md) distinguishes the successful hosted baseline from the new image-replacement flow, which needs its own hosted run.
 
-The public interfaces are `make demo` and `make reference`. GitHub retains **prepare → actions/attest → finish → cleanup**: preparation produces image/state, the hosted action emits native provenance, finalization consumes it, and cleanup removes resources. A local function does not substitute for the hosted attestation action.
+The public interfaces are `make demo` and `make reference`. GitHub retains **prepare → actions/attest → finish → cleanup**: preparation produces the initial and L01 replacement images with separate state; two hosted action steps issue native provenance for their respective digests. Finalization verifies each delivery and cleanup removes shared resources. A local function does not substitute for the hosted attestation action.
 
 ## Implemented modules and dependencies
 
@@ -77,13 +77,14 @@ The [initial plan](implementation-plan.md) retains earlier proposed directories;
 | Component | Inputs/outputs and verification |
 |---|---|
 | [Service](../../services/quotes-node/src/) | HTTP/JSON → health, version or quote. `index.js` starts, `server.js` adapts HTTP, `quote.js` calculates, `validation.js` validates. [Service tests](../../services/quotes-node/test/) check behavior and limits. |
-| [Orchestrator](../../scripts/demo.sh) and [workflows](../../../.github/workflows/) | Mode/phase/arguments → ordered module/scenario calls. One cleanup `trap`. [Orchestration tests](../../tests/unit/orchestration.test.mjs) substitute stages to check order, interruption and exit status; they do not establish real integration. |
+| [Orchestrator](../../scripts/demo.sh) and [workflows](../../../.github/workflows/) | Mode/phase/arguments → ordered module/scenario calls and ownership of infrastructure cleanup. [Orchestration tests](../../tests/unit/orchestration.test.mjs) substitute stages to check order, interruption and exit status; they do not establish real integration. |
 | [Context](../../scripts/lib/context.sh) | Parameters/persisted state → run identity, resources and traceability without mixing images or attempts. |
 | [Laboratory](../../scripts/lib/lab.sh) | Context/versions → kind, zot, builder, namespaces, Kyverno, diagnostics and cleanup. Real resource operations need integration. |
 | [Delivery](../../scripts/lib/delivery.sh) | Sources/context → tests, early checks, image, Trivy reports and manifests. Rule unit tests do not replace a real image scan. |
 | [Attestations](../../scripts/lib/attestations.sh) | Image/identities → signing, verification and results issuance. Separate cryptography, content and policy authorization. |
 | [Classic chain adapter](../../scripts/complete-classic-chain.mjs) | Hosted classic OCI manifests + authenticated Fulcio material → complete public CA chain annotation and before/after report. Preserve payloads, signatures, identities and verifier roots; subsequent Cosign/admission verification remains mandatory. Temporary compatibility support, separate from the [deferred bundle migration](cosign-bundle-migration.md). |
 | [Workload](../../scripts/lib/workload.sh) | Manifest/image → deployment request and HTTP check. Admission and functional response are distinct observations. |
+| [Image rollout check](../../scripts/check-image-rollout.mjs) | Original/replacement references + observed Deployment/Pods → proof that a distinct digest completed rollout and runs in ready Pods. It does not replace admission or signature verification. |
 | [Scenarios](../../tests/scenarios/) | Delivery context → L01/F13/F11 preparation and expectations. Attribute a rejection to its intended condition. |
 | [Conftest policies](../../policies/conftest/) | Workflow, manifest or Trivy JSON → Rego decisions. [Policy fixtures](../../tests/policies/run_rego.py) and [real-file checks](../../scripts/check-policies.sh) exercise the rules. |
 | [Contract helper](../../scripts/lab-contracts.mjs) | Parameters → manifests/predicates; verified documents → subject/type/content checks. [Contract tests](../../tests/unit/contracts.test.mjs) do not perform cryptography. |
@@ -126,7 +127,9 @@ Functions require the initialized context. A module must not silently redefine i
 
 ### Extending a scenario
 
-`l01.sh` checks legitimate delivery. `f13.sh` checks missing-results rejection before authorization is issued, then L01 consumes the same digest. `f11.sh` checks early privileged input and a forbidden update after legitimate admission. Common resources and evidence production stay in laboratory modules.
+`l01.sh` checks legitimate delivery and a subsequent authorized image replacement. Its second image uses the same source commit with a different build label and gets separate image-specific evidence in `L01-update/`; existing delivery and attestation modules perform those checks. A subshell isolates the replacement context and cleans up its own probe process, while `demo.sh` owns infrastructure cleanup. `check-image-rollout.mjs` records the actual new Pod digests in `L01-image-update.json`. This checks replacement mechanics, not a functional application upgrade.
+
+`f13.sh` checks missing-results rejection before authorization is issued, then initial L01 consumes that same digest. `f11.sh` checks early privileged input and a forbidden update after legitimate admission. Common resources and evidence production stay in laboratory modules.
 
 1. Define valid input, alteration, expected outcome and attributable diagnostic in the case specification.
 2. Add preparation/check functions under `tests/scenarios/`, without import-time effects. Reuse context and common operations.

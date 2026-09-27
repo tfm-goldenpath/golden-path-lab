@@ -16,7 +16,7 @@ The first environment test uses an infrastructure probe independent of `quotes-n
 |---|---|---|
 | Node / npm | 24.21.0 / 11.19.0 | LTS line and native tests without another framework. [Node release](https://nodejs.org/en/blog/release/v24.21.0), [bundled npm](https://github.com/nodejs/node/blob/v24.21.0/deps/npm/package.json). |
 | Development base | `node:24.21.0-bookworm`, AMD64 manifest by SHA-256 | [Official Node image](https://hub.docker.com/_/node); full reference in [versions.env](../../versions.env). |
-| Service runtime base | Node 24.21.0 / Alpine 3.24, AMD64 manifest by SHA-256 | Separate `SERVICE_NODE_IMAGE` in [versions.env](../../versions.env); see [service README](../../services/quotes-node/README.md). |
+| Service runtime base | Node 24.21.0 / Alpine 3.23, AMD64 manifest by SHA-256 | Supported Alpine `main` branch recognized by Trivy 0.74.0's EOL metadata. Separate `SERVICE_NODE_IMAGE` in [versions.env](../../versions.env); see [service README](../../services/quotes-node/README.md) for the compatibility decision. |
 | Docker Engine / CLI | 29.8.0 | [Official release](https://docs.docker.com/engine/release-notes/29/#2980); installed from Docker's Debian repository. |
 | Docker-in-Docker feature | 4.1.0 with lockfile | [Official feature](https://github.com/devcontainers/features/tree/main/src/docker-in-docker). Tagged feature ID in JSON, resolved digest in lockfile; automatic Buildx/Compose disabled. |
 | Buildx | 0.37.1 | [Official release](https://github.com/docker/buildx/releases/tag/v0.37.1), AMD64 download with pinned SHA-256. |

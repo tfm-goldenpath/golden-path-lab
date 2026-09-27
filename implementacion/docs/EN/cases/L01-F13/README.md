@@ -19,7 +19,7 @@
 | Expected stage | Kubernetes admission, in a directed check of the later barrier. |
 | Blocking boundary | Before admitting the protected workload; detecting it after execution is insufficient. |
 | F13 oracle | Rejection attributable to the mandatory-results policy, with other conditions verified. |
-| L01 oracle | Admission, workload readiness, health, version and quote consistent with the delivery. |
+| L01 oracle | Initial admission and healthy response; subsequently, an authorized UPDATE to a different image digest, with the Deployment and ready Pods running that digest and preserving the quote contract. |
 | Evidence | Digest, trust settings, policies, reports, verification results, admission responses and HTTP result. |
 | Scope | Local lane A and hosted lane B, with distinct documented identity mechanisms. |
 
@@ -27,7 +27,7 @@
 
 ```mermaid
 flowchart TD
-  T[Service and policy tests] --> B[Build and publish one digest]
+  T[Service and policy tests] --> B[Build and publish initial digest]
   B --> R[Reference R: deploy and check HTTP]
   B --> P[Conftest and Trivy]
   P --> E[Image signature, SBOM and provenance]
@@ -39,11 +39,17 @@ flowchart TD
   S --> A[L01: request complete admission]
   A --> K[Kyverno checks signature and evidence]
   K --> H[Workload ready and quote correct]
+  B --> U[Prepare second digest: scan, SBOM and provenance]
+  U --> Q[Verify and sign replacement authorization]
+  H --> Q
+  Q --> J[L01 UPDATE: check ready Pods use replacement digest]
 ```
 
 Use isolated run state so the digest does not inherit a successful summary from an earlier trial. **F13 runs before the summary is published**; it does not delete evidence belonging to another delivery or weaken policy to obtain rejection. If the registry already holds reusable authorization for the trial image, absence has not been demonstrated and preparation must be isolated again.
 
 After F13, the issuer publishes the summary only if mandatory preceding checks passed. Admission is not included as a circular prerequisite. Kyverno's final authorization and functional response are recorded afterwards.
+
+L01 also replaces the running image. A second build uses the same source commit with a distinct laboratory build label, producing a different immutable digest; this tests image replacement, not a functional application upgrade. That digest receives its own Trivy report, SBOM, signature, provenance and signed results. The UPDATE must pass the existing admission controls, complete its rollout and leave ready Pods reporting the new runtime image digest. The initial image's evidence is not reused to authorize its replacement.
 
 ## Integrated properties and controls
 
@@ -70,7 +76,7 @@ The directed F11 check sets `privileged=true` together with `allowPrivilegeEscal
 
 | Observation | Interpretation |
 |---|---|
-| F13 rejected for missing summary; L01 admitted and functional | Oracle satisfied within the recorded versions and conditions. |
+| F13 rejected for missing summary; initial L01 and its distinct-image UPDATE admitted, ready and functional | Oracle satisfied within the recorded versions and conditions. |
 | F13 admitted | Barrier efficacy or trial isolation failed; retain as an unfavorable observation. |
 | F13 rejected for another missing/invalid evidence item | Rejection cannot be attributed to the required summary. Correct preparation and repeat. |
 | Network, verifier, registry or webhook failure | Operational incident, not a correct F13 detection. |
@@ -81,7 +87,7 @@ Success is not inferred from a generic `kubectl` exit code. Retain the diagnosti
 
 ## Comparison and limitations
 
-R and G share the service and, in this demonstration, the digest. The comparison exposes G's additional conditions and shows that R does not require the experimental summary. It neither establishes a general detection rate nor covers all twenty scenarios or a valid timing campaign: two independent builds per pair have not been measured.
+R and G initially share the service and digest. L01 then exercises a second digest only in G to check a legitimate image replacement. The initial comparison exposes G's additional conditions and shows that R does not require the experimental summary. The extra UPDATE build is not an independent R/G pair: this illustration neither establishes a general detection rate nor covers all twenty scenarios or a valid timing campaign.
 
 Omitting the summary is a controlled fault modeling incomplete delivery or a route lacking required authorization. It does not demonstrate resistance to complete administrator, authorized-runner or trust-root compromise. It also does not establish absence of malware or complete regulatory compliance. Traceability can support technical evidence for risk/change management; applying it to an insurer requires organizational context and additional controls.
 

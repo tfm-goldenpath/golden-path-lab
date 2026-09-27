@@ -46,7 +46,9 @@ test('build references and checks use the same pinned versions', () => {
   assert.equal(options.version, versions.DOCKER_VERSION);
   assert.equal(options.installDockerBuildx, false);
   assert.equal(options.dockerDashComposeVersion, 'none');
-  for (const key of ['NODE_IMAGE', 'KIND_NODE_IMAGE']) assert.match(versions[key], /@sha256:[a-f0-9]{64}$/);
+  for (const key of ['NODE_IMAGE', 'SERVICE_NODE_IMAGE', 'KIND_NODE_IMAGE']) assert.match(versions[key], /@sha256:[a-f0-9]{64}$/);
+  assert.ok(versions.SERVICE_NODE_IMAGE.startsWith(`node:${versions.NODE_VERSION}-`));
+  assert.equal(read('services/quotes-node/Dockerfile').split(/\r?\n/)[0], `ARG NODE_IMAGE=${versions.SERVICE_NODE_IMAGE}`);
   for (const key of ['KIND_SHA256', 'KUBECTL_SHA256', 'BUILDX_SHA256']) assert.match(versions[key], /^[a-f0-9]{64}$/);
   assert.match(versions.KIND_NODE_IMAGE, new RegExp(`^kindest/node:v${versions.KUBERNETES_VERSION.replaceAll('.', '\\.')}@`));
   assert.equal(config.remoteUser, 'node');
@@ -60,15 +62,20 @@ test('hosted attestation authenticates in the default Docker config and always l
   const prepare = steps.findIndex(step => step.startsWith('Build and prepare the delivery\n'));
   const login = steps.findIndex(step => step.startsWith('Authenticate GHCR for attestation\n'));
   const attest = steps.findIndex(step => step.startsWith('Generate build provenance\n'));
+  const attestUpdate = steps.findIndex(step => step.startsWith('Generate replacement image provenance\n'));
   const logout = steps.findIndex(step => step.startsWith('Remove attestation registry credentials\n'));
-  const finish = steps.findIndex(step => step.startsWith('Verify evidence and check L01 and F13\n'));
-  assert.ok(prepare >= 0 && login === prepare + 1 && attest === login + 1 && logout === attest + 1 && finish === logout + 1);
+  const finish = steps.findIndex(step => step.startsWith('Verify evidence, F13, F11 and L01 image replacement\n'));
+  assert.ok(prepare >= 0 && login === prepare + 1 && attest === login + 1 && attestUpdate === attest + 1 && logout === attestUpdate + 1 && finish === logout + 1);
   assert.ok(steps[login].includes('GH_TOKEN: ${{ github.token }}'));
   assert.ok(steps[login].includes(`printf '%s' "$GH_TOKEN" |`));
   assert.ok(steps[login].includes('docker --config "$HOME/.docker" login ghcr.io'));
   assert.ok(steps[login].includes('--username "$GITHUB_ACTOR" --password-stdin'));
-  assert.ok(!steps[attest].includes('DOCKER_CONFIG:'));
-  assert.ok(steps[attest].includes('push-to-registry: true'));
+  for (const index of [attest, attestUpdate]) {
+    assert.ok(!steps[index].includes('DOCKER_CONFIG:'));
+    assert.ok(steps[index].includes('push-to-registry: true'));
+  }
+  assert.ok(steps[attest].includes('subject-digest: ${{ steps.prepare.outputs.digest }}'));
+  assert.ok(steps[attestUpdate].includes('subject-digest: ${{ steps.prepare.outputs.update_digest }}'));
   assert.ok(steps[logout].includes('if: ${{ always() }}'));
   assert.ok(steps[logout].includes('docker --config "$HOME/.docker" logout ghcr.io'));
   assert.ok(read('scripts/lib/context.sh').includes('export DOCKER_CONFIG="$private/docker"'));

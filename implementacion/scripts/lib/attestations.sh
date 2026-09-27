@@ -21,7 +21,11 @@ attestations_verify_delivery() {
   verify_args=(--new-bundle-format=false)
   if [[ "$mode" == local ]]; then
     export COSIGN_PASSWORD=''
-    cosign generate-key-pair --output-key-prefix "$private/cosign" >/dev/null
+    # Both L01 images must use the run key already trusted by admission.
+    if [[ ! -f "$private/cosign.key" && ! -f "$private/cosign.pub" ]]; then
+      cosign generate-key-pair --output-key-prefix "$private/cosign" >/dev/null
+    fi
+    [[ -f "$private/cosign.key" && -f "$private/cosign.pub" ]] || fail 'Incomplete local signing key pair.'
     cp "$private/cosign.pub" "$state_dir/development-public-key.pem"
     sign_args+=(--key "$private/cosign.key" --tlog-upload=false --allow-insecure-registry)
     verify_args+=(--key "$private/cosign.pub" --insecure-ignore-tlog --allow-insecure-registry)

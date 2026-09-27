@@ -54,6 +54,35 @@ test('the package preserves verifiable hashes and excludes state and credentials
   }
 });
 
+test('replacement evidence is retained with separate hashes and excludes its credentials', t => {
+  const { source, output } = fixture(t);
+  const update = path.join(source, 'L01-update');
+  fs.mkdirSync(update);
+  fs.writeFileSync(path.join(update, 'verified-results.json'), '{"replacement":true}\n');
+  fs.writeFileSync(path.join(update, 'state.json'), '{"private":"fixture"}');
+  fs.writeFileSync(path.join(update, 'secret.log'), '-----BEGIN PRIVATE KEY-----\nfixture');
+  const unrelated = path.join(source, 'unrelated');
+  fs.mkdirSync(unrelated);
+  fs.writeFileSync(path.join(unrelated, 'ignored.json'), '{}');
+  execFileSync(python, [script, source, output, 'PASS']);
+  const result = inspectArchive(path.join(output, 'run-test.tar.gz'));
+  assert.deepEqual(result.mismatches, []);
+  assert.ok(result.names.includes('run-test/L01-update/verified-results.json'));
+  assert.ok(!result.names.includes('run-test/L01-update/state.json'));
+  assert.ok(!result.names.includes('run-test/L01-update/secret.log'));
+  assert.ok(!result.names.some(name => name.includes('/unrelated/')));
+});
+
+test('replacement evidence directory cannot redirect packaging outside the run', t => {
+  const { source, output } = fixture(t);
+  const external = path.join(path.dirname(source), 'external');
+  fs.mkdirSync(external);
+  fs.writeFileSync(path.join(external, 'unrelated.json'), '{}');
+  fs.symlinkSync(external, path.join(source, 'L01-update'), process.platform === 'win32' ? 'junction' : 'dir');
+  assert.throws(() => execFileSync(python, [script, source, output, 'PASS'], { stdio: 'pipe' }));
+  assert.ok(!fs.existsSync(path.join(output, 'run-test.tar.gz')));
+});
+
 for (const name of ['execution-summary.json', 'SHA256SUMS.txt']) {
   test(`packaging rejects a symlinked ${name} without changing its target`, t => {
     const { source, output } = fixture(t);

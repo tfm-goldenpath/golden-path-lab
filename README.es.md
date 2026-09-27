@@ -27,7 +27,7 @@ La demostración satisfactoria imprime este resumen antes de la limpieza y el em
 == PASS: L01 accepted; F13 and F11 rejected. Evidence: <directorio-de-evidencias> ==
 ```
 
-El mensaje añade la ubicación de las evidencias. La demostración utiliza `quotes-node`, crea un laboratorio efímero, comprueba aceptación de L01, ausencia de autorización firmada en F13 y una carga privilegiada en F11. Conserva los paquetes bajo `implementacion/evidence/packages/`. Es una prueba de integración funcional; no equivale a ejecutar la campaña completa de veinte escenarios.
+El mensaje añade la ubicación de las evidencias. La demostración utiliza `quotes-node`, crea un laboratorio efímero, comprueba la entrega inicial y la sustitución por otro digest verificado en L01, ausencia de autorización firmada en F13 y una carga privilegiada en F11. Conserva los paquetes bajo `implementacion/evidence/packages/`. Es una prueba de integración funcional; no equivale a ejecutar la campaña completa de veinte escenarios.
 
 ## Guías en español
 

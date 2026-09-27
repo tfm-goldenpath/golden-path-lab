@@ -19,7 +19,7 @@ El servicio `quotes-node` aporta un contrato funcional determinista. El objeto d
 | Fase esperada | Admisión de Kubernetes, en una comprobación dirigida de la barrera posterior. |
 | Límite de bloqueo | Antes de admitir la carga protegida; no se considera suficiente detectar el problema después de su ejecución. |
 | Oráculo F13 | Rechazo atribuible a la política de resultados obligatorios, con el resto de condiciones verificadas. |
-| Oráculo L01 | Admisión y despliegue preparados; salud, versión y cotización coherentes con la entrega. |
+| Oráculo L01 | Admisión inicial y respuesta saludable; después, UPDATE autorizado a otro digest de imagen, con el Deployment y los Pods preparados ejecutándolo y conservando el contrato de cotización. |
 | Evidencia | Digest, configuración de confianza, políticas, informes, verificaciones, respuestas de admisión y resultado HTTP. |
 | Alcance | Vía A local y vía B alojada, con mecanismos de identidad distintos y documentados. |
 
@@ -27,7 +27,7 @@ El servicio `quotes-node` aporta un contrato funcional determinista. El objeto d
 
 ```mermaid
 flowchart TD
-  T[Pruebas del servicio y políticas] --> B[Construcción y publicación: un digest]
+  T[Pruebas del servicio y políticas] --> B[Construcción y publicación del digest inicial]
   B --> R[Referencia R: despliegue y prueba HTTP]
   B --> P[Conftest y Trivy: políticas e informe]
   P --> E[Firma de imagen, SBOM y procedencia]
@@ -39,11 +39,17 @@ flowchart TD
   S --> A[L01: solicitar admisión completa]
   A --> K[Kyverno comprueba firma y evidencias]
   K --> H[Servicio preparado y cotización correcta]
+  B --> U[Preparar segundo digest: análisis, SBOM y procedencia]
+  U --> Q[Verificar y firmar autorización de la sustitución]
+  H --> Q
+  Q --> J[L01 UPDATE: comprobar Pods preparados con nuevo digest]
 ```
 
 Se usa un estado de ejecución aislado para que el digest no herede un resumen satisfactorio de un ensayo anterior. **F13 se ejecuta antes de publicar dicho resumen**; no se elimina una evidencia de una entrega ajena ni se rebaja la política para conseguir el rechazo. Si el registro ya contiene una autorización válida reutilizable para el objeto de esta prueba, no se puede dar por demostrada la ausencia y el ensayo debe aislarse de nuevo.
 
 Tras F13, el emisor publica el resumen únicamente si los controles obligatorios previos están satisfechos. Este resumen no incluye como requisito circular una admisión que todavía no se ha producido. La autorización final de Kyverno y la respuesta funcional se registran después.
+
+L01 también sustituye la imagen en ejecución. Una segunda construcción utiliza el mismo commit fuente y una etiqueta de construcción del laboratorio distinta para obtener otro digest inmutable; comprueba la sustitución de imagen, no una actualización funcional de la aplicación. Ese digest recibe su propio informe Trivy, SBOM, firma, procedencia y resultados firmados. El UPDATE debe superar los controles de admisión existentes, completar el despliegue y dejar Pods preparados cuyo identificador de imagen en ejecución corresponda al nuevo digest. Las evidencias de la imagen inicial no autorizan su sustitución.
 
 ## Propiedades y controles integrados
 
@@ -70,7 +76,7 @@ La comprobación dirigida F11 usa `privileged=true` junto con `allowPrivilegeEsc
 
 | Estado observado | Interpretación |
 |---|---|
-| F13 rechazado por ausencia del resumen; L01 admitido y funcional | Se satisface el oráculo de esta demostración, dentro de las versiones y condiciones registradas. |
+| F13 rechazado por ausencia del resumen; L01 inicial y su UPDATE a otra imagen admitidos, preparados y funcionales | Se satisface el oráculo de esta demostración, dentro de las versiones y condiciones registradas. |
 | F13 admitido | Fallo de eficacia de la barrera o de aislamiento del ensayo; se conserva como resultado desfavorable. |
 | F13 rechazado por otra evidencia ausente o inválida | No permite atribuir el resultado al resumen obligatorio. Hay que corregir la preparación y repetir la comprobación. |
 | Fallo de red, verificador, registro o webhook | Incidencia operativa; no se contabiliza como detección correcta de F13. |
@@ -81,7 +87,7 @@ El éxito no se deduce del código de salida genérico de `kubectl`. Se conserva
 
 ## Comparación y límites
 
-R y G usan el mismo servicio y, en esta demostración, el mismo digest. La comparación expone qué condiciones añade G y permite observar que R no exige el resumen experimental. No demuestra una tasa de detección general, ni cubre los veinte escenarios, ni constituye una campaña válida de tiempos: no se han repetido dos construcciones independientes por pareja.
+R y G comparten inicialmente el servicio y el digest. Después, L01 utiliza un segundo digest solo en G para comprobar una sustitución legítima de imagen. La comparación inicial expone qué condiciones añade G y permite observar que R no exige el resumen experimental. La construcción adicional para UPDATE no constituye una pareja independiente R/G: esta demostración no acredita una tasa de detección general, ni cubre los veinte escenarios, ni constituye una campaña válida de tiempos.
 
 La ausencia del resumen es una inyección controlada que modela una entrega incompleta o una vía que no aporta la autorización requerida. No demuestra resistencia al compromiso total del administrador, del runner autorizado o de la raíz de confianza. Tampoco acredita ausencia de malware ni cumplimiento normativo completo. La trazabilidad obtenida puede aportar evidencia técnica a la gestión del riesgo y del cambio, pero su aplicación a una aseguradora exige contexto organizativo y controles adicionales.
 

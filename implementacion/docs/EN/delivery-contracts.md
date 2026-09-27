@@ -4,7 +4,7 @@
 
 [Versión en español](../ES/delivery-contracts.md).
 
-The demonstration uses one `linux/amd64` image of `quotes-node`, identified by digest, for reference path R and protected path G. Reusing it compares functional behavior; **it is not a timing-measurement pair**. The [execution guide](cases/L01-F13/runbook.md) provides current commands, and [TODO](../../TODO.md) separates implemented capabilities from observed acceptance.
+The demonstration initially shares one `linux/amd64` image of `quotes-node`, identified by digest, between reference path R and protected path G. L01 subsequently replaces G's image with a second digest from the same source commit and a distinct build label, with its own analysis and signed evidence. This tests image replacement while preserving application behavior; **it is not a timing-measurement pair**. The [execution guide](cases/L01-F13/runbook.md) provides current commands, and [TODO](../../TODO.md) separates implemented capabilities from observed acceptance.
 
 ## Inputs, decisions and evidence
 
@@ -21,7 +21,7 @@ The demonstration uses one `linux/amd64` image of `quotes-node`, identified by d
 
 ## Local development provenance: lane A
 
-Kyverno image-verification caching is disabled so that **F13 → results issuance → L01** retrieves the relevant evidence. Trivy reuses its download cache while recording the scanner version, database metadata and database hash. Each run creates its own builder and image identifier. These conditions serve the functional demonstration; campaign cache policy and paired ordering follow the experimental protocol.
+Kyverno image-verification caching is disabled so that **F13 → results issuance → L01 → image UPDATE** retrieves the relevant evidence. Trivy may reuse downloaded database/cache content, but each digest is analyzed separately and records its scanner version, database metadata and hash. The initial and replacement images have separate run labels and evidence directories under one laboratory builder. Source-level test results may be reused for the unchanged source; image reports and authorizations are not transferred to a different digest. These conditions serve the functional demonstration; campaign cache policy and paired ordering follow the experimental protocol.
 
 The script creates a SLSA v1-shaped provenance statement with custom `buildType` `https://tfm-goldenpath.dev/buildtypes/local/v1`, signed with an ephemeral development key. It retains the declared repository, commit when available, run identifier and selected source-file snapshot. Without a Git repository, forty zeros identify an unavailable commit and `gitCommitAvailable` is false; the snapshot does not turn the sentinel into a real commit.
 
@@ -29,7 +29,7 @@ This lane checks generation, storage, retrieval, signatures and consumption of t
 
 ## Native GitHub provenance: lane B
 
-The manual workflow builds and publishes the candidate image to GHCR. SHA-pinned `actions/attest` emits native build provenance as a **SigstoreBundle** associated with the digest. GitHub CLI checks the signature, exact workflow identity, OIDC issuer, repository, commit and source reference. The content validator then examines JSON from successful verification; it does not perform cryptography itself. Kyverno retrieves the bundle and enforces provenance conditions directly at admission. References: [GitHub CLI](https://cli.github.com/manual/gh_attestation_verify), [official action](https://github.com/actions/attest), [Kyverno and Sigstore](https://kyverno.io/docs/policy-types/cluster-policy/verify-images/sigstore/).
+The manual workflow builds and publishes both image candidates to GHCR. Two SHA-pinned `actions/attest` steps emit native build provenance as a **SigstoreBundle** for their respective digests. GitHub CLI checks each signature, exact workflow identity, OIDC issuer, repository, commit and source reference. The content validator then examines JSON from successful verification; it does not perform cryptography itself. Kyverno retrieves the bundle and enforces provenance conditions directly at admission. References: [GitHub CLI](https://cli.github.com/manual/gh_attestation_verify), [official action](https://github.com/actions/attest), [Kyverno and Sigstore](https://kyverno.io/docs/policy-types/cluster-policy/verify-images/sigstore/).
 
 Image signatures and SBOM/results attestations explicitly use classic Cosign storage through `--new-bundle-format=false`. Native provenance uses the `SigstoreBundle` consumer. These mechanisms are not assumed to share storage or retrieval behavior. Lane A's identities and keys do not authorize B. The workflow is not an isolated reusable builder that automatically establishes SLSA Build L3.
 
@@ -39,4 +39,4 @@ Predicate type: `https://tfm-goldenpath.dev/attestations/verification-results/v1
 
 The design is **inspired by VSA's purpose** but uses a custom contract. It does not claim conformance to the [Verification Summary Attestation specification](https://slsa.dev/spec/v1.2/verification_summary). Admission is recorded after issuing the summary, avoiding a circular prerequisite. Kyverno retains direct signature, SBOM, provenance and configuration checks alongside the summary's outcome and policy.
 
-F13 prepares all other evidence and omits only that summary. The preparation check records its absence, and the directed admission test must identify `tfm-results`/`require-results` as the rejection cause. After summary issuance, L01 must be admitted and respond correctly. F11 checks privileged input both early and through a directed update. These checks do not close the remaining catalogue or replace campaign measurements.
+F13 prepares all other evidence and omits only that summary. The preparation check records its absence, and the directed admission test must identify `tfm-results`/`require-results` as the rejection cause. After summary issuance, initial L01 must be admitted and respond correctly. F11 checks privileged input both early and through a directed update. Finally, L01's replacement receives its own signed summary and must pass admission, complete rollout on the distinct digest and preserve the quote response. These checks do not close the remaining catalogue or replace campaign measurements.

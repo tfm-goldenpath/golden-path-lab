@@ -69,11 +69,32 @@ class RenderTests(unittest.TestCase):
         rule = item["spec"]["rules"][0]
         self.assertEqual(rule["name"], "require-results")
         attestation = rule["verifyImages"][0]["attestations"][0]
-        self.assertEqual(attestation["predicateType"], renderer.RESULTS_TYPE)
+        self.assertEqual(attestation["type"], renderer.RESULTS_TYPE)
         checks = attestation["conditions"][0]["all"]
         self.assertEqual(len(checks), 4 + len(renderer.CHECKS))
         for name in renderer.CHECKS:
             self.assertIn(renderer.condition("checks." + name, "PASS"), checks)
+
+    def test_supported_predicate_field_preserves_distinct_formats_and_trust(self):
+        expected = [renderer.SBOM_TYPE, renderer.PROVENANCE_TYPE, renderer.RESULTS_TYPE]
+        for mode in ("local", "github"):
+            config = self.config(mode)
+            for item, predicate in zip(renderer.render(config)["items"][2:], expected):
+                with self.subTest(mode=mode, policy=item["metadata"]["name"]):
+                    check = item["spec"]["rules"][0]["verifyImages"][0]
+                    is_native_bundle = mode == "github" and predicate == renderer.PROVENANCE_TYPE
+                    self.assertEqual(check["type"], "SigstoreBundle" if is_native_bundle else "Cosign")
+                    attestation = check["attestations"][0]
+                    self.assertEqual(attestation["type"], predicate)
+                    self.assertNotIn("predicateType", attestation)
+                    self.assertEqual(attestation["attestors"][0]["count"], 1)
+                    trust = attestation["attestors"][0]["entries"][0]
+                    if mode == "github":
+                        self.assertEqual(trust["keyless"]["subject"], config["identity"])
+                        self.assertEqual(trust["keyless"]["issuer"], "https://token.actions.githubusercontent.com")
+                        self.assertNotIn("ignoreTlog", trust["keyless"]["rekor"])
+                    else:
+                        self.assertEqual(trust["keys"]["publicKeys"], config["public_key"])
 
     def test_local_provenance_does_not_claim_github_builder(self):
         item = renderer.render(self.config())["items"][3]

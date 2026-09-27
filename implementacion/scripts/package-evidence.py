@@ -26,7 +26,13 @@ def package(source, output, status):
     allowed = {'.json', '.log', '.txt', '.yaml'}
     excluded = {'state.json', 'config.json', 'kubeconfig', 'cosign.key', 'SHA256SUMS.txt'}
     files = []
-    for file in sorted(source.iterdir()):
+    candidates = list(source.iterdir())
+    replacement = source / 'L01-update'
+    if replacement.is_symlink() or replacement.resolve() != replacement:
+        raise ValueError('Refusing symlinked replacement evidence directory')
+    if replacement.is_dir():
+        candidates.extend(replacement.iterdir())
+    for file in sorted(candidates):
         if file.is_file() and not file.is_symlink() and file.suffix in allowed and file.name not in excluded:
             if re.search(rb'-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----', file.read_bytes()):
                 continue
@@ -43,16 +49,16 @@ def package(source, output, status):
         if metadata.is_symlink():
             raise ValueError('Refusing symlinked evidence metadata: ' + metadata.name)
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'L01 + F13 integration demonstration; not the experimental campaign',
+        'scope': 'L01 image replacement + F13 + F11 integration demonstration; not the experimental campaign',
         'secretsIncluded': False}, indent=2) + '\n')
     files = [p for p in files if p != summary] + [summary]
-    write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.name + '\n' for p in files))
+    write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.relative_to(source).as_posix() + '\n' for p in files))
     descriptor, temporary = tempfile.mkstemp(dir=output)
     try:
         with os.fdopen(descriptor, 'w+b') as stream:
             with tarfile.open(fileobj=stream, mode='w:gz') as archive:
                 for file in files + [sums]:
-                    archive.add(file, arcname=source.name + '/' + file.name, recursive=False)
+                    archive.add(file, arcname=source.name + '/' + file.relative_to(source).as_posix(), recursive=False)
             stream.seek(0)
             digest = hashlib.sha256()
             for chunk in iter(lambda: stream.read(1024 * 1024), b''):
