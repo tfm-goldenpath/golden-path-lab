@@ -12,8 +12,10 @@ const BUNDLE = 'application/vnd.dev.sigstore.bundle.v0.3+json';
 const BUNDLE_PREFIX = 'application/vnd.dev.sigstore.bundle';
 const INDEX = 'application/vnd.oci.image.index.v1+json';
 const MANIFEST = 'application/vnd.oci.image.manifest.v1+json';
+const EMPTY_CONFIG = 'application/vnd.oci.empty.v1+json';
 const MAX_REFERRERS = 50; // Matches pinned Kyverno's bundle verifier.
 const MAX_MANIFEST = 4 * 1024 * 1024;
+const MAX_CONFIG = 64 * 1024;
 const MAX_BUNDLE = 10 * 1000 * 1000;
 const hash = bytes => 'sha256:' + createHash('sha256').update(bytes).digest('hex');
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -181,6 +183,7 @@ export async function downloadBundleInventory({ mode, image, actor, token, reque
   const before = await listReferrers();
   const bundles = [];
   const artifacts = [];
+  const configs = new Map();
   for (const entry of before.descriptors) {
     const manifest = jsonOf(await fetchContent(`/v2/${repository}/manifests/${entry.digest}`, entry, MAX_MANIFEST));
     if (!object(manifest) || manifest.schemaVersion !== 2 || manifest.mediaType !== MANIFEST
@@ -189,12 +192,27 @@ export async function downloadBundleInventory({ mode, image, actor, token, reque
     const candidate = [entry.artifactType, manifest.artifactType, manifest.config.mediaType,
       ...manifest.layers.map(layer => layer?.mediaType)].some(isBundle);
     if (!candidate) {
-      artifacts.push({manifestDigest:entry.digest, kind:'non-sigstore'});
+      // Non-Sigstore contents cannot satisfy a bundle requirement. Inspect their
+      // manifests for classification without retrieving unrelated artifact data.
+      artifacts.push({manifestDigest:entry.digest, kind:'non-sigstore', check:'manifest-only'});
       continue;
     }
     if (manifest.artifactType !== BUNDLE || (entry.artifactType && entry.artifactType !== BUNDLE)
         || manifest.subject?.digest !== digest || manifest.layers.length !== 1 || manifest.layers[0]?.mediaType !== BUNDLE) {
       throw new Error('Unsupported Sigstore referrer type, subject or layer structure.');
+    }
+    // Both pinned publishers use an OCI empty JSON config; Cosign optionally
+    // adds artifactType to its descriptor, while the GitHub publisher omits it.
+    // Cosign v3.1.3 pkg/oci/remote/write.go and @sigstore/oci 0.7.2 image.ts.
+    const config = descriptor(manifest.config, MAX_CONFIG);
+    if (config.mediaType !== EMPTY_CONFIG) throw new Error('Unsupported Sigstore config media type.');
+    if (configs.has(config.digest)) {
+      if (configs.get(config.digest) !== config.size) throw new Error('Shared config descriptors disagree on content size.');
+    } else {
+      const configBytes = await fetchContent(`/v2/${repository}/blobs/${config.digest}`, config, MAX_CONFIG, true);
+      const value = jsonOf(configBytes);
+      if (!object(value) || Object.keys(value).length !== 0) throw new Error('Sigstore OCI empty config must contain an empty JSON object.');
+      configs.set(config.digest, config.size);
     }
     const layer = descriptor(manifest.layers[0], MAX_BUNDLE);
     const bytes = await fetchContent(`/v2/${repository}/blobs/${layer.digest}`, layer, MAX_BUNDLE, true);
@@ -202,13 +220,14 @@ export async function downloadBundleInventory({ mode, image, actor, token, reque
     // Validate every returned wrapper, including unrelated predicate types.
     parseEnvelopes(JSON.stringify(bundle), {bundlesOnly:true});
     bundles.push(bundle);
-    artifacts.push({manifestDigest:entry.digest, bundleDigest:layer.digest, bundleSize:layer.size, kind:'sigstore-bundle-v0.3'});
+    artifacts.push({manifestDigest:entry.digest, configDigest:config.digest, configSize:config.size,
+      bundleDigest:layer.digest, bundleSize:layer.size, kind:'sigstore-bundle-v0.3'});
   }
   if (!bundles.length) throw new Error('The registry contains no supported Sigstore bundles.');
   const after = await listReferrers();
   if (canonical(before) !== canonical(after)) throw new Error('Referrer inventory changed during retrieval.');
   return { bundles, inventory:{image, source:before.source, descriptors:before.descriptors, artifacts,
-    check:'complete OCI referrer retrieval and structure; signatures verified separately'} };
+    check:'complete OCI referrer listing and manifests; Sigstore configs, bundle layers and structure; signatures verified separately'} };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

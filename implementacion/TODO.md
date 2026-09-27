@@ -120,7 +120,8 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [x] Require strict OCI referrer retrieval before attributing missing results; unreadable evidence and changing inventories are integration failures.
 - [x] Run regression and actual Cosign cryptographic checks, including SBOM/results substitution, altered signatures, wrong digests and unauthorized development keys.
 - [x] Record a fresh local end-to-end run with strict retrieval, F13/F11 attribution, L01 creation and independent image replacement, and verified archive checksums: [run-De88fpWy](registros/cosign_bundles_validation_EN.md), on the documented cgroup-v1 compatibility host. This is not a campaign measurement.
-- [ ] Run and review the published migration branch in real GitHub Actions, including native provenance, exact workflow identity, certificate/SCT and transparency verification by CLI and admission.
+- [x] Run and review the published migration branch in real GitHub Actions at `82728c5`: [run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827), including native provenance, exact identity, certificate/SCT, transparency and L01/F13/F11. See the [review record](registros/pr15_review_EN.md); later source corrections require their own run.
+- [ ] Revalidate the PR #15 config-blob and packaging corrections in local/hosted integration on the exact published revision.
 - [ ] Complete the remaining directed admission checks in the [migration acceptance list](docs/EN/cosign-bundle-migration.md), including valid attestations without the independent image-signature predicate. Cryptographic and policy-construction tests alone do not complete these live checks.
 - [ ] Review, merge and validate the resulting `main` revision, then repeat affected pilot checks before fixing the campaign version.
 

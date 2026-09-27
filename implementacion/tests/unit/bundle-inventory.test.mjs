@@ -6,6 +6,7 @@ import {downloadBundleInventory} from '../../scripts/download-bundle-inventory.m
 const BUNDLE = 'application/vnd.dev.sigstore.bundle.v0.3+json';
 const INDEX = 'application/vnd.oci.image.index.v1+json';
 const MANIFEST = 'application/vnd.oci.image.manifest.v1+json';
+const EMPTY_CONFIG = 'application/vnd.oci.empty.v1+json';
 const imageDigest = 'sha256:' + 'a'.repeat(64);
 const bytes = value => Buffer.from(JSON.stringify(value));
 const digest = value => 'sha256:' + createHash('sha256').update(value).digest('hex');
@@ -26,6 +27,7 @@ function fixture({mode = 'local', types = ['https://sigstore.dev/cosign/sign/v1'
   const descriptors = [];
   const bundles = types.map(bundle);
   const layerPaths = [];
+  const configPaths = [];
   const manifestPaths = [];
   const overrides = new Map();
   const calls = [];
@@ -34,16 +36,19 @@ function fixture({mode = 'local', types = ['https://sigstore.dev/cosign/sign/v1'
     const layer = {mediaType:BUNDLE, digest:digest(raw), size:raw.length};
     const configBytes = Buffer.from('{}');
     const manifest = {schemaVersion:2, mediaType:MANIFEST, artifactType:BUNDLE,
-      config:{mediaType:'application/vnd.oci.empty.v1+json', digest:digest(configBytes), size:2},
+      config:{mediaType:EMPTY_CONFIG, digest:digest(configBytes), size:2},
       subject:{mediaType:MANIFEST, digest:imageDigest, size:123}, layers:[layer]};
     const manifestBytes = bytes(manifest);
     const entry = {mediaType:MANIFEST, artifactType:BUNDLE, digest:digest(manifestBytes), size:manifestBytes.length};
     descriptors.push(entry);
     const layerPath = path + '/blobs/' + layer.digest;
+    const configPath = path + '/blobs/' + digest(configBytes);
     const manifestPath = path + '/manifests/' + entry.digest;
     contents.set(layerPath, {body:raw, type:BUNDLE});
+    contents.set(configPath, {body:configBytes, type:EMPTY_CONFIG});
     contents.set(manifestPath, {body:manifestBytes, type:MANIFEST});
     layerPaths.push(layerPath);
+    configPaths.push(configPath);
     manifestPaths.push(manifestPath);
   }
   const index = entries => response(bytes({schemaVersion:2, mediaType:INDEX, manifests:entries}), INDEX);
@@ -58,7 +63,7 @@ function fixture({mode = 'local', types = ['https://sigstore.dev/cosign/sign/v1'
     return found ? response(found.body, found.type) : response('', 'text/plain', 404);
   }
   return {mode, image, origin, path, indexPath, fallbackPath, request, contents, descriptors, index,
-    bundles, layerPaths, manifestPaths, overrides, calls,
+    bundles, layerPaths, configPaths, manifestPaths, overrides, calls,
     run(extra = {}) { return downloadBundleInventory({mode, image, request, actor:'test-actor', token:'TEST-WORKFLOW-TOKEN', ...extra}); }};
 }
 
@@ -68,6 +73,12 @@ test('retains every raw bundle after hash-bound retrieval and stable second list
   assert.deepEqual(new Set(result.bundles.map(JSON.stringify)), new Set(f.bundles.map(JSON.stringify)));
   assert.equal(result.inventory.descriptors.length, 3);
   assert.equal(result.inventory.artifacts.length, 3);
+  for (const artifact of result.inventory.artifacts) {
+    assert.equal(artifact.configDigest, digest(Buffer.from('{}')));
+    assert.equal(artifact.configSize, 2);
+  }
+  assert.equal(f.calls.filter(call => new URL(call.url).pathname === f.configPaths[0]).length, 1,
+    'retrieve a shared config once while validating every descriptor');
   assert.equal(f.calls.filter(call => new URL(call.url).pathname === f.indexPath).length, 2);
   assert.ok(f.calls.every(call => call.options.redirect === 'manual' && !call.options.headers.Authorization));
 });
@@ -133,11 +144,11 @@ test('fails on duplicate descriptors, oversized counts, repeated pages and chang
   await assert.rejects(changed.run(), /changed during retrieval/);
 });
 
-for (const target of ['manifest', 'layer']) {
+for (const target of ['manifest', 'config', 'layer']) {
   test(`a failed ${target} for one referrer cannot be silently omitted`, async () => {
     const f = fixture({types:['https://sigstore.dev/cosign/sign/v1', 'https://cyclonedx.org/bom', 'https://slsa.dev/provenance/v1',
       'https://tfm-goldenpath.dev/attestations/verification-results/v1']});
-    const path = (target === 'manifest' ? f.manifestPaths : f.layerPaths)[3];
+    const path = (target === 'manifest' ? f.manifestPaths : target === 'config' ? f.configPaths : f.layerPaths)[3];
     f.overrides.set(path, () => response('', 'text/plain', 503));
     await assert.rejects(f.run(), /Reading registry content failed \(HTTP 503\)/);
   });
@@ -168,6 +179,89 @@ function replaceManifest(f, index, mutate) {
   f.contents.set(path, {body, type:MANIFEST});
   f.manifestPaths[index] = path;
 }
+
+test('both pinned publishers empty-config descriptors are accepted', async () => {
+  for (const withArtifactType of [false, true]) {
+    const f = fixture();
+    replaceManifest(f, 0, manifest => {
+      if (withArtifactType) manifest.config.artifactType = BUNDLE;
+    });
+    assert.equal((await f.run()).bundles.length, 3);
+  }
+});
+
+test('Sigstore configs require valid bounded descriptors before retrieval', async () => {
+  for (const config of [
+    {}, {mediaType:EMPTY_CONFIG, size:2}, {mediaType:EMPTY_CONFIG, digest:imageDigest},
+    {mediaType:'', digest:imageDigest, size:2}, {mediaType:42, digest:imageDigest, size:2},
+    {mediaType:EMPTY_CONFIG, digest:'not-a-digest', size:2},
+    ...[0, -1, 1.5, '2', 65537].map(size => ({mediaType:EMPTY_CONFIG, digest:imageDigest, size})),
+  ]) {
+    const f = fixture();
+    replaceManifest(f, 0, manifest => {manifest.config = config;});
+    await assert.rejects(f.run(), /invalid or oversized OCI descriptor/);
+    assert.ok(!f.calls.some(call => new URL(call.url).pathname === f.path + '/blobs/' + imageDigest));
+  }
+  const unsupported = fixture();
+  replaceManifest(unsupported, 0, manifest => {manifest.config.mediaType = 'application/json';});
+  await assert.rejects(unsupported.run(), /Unsupported Sigstore config media type/);
+});
+
+test('config transport, size and digest failures are never accepted as a complete inventory', async () => {
+  for (const failure of ['missing', 'network', 'length', 'digest', 'header', 'declared-size', 'stream-size']) {
+    const f = fixture();
+    f.overrides.set(f.configPaths[0], () => {
+      if (failure === 'missing') return response('', 'text/plain', 404);
+      if (failure === 'network') throw new Error('SECRET CONFIG REQUEST');
+      if (failure === 'length') return response('{', EMPTY_CONFIG);
+      if (failure === 'digest') return response('[]', EMPTY_CONFIG);
+      if (failure === 'header') return response('{}', EMPTY_CONFIG, 200, {'docker-content-digest':imageDigest});
+      if (failure === 'declared-size') return response('{}', EMPTY_CONFIG, 200, {'content-length':'65537'});
+      return response(Buffer.alloc(65537, 32), EMPTY_CONFIG);
+    });
+    await assert.rejects(f.run(), error => !error.message.includes('SECRET')
+      && /failed|does not match|size limit/.test(error.message), failure);
+  }
+});
+
+test('config bytes must parse as the advertised empty JSON object', async () => {
+  for (const body of ['{', '[]', 'null', '{"hidden":"content"}']) {
+    const f = fixture();
+    const raw = Buffer.from(body);
+    replaceManifest(f, 0, manifest => {
+      manifest.config = {mediaType:EMPTY_CONFIG, digest:digest(raw), size:raw.length};
+    });
+    f.contents.set(f.path + '/blobs/' + digest(raw), {body:raw, type:EMPTY_CONFIG});
+    await assert.rejects(f.run(), /malformed JSON|must contain an empty JSON object/);
+  }
+});
+
+test('cached config content still checks every descriptor size', async () => {
+  const f = fixture();
+  replaceManifest(f, 0, manifest => {manifest.config.size = 3;});
+  await assert.rejects(f.run(), /Shared config descriptors disagree|does not match its OCI size and digest/);
+});
+
+test('non-Sigstore referrers are explicitly manifest-only without fetching unrelated config or layer data', async () => {
+  const f = fixture();
+  const unrelatedConfigDigest = 'sha256:' + 'b'.repeat(64);
+  const unrelatedLayerDigest = 'sha256:' + 'c'.repeat(64);
+  replaceManifest(f, 0, manifest => {
+    manifest.artifactType = 'application/example';
+    manifest.config = {mediaType:'application/example.config', digest:unrelatedConfigDigest, size:5000000};
+    manifest.layers = [{mediaType:'application/example.content', digest:unrelatedLayerDigest, size:50000000}];
+  });
+  f.descriptors[0].artifactType = 'application/example';
+  const result = await f.run();
+  assert.equal(result.bundles.length, 2);
+  assert.deepEqual(result.inventory.artifacts.find(artifact => artifact.kind === 'non-sigstore'), {
+    manifestDigest:f.descriptors[0].digest, kind:'non-sigstore', check:'manifest-only',
+  });
+  assert.match(result.inventory.check, /Sigstore configs, bundle layers/);
+  for (const unrelatedDigest of [unrelatedConfigDigest, unrelatedLayerDigest]) {
+    assert.ok(!f.calls.some(call => new URL(call.url).pathname === f.path + '/blobs/' + unrelatedDigest));
+  }
+});
 
 test('unsupported bundle media, subject, layer count and malformed wrapper fail closed', async () => {
   for (const mutate of [
@@ -204,6 +298,19 @@ test('GHCR authenticates only its fixed pull endpoints and strips credentials on
   assert.equal(storage.options.headers.Authorization, undefined);
   assert.ok(f.calls.slice(1).filter(call => new URL(call.url).hostname === 'ghcr.io')
     .every(call => call.options.headers.Authorization === 'Bearer TEST-PULL-TOKEN'));
+});
+
+test('config blobs use the same GHCR redirect protections without forwarding credentials', async () => {
+  const f = fixture({mode:'github'});
+  f.overrides.set(f.configPaths[0], () => response('', 'text/plain', 307,
+    {location:'https://pkg-containers.githubusercontent.com/storage/config'}));
+  f.overrides.set('/storage/config', () => response('{}', 'application/octet-stream'));
+  assert.equal((await f.run()).bundles.length, 3);
+  const storage = f.calls.find(call => new URL(call.url).hostname === 'pkg-containers.githubusercontent.com');
+  assert.equal(storage.options.headers.Authorization, undefined);
+  const local = fixture();
+  local.overrides.set(local.configPaths[0], () => response('', 'text/plain', 302, {location:local.origin + '/anything'}));
+  await assert.rejects(local.run(), /Unexpected or excessive registry redirect/);
 });
 
 test('redirects never send credentials to arbitrary hosts or loopback and remain bounded', async () => {

@@ -13,7 +13,7 @@ Esta documentación ofrece apoyo en español. La implementación y la documentac
 | [Guía de ejecución L01/F13](cases/L01-F13/runbook.md) | Comandos locales y alojados, resultados esperados, diagnóstico y limpieza. |
 | [Configuración de GitHub — en inglés](../EN/github-configuration.md) | Protecciones y configuración propuestas para el repositorio; el documento no activa esas opciones. |
 | [Plan de implementación](implementation-plan.md) | Hitos incrementales y criterios de aceptación; la guía de ejecución contiene los comandos actuales. |
-| [Migración a bundles de Cosign](cosign-bundle-migration.md) | Perfil candidato, PASS local con recuperación estricta, antecedentes clásicos y comprobaciones alojadas/F07 pendientes. |
+| [Migración a bundles de Cosign](cosign-bundle-migration.md) | Perfil candidato, observaciones locales/alojadas, revisión de PR y aceptación pendiente de correcciones/F07. |
 | [Revisión de la propuesta externa](context/external-proposal-review.md) | Antecedente documental en español, separado de las instrucciones operativas. |
 
 El [README de implementación](../../README.md) contiene los comandos principales y el [TODO](../../TODO.md) recoge el avance. Los [registros originales](../../registros/) conservan su idioma y alcance para distinguir las comprobaciones realizadas de las integraciones pendientes.

@@ -5,10 +5,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, generateKeyPairSync } from 'node:crypto';
 
 const script = fileURLToPath(new URL('../../scripts/package-evidence.py', import.meta.url));
 const python = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+const publicKey = generateKeyPairSync('ec', { namedCurve: 'prime256v1' })
+  .publicKey.export({ type: 'spki', format: 'pem' });
 
 function fixture(t) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'gp-package-test-'));
@@ -54,6 +56,52 @@ test('the package preserves verifiable hashes and excludes state and credentials
   }
 });
 
+test('private-key PEM markers are excluded across encrypted and punctuated labels', t => {
+  const { source, output } = fixture(t);
+  const update = path.join(source, 'L01-update');
+  fs.mkdirSync(update);
+  const labels = ['PRIVATE KEY', 'ENCRYPTED PRIVATE KEY', 'ENCRYPTED COSIGN PRIVATE KEY',
+    'ENCRYPTED SIGSTORE PRIVATE KEY', 'RSA PRIVATE KEY', 'EC PRIVATE KEY', 'OPENSSH PRIVATE KEY',
+    'EC-CUSTOM PRIVATE KEY'];
+  for (const directory of [source, update]) {
+    for (const [index, label] of labels.entries()) {
+      fs.writeFileSync(path.join(directory, `secret-${index}.txt`),
+        `diagnostic output\n-----BEGIN ${label}-----\nSYNTHETIC\n-----END ${label}-----\n`);
+    }
+  }
+  execFileSync(python, [script, source, output, 'PASS']);
+  const result = inspectArchive(path.join(output, 'run-test.tar.gz'));
+  assert.deepEqual(result.mismatches, []);
+  assert.ok(!result.names.some(name => /\/secret-\d+\.txt$/.test(name)));
+});
+
+const invalidPublicKeys = [
+  ['arbitrary text', 'sensitive fixture without a PEM header'],
+  ['another PEM type', '-----BEGIN CERTIFICATE-----\nYQ==\n-----END CERTIFICATE-----\n'],
+  ['invalid Base64', '-----BEGIN PUBLIC KEY-----\nnot!base64\n-----END PUBLIC KEY-----\n'],
+  ['noncanonical Base64', '-----BEGIN PUBLIC KEY-----\nYR==\n-----END PUBLIC KEY-----\n'],
+  ['leading text', `sensitive fixture\n${publicKey}`],
+  ['trailing text', `${publicKey}sensitive fixture\n`],
+  ['multiple public-key blocks', publicKey + publicKey],
+  ['a public block followed by a private block', `${publicKey}-----BEGIN ENCRYPTED COSIGN PRIVATE KEY-----\nSYNTHETIC\n-----END ENCRYPTED COSIGN PRIVATE KEY-----\n`],
+];
+
+for (const [label, content] of invalidPublicKeys) {
+  test(`the public-key filename does not admit ${label}`, t => {
+    const { source, output } = fixture(t);
+    const update = path.join(source, 'L01-update');
+    fs.mkdirSync(update);
+    for (const directory of [source, update]) {
+      fs.writeFileSync(path.join(directory, 'development-public-key.pem'), content);
+    }
+    execFileSync(python, [script, source, output, 'PASS']);
+    const result = inspectArchive(path.join(output, 'run-test.tar.gz'));
+    assert.deepEqual(result.mismatches, []);
+    assert.ok(!result.names.some(name => name.endsWith('/development-public-key.pem')));
+    assert.ok(result.names.includes('run-test/result.json'));
+  });
+}
+
 test('replacement evidence is retained with separate hashes and excludes its credentials', t => {
   const { source, output } = fixture(t);
   const update = path.join(source, 'L01-update');
@@ -63,7 +111,8 @@ test('replacement evidence is retained with separate hashes and excludes its cre
     for (const name of ['image.bundle.json', 'sbom.bundle.json', 'provenance.bundle.json', 'results.bundle.json', 'evidence-profile.json']) {
       fs.writeFileSync(path.join(directory, name), JSON.stringify({ synthetic: true, file: name, directory: path.basename(directory) }));
     }
-    fs.writeFileSync(path.join(directory, 'development-public-key.pem'), '-----BEGIN PUBLIC KEY-----\nsynthetic\n-----END PUBLIC KEY-----\n');
+    fs.writeFileSync(path.join(directory, 'development-public-key.pem'),
+      directory === update ? publicKey.replaceAll('\n', '\r\n') : publicKey);
   }
   fs.writeFileSync(path.join(update, 'state.json'), '{"private":"fixture"}');
   fs.writeFileSync(path.join(update, 'secret.log'), '-----BEGIN PRIVATE KEY-----\nfixture');

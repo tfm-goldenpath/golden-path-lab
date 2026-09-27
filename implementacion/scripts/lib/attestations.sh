@@ -44,6 +44,9 @@ attestations_verify_delivery() {
     sign_args+=(--trusted-root "$state_dir/sigstore-trusted-root.json")
     verify_args+=(--trusted-root "$state_dir/sigstore-trusted-root.json" --certificate-identity "$(get identity)" --certificate-oidc-issuer https://token.actions.githubusercontent.com)
   fi
+  # Pinned Cosign 3.1.3 image signing emits a DSSE cosign/sign/v1 statement
+  # in bundle mode; sign-blob's messageSignature is a different operation.
+  # https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/sign/sign.go
   cosign sign "${sign_args[@]}" --bundle "$state_dir/image.bundle.json" "$image"
   attestations_verify_bundle image.bundle.json https://sigstore.dev/cosign/sign/v1 verified-image-bundle.txt
   # Generic bundle verification can accept other predicates. Require the
