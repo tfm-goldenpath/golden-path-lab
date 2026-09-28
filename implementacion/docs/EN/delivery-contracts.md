@@ -8,7 +8,7 @@ The demonstration initially shares one `linux/amd64` image of `quotes-node`, ide
 
 ## Bundle profile and validation status
 
-This branch configures Cosign 3.1.3 Sigstore bundles and Kyverno 1.19.1 `SigstoreBundle` consumers for every image evidence requirement. [Local compatibility run `run-De88fpWy`](../../registros/cosign_bundles_validation_EN.md) passed with strict inventory retrieval, and [hosted validation at `82728c5`](../../registros/pr15_review_EN.md) exercised OIDC, SCT and transparency. Subsequent review corrections need integration on their exact revision; actual F07 negative admission remains pending. The local run used Docker Engine 24.0.5/cgroup v1 with explicit `GP_CGROUP_V1_COMPAT=1`; it is not a campaign measurement. The classic v0.1.0 baseline and its retained executions do not prove the new profile.
+This branch configures Cosign 3.1.3 Sigstore bundles and Kyverno 1.19.1 `SigstoreBundle` consumers for every image evidence requirement. [Local compatibility run `run-De88fpWy`](../../registros/cosign_bundles_validation_EN.md) passed with strict inventory retrieval, and [hosted validation at `82728c5`](../../registros/pr15_review_EN.md) exercised OIDC, SCT and transparency. Local directed F07 subsequently passed in `run-xFGRe6X1`; hosted F07 remains pending. See the [operational record](cases/F07/record.md) for source hashes and acceptance limits. The earlier `run-De88fpWy` used Docker Engine 24.0.5/cgroup v1 with explicit `GP_CGROUP_V1_COMPAT=1`; it is not a campaign measurement. The classic v0.1.0 baseline and its retained executions do not prove the new profile.
 
 The independent image-signature contract requires `https://sigstore.dev/cosign/sign/v1` for the expected digest. A signed SBOM, provenance or results statement cannot stand in for it. The remaining predicates, CycloneDX content, vulnerability threshold and authorization conditions are unchanged.
 
@@ -27,7 +27,7 @@ The independent image-signature contract requires `https://sigstore.dev/cosign/s
 
 ## Local development provenance: lane A
 
-Kyverno image-verification caching is disabled so that **F13 → results issuance → L01 → image UPDATE** retrieves the relevant evidence. Trivy may reuse downloaded database/cache content, but each digest is analyzed separately and records its scanner version, database metadata and hash. The initial and replacement images have separate run labels and evidence directories under one laboratory builder. Source-level test results may be reused for the unchanged source; image reports and authorizations are not transferred to a different digest. These conditions serve the functional demonstration; campaign cache policy and paired ordering follow the experimental protocol.
+Kyverno image-verification caching is disabled so that **F13 → results issuance → local F07 rejection/restoration → L01 → F11 → image UPDATE** retrieves the relevant evidence. Trivy may reuse downloaded database/cache content, but each digest is analyzed separately and records its scanner version, database metadata and hash. The initial and replacement images have separate run labels and evidence directories under one laboratory builder. Source-level test results may be reused for the unchanged source; image reports and authorizations are not transferred to a different digest. These conditions serve the functional demonstration; campaign cache policy and paired ordering follow the experimental protocol.
 
 The script creates a SLSA v1-shaped provenance statement with custom `buildType` `https://tfm-goldenpath.dev/buildtypes/local/v1`, signed with an ephemeral development key. It retains the declared repository, commit when available, run identifier and selected source-file snapshot. Without a Git repository, forty zeros identify an unavailable commit and `gitCommitAvailable` is false; the snapshot does not turn the sentinel into a real commit.
 
@@ -48,6 +48,15 @@ Predicate type: `https://tfm-goldenpath.dev/attestations/verification-results/v1
 The design is **inspired by VSA's purpose** but uses a custom contract. It does not claim conformance to the [Verification Summary Attestation specification](https://slsa.dev/spec/v1.2/verification_summary). Admission is recorded after issuing the summary, avoiding a circular prerequisite. Kyverno retains direct signature, SBOM, provenance and configuration checks alongside the summary's outcome and policy.
 
 F13 prepares all other evidence and omits only that summary. The preparation check records its absence, and the directed admission test must identify `tfm-results`/`require-results` as the rejection cause. After summary issuance, initial L01 must be admitted and respond correctly. F11 checks privileged input both early and through a directed update. Finally, L01's replacement receives its own signed summary and must pass admission, complete rollout on the distinct digest and preserve the quote response. These checks do not close the remaining catalogue or replace campaign measurements.
+
+Local F07 runs after normal results authorization. It authenticates the complete
+starting inventory, removes exactly the independent image-signature manifest and
+requires a singleton `tfm-signature` rejection with the expected absence diagnostic.
+It restores the original artifact before L01. `F07/result.json` is intermediate;
+`F07-completed.json` records `DIRECTED_ACCEPTANCE_COMPLETE` only after successful
+same-digest L01 admission/HTTP checks and observed Deployment/Pod digest checks.
+Later F11 or replacement failures still prevent overall PASS. Hosted F07 is
+`NOT_EXECUTED`; GHCR compatibility, academic F07's CI barrier and L04 remain pending.
 
 Kyverno 1.19.1's bundle verifier reports `no matching signatures found` both for missing predicates and some trust failures. F13 therefore requires exactly one identified `tfm-results`/`require-results` rejection (including its generated Deployment rule), valid bundle-only inventories captured before and after denial, with the original preflight revalidated before the request, absent results and present image-signature/SBOM/provenance predicates for the same digest. Other admission policies must pass, and L01 must subsequently admit that same digest after results issuance before the overall run can pass. Inventory parsing is structural evidence, not signature authentication. Additional rules, malformed or unavailable inventories and unrelated verification errors fail the test.
 

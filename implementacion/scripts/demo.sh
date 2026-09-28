@@ -10,7 +10,7 @@ source versions.env
 for module in context lab delivery attestations workload; do
   source "$root/scripts/lib/$module.sh"
 done
-for scenario in l01 f13 f11; do
+for scenario in l01 f13 f07 f11; do
   source "$root/tests/scenarios/$scenario.sh"
 done
 context_init
@@ -68,10 +68,19 @@ lab_install_admission
 scenario_f13_admission
 record 'Authorize results and check L01 against the same digest'
 attestations_authorize_results
+if [[ "$mode" == local ]]; then
+  scenario_f07_admission
+else
+  scenario_f07_pending
+fi
 scenario_l01_accept
+if [[ "$mode" == local ]]; then
+  scenario_f07_complete
+fi
 scenario_f11_admission
 scenario_l01_update
 jq -n --arg image "$image" --arg mode "$mode" --arg repo "$repository" --arg commit "$commit" \
+  --slurpfile f07 "$state_dir/F07-completed.json" \
   --slurpfile update "$state_dir/L01-image-update.json" \
-  '{status:"PASS",mode:$mode,evidenceFormat:"sigstore-bundle-v0.3",image:$image,source:{repository:$repo,commit:$commit},reference:"healthy",L01:"accepted-and-healthy",F13:"denied-by-require-results",F11:{early:"denied",admissionUpdate:"denied"},legitimateUpdate:$update[0],measurement:"functional-integration-only"}' > "$state_dir/result.json"
-record "PASS: L01 accepted; F13 and F11 rejected. Evidence: $state_dir"
+  '{status:"PASS",mode:$mode,evidenceFormat:"sigstore-bundle-v0.3",image:$image,source:{repository:$repo,commit:$commit},reference:"healthy",L01:"accepted-and-healthy",F13:"denied-by-require-results",F07:$f07[0],F11:{early:"denied",admissionUpdate:"denied"},legitimateUpdate:$update[0],measurement:"functional-integration-only"}' > "$state_dir/result.json"
+record "PASS: L01 accepted; F13 and F11 rejected; F07 status recorded for the selected lane. Evidence: $state_dir"

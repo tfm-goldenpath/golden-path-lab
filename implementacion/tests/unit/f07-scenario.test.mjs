@@ -76,6 +76,24 @@ scenario_f07_admission
   result.stdout = readFileSync(join(root, 'stdout.log'), 'utf8');
   result.stderr = readFileSync(join(root, 'stderr.log'), 'utf8');
   assert.ifError(result.error);
+  // This function only establishes the intermediate observation. Package it as
+  // incomplete even when rejection/restoration succeeds; L01 has not run here.
+  const packaged = spawnSync('python3', [source + '/scripts/package-evidence.py', state, root + '/packages', 'FAIL'], {encoding:'utf8'});
+  assert.equal(packaged.status, 0, packaged.stderr);
+  const audit = spawnSync('python3', ['-c', `
+import hashlib,sys,tarfile
+with tarfile.open(sys.argv[1]) as archive:
+    prefix='run-fixture/'
+    for line in archive.extractfile(prefix+'SHA256SUMS.txt').read().decode().splitlines():
+        digest,name=line.split('  ',1)
+        assert hashlib.sha256(archive.extractfile(prefix+name).read()).hexdigest()==digest
+    for name in ('recovery.json','admission.json','attribution.json','restore.log','result.json'):
+        from pathlib import Path
+        if Path(sys.argv[2]+'/F07/'+name).is_file():
+            assert archive.extractfile(prefix+'F07/'+name).read()==Path(sys.argv[2]+'/F07/'+name).read_bytes()
+`, root + '/packages/run-fixture.tar.gz', state], {encoding:'utf8'});
+  assert.equal(audit.status, 0, audit.stderr);
+  assert.equal(JSON.parse(readFileSync(join(state, 'execution-summary.json'))).status, 'FAIL');
   return {...result, state, events:readFileSync(join(root, 'events'), 'utf8').trim().split('\n')};
 }
 for (const rule of ['require-image-signature', 'autogen-require-image-signature']) {

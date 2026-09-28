@@ -8,7 +8,7 @@ La primera demostración integra `quotes-node`, registro de imágenes, política
 
 Las salidas indicadas son **resultados esperados**. Una prueba unitaria satisfactoria no acredita la integración Docker/Kubernetes, y la vía local no acredita la identidad OIDC de GitHub. El resultado observado de cada ejecución queda en sus evidencias.
 
-El perfil bundle superó la compatibilidad local y la [validación alojada de OIDC/SCT/transparencia en `82728c5`](../../../../registros/pr15_review_ES.md); las correcciones posteriores requieren integración en su revisión exacta y sigue pendiente F07 negativo real en admisión. Los resultados clásicos anteriores no acreditan esta representación.
+El perfil bundle superó la compatibilidad local y la [validación alojada de OIDC/SCT/transparencia en `82728c5`](../../../../registros/pr15_review_ES.md); F07 dirigido local pasó después en `run-xFGRe6X1`; F07 alojado sigue pendiente (consulta el registro F07 enlazado abajo). Los resultados clásicos anteriores no acreditan esta representación.
 
 ## 1. Abrir el entorno correcto
 
@@ -177,7 +177,7 @@ La [ejecución clásica 36310983700](https://github.com/tfm-goldenpath/golden-pa
 
 Inicia una ejecución nueva en el commit publicado de `feat/cosign-bundles` y comprueba su `headSha` antes de interpretar el resultado. La aceptación exige rechazo de F13 **únicamente** por resultados ausentes, admisión de L01 tras emitirlos, rechazo de F11 y sustitución preparada con su propio digest y evidencias verificadas. Además, los criterios de migración deben mostrar que otros bundles válidos no sustituyen al predicado de firma independiente y que se rechazan alteraciones, confianza no autorizada y digests ajenos. Conserva los fallos de recuperación, firma, procedencia o red como errores de integración.
 
-La [ejecución local bundle `run-De88fpWy`](../../../../registros/cosign_bundles_validation_ES.md) terminó con PASS, herramientas fijadas, zot/kind nuevos y recuperación estricta del inventario: rechazos atribuidos de F13/F11, admisión de L01 y sustitución por otro digest verificado con despliegue completado. El anfitrión usó Docker Engine 24.0.5/cgroup v1 con `GP_CGROUP_V1_COMPAT=1` explícito. Es evidencia de compatibilidad, no el entorno de campaña ni una medición temporal. El intento utilizó el árbol de trabajo modificado sobre `9f1999e`, identificado por la huella fuente del registro enlazado. La validación alojada pasó después en `82728c5`; siguen pendientes la integración de las correcciones posteriores y la admisión negativa real de F07. Conserva bundles originales, salidas de verificación y políticas que permitan comprobar el perfil utilizado.
+La [ejecución local bundle `run-De88fpWy`](../../../../registros/cosign_bundles_validation_ES.md) terminó con PASS, herramientas fijadas, zot/kind nuevos y recuperación estricta del inventario: rechazos atribuidos de F13/F11, admisión de L01 y sustitución por otro digest verificado con despliegue completado. El anfitrión usó Docker Engine 24.0.5/cgroup v1 con `GP_CGROUP_V1_COMPAT=1` explícito. Es evidencia de compatibilidad, no el entorno de campaña ni una medición temporal. El intento utilizó el árbol de trabajo modificado sobre `9f1999e`, identificado por la huella fuente del registro enlazado. La validación alojada pasó después en `82728c5`. F07 dirigido local pasó en `run-xFGRe6X1`; F07 alojado sigue pendiente (consulta el registro F07 enlazado abajo). Conserva bundles originales, salidas de verificación y políticas que permitan comprobar el perfil utilizado.
 
 El verificador bundle de Kyverno 1.19.1 puede mostrar `no matching signatures found` tanto por un predicado ausente como por fallos de confianza. Por ello, F13 exige un único rechazo identificado de `tfm-results`/`require-results` (incluida su regla generada para Deployment), inventarios válidos exclusivamente de bundles obtenidos antes y después, revalidando el original previo antes de la petición, resultados ausentes y predicados de firma/SBOM/procedencia presentes para el mismo digest. Las demás políticas deben superar la admisión y L01 debe admitir después ese mismo digest tras emitir resultados antes de considerar satisfactorio el intento completo. Analizar el inventario aporta evidencia estructural, no autentica firmas. Reglas adicionales, inventarios malformados o inaccesibles y errores de verificación ajenos hacen fallar la prueba.
 
@@ -224,20 +224,26 @@ Los informes de vulnerabilidades y SBOM pueden revelar componentes y versiones. 
 | GitHub no muestra Run workflow | Comprueba la ubicación raíz, la presencia del workflow manual en la rama predeterminada y que Actions está habilitado. |
 | GHCR o la atestación rechazan permisos | Revisa permisos del job y restricciones de organización/repositorio. No añadas credenciales de larga duración al código como solución rápida. |
 
-## Estado de la extensión F07
+## Admisión local F07
 
-El [registro operativo F07](../../../EN/cases/F07/record.md) fija el oráculo dirigido
-y documenta una implementación local aún no conectada. `make demo` sigue ejecutando
-L01/F13/F11. Antes de conectar F07, el registro local fijado debe demostrar la
-retirada precisa y la restauración del artefacto de firma original. Desde la raíz:
-`bash implementacion/tests/integration/f07-registry.sh`. Esta sonda de protocolo usa
-fixtures unitarios sintéticos etiquetados; no demuestra admisión. La repetición fuera del sandbox completó
-la sonda de protocolo en `run-IOwYIXos`. Siguen pendientes la conexión al
-coordinador, la admisión local real, la compatibilidad alojada,
-la ejecución alojada autorizada y la admisión sobre la revisión exacta. La barrera
-CI de F07 académico y su contraparte L04 mantienen su alcance independiente.
+`make demo` ejecuta F13 → autorización normal → copia/eliminación/rechazo/
+restauración exacta F07 local → L01 con el mismo digest y pruebas HTTP → F11 →
+sustitución L01 verificada de forma independiente. Consulta el
+[registro operativo](../../../EN/cases/F07/record.md) para observaciones reales y
+criterios de aceptación pendientes.
 
-El helper F07 exige la ruta exacta del repositorio `quotes-node-<run-id>`;
-rechaza antes de acceder al registro los repositorios anidados que solo terminan
-con ese nombre. El resultado dirigido conserva la regla real atribuida por
-Kyverno, incluida `autogen-require-image-signature` para la regla generada de Deployment.
+Conserva `F07/before.json`, `negative.json`, `after-denial.json`, `restored.json`,
+las copias OCI, `*.verify.txt`, `*.statement.json`, `controller.json`,
+`admission.log`, `admission.json`, `attribution.json` y `recovery.json`.
+`F07/result.json` conserva pendiente el control positivo. `F07-completed.json`
+solo se escribe tras superar admisión/pruebas HTTP y comprobar el digest original
+en Deployment/Pods listos (`F07/L01-*.json`). `result.json` incluye la finalización
+solo cuando también pasan F11 y la sustitución. Un fallo posterior conserva las
+evidencias intermedias y empaqueta FAIL global.
+
+La vía alojada conserva su flujo y registra F07 como `NOT_EXECUTED`, con GHCR
+pendiente; nunca llama al helper de mutación. La barrera CI de F07 académico y
+L04 siguen pendientes. No se añade un escenario al catálogo ni una medición de
+campaña. El comando local no despacha workflows ni cambia privilegios de paquetes.
+Un fallo de restauración es un error de integración: conserva la copia original
+y ambos estados de `recovery.json` para el diagnóstico.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Directed F07; definitions only. Requires f13.sh's strict shared classifier.
-# Not yet loaded by demo.sh; coordinator wiring and live admission remain pending.
+# Local coordinator calls this after normal results authorization.
 
 scenario_f07_prepare() {
   local registry_ip registry_owner manifest type
@@ -71,3 +71,22 @@ scenario_f07_admission() (
   [[ "$reason" == 'image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: sigstore bundle verification failed: no matching signatures found' ]] || fail 'F07 has an unrelated verification error; this does not count as detection.'
   jq -n --arg rule "$rule" --arg reason "$reason" '{policy:"tfm-signature",rule:$rule,reason:$reason}' > "$state_dir/F07/attribution.json"
 )
+
+# Called directly only after scenario_l01_accept returns successfully. Keep the
+# intermediate result unchanged; completion is a separate, digest-bound record.
+scenario_f07_complete() {
+  [[ "$mode" == local && "$image" == "$(get imageRepository)@$(get digest)" ]] || fail 'F07 positive control image differs from run state.'
+  jq -e --arg image "$image" '.image == $image and .status == "DIRECTED_REJECTION_AND_RESTORATION" and .sameDigestL01 == "pending"' "$state_dir/F07/result.json" >/dev/null
+  jq -e '.originalStatus == 0 and .restorationStatus == 0 and .restorationAttempted == true' "$state_dir/F07/recovery.json" >/dev/null
+  k -n tfm-golden get deployment quotes-node -o json > "$state_dir/F07/L01-deployment.json"
+  k -n tfm-golden get pods -l app=quotes-node -o json > "$state_dir/F07/L01-pods.json"
+  node scripts/check-image-rollout.mjs --same-image "$image" "$state_dir/F07/L01-deployment.json" "$state_dir/F07/L01-pods.json" > "$state_dir/F07/L01-rollout.json"
+  jq --slurpfile rollout "$state_dir/F07/L01-rollout.json" \
+    '.status="DIRECTED_ACCEPTANCE_COMPLETE" | .sameDigestL01="accepted-and-healthy" | .rollout=$rollout[0]' \
+    "$state_dir/F07/result.json" > "$state_dir/F07-completed.json"
+}
+
+scenario_f07_pending() {
+  record 'F07 hosted: not executed; GHCR mutation compatibility pending'
+  jq -n '{scenario:"F07",status:"NOT_EXECUTED",reason:"Hosted GHCR mutation compatibility pending",sameDigestL01:"not-applicable"}' > "$state_dir/F07-completed.json"
+}
