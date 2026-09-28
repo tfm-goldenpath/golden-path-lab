@@ -20,8 +20,8 @@ attestations_verify_bundle() {
   fi
 }
 
-attestations_verify_delivery() {
-  record 'Sign and verify the image, SBOM and provenance'
+attestations_issue_delivery() {
+  record 'Issue the image signature, SBOM and provenance'
   sign_args=(--yes)
   verify_args=()
   if [[ "$mode" == local ]]; then
@@ -56,20 +56,25 @@ attestations_verify_delivery() {
   if [[ "$mode" == local ]]; then
     cosign attest "${sign_args[@]}" --bundle "$state_dir/provenance.bundle.json" --type slsaprovenance1 --predicate "$state_dir/provenance.json" "$image"
     attestations_verify_bundle provenance.bundle.json https://slsa.dev/provenance/v1 verified-provenance-bundle.txt verified-provenance.json
-  else
-    need gh
-    gh --version > "$state_dir/github-cli-version.txt"
-    gh attestation verify "oci://$image" --repo "$GITHUB_REPOSITORY" --cert-identity "$(get identity)" \
-      --source-digest "$commit" --source-ref "$GITHUB_REF" --deny-self-hosted-runners --bundle-from-oci \
-      --predicate-type https://slsa.dev/provenance/v1 --format json > "$state_dir/verified-provenance.json"
-    node scripts/github-attestation.mjs "$state_dir/verified-provenance.json" "$image_repo" "$digest" "$repository" "$commit" "$(get identity)" "$GITHUB_REF" > "$state_dir/provenance-contract.json"
   fi
 }
 
+attestations_ci_gate() {
+  node scripts/ci-verification-gate.mjs "$state_dir" "$1" "${2:-before-results}"
+}
+
+attestations_verify_delivery() {
+  attestations_issue_delivery
+  attestations_ci_gate CI-delivery
+}
+
 attestations_authorize_results() {
+  # Re-read the registry immediately before issuance; no saved report grants it.
+  attestations_ci_gate CI-authorization
   node "$contract" results "$state_dir" "$repository" "$commit" "$state_dir/results-predicate.json"
   cosign attest "${sign_args[@]}" --bundle "$state_dir/results.bundle.json" --type "$results_type" --predicate "$state_dir/results-predicate.json" "$image"
   attestations_verify_bundle results.bundle.json "$results_type" verified-results-bundle.txt verified-results.json
   node scripts/download-bundle-inventory.mjs "$mode" "$image" "$state_dir/registry-inventory-authorized.json" > "$state_dir/bundle-inventory-authorized.json"
   node scripts/check-bundle-profile.mjs "$state_dir/bundle-inventory-authorized.json" "$digest" authorized > "$state_dir/evidence-profile.json"
+  attestations_ci_gate CI-authorized authorized
 }

@@ -56,7 +56,7 @@ It restores the original artifact before L01. `F07/result.json` is intermediate;
 `F07-completed.json` records `DIRECTED_ACCEPTANCE_COMPLETE` only after successful
 same-digest L01 admission/HTTP checks and observed Deployment/Pod digest checks.
 Later F11 or replacement failures still prevent overall PASS. Hosted F07 is
-`NOT_EXECUTED`; GHCR compatibility, academic F07's CI barrier and L04 remain pending.
+`NOT_EXECUTED`; GHCR compatibility remains unproven. The [early CI F07/L04 record](cases/L04/record.md) describes the separate pre-results replacement check.
 
 Kyverno 1.19.1's bundle verifier reports `no matching signatures found` both for missing predicates and some trust failures. F13 therefore requires exactly one identified `tfm-results`/`require-results` rejection (including its generated Deployment rule), valid bundle-only inventories captured before and after denial, with the original preflight revalidated before the request, absent results and present image-signature/SBOM/provenance predicates for the same digest. Other admission policies must pass, and L01 must subsequently admit that same digest after results issuance before the overall run can pass. Inventory parsing is structural evidence, not signature authentication. Additional rules, malformed or unavailable inventories and unrelated verification errors fail the test.
 
@@ -75,3 +75,27 @@ For Cosign evidence, `verified-bundle-statement.mjs` extracts content only after
 The twenty-scenario method is unchanged. R and G must use the same frozen source revision; R omits G's experimental signing, attestation and admission controls while keeping ordinary Kubernetes and functional checks. Freeze the adopted profile after pilot validation; do not combine classic development timings and bundle campaign measurements. Bundle adoption does not establish a higher SLSA level or full VSA conformance.
 
 Hosted F07 compatibility is unproven after the [bounded investigation](cases/F07/hosted-compatibility.md). The prepared protocol experiment runs separately after normal hosted delivery and cannot establish admission rejection or restored L01 acceptance. Existing trust, caching, issuance and local F07 behavior are unchanged.
+
+## Fresh CI gate and L04
+
+`attestations_issue_delivery` performs scheduled signing; the read-only CI gate
+retrieves a complete current inventory and authenticates each retrieved bundle
+before accepting digest, predicate and lane-specific trust. Saved issuance bundles
+or earlier positive reports cannot satisfy this gate. Results issuance repeats it
+before authorization, then authenticates the resulting authorized inventory.
+Native GitHub provenance uses the exact downloaded bundle with the existing
+identity, source, certificate and timestamp checks.
+
+After F11, the local replacement sequence is: scheduled signing → pre-results
+F07 backup/removal → CI rejection → exact restoration → fresh CI verification →
+normal results issuance/verification → L01 replacement admission, rollout and HTTP
+checks shared with L04. Results may be absent during the negative attempt; SBOM
+and provenance must remain valid. The new digest remains in the same run-owned
+repository. Admission-mode F07 still requires all four evidence types.
+
+Only exit 42 plus a complete inventory and authenticated non-target evidence
+establishes `MISSING_IMAGE_SIGNATURE`. Trust, registry, transport and malformed
+inputs are integration failures; unexpected acceptance is unfavorable. Recovery
+retains both errors. `L04-result.json` and `F07-CI-completed.json` are written only
+after successful positive control. These are linked records of one execution,
+not extra scenarios or campaign measurements. See the [record and commands](cases/L04/record.md).

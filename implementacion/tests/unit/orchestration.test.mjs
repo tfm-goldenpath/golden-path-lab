@@ -79,6 +79,8 @@ scenario_l01_accept() { step l01; }
 scenario_f11_admission() { step f11-update; }
 scenario_l01_update() {
   step l01-update
+  command jq -n '{status:"PASS",sharedExecution:"L01-image-update"}' > "$state_dir/L04-result.json"
+  command jq -n --arg mode "$mode" '{status:(if $mode=="local" then "CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE" else "NOT_EXECUTED" end)}' > "$state_dir/F07-CI-completed.json"
   command jq -n '{status:"PASS"}' > "$state_dir/L01-image-update.json"
 }
 cleanup() {
@@ -255,10 +257,10 @@ attestations_authorize_results
     const provenance = commands.find(command => command[0] === 'gh' && command[1] === 'attestation');
     if (mode === 'github') {
       assert.equal(commands[0].slice(0, 4).join(' '), 'cosign trusted-root create --with-default-services');
-      assert.ok(provenance.includes('--bundle-from-oci'));
-      assert.ok(provenance.includes('--deny-self-hosted-runners'));
-      assert.equal(provenance[provenance.indexOf('--cert-identity') + 1], identity);
-      assert.equal(provenance[provenance.indexOf('--source-ref') + 1], `refs/heads/${ref}`);
+      // Fresh native-provenance verification now belongs to the read-only gate.
+      assert.equal(provenance, undefined);
+      assert.deepEqual(commands.filter(c => c[1] === 'scripts/ci-verification-gate.mjs').map(c => c.slice(-2)),
+        [['CI-delivery','before-results'], ['CI-authorization','before-results'], ['CI-authorized','authorized']]);
     } else {
       assert.equal(provenance, undefined);
       assert.deepEqual(commands[0], ['cosign', 'signing-config', 'create']);
@@ -528,3 +530,61 @@ test('reference runs only R and cleans up on exit', (t) => {
     assert.equal(packaged.report, null);
   });
  }
+
+// Keep both the coordinator and replacement function real; substitute only the
+// external stages. The actual gate, recovery and rollout have separate tests.
+for (const [mode, failure] of [['local',''],['github',''],...['update-issue','update-ci','update-ci-restore','update-authorize','update-apply','update-probe'].map(stage=>['local',stage])]) {
+  test(`real coordinator and replacement preserve CI/L04 ordering (${mode}, ${failure || 'success'})`,t=>{
+    const f=fixture(t);
+    writeFileSync(join(f.state,'image-repo'),repository+'\n');
+    writeFileSync(join(f.state,'digest'),digest+'\n');
+    writeFileSync(join(f.state,'tfm-reference-quote.json'),'{}\n');
+    const child=join(f.state,'L01-update'); mkdirSync(child);
+    writeFileSync(join(child,'state.json'),'{}');
+    writeFileSync(join(child,'image-repo'),repository+'-update\n');
+    writeFileSync(join(child,'digest'),'sha256:'+'b'.repeat(64)+'\n');
+    appendFileSync(join(f.root,'tests/scenarios/f11.sh'),String.raw`
+source "$root/tests/scenarios/l01.sh"
+scenario_l01_accept() { step l01; }
+attestations_issue_delivery() { step update-issue; }
+attestations_ci_gate() { step update-gate; }
+scenario_f07_ci() {
+  mkdir "$state_dir/F07-CI"
+  echo '{"status":"attempted"}' > "$state_dir/F07-CI/attempt.json"
+  step update-ci
+  step update-ci-restore
+  echo '{"status":"CI_REJECTION_AND_RECOVERY"}' > "$state_dir/F07-CI/result.json"
+}
+attestations_authorize_results() {
+  if [[ "$state_dir" == */L01-update ]]; then step update-authorize; else step authorize; fi
+}
+actor() { step update-apply; }
+probe() { step update-probe; cp "$GP_FIXTURE_STATE/tfm-reference-quote.json" "$state_dir/tfm-golden-quote.json"; }
+k() { echo '{}'; }
+node() {
+  [[ "$1" == scripts/check-image-rollout.mjs ]] || return 91
+  step update-rollout
+  command jq -n --arg image "$image" '{status:"PASS",toImage:$image}'
+}
+`);
+    const result=run(f,['scripts/demo.sh',mode,'finish'],{GP_FAIL_STAGE:failure});
+    const order=stages(result);
+    assert.ok(order.indexOf('f11-update')<order.indexOf('update-issue'));
+    const archived=auditPackage(f);
+    if(failure) {
+      assert.equal(result.status,37,result.stderr);
+      assert.equal(archived.summary.status,'FAIL');
+      assert.equal(archived.report,null);
+      assert.ok(!existsSync(join(f.state,'L04-result.json')));
+      if(['update-issue','update-ci','update-ci-restore'].includes(failure)) assert.ok(!order.includes('update-authorize'));
+      if(failure!=='update-probe') assert.ok(!order.includes('update-probe'));
+    } else {
+      assert.equal(result.status,0,result.stderr);
+      const observed=order.filter(s=>s.startsWith('update-'));
+      assert.deepEqual(observed,['update-issue',...(mode==='local'?['update-ci','update-ci-restore']:['update-gate']),'update-authorize','update-apply','update-probe','update-rollout']);
+      assert.equal(archived.report.L04.sharedExecution,'L01-image-update');
+      assert.equal(archived.report.L04.image,repository+'-update@sha256:'+'b'.repeat(64));
+      assert.equal(archived.report.F07CI.status,mode==='local'?'CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE':'NOT_EXECUTED');
+    }
+  });
+}

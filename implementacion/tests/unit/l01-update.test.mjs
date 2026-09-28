@@ -37,10 +37,7 @@ get() { command node -e 'console.log(JSON.parse(require("fs").readFileSync(proce
 put() {
   command node -e 'const fs=require("fs"), p=process.argv[1], v=JSON.parse(fs.readFileSync(p,"utf8")); v[process.argv[2]]=process.argv[3]; fs.writeFileSync(p,JSON.stringify(v));' "$state_dir/state.json" "$1" "$2"
 }
-jq() {
-  [[ "$#" == 3 && "$1" == -er && "$2" == .sbomVersion ]] || fail 'Unexpected fixture jq invocation'
-  command node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).sbomVersion)' "$3"
-}
+
 delivery_build() {
   step build "$id"
   digest="$GP_REPLACEMENT_DIGEST"
@@ -60,10 +57,18 @@ delivery_analyze() {
   printf '{"image":"%s","freshSbom":true}\n' "$image" > "$state_dir/sbom.cdx.json"
   put sbomVersion "$GP_SBOM_VERSION"
 }
-attestations_verify_delivery() {
-  step verify
+attestations_issue_delivery() {
+  step issue
   printf '{"image":"%s","verified":true}\n' "$image" > "$state_dir/verified-signature.json"
   printf '{"image":"%s","verified":true}\n' "$image" > "$state_dir/verified-provenance.json"
+}
+attestations_ci_gate() { step verify; }
+scenario_f07_ci() {
+  step f07-ci
+  step f07-ci-restore
+  attestations_ci_gate CI-F07-restored
+  mkdir "$state_dir/F07-CI"
+  command jq -n '{status:"CI_REJECTION_AND_RECOVERY"}' > "$state_dir/F07-CI/result.json"
 }
 attestations_authorize_results() {
   step authorize
@@ -176,7 +181,7 @@ for (const mode of ['local', 'github']) {
     const f = fixture(t);
     const result = run(f, { GP_MODE: mode });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.deepEqual(result.stages, ['build', 'manifests', 'manifest-policy', 'analyze', 'verify', 'authorize',
+    assert.deepEqual(result.stages, ['build', 'manifests', 'manifest-policy', 'analyze', 'issue', ...(mode === 'local' ? ['f07-ci', 'f07-ci-restore'] : []), 'verify', 'authorize',
       'apply', 'probe', 'deployment', 'pods', 'rollout-check', 'parent-cleanup']);
     const child = join(f.state, 'L01-update');
     assert.equal(JSON.parse(readFileSync(join(child, 'state.json'), 'utf8')).digest, replacementDigest);
@@ -203,19 +208,23 @@ for (const mode of ['local', 'github']) {
     assert.equal(report.fromImage, initialImage);
     assert.equal(report.toImage, replacementImage);
     assert.equal(report.pods[0].uid, 'replacement-uid');
+    const l04 = JSON.parse(readFileSync(join(f.state, 'L04-result.json')));
+    assert.equal(l04.image, replacementImage);
+    assert.equal(l04.sharedExecution, 'L01-image-update');
+    assert.equal(JSON.parse(readFileSync(join(f.state, 'F07-CI-completed.json'))).status, mode === 'local' ? 'CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE' : 'NOT_EXECUTED');
     assert.equal(readFileSync(f.output, 'utf8'), mode === 'github'
       ? `update_image=${imageRepository}\nupdate_digest=${replacementDigest}\n` : '');
   });
 }
 
-for (const stage of ['build', 'manifest-policy', 'analyze', 'verify', 'authorize', 'apply', 'probe']) {
+for (const stage of ['build', 'manifest-policy', 'analyze', 'issue', 'f07-ci', 'f07-ci-restore', 'verify', 'authorize', 'apply', 'probe']) {
   test(`real L01 scenario propagates ${stage} failure without reaching later delivery steps`, t => {
     const f = fixture(t);
-    const result = run(f, { GP_FAIL_STAGE: stage });
+    const result = run(f, { GP_FAIL_STAGE: stage, GP_MODE:'local' });
     assert.equal(result.status, 37, result.stdout + result.stderr);
     assert.ok(result.stages.includes(stage));
     assert.ok(!result.stages.includes('rollout-check'));
-    if (['build', 'manifest-policy', 'analyze', 'verify', 'authorize'].includes(stage)) {
+    if (['build', 'manifest-policy', 'analyze', 'issue', 'verify', 'f07-ci', 'f07-ci-restore', 'authorize'].includes(stage)) {
       assert.ok(!result.stages.includes('apply'), 'A failed prerequisite must prevent deployment');
     }
     if (stage === 'verify') assert.ok(!result.stages.includes('authorize'));

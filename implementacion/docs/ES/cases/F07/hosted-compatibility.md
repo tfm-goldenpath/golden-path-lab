@@ -9,7 +9,7 @@ oficial, se preparó una sonda optativa y se ejecutaron regresiones locales. No 
 publicó ninguna imagen ni se solicitó un token GHCR, eliminó un artefacto o despachó
 un workflow. El siguiente trabajo acotado recomendado es
 **`test/f07-ci-verification-l04`**. F07 dirigido local sigue cubierto por
-`run-xFGRe6X1`; la barrera CI de F07 académico y L04 siguen pendientes.
+`run-xFGRe6X1`; el [incremento F07 CI/L04](../L04/record.md) registra por separado la verificación local y la sustitución legítima.
 
 GitHub documenta publicación con el token del workflow y eliminación/restauración
 REST condicionadas por acceso administrativo al paquete. `packages: write` no

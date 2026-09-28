@@ -238,10 +238,19 @@ includes this completion record only when F11 and image replacement also succeed
 A later failure preserves the intermediate evidence and packages overall FAIL.
 
 Hosted delivery keeps its existing flow and records F07 as `NOT_EXECUTED` with
-GHCR compatibility pending. It never invokes the mutation helper. Academic F07's
-early CI barrier and L04 remain pending; this directed check adds no catalogue
+GHCR compatibility pending. It never invokes the mutation helper. The [early CI F07/L04 increment](../L04/record.md) adds a separate pre-results replacement check; this directed check adds no catalogue
 scenario or campaign measurement. No hosted dispatch or package privileges are
 part of the local command. A failed restoration is an integration failure; retain
 the original backup and both statuses in `recovery.json` for diagnosis.
 
 For the inactive hosted protocol probe, reviewed command proposal and stopping condition, see [F07 hosted compatibility](../F07/hosted-compatibility.md). `make demo` and `golden-path.yml` do not invoke it. No hosted execution was performed in that investigation.
+
+## F07 CI / L04
+
+`make demo` now also exercises the replacement candidate's missing-signature CI
+barrier before authorization, restores the original artifact, then shares L01's
+replacement admission/rollout/HTTP observation with L04. Inspect `F07-CI-completed.json`,
+`L04-result.json` and `L01-update/F07-CI/` alongside the original F13/F07/F11 evidence.
+The [operational record](../L04/record.md) distinguishes actual runs, failures and
+unexecuted hosted checks, and supplies local/GitHub commands. Hosted negative F07
+remains NOT_EXECUTED; no prepared GHCR probe is invoked.

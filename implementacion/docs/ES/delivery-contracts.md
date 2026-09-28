@@ -56,7 +56,7 @@ Restaura el artefacto original antes de L01. `F07/result.json` es intermedio;
 `F07-completed.json` registra `DIRECTED_ACCEPTANCE_COMPLETE` solo tras superar
 admisión y pruebas HTTP de L01 con el mismo digest y comprobar Deployment/Pods.
 Un fallo posterior de F11 o de sustitución impide el PASS global. F07 alojado es
-`NOT_EXECUTED`; GHCR, la barrera CI de F07 académico y L04 siguen pendientes.
+`NOT_EXECUTED`; la compatibilidad GHCR sigue sin demostrar. El [registro F07 CI/L04](cases/L04/record.md) describe la comprobación de sustitución previa a resultados.
 
 El verificador bundle de Kyverno 1.19.1 puede mostrar `no matching signatures found` tanto por un predicado ausente como por fallos de confianza. Por ello, F13 exige un único rechazo identificado de `tfm-results`/`require-results` (incluida su regla generada para Deployment), inventarios válidos exclusivamente de bundles obtenidos antes y después, revalidando el original previo antes de la petición, resultados ausentes y predicados de firma/SBOM/procedencia presentes para el mismo digest. Las demás políticas deben superar la admisión y L01 debe admitir después ese mismo digest tras emitir resultados antes de considerar satisfactorio el intento completo. Analizar el inventario aporta evidencia estructural, no autentica firmas. Reglas adicionales, inventarios malformados o inaccesibles y errores de verificación ajenos hacen fallar la prueba.
 
@@ -75,3 +75,28 @@ Para las evidencias Cosign, `verified-bundle-statement.mjs` extrae el contenido 
 La metodología de veinte escenarios no cambia. R y G deben usar la misma revisión fuente fijada; R omite los controles experimentales de firma, atestación y admisión de G, manteniendo las comprobaciones ordinarias de Kubernetes y funcionamiento. Fija el perfil adoptado después de validar el piloto; no combines tiempos de desarrollo clásico con mediciones de campaña bundle. Adoptar bundles no acredita un nivel SLSA superior ni conformidad VSA completa.
 
 La compatibilidad F07 alojada sigue sin demostrar tras la [investigación acotada](cases/F07/hosted-compatibility.md). La sonda preparada se ejecuta por separado después de la entrega normal; no acredita rechazo de admisión ni L01 positivo restaurado. No cambian confianza, caché, emisión ni F07 local.
+
+## Verificación CI fresca y L04
+
+`attestations_issue_delivery` realiza la firma programada. La barrera CI de solo
+lectura recupera el inventario actual completo y autentica cada bundle antes de
+aceptar digest, predicado y confianza de la vía. No acepta firmas guardadas ni
+informes positivos anteriores. La emisión de resultados repite la barrera antes
+de autorizar y autentica después el inventario autorizado. La procedencia nativa
+GitHub utiliza el bundle descargado exacto y conserva identidad, origen,
+certificados y marcas temporales exigidos.
+
+Después de F11, la sustitución local sigue: firma → copia/eliminación F07 previa
+a resultados → rechazo CI → restauración exacta → verificación fresca → emisión
+y verificación normal de resultados → admisión, despliegue y HTTP de L01,
+compartidos con L04. Durante el intento negativo pueden faltar resultados; SBOM
+y procedencia deben seguir siendo válidos. El digest nuevo permanece en el mismo
+repositorio de la ejecución. F07 de admisión sigue exigiendo las cuatro evidencias.
+
+Solo el código 42 con inventario completo y evidencias restantes autenticadas
+acredita `MISSING_IMAGE_SIGNATURE`. Confianza, registro, transporte o contenido
+malformado son fallos de integración; la aceptación inesperada es desfavorable.
+La recuperación conserva ambos errores. `L04-result.json` y
+`F07-CI-completed.json` requieren superar el control positivo. Son registros
+vinculados de una ejecución, no escenarios adicionales ni mediciones. Consulta el
+[registro y los comandos](cases/L04/record.md).

@@ -11,7 +11,7 @@ There is no hosted protocol or admission observation to accept. The next bounded
 implementation task is **`test/f07-ci-verification-l04`**.
 
 Local directed F07 remains covered by `run-xFGRe6X1` in the [operational
-record](record.md). Academic F07's early CI barrier and L04 remain pending.
+record](record.md). The subsequent [early CI F07/L04 increment](../L04/record.md) tracks local verification and legitimate replacement separately.
 
 ## What the sources establish
 

@@ -1,4 +1,8 @@
-# F07 directed image-signature admission check
+# F07 image-signature checks
+
+Current early CI behavior and L04 acceptance are tracked in the
+[CI/L04 operational record](../L04/record.md). The directed admission observations
+below retain their original scope. Hosted negative F07 remains NOT_EXECUTED.
 
 Prepared before implementation on base `0c0b928ace01145408f826acabd20f288a5684ad`.
 

@@ -150,3 +150,13 @@ The twenty experimental scenarios do not limit the number of automated tests. Ma
 Domain-Driven Design is not adopted: the primary responsibilities concern delivery automation and verification, and this synthetic service does not justify aggregates or domain repositories. See [Microsoft's DDD guidance](https://learn.microsoft.com/en-us/azure/architecture/microservices/model/domain-analysis). DSRM structures research, TDD guides construction and modular architecture organizes the artifact.
 
 Hexagonal architecture may become useful for stable domain logic with interchangeable providers; Tekton/Konflux may supply a fuller build/release platform. Current scope favors bounded integration of existing tools over additional subsystems. Introduce further structure when growth or reuse justifies it, not to populate empty directories.
+
+## F07 CI / L04
+
+The shared read-only `ci-verification-gate.mjs` retrieves and authenticates current
+registry evidence. `attestations.sh` separates scheduled issuance from that gate;
+`f07.sh` owns the local pre-results replacement mutation/recovery. `l01.sh` reuses
+its replacement execution for L04 and records completion only after rollout and
+HTTP checks. `demo.sh` retains overall sequencing, final results and shared cleanup.
+The explicit `ci-replacement` helper mode validates parent/child ownership without
+relaxing the authorized admission profile. See the [operational record](cases/L04/record.md).

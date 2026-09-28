@@ -118,6 +118,8 @@ digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 image="registry.invalid/lab@$digest"
 results_type=https://tfm-goldenpath.dev/attestations/verification-results/v1
 sign_args=(--yes); verify_args=(--key fixture.pub)
+# Gate behavior has its own regressions; isolate post-issuance content binding.
+attestations_ci_gate() { :; }
 node() { "$GP_NODE" "$@"; }
 cosign() {
   printf '%s\n' "$1" >> "$GP_PROBE/commands.log"
