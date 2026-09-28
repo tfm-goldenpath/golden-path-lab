@@ -43,11 +43,12 @@ def package(source, output, status):
     excluded = {'state.json', 'config.json', 'kubeconfig', 'cosign.key', 'SHA256SUMS.txt'}
     files = []
     candidates = list(source.iterdir())
-    replacement = source / 'L01-update'
-    if replacement.is_symlink() or replacement.resolve() != replacement:
-        raise ValueError('Refusing symlinked replacement evidence directory')
-    if replacement.is_dir():
-        candidates.extend(replacement.iterdir())
+    for name in ('L01-update', 'F07'):
+        directory = source / name
+        if directory.is_symlink() or directory.resolve() != directory:
+            raise ValueError('Refusing symlinked scenario evidence directory')
+        if directory.is_dir():
+            candidates.extend(directory.iterdir())
     for file in sorted(candidates):
         if file.is_file() and not file.is_symlink() and (file.suffix in allowed or file.name == 'development-public-key.pem') and file.name not in excluded:
             content = file.read_bytes()
@@ -68,7 +69,8 @@ def package(source, output, status):
         if metadata.is_symlink():
             raise ValueError('Refusing symlinked evidence metadata: ' + metadata.name)
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'L01 image replacement + F13 + F11 integration demonstration; not the experimental campaign',
+        'scope': 'L01 image replacement + F13 + F11 integration demonstration; optional F07 directed evidence; not the experimental campaign',
+        'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
         'secretsIncluded': False}, indent=2) + '\n')
     files = [p for p in files if p != summary] + [summary]
     write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.relative_to(source).as_posix() + '\n' for p in files))

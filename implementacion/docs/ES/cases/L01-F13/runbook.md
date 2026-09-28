@@ -223,3 +223,16 @@ Los informes de vulnerabilidades y SBOM pueden revelar componentes y versiones. 
 | Se admite la sustitución de L01 pero falla la comprobación del despliegue | Revisa `L01-update/deployment.json`, `pods.json` y los diagnósticos funcionales. Los Pods anteriores, el digest antiguo o la preparación incompleta no satisfacen el oráculo UPDATE. |
 | GitHub no muestra Run workflow | Comprueba la ubicación raíz, la presencia del workflow manual en la rama predeterminada y que Actions está habilitado. |
 | GHCR o la atestación rechazan permisos | Revisa permisos del job y restricciones de organización/repositorio. No añadas credenciales de larga duración al código como solución rápida. |
+
+## Estado de la extensión F07
+
+El [registro operativo F07](../../../EN/cases/F07/record.md) fija el oráculo dirigido
+y documenta una implementación local aún no conectada. `make demo` sigue ejecutando
+L01/F13/F11. Antes de conectar F07, el registro local fijado debe demostrar la
+retirada precisa y la restauración del artefacto de firma original. Desde la raíz:
+`bash implementacion/tests/integration/f07-registry.sh`. Esta sonda de protocolo usa
+fixtures unitarios sintéticos etiquetados; no demuestra admisión. La repetición fuera del sandbox completó
+la sonda de protocolo en `run-IOwYIXos`. Siguen pendientes la conexión al
+coordinador, la admisión local real, la compatibilidad alojada,
+la ejecución alojada autorizada y la admisión sobre la revisión exacta. La barrera
+CI de F07 académico y su contraparte L04 mantienen su alcance independiente.

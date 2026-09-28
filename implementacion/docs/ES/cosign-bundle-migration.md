@@ -95,3 +95,12 @@ Las pruebas de regresión utilizan certificados generados con firmas reales y un
 La [ejecución alojada 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654), en `4f8fe77`, terminó con PASS, incluida la sustitución de imagen verificada de forma independiente, las dos emisiones de procedencia nativa y L01/F13/F11. Sus artefactos se auditaron. La publicación posterior v0.1.0 apunta a `9f1999e` e incluye ese cambio; no se atribuye la ejecución anterior al commit de publicación. Son resultados del perfil clásico y no validan el candidato bundle.
 
 La revisión previa incluyó ocho diagnósticos sintéticos del inventario, once pruebas del auxiliar y diez de generación de políticas. Docker no estaba disponible durante esa revisión: las salidas sintéticas no prueban firma real, admisión ni sobrecarga experimental. Las [fuentes técnicas y criterios equivalentes en inglés](../EN/cosign-bundle-migration.md#sources) completan esta explicación.
+
+### Condición previa de F07
+
+El [registro operativo](../EN/cases/F07/record.md) identifica fuente documental,
+actor, regla y evidencias. Existen pruebas locales del módulo y los validadores,
+y la sonda del protocolo de registro pasó fuera del sandbox en `run-IOwYIXos`.
+Siguen pendientes la conexión al coordinador y la admisión real. La admisión real de F07 no está completada.
+La compatibilidad GHCR con los permisos actuales no se ha demostrado; no hubo
+mutación alojada ni ejecución remota del workflow.
