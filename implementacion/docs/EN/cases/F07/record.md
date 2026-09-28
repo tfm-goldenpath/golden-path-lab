@@ -17,7 +17,7 @@ Prepared before implementation on base `0c0b928ace01145408f826acabd20f288a5684ad
 | Coverage | Directed functional integration only. Academic F07 also requires CI verification before promotion and names L04 as legitimate counterpart. A repaired L01 fixture does not complete F07 or L04 or add campaign measurements. |
 | Initial observation | Not executed. Local mutation proof precedes orchestration wiring. Hosted GHCR compatibility pending within existing authorization; no publication/dispatch authorized. |
 
-Human review: pending. Implementation assistance: Codex (GPT-6), requirements from the user; final decision pending human review.
+Human review: pending. Implementation assistance: GitHub Copilot and Codex (GPT-6), requirements from the user; individual edits are not attributed where that detail was not recorded. Final decision pending human review.
 
 ## Implementation status and gates
 
