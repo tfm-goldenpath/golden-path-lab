@@ -220,3 +220,21 @@ SBOMs and vulnerability reports can expose component names and versions. Review 
 | L01 replacement is admitted but rollout verification fails | Inspect `L01-update/deployment.json`, `pods.json` and probe diagnostics. Old Pods, the old digest or incomplete readiness do not satisfy the UPDATE oracle. |
 | Run workflow is absent | Check the root location, default-branch presence and Actions enablement. |
 | GHCR or attestation permissions fail | Review job and organization/repository permissions; do not add long-lived credentials to the code. |
+
+## F07 extension status
+
+The [F07 operational record](../F07/record.md) fixes the directed oracle and records
+an unwired local implementation. `make demo` still runs L01/F13/F11. F07 must not be
+loaded into the coordinator until the pinned local registry proves exact removal
+and restoration of its original signature artifact. The registry-only protocol
+probe is `bash implementacion/tests/integration/f07-registry.sh` from the repository
+root; it uses labelled synthetic unit fixtures and does not prove admission.
+The retry outside the sandbox passed the protocol proof in `run-IOwYIXos`;
+coordinator wiring and actual local admission remain pending. Hosted
+compatibility, authorized hosted execution and exact-revision admission remain
+pending. Academic F07's early CI barrier and legitimate L04 remain separate.
+
+F07 helper calls require the exact repository path `quotes-node-<run-id>`;
+nested repositories that merely end with that name are rejected before registry
+access. The directed result retains the actual attributed Kyverno rule, including
+`autogen-require-image-signature` for a generated Deployment rule.

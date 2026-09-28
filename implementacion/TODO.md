@@ -49,7 +49,7 @@ Current commands are in the [README](README.md) and [execution guide](docs/EN/ca
 ## 2. Early provenance and admission integration
 
 - [x] Implement Kyverno in `tfm-golden` with development-key trust and demonstrate signed delivery plus registry access from the client, node and controller.
-- [ ] Complete the isolated unsigned-image admission check F07, keeping the other required attestations valid; positive delivery alone does not establish this rejection.
+- [ ] Complete the isolated unsigned-image admission check F07, keeping the other required attestations valid; positive delivery alone does not establish this rejection. See the [F07 operational record](docs/EN/cases/F07/record.md): local helper/scenario regressions are prepared and registry protocol proof passed outside the sandbox in `run-IOwYIXos`; coordinator wiring, live admission and GHCR compatibility remain pending.
 - [ ] Finalize the relevant scenario records before testing: acceptance of valid provenance, missing provenance F09 and unauthorized origin F10; distinguish partial checks from complete scenarios.
 - [x] Prepare pinned Kyverno configuration and root `.github/workflows/` orchestration with repository-specific identities and reusable commands in `implementacion/`. The hosted entry point is manual `workflow_dispatch`, not a reusable `workflow_call` interface.
 - [x] Implement image/provenance contracts for format, retrieval, signature, issuer, source, workflow, commit and digest, with positive and negative contract tests.

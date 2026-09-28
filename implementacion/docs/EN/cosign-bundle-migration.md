@@ -105,3 +105,11 @@ Regression tests exercise real generated certificate signatures and mocked regis
 4. [Kyverno 1.19.1: bundle retrieval, trust and timestamp requirements](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/image/verifiers/cpol/cosign/sigstore.go), with [upstream tests](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/image/verifiers/cpol/cosign/sigstore_test.go).
 5. [Kyverno 1.19.1: policy fields and verifier options](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go).
 6. [Sigstore bundle specification](https://docs.sigstore.dev/about/bundle/) and [Cosign 3.1.3 signing defaults](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go).
+
+### F07 preparation gate
+
+The [operational record](cases/F07/record.md) identifies the documentary source,
+actor, expected rule and evidence. Local scenario/helper tests are available, but
+the registry protocol proof passed outside the sandbox in `run-IOwYIXos`.
+Coordinator wiring and actual admission remain pending. Do not mark the live F07 acceptance item complete. GHCR compatibility under
+existing permissions is unproven; no hosted mutation or dispatch was performed.

@@ -47,7 +47,7 @@ function location(mode, image) {
   return { origin:'http://' + host, repository, digest };
 }
 
-async function bytesOf(response, maximum) {
+export async function bytesOf(response, maximum) {
   const declared = response.headers.get('content-length');
   if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > maximum)) throw new Error('Registry response exceeds its size limit.');
   const reader = response.body?.getReader();
@@ -184,8 +184,10 @@ export async function downloadBundleInventory({ mode, image, actor, token, reque
   const bundles = [];
   const artifacts = [];
   const configs = new Map();
+  const rawArtifacts = [];
   for (const entry of before.descriptors) {
-    const manifest = jsonOf(await fetchContent(`/v2/${repository}/manifests/${entry.digest}`, entry, MAX_MANIFEST));
+    const manifestBytes = await fetchContent(`/v2/${repository}/manifests/${entry.digest}`, entry, MAX_MANIFEST);
+    const manifest = jsonOf(manifestBytes);
     if (!object(manifest) || manifest.schemaVersion !== 2 || manifest.mediaType !== MANIFEST
         || !Array.isArray(manifest.layers) || !object(manifest.config)) throw new Error('Referrer is not an OCI image manifest.');
     if (entry.artifactType && manifest.artifactType && entry.artifactType !== manifest.artifactType) throw new Error('Referrer artifact types disagree.');
@@ -207,26 +209,30 @@ export async function downloadBundleInventory({ mode, image, actor, token, reque
     const config = descriptor(manifest.config, MAX_CONFIG);
     if (config.mediaType !== EMPTY_CONFIG) throw new Error('Unsupported Sigstore config media type.');
     if (configs.has(config.digest)) {
-      if (configs.get(config.digest) !== config.size) throw new Error('Shared config descriptors disagree on content size.');
+      if (configs.get(config.digest).length !== config.size) throw new Error('Shared config descriptors disagree on content size.');
     } else {
       const configBytes = await fetchContent(`/v2/${repository}/blobs/${config.digest}`, config, MAX_CONFIG, true);
       const value = jsonOf(configBytes);
       if (!object(value) || Object.keys(value).length !== 0) throw new Error('Sigstore OCI empty config must contain an empty JSON object.');
-      configs.set(config.digest, config.size);
+      configs.set(config.digest, configBytes);
     }
     const layer = descriptor(manifest.layers[0], MAX_BUNDLE);
     const bytes = await fetchContent(`/v2/${repository}/blobs/${layer.digest}`, layer, MAX_BUNDLE, true);
     const bundle = jsonOf(bytes);
     // Validate every returned wrapper, including unrelated predicate types.
-    parseEnvelopes(JSON.stringify(bundle), {bundlesOnly:true});
+    const [statement] = parseEnvelopes(JSON.stringify(bundle), {bundlesOnly:true});
+    if (statement.subject.some(subject => subject.digest.sha256 !== digest.slice(7))) throw new Error('Bundle subject differs from the requested image.');
+    rawArtifacts.push({manifestDigest:entry.digest, manifest:manifestBytes.toString('base64'),
+      config:configs.get(config.digest).toString('base64'), bundle:bytes.toString('base64')});
     bundles.push(bundle);
     artifacts.push({manifestDigest:entry.digest, configDigest:config.digest, configSize:config.size,
-      bundleDigest:layer.digest, bundleSize:layer.size, kind:'sigstore-bundle-v0.3'});
+      bundleDigest:layer.digest, bundleSize:layer.size, predicateType:statement.predicateType,
+      subjectDigest:digest, kind:'sigstore-bundle-v0.3'});
   }
   if (!bundles.length) throw new Error('The registry contains no supported Sigstore bundles.');
   const after = await listReferrers();
   if (canonical(before) !== canonical(after)) throw new Error('Referrer inventory changed during retrieval.');
-  return { bundles, inventory:{image, source:before.source, descriptors:before.descriptors, artifacts,
+  return { bundles, rawArtifacts, inventory:{image, source:before.source, descriptors:before.descriptors, artifacts,
     check:'complete OCI referrer listing and manifests; Sigstore configs, bundle layers and structure; signatures verified separately'} };
 }
 
