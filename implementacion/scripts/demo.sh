@@ -81,6 +81,8 @@ scenario_f11_admission
 scenario_l01_update
 jq -n --arg image "$image" --arg mode "$mode" --arg repo "$repository" --arg commit "$commit" \
   --slurpfile f07 "$state_dir/F07-completed.json" \
+  --slurpfile ci "$state_dir/F07-CI-completed.json" \
+  --slurpfile l04 "$state_dir/L04-result.json" \
   --slurpfile update "$state_dir/L01-image-update.json" \
-  '{status:"PASS",mode:$mode,evidenceFormat:"sigstore-bundle-v0.3",image:$image,source:{repository:$repo,commit:$commit},reference:"healthy",L01:"accepted-and-healthy",F13:"denied-by-require-results",F07:$f07[0],F11:{early:"denied",admissionUpdate:"denied"},legitimateUpdate:$update[0],measurement:"functional-integration-only"}' > "$state_dir/result.json"
+  '{status:"PASS",mode:$mode,evidenceFormat:"sigstore-bundle-v0.3",image:$image,source:{repository:$repo,commit:$commit},reference:"healthy",L01:"accepted-and-healthy",F13:"denied-by-require-results",F07:$f07[0],F07CI:$ci[0],L04:$l04[0],F11:{early:"denied",admissionUpdate:"denied"},legitimateUpdate:$update[0],measurement:"functional-integration-only"}' > "$state_dir/result.json"
 record "PASS: L01 accepted; F13 and F11 rejected; F07 status recorded for the selected lane. Evidence: $state_dir"

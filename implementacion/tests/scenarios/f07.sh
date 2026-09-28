@@ -90,3 +90,55 @@ scenario_f07_pending() {
   record 'F07 hosted: not executed; GHCR mutation compatibility pending'
   jq -n '{scenario:"F07",status:"NOT_EXECUTED",reason:"Hosted GHCR mutation compatibility pending",sameDigestL01:"not-applicable"}' > "$state_dir/F07-completed.json"
 }
+
+# Early CI fault on the separately built candidate. This harness observes a
+# rejected gate; it cannot issue authorization or submit a workload.
+scenario_f07_ci() (
+  set -Eeuo pipefail
+  local recovery_required=0 gate_status=0 registry_ip registry_owner
+  mkdir "$state_dir/F07-CI"
+  scenario_f07_ci_recover() {
+    local original=$? restoration=0
+    trap - EXIT INT TERM
+    if [[ "$recovery_required" == 1 ]]; then
+      node scripts/f07-signature-evidence.mjs restore "$state_dir" "$image" - ci-replacement > "$state_dir/F07-CI/restore.log" 2>&1 || restoration=$?
+      if [[ "$restoration" == 0 ]]; then
+        node scripts/f07-signature-evidence.mjs snapshot "$state_dir" "$image" restored ci-replacement >> "$state_dir/F07-CI/restore.log" 2>&1 || restoration=$?
+      fi
+      if [[ "$restoration" == 0 ]]; then
+        node scripts/ci-verification-gate.mjs "$state_dir" CI-F07-restored before-results >> "$state_dir/F07-CI/restore.log" 2>&1 || restoration=$?
+      fi
+    fi
+    jq -n --argjson original "$original" --argjson restoration "$restoration" --argjson attempted "$recovery_required" \
+      '{originalStatus:$original,restorationStatus:$restoration,restorationAttempted:($attempted==1)}' > "$state_dir/F07-CI/recovery.json" || { [[ "$original" != 0 ]] || original=1; }
+    if [[ "$original" == 0 && "$restoration" == 0 ]]; then
+      jq -n --arg image "$image" '{scenario:"F07",phase:"early-CI",image:$image,status:"CI_REJECTION_AND_RECOVERY",L04:"pending"}' > "$state_dir/F07-CI/result.json" || original=$?
+    fi
+    [[ "$original" != 0 ]] || original=$restoration
+    exit "$original"
+  }
+  trap scenario_f07_ci_recover EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  [[ "$mode" == local && "$(basename "$state_dir")" == L01-update ]] || fail 'F07 CI requires the local replacement candidate.'
+  registry_ip=$(docker inspect -f '{{(index .NetworkSettings.Networks "kind").IPAddress}}' "$registry")
+  registry_owner=$(docker inspect -f '{{index .Config.Labels "tfm.lab"}}' "$registry")
+  [[ "$registry_owner" == "$cluster" && "$image_repo" == "$registry_ip:5000/quotes-node-$(basename "$(dirname "$state_dir")" | tr '[:upper:]' '[:lower:]')" ]] || fail 'F07 CI registry ownership mismatch.'
+  node scripts/f07-signature-evidence.mjs snapshot "$state_dir" "$image" before ci-replacement
+  attestations_ci_gate CI-F07-before
+  recovery_required=1
+  node scripts/f07-signature-evidence.mjs remove "$state_dir" "$image" - ci-replacement > "$state_dir/F07-CI/remove.log" 2>&1
+  node scripts/f07-signature-evidence.mjs snapshot "$state_dir" "$image" negative ci-replacement
+  # Only this external read-only command is expected to fail. Never suppress
+  # errexit around the complete scenario or normal delivery authorization.
+  if node scripts/ci-verification-gate.mjs "$state_dir" CI-F07-negative before-results > "$state_dir/F07-CI/gate.log" 2>&1; then
+    gate_status=0
+  else
+    gate_status=$?
+  fi
+  jq -n --argjson status "$gate_status" '{exitStatus:$status,observation:(if $status==0 then "UNEXPECTED_ACCEPTANCE" elif $status==42 then "REJECTION_REQUIRES_ATTRIBUTION" else "INTEGRATION_FAILURE" end),authorizationReached:false,deploymentReached:false}' > "$state_dir/F07-CI/attempt.json"
+  node scripts/f07-signature-evidence.mjs snapshot "$state_dir" "$image" after-denial ci-replacement
+  [[ "$gate_status" == 42 ]] || fail 'F07 CI did not produce the intended missing-signature rejection.'
+  jq -e --arg image "$image" '.image==$image and .status=="MISSING_IMAGE_SIGNATURE" and .phase=="before-results" and .inventoryComplete==true and .predicate=="https://sigstore.dev/cosign/sign/v1"' "$state_dir/CI-F07-negative.result.json" >/dev/null
+  [[ ! -e "$state_dir/results.bundle.json" && ! -e "$state_dir/results-predicate.json" && ! -e "$state_dir/L01-update.log" ]] || fail 'F07 CI reached authorization or deployment before recovery.'
+)

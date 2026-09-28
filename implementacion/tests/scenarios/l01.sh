@@ -47,7 +47,13 @@ scenario_l01_update() (
   load_delivery_context
   [[ "$image" != "$previous_image" ]] || fail 'L01 requires a different replacement digest.'
   record 'L01: verify and authorize the replacement image'
-  attestations_verify_delivery
+  attestations_issue_delivery
+  if [[ "$mode" == local ]]; then
+    scenario_f07_ci
+  else
+    attestations_ci_gate CI-delivery
+    jq -n --arg image "$image" '{scenario:"F07",phase:"early-CI",image:$image,status:"NOT_EXECUTED",reason:"Hosted negative F07 remains pending"}' > "$parent_state/F07-CI-completed.json"
+  fi
   attestations_authorize_results
   record 'L01: replace the deployed image and verify the new Pods'
   actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/L01-update.log"
@@ -56,4 +62,8 @@ scenario_l01_update() (
   k -n tfm-golden get deployment quotes-node -o json > "$state_dir/deployment.json"
   k -n tfm-golden get pods -l app=quotes-node -o json > "$state_dir/pods.json"
   node scripts/check-image-rollout.mjs "$previous_image" "$image" "$state_dir/deployment.json" "$state_dir/pods.json" > "$parent_state/L01-image-update.json"
+  jq --arg image "$image" '. + {scenario:"L04",image:$image,sharedExecution:"L01-image-update",verification:"fresh-registry",functionality:"healthy"}' "$parent_state/L01-image-update.json" > "$parent_state/L04-result.json"
+  if [[ "$mode" == local ]]; then
+    jq --slurpfile l04 "$parent_state/L04-result.json" '.status="CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE" | .L04=$l04[0]' "$state_dir/F07-CI/result.json" > "$parent_state/F07-CI-completed.json"
+  fi
 )

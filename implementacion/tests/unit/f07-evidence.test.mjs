@@ -131,3 +131,36 @@ for (const restore of [false, true]) {
     }
   });
 }
+
+test('pre-results mutation requires the exact distinct replacement and parent ownership', async () => {
+  const parentFixture = setup();
+  const parent = {...stateFor(parentFixture), cluster:'tfm-demo-run-fixture', sourceRepository:'repo', sourceCommit:'commit', sourceSnapshot:'snapshot'};
+  const f = fixture({repo:'quotes-node-run-fixture', imageDigest:'sha256:'+'b'.repeat(64), types:types.slice(0,3)});
+  const state = {...parent, imageRepository:f.image.split('@')[0], digest:f.image.split('@')[1]};
+  const backup = await f.run();
+  assert.throws(() => validateBackup(backup, f.image), /Missing bundle predicate/);
+  const selected = validateBackup(backup, f.image, 'before-results');
+  const mutations = [];
+  const request = async (url, options = {}) => {
+    if (['DELETE','PUT'].includes(options.method)) {
+      mutations.push({url, ...options});
+      if (options.method === 'DELETE') f.descriptors.splice(f.descriptors.findIndex(d => d.digest === selected.entry.digest), 1);
+      else f.descriptors.push(selected.entry);
+      return new Response(null, {status:options.method === 'DELETE' ? 202 : 201, headers:{'docker-content-digest':selected.entry.digest}});
+    }
+    return f.request(url, options);
+  };
+  const args = {state, parent, purpose:'ci-replacement', run:'run-fixture', image:f.image, backup, request};
+  for (const bad of [{mode:'github'}, {digest:parent.digest}, {registry:'other'}, {sourceCommit:'other'}, {sourceSnapshot:'other'}, {cluster:'other'}, {imageRepository:state.imageRepository+'/nested'}, {imageRepository:parent.imageRepository+'-update'}]) {
+    await assert.rejects(mutateSignature({...args, state:{...state,...bad}}));
+    assert.equal(mutations.length, 0);
+  }
+  await assert.rejects(mutateSignature({...args, purpose:'admission'}));
+  await mutateSignature(args);
+  checkAlteration(backup, await f.run(), f.image, false, 'before-results');
+  await mutateSignature({...args,restore:true});
+  checkAlteration(backup, await f.run(), f.image, true, 'before-results');
+  assert.deepEqual(mutations.map(m=>m.method), ['DELETE','PUT']);
+  assert.ok(mutations.every(m=>m.url.endsWith('/manifests/'+selected.entry.digest)));
+  assert.deepEqual(mutations[1].body, Buffer.from(selected.raw.manifest,'base64'));
+});

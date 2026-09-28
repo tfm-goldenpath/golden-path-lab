@@ -169,3 +169,14 @@ No se adopta Domain-Driven Design como método de diseño de este prototipo. DDD
 Se mantendrá un vocabulario preciso —imagen, digest, identidad, evidencia, política, autorización y decisión— y responsabilidades separadas. DSRM organiza la investigación, TDD guía la construcción y la arquitectura modular estructura el artefacto: cumplen funciones distintas y compatibles.
 
 Una arquitectura hexagonal podría ser útil si apareciese una aplicación propia con lógica de dominio estable y numerosos proveedores intercambiables. Una plataforma como Tekton/Konflux aportaría componentes específicos de construcción y liberación. Para el alcance actual se elige una integración más acotada sobre GitHub Actions y herramientas existentes, suficiente para separar y probar los contratos sin añadir esos subsistemas.
+
+## F07 CI / L04
+
+La barrera compartida de solo lectura `ci-verification-gate.mjs` recupera y
+autentica evidencias actuales del registro. `attestations.sh` separa su emisión;
+`f07.sh` controla la mutación/restauración local de la sustitución antes de
+resultados. `l01.sh` comparte su ejecución de sustitución con L04 y registra
+finalización tras despliegue y HTTP. `demo.sh` conserva secuencia global,
+resultados y limpieza compartida. El modo explícito `ci-replacement` valida la
+propiedad de padre/candidato sin relajar el perfil autorizado de admisión.
+Consulta el [registro operativo](cases/L04/record.md).

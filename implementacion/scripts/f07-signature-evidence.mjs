@@ -2,7 +2,7 @@
 // Controlled F07 fixture operations. Inventory and hashes do not authenticate signatures.
 import {createHash} from 'node:crypto';
 import {readFileSync, writeFileSync} from 'node:fs';
-import {basename, join} from 'node:path';
+import {basename, dirname, join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {downloadBundleInventory, bytesOf} from './download-bundle-inventory.mjs';
 import {checkBundleProfile, IMAGE_SIGNATURE_TYPE} from './check-bundle-profile.mjs';
@@ -26,10 +26,21 @@ export function authorizeTarget(state, run, image) {
   }
 }
 
-export function validateBackup(snapshot, image) {
+// A separate preparation contract; admission retains its authorized profile.
+export function authorizeReplacement(state, parent, run, image) {
+  authorizeTarget(parent, run, parent.imageRepository + '@' + parent.digest);
+  if (state.mode !== 'local' || state.registry !== parent.registry
+      || state.imageRepository !== parent.imageRepository
+      || state.digest === parent.digest || !/^sha256:[a-f0-9]{64}$/.test(state.digest || '')
+      || image !== state.imageRepository + '@' + state.digest
+      || ['sourceRepository', 'sourceCommit', 'sourceSnapshot', 'cluster'].some(key =>
+        !parent[key] || state[key] !== parent[key])) throw new Error('Unauthorized F07 replacement target');
+}
+
+export function validateBackup(snapshot, image, profile = 'authorized') {
   if (snapshot.inventory?.image !== image) throw new Error('Backup image differs from the authorized target.');
   const digest = image.split('@')[1];
-  checkBundleProfile(JSON.stringify(snapshot.bundles), digest, 'authorized');
+  checkBundleProfile(JSON.stringify(snapshot.bundles), digest, profile);
   checkInventoryConsistency(snapshot.inventory, snapshot.inventory, image);
   const candidates = [];
   if (!Array.isArray(snapshot.rawArtifacts)) throw new Error('Missing raw OCI backup.');
@@ -73,8 +84,8 @@ export function validateBackup(snapshot, image) {
   return candidates[0];
 }
 
-export function checkAlteration(before, current, image, restored = false) {
-  const selected = validateBackup(before, image);
+export function checkAlteration(before, current, image, restored = false, profile = 'authorized') {
+  const selected = validateBackup(before, image, profile);
   const expected = structuredClone(before.inventory);
   if (!restored) expected.descriptors = expected.descriptors.filter(item => item.digest !== selected.entry.digest);
   checkInventoryConsistency(expected, current.inventory, image);
@@ -87,11 +98,11 @@ export function checkAlteration(before, current, image, restored = false) {
     complete.inventory.artifacts.push(before.inventory.artifacts.find(item => item.manifestDigest === selected.entry.digest));
     complete.bundles.push(JSON.parse(Buffer.from(selected.raw.bundle, 'base64')));
   }
-  validateBackup(complete, image);
+  validateBackup(complete, image, profile);
   const statements = parseEnvelopes(JSON.stringify(current.bundles), {bundlesOnly:true});
   if (!restored && statements.some(item => item.predicateType === IMAGE_SIGNATURE_TYPE)) throw new Error('Independent image signature remains during F07.');
   const bundles = restored ? current.bundles : [...current.bundles, JSON.parse(Buffer.from(selected.raw.bundle, 'base64'))];
-  checkBundleProfile(JSON.stringify(bundles), image.split('@')[1], 'authorized');
+  checkBundleProfile(JSON.stringify(bundles), image.split('@')[1], profile);
   for (const artifact of current.rawArtifacts) {
     const original = before.rawArtifacts.find(item => item.manifestDigest === artifact.manifestDigest);
     if (JSON.stringify(original) !== JSON.stringify(artifact)) throw new Error('Evidence bytes changed during F07.');
@@ -99,9 +110,12 @@ export function checkAlteration(before, current, image, restored = false) {
   return {scenario:'F07', image, signatureManifest:selected.entry.digest, check:restored ? 'original-evidence-restored' : 'only-independent-image-signature-absent'};
 }
 
-export async function mutateSignature({state, run, image, backup, restore = false, request = fetch}) {
-  authorizeTarget(state, run, image);
-  const selected = validateBackup(backup, image);
+export async function mutateSignature({state, run, image, backup, restore = false, request = fetch, purpose = 'admission', parent}) {
+  if (!['admission', 'ci-replacement'].includes(purpose)) throw new Error('Invalid mutation purpose');
+  if (purpose === 'ci-replacement') authorizeReplacement(state, parent, run, image);
+  else authorizeTarget(state, run, image);
+  const profile = purpose === 'ci-replacement' ? 'before-results' : 'authorized';
+  const selected = validateBackup(backup, image, profile);
   const origin = 'http://' + state.imageRepository.split('/')[0];
   const base = origin + '/v2/' + state.imageRepository.split('/').slice(1).join('/');
   const send = async (url, options) => {
@@ -121,7 +135,7 @@ export async function mutateSignature({state, run, image, backup, restore = fals
     }
   } else {
     const current = await downloadBundleInventory({mode:state.mode, image, request});
-    checkAlteration(backup, current, image, true);
+    checkAlteration(backup, current, image, true, profile);
   }
   const response = await send(base + '/manifests/' + selected.entry.digest, restore ? {
     method:'PUT', headers:{'Content-Type':selected.entry.mediaType}, body:Buffer.from(selected.raw.manifest, 'base64'),
@@ -132,27 +146,34 @@ export async function mutateSignature({state, run, image, backup, restore = fals
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    const [, , command, stateDir, image, phase] = process.argv;
+    const [, , command, stateDir, image, phase, purpose = 'admission'] = process.argv;
     const state = read(join(stateDir, 'state.json'));
-    const directory = join(stateDir, 'F07');
-    authorizeTarget(state, basename(stateDir), image);
+    if (!['admission', 'ci-replacement'].includes(purpose)) throw new Error('Invalid mutation purpose');
+    const replacement = purpose === 'ci-replacement';
+    if (replacement && basename(stateDir) !== 'L01-update') throw new Error('Expected replacement state directory');
+    const parent = replacement ? read(join(dirname(stateDir), 'state.json')) : undefined;
+    const run = basename(replacement ? dirname(stateDir) : stateDir);
+    const profile = replacement ? 'before-results' : 'authorized';
+    const directory = join(stateDir, replacement ? 'F07-CI' : 'F07');
+    if (replacement) authorizeReplacement(state, parent, run, image);
+    else authorizeTarget(state, run, image);
     if (command === 'snapshot') {
       if (!['before', 'negative', 'after-denial', 'restored'].includes(phase)) throw new Error('Invalid F07 snapshot phase.');
       const snapshot = await downloadBundleInventory({mode:state.mode, image});
       if (phase === 'before') {
-        validateBackup(snapshot, image);
+        validateBackup(snapshot, image, profile);
         for (const artifact of snapshot.rawArtifacts) {
           save(join(directory, artifact.manifestDigest.slice(7) + '.bundle.json'), JSON.parse(Buffer.from(artifact.bundle, 'base64')));
         }
       }
       save(join(directory, phase + '.json'), snapshot);
       if (phase !== 'before') {
-        const result = checkAlteration(read(join(directory, 'before.json')), snapshot, image, phase === 'restored');
+        const result = checkAlteration(read(join(directory, 'before.json')), snapshot, image, phase === 'restored', profile);
         if (phase === 'after-denial') checkInventoryConsistency(read(join(directory, 'negative.json')).inventory, snapshot.inventory, image);
         save(join(directory, phase + '-check.json'), result);
       }
     } else if (['remove', 'restore'].includes(command)) {
-      await mutateSignature({state, run:basename(stateDir), image, backup:read(join(directory, 'before.json')), restore:command === 'restore'});
+      await mutateSignature({state, run, image, purpose, parent, backup:read(join(directory, 'before.json')), restore:command === 'restore'});
     } else throw new Error('Unknown F07 evidence operation.');
   } catch (error) {
     console.error('F07 evidence failed: ' + error.message);

@@ -242,10 +242,19 @@ solo cuando también pasan F11 y la sustitución. Un fallo posterior conserva la
 evidencias intermedias y empaqueta FAIL global.
 
 La vía alojada conserva su flujo y registra F07 como `NOT_EXECUTED`, con GHCR
-pendiente; nunca llama al helper de mutación. La barrera CI de F07 académico y
-L04 siguen pendientes. No se añade un escenario al catálogo ni una medición de
+pendiente; nunca llama al helper de mutación. El [incremento F07 CI/L04](../L04/record.md) añade una comprobación separada de sustitución antes de resultados. No se añade un escenario al catálogo ni una medición de
 campaña. El comando local no despacha workflows ni cambia privilegios de paquetes.
 Un fallo de restauración es un error de integración: conserva la copia original
 y ambos estados de `recovery.json` para el diagnóstico.
 
 La [compatibilidad F07 alojada](../F07/hosted-compatibility.md) recoge la sonda inactiva, los comandos propuestos y el criterio de parada. Ni `make demo` ni `golden-path.yml` la invocan. La investigación no ejecutó operaciones alojadas.
+
+## F07 CI / L04
+
+`make demo` también prueba la barrera CI por firma ausente del candidato de
+sustitución antes de autorizar, restaura el artefacto original y comparte con L04
+la admisión, despliegue y HTTP de sustitución L01. Revisa `F07-CI-completed.json`,
+`L04-result.json` y `L01-update/F07-CI/`, junto con F13/F07/F11 originales. El
+[registro operativo](../L04/record.md) distingue ejecuciones reales, fallos y
+comprobaciones alojadas no ejecutadas, e incluye comandos locales/GitHub.
+F07 negativo alojado permanece NOT_EXECUTED; no se invoca la sonda GHCR.
