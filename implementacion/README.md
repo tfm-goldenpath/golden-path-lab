@@ -6,7 +6,7 @@ The [execution guide](docs/EN/cases/L01-F13/runbook.md) covers Codespaces, Dev C
 
 The [image-replacement validation](registros/l01_image_update_validation_EN.md) records the earlier local result. Classic hosted [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654) subsequently passed on `4f8fe77`, including independent image replacement; released v0.1.0 at `9f1999e` includes that change. Preserve the recorded commit and profile for each observation.
 
-This branch is a [bundle migration candidate](docs/EN/cosign-bundle-migration.md), with [local compatibility PASS](registros/cosign_bundles_validation_EN.md) in `run-De88fpWy`, including strict inventory retrieval; hosted L01/F13/F11 also passed at `82728c5` in [run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827). Actual F07 negative admission and integration of the subsequent PR review corrections remain pending. Cosign 3.1.3 emits default Sigstore bundles and Kyverno 1.19.1 consumes them for each distinct evidence requirement, including the independent image-signature predicate. The classic chain adapter is outside the active path; local development-key trust and hosted OIDC/transparency remain separate. Freeze the adopted profile after the pilot, and keep classic development timings separate from bundle campaign measurements.
+This branch is a [bundle migration candidate](docs/EN/cosign-bundle-migration.md), with [local compatibility PASS](registros/cosign_bundles_validation_EN.md) in `run-De88fpWy`, including strict inventory retrieval; hosted L01/F13/F11 also passed at `82728c5` in [run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827). Local directed F07 passed in `run-xFGRe6X1`, as recorded in the [F07 record](docs/EN/cases/F07/record.md). Hosted F07 remains `NOT_EXECUTED`; the [GHCR protocol investigation](docs/EN/cases/F07/hosted-compatibility.md) supplies an inactive probe and a bounded stopping condition. Cosign 3.1.3 emits default Sigstore bundles and Kyverno 1.19.1 consumes them for each distinct evidence requirement, including the independent image-signature predicate. The classic chain adapter is outside the active path; local development-key trust and hosted OIDC/transparency remain separate. Freeze the adopted profile after the pilot, and keep classic development timings separate from bundle campaign measurements.
 
 ## Documentation language
 
@@ -56,7 +56,7 @@ A HIGH/CRITICAL finding blocks delivery even when no fix is available. An incomp
 | `make test` | Check environment, API, contracts, orchestration, packaging and policies without requiring a cluster. |
 | `make smoke-env` | Build and load an image directly into kind; does not verify a registry or signatures. |
 | `make reference` | Deploy by digest into `tfm-reference` and check the HTTP response. |
-| `make demo` | Exercise R/G, L01/F13 and the directed F11 checks. |
+| `make demo` | Exercise R/G, L01/F13, local directed F07 and F11 checks. |
 
 The reference request is `POST /quotes` with `{"insuredAmountCents":100000,"coverage":"basic"}`. Both R and G must return:
 

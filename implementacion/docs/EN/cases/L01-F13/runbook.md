@@ -243,3 +243,5 @@ early CI barrier and L04 remain pending; this directed check adds no catalogue
 scenario or campaign measurement. No hosted dispatch or package privileges are
 part of the local command. A failed restoration is an integration failure; retain
 the original backup and both statuses in `recovery.json` for diagnosis.
+
+For the inactive hosted protocol probe, reviewed command proposal and stopping condition, see [F07 hosted compatibility](../F07/hosted-compatibility.md). `make demo` and `golden-path.yml` do not invoke it. No hosted execution was performed in that investigation.

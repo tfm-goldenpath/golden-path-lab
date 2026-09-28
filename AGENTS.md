@@ -159,7 +159,8 @@ of their original revisions.
 - Synthetic reports belong in labelled unit tests. Real integration and campaign
   claims require real executions and their evidence. Never fabricate results,
   citations, measurements, human approval or an earlier TDD history.
-- The current demonstration exercises L01/F13 and directed F11 checks. Additional
+- The current demonstration exercises L01/F13, local directed F07 and F11 checks.
+  Hosted F07 remains NOT_EXECUTED. Additional
   unit tests do not establish execution of the entire twenty-scenario catalogue.
 - AI assists development; deterministic tools implement delivery decisions. Do
   not introduce AI into measured manual tasks or campaign acceptance decisions.

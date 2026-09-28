@@ -10,6 +10,7 @@ English is the primary language for implementation and technical contribution. S
 | [Modular architecture](architecture.md) | Component responsibilities, interfaces and verification boundaries. |
 | [Delivery contracts](delivery-contracts.md) | Artifact identity, required evidence and authorization checks. |
 | [AI-assisted development](ai-assisted-development.md) | Scoped assistance, human responsibility, shared instructions, scenario skill and truthful attribution. |
+| [F07 hosted compatibility](cases/F07/hosted-compatibility.md) | Local coverage, bounded GHCR findings and inactive protocol commands. |
 | [L01/F13 case specification](cases/L01-F13/README.md) | Expected behavior of legitimate delivery, missing results and directed F11 checks. |
 | [L01/F13 execution runbook](cases/L01-F13/runbook.md) | Local and hosted commands, expected outputs, diagnostics and cleanup. |
 | [GitHub configuration](github-configuration.md) | Proposed repository protections and hosted integration settings; documentation does not activate those settings. |

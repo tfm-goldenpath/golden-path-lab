@@ -2,9 +2,9 @@
 
 [English](cosign-bundle-migration.md) · [Español](../ES/cosign-bundle-migration.md) · [Documentation index](README.md)
 
-**Status: local compatibility PASS and hosted L01/F13/F11 PASS at `82728c5`.** [Hosted run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827) exercised OIDC, certificate/SCT and transparency verification with GHCR and Kyverno. Subsequent reviews strengthen config-blob retrieval, packaging, authenticated-content binding and F13 inventory comparison; those changes require a new integration run on their exact commit. The actual F07 negative admission check remains pending. The released classic baseline is **v0.1.0**, commit `9f1999e`; its observations are not bundle validation. See the [PR review and release recommendation](../../registros/pr15_review_EN.md).
+**Status: local compatibility PASS and hosted L01/F13/F11 PASS at `82728c5`.** [Hosted run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827) exercised OIDC, certificate/SCT and transparency verification with GHCR and Kyverno. Subsequent reviews strengthen config-blob retrieval, packaging, authenticated-content binding and F13 inventory comparison; those changes require a new integration run on their exact commit. Local directed F07 passed in `run-xFGRe6X1`; hosted F07 remains NOT_EXECUTED. See the [bounded compatibility investigation](cases/F07/hosted-compatibility.md). The released classic baseline is **v0.1.0**, commit `9f1999e`; its observations are not bundle validation. See the [PR review and release recommendation](../../registros/pr15_review_EN.md).
 
-[Local run `run-De88fpWy`](../../registros/cosign_bundles_validation_EN.md) passed with pinned tools, fresh zot/kind and strict inventory retrieval: F13 and F11 were rejected for their expected reasons, L01 was admitted, and its independently verified replacement digest completed rollout. The host used Docker Engine 24.0.5 with cgroup v1 and explicit `GP_CGROUP_V1_COMPAT=1`. This is compatibility evidence, not the prescribed campaign environment or a timing measurement. The run validates the modified working tree based on `9f1999e`, with source snapshot `8d79c68d46569c826fb43d693c03dc767631c715f039021717642d3d2991cc0a`; it is not an execution of unchanged v0.1.0. The later hosted review below validates B at `82728c5`; F07 and integration of subsequent corrections remain pending.
+[Local run `run-De88fpWy`](../../registros/cosign_bundles_validation_EN.md) passed with pinned tools, fresh zot/kind and strict inventory retrieval: F13 and F11 were rejected for their expected reasons, L01 was admitted, and its independently verified replacement digest completed rollout. The host used Docker Engine 24.0.5 with cgroup v1 and explicit `GP_CGROUP_V1_COMPAT=1`. This is compatibility evidence, not the prescribed campaign environment or a timing measurement. The run validates the modified working tree based on `9f1999e`, with source snapshot `8d79c68d46569c826fb43d693c03dc767631c715f039021717642d3d2991cc0a`; it is not an execution of unchanged v0.1.0. The later hosted review below validates B at `82728c5`; hosted F07 and exact-revision hosted validation of subsequent corrections remain pending. Local F07 passed later in `run-xFGRe6X1`.
 
 ## Selected profile
 
@@ -43,14 +43,14 @@ The offline crypto probe uses `attest-blob` with synthetic predicates. It tests 
 - [x] Observed at `82728c5`: verify B on GitHub/GHCR with real OIDC, the exact authorized workflow identity, authenticated certificate trust and required transparency/timestamp material.
 - [x] Observed at `82728c5`: repeat in B the F13 missing-results attribution and subsequent L01 admission for the same digest. Local run `run-De88fpWy` passed the sequence with strict before/after retrieval and same-digest L01 acceptance.
 - [x] Observed at `82728c5`: repeat in B the F11 rejection and independently verified L01 replacement, including rollout and functional comparison. Local run `run-De88fpWy` passed both checks with strict inventory retrieval.
-- [ ] Complete the actual F07 negative admission check: retain valid SBOM/provenance/results but omit the image-signature predicate; admission must reject it. Passing cryptographic probes and policy regressions do not replace this check. Retain the negative-check contracts for altered signatures, unauthorized keys/identities, wrong digests and incompatible or unsuccessful results; retrieval/verifier failure must stop the mandatory check.
+- [x] Observe local F07 negative admission and restored same-digest L01 in `run-xFGRe6X1` (see the [record](cases/F07/record.md)). Hosted F07 remains pending. Local oracle: retain valid SBOM/provenance/results but omit the image-signature predicate; admission must reject it. Passing cryptographic probes and policy regressions do not replace this check. Retain the negative-check contracts for altered signatures, unauthorized keys/identities, wrong digests and incompatible or unsuccessful results; retrieval/verifier failure must stop the mandatory check.
 - [x] Preserve both local image evidence sets and verify the archive plus all 111 internal hashes: [validation record](../../registros/cosign_bundles_validation_EN.md). Eight raw bundles, public development keys, original CycloneDX JSON, verifier outputs, profiles, policies and admission responses are included; credentials and private keys are excluded.
 - [x] Preserve B's package and verify all 103 internal hashes at `82728c5`, including hosted trust material and native provenance.
 - [x] Record the local working-tree snapshot, base commit, versions, run identifier and limitations in the validation record.
 - [x] Record the actual hosted commit and results in the PR review record.
 - [ ] Revalidate the review corrections on their exact revision, complete F07 and repeat affected pilot checks before campaign freeze.
 
-The public commands remain `make test`, `make demo` and manual `golden-path.yml`; preparing this candidate does not dispatch GitHub or publish a branch. Publish the reviewed corrections and dispatch their exact revision; the successful hosted run of `82728c5` does not validate later changes. Actual F07 negative admission remains an acceptance task. A failed integration is retained as such; it does not justify weakening the hosted trust profile.
+The public commands remain `make test`, `make demo` and manual `golden-path.yml`; preparing this candidate does not dispatch GitHub or publish a branch. Publish the reviewed corrections and dispatch their exact revision; the successful hosted run of `82728c5` does not validate later changes. Hosted F07 remains an acceptance task; local directed F07 passed in `run-xFGRe6X1`. A failed integration is retained as such; it does not justify weakening the hosted trust profile.
 
 ## Milestone and release recommendation
 
@@ -106,10 +106,11 @@ Regression tests exercise real generated certificate signatures and mocked regis
 5. [Kyverno 1.19.1: policy fields and verifier options](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go).
 6. [Sigstore bundle specification](https://docs.sigstore.dev/about/bundle/) and [Cosign 3.1.3 signing defaults](https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go).
 
-### F07 preparation gate
+### F07 compatibility gate
 
-The [operational record](cases/F07/record.md) identifies the documentary source,
-actor, expected rule and evidence. Local scenario/helper tests are available, but
-the registry protocol proof passed outside the sandbox in `run-IOwYIXos`.
-Coordinator wiring and actual admission remain pending. Do not mark the live F07 acceptance item complete. GHCR compatibility under
-existing permissions is unproven; no hosted mutation or dispatch was performed.
+Local coordination and real directed admission passed in `run-xFGRe6X1`;
+retain the [operational record](cases/F07/record.md). The bounded
+[GHCR investigation](cases/F07/hosted-compatibility.md) leaves hosted F07
+NOT_EXECUTED: precise removal/restoration with the existing job token is unproven.
+The protocol probe and workflow patch are inactive and require separate publication
+and execution authorization. Next task: `test/f07-ci-verification-l04`.

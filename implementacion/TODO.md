@@ -6,7 +6,7 @@ The [modular architecture](docs/EN/architecture.md) separates orchestration, pol
 
 The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the functional contract and H0–H6 acceptance conditions behind increments 0–3. This checklist tracks implementation and acceptance separately.
 
-## Available increment: L01/F13 demonstration and F11 checks
+## Available increment: L01/F13, local F07 and F11 checks
 
 - [x] Implement `quotes-node`, policies, evidence validators and pinned tools, detailed in increments 0–3.
 - [x] Provide `make demo`, `make reference`, CI and manual hosted integration, with digest-based delivery, L01/F13, directed F11 checks and evidence packages.
@@ -17,7 +17,7 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 - [x] Observe the corrected chains and results verified in hosted admission in [run 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179), commit `1ae111fc6e1614b32ee86461771836ada60e1d42`: F13 correctly rejected, L01 admitted and healthy, F11 correctly denied by Kyverno. The overall run failed because the rejection parser counted kubectl's preamble `to:` as an extra policy; the final legitimate update was not reached.
 - [x] Review the downloaded hosted bundle package at `82728c5`: archive checksum, 103 internal hashes and eight independently verified bundles. Preserve that scope in the [review record](registros/pr15_review_EN.md); the latest main-run package still needs its own audit.
 
-Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md); the [delivery contracts](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Executable scenario modules cover L01/F13 and directed F11 checks. Policy tests and cryptographic probes do not complete the twenty scenario records, establish TDD history or constitute pilot measurements.
+Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md); the [delivery contracts](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Executable scenario modules cover L01/F13, local directed F07 and F11 checks. Hosted F07 remains NOT_EXECUTED. Policy tests and cryptographic probes do not complete the twenty scenario records, establish TDD history or constitute pilot measurements.
 
 ## 0. Preparation and environment
 
@@ -51,6 +51,8 @@ Current commands are in the [README](README.md) and [execution guide](docs/EN/ca
 - [x] Implement Kyverno in `tfm-golden` with development-key trust and demonstrate signed delivery plus registry access from the client, node and controller.
 - [x] Exercise the isolated **local directed admission** check F07: `run-xFGRe6X1` rejected only the missing independent image signature, restored the original artifact, admitted the identical digest with L01 HTTP/rollout checks, then passed F11 and image replacement. Both successful and failed-run packages were audited; see the [F07 operational record](docs/EN/cases/F07/record.md). Human acceptance remains pending.
 - [ ] Complete hosted F07/GHCR compatibility and the academic F07 early CI barrier with L04. Local directed acceptance does not close these gates or add campaign coverage.
+- [x] Bound the initial hosted F07 investigation: official documentation does not establish precise OCI removal/restoration with the existing workflow token. Prepared an inactive, run-scoped protocol probe and focused regressions; no hosted operation performed. See [findings and prepared commands](docs/EN/cases/F07/hosted-compatibility.md).
+- [ ] Next bounded task: `test/f07-ci-verification-l04`. Do not expand package permissions or substitute package-version deletion to force hosted F07.
 - [ ] Finalize the relevant scenario records before testing: acceptance of valid provenance, missing provenance F09 and unauthorized origin F10; distinguish partial checks from complete scenarios.
 - [x] Prepare pinned Kyverno configuration and root `.github/workflows/` orchestration with repository-specific identities and reusable commands in `implementacion/`. The hosted entry point is manual `workflow_dispatch`, not a reusable `workflow_call` interface.
 - [x] Implement image/provenance contracts for format, retrieval, signature, issuer, source, workflow, commit and digest, with positive and negative contract tests.
@@ -73,7 +75,7 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [ ] Complete full SBOM schema validation; current checks validate selected contract fields, not full schema or inventory completeness.
 - [ ] Prepare real inputs for F03/F04/L02, giving flexible priority to a direct production Node dependency for F03. Confirm severity, fix availability and a functional upgrade before fixing the scenario.
 - [x] Sign and verify image/SBOM bundles with explicit identity, predicate, content and digest checks; retain actual cryptographic negative probes, including signature-byte alteration.
-- [ ] Complete operational F05–F08, including isolated live F07 and well-formed altered-signature F08. Synthetic cryptographic probes do not complete these scenario executions.
+- [ ] Complete operational F05–F08, including hosted/CI F07 and well-formed altered-signature F08; local directed admission passed in `run-xFGRe6X1`. Synthetic cryptographic probes do not complete these scenario executions.
 - [x] Issue a signed versioned results predicate only after successful mandatory pre-admission controls, retain report hashes and record the later admission response separately.
 - [x] Implement direct admission and results checks for the protected namespace and selected CREATE/UPDATE operations; observe L01/F13 and F11 in the recorded integrations.
 - [ ] Complete remaining F13/F14 operational acceptance and scope checks; retain the same-digest positive control and distinguish attributable rejection from operational failure.
@@ -91,7 +93,7 @@ Use small PRs in this order; sections 1–3 retain the detailed control and acce
 
 - [x] **1. Prepare lightweight AI collaboration guidance:** `AGENTS.md`, Copilot instructions, one scenario-change skill, `CONTRIBUTING.md`, PR template, [EN/ES guidance](docs/EN/ai-assisted-development.md) and CI triggers covering their changes. Files are prepared locally; runtime loading and human review remain below.
 - [ ] Verify instruction/skill loading in the intended tools and record human review of the guidance; file availability alone does not establish runtime behavior or approval.
-- [ ] **2. Fix operational records and close migration acceptance:** complete the 20 records in one catalogue using the [template](templates/ficha_escenario.md) and the identified thesis revision. Set actor capabilities, injection, expected detection phase, latest blocking point and evidence before measurement; prioritize live F07 and the migration follow-up below.
+- [ ] **2. Fix operational records and close migration acceptance:** complete the 20 records in one catalogue using the [template](templates/ficha_escenario.md) and the identified thesis revision. Set actor capabilities, injection, expected detection phase, latest blocking point and evidence before measurement; prioritize `test/f07-ci-verification-l04`; hosted F07 remains gated on GHCR compatibility.
 - [ ] **3. Complete control-family PRs:** evidence/provenance/results, workflow/runtime, then real vulnerability/remediation inputs, with legitimate counterparts and attributable negative cases. Reuse existing L01/F11/F13 modules and policy tests; complete all twenty operational cases without counting directed checks as extra scenarios.
 - [ ] **4. Implement the paired R/G runner and measurement:** use the same legitimate path, resources, platform and frozen source revision, with explicit retained controls and separate comparable builds. Replace the old fault-driver approach with actual alterations and structured causes; no generic error matching or automatic administrative merges.
 - [ ] Identify tool, policy, image and vulnerability database versions and comparable cache conditions. Record infrastructure preparation separately from the main measurement interval.

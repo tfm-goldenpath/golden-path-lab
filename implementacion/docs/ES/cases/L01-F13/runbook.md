@@ -247,3 +247,5 @@ L04 siguen pendientes. No se añade un escenario al catálogo ni una medición d
 campaña. El comando local no despacha workflows ni cambia privilegios de paquetes.
 Un fallo de restauración es un error de integración: conserva la copia original
 y ambos estados de `recovery.json` para el diagnóstico.
+
+La [compatibilidad F07 alojada](../F07/hosted-compatibility.md) recoge la sonda inactiva, los comandos propuestos y el criterio de parada. Ni `make demo` ni `golden-path.yml` la invocan. La investigación no ejecutó operaciones alojadas.
