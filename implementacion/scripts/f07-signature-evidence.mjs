@@ -20,7 +20,7 @@ export function authorizeTarget(state, run, image) {
   if (!/^run-[A-Za-z0-9]+$/.test(run) || state.registry !== 'tfm-zot-' + run.toLowerCase()
       || !/^sha256:[a-f0-9]{64}$/.test(state.digest || '')
       || image !== state.imageRepository + '@' + state.digest
-      || !state.imageRepository.endsWith('/quotes-node-' + run.toLowerCase())
+      || state.imageRepository.split('/').slice(1).join('/') !== 'quotes-node-' + run.toLowerCase()
       || !/^(?:10\.\d+\.\d+\.\d+|127\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+):[1-9]\d{0,4}\//.test(state.imageRepository)) {
     throw new Error('Unauthorized F07 mutation target: expected the current run image and registry.');
   }

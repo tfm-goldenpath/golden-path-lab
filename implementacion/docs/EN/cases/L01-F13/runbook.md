@@ -233,3 +233,8 @@ The retry outside the sandbox passed the protocol proof in `run-IOwYIXos`;
 coordinator wiring and actual local admission remain pending. Hosted
 compatibility, authorized hosted execution and exact-revision admission remain
 pending. Academic F07's early CI barrier and legitimate L04 remain separate.
+
+F07 helper calls require the exact repository path `quotes-node-<run-id>`;
+nested repositories that merely end with that name are rejected before registry
+access. The directed result retains the actual attributed Kyverno rule, including
+`autogen-require-image-signature` for a generated Deployment rule.

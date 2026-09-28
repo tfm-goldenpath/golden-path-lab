@@ -236,3 +236,8 @@ la sonda de protocolo en `run-IOwYIXos`. Siguen pendientes la conexión al
 coordinador, la admisión local real, la compatibilidad alojada,
 la ejecución alojada autorizada y la admisión sobre la revisión exacta. La barrera
 CI de F07 académico y su contraparte L04 mantienen su alcance independiente.
+
+El helper F07 exige la ruta exacta del repositorio `quotes-node-<run-id>`;
+rechaza antes de acceder al registro los repositorios anidados que solo terminan
+con ese nombre. El resultado dirigido conserva la regla real atribuida por
+Kyverno, incluida `autogen-require-image-signature` para la regla generada de Deployment.

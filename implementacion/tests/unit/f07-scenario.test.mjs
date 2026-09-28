@@ -84,6 +84,7 @@ for (const rule of ['require-image-signature', 'autogen-require-image-signature'
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.deepEqual(result.events, ['before', 'verify', 'verify', 'verify', 'verify', 'remove', 'negative', 'actor', 'after-denial', 'restore', 'restored', 'returned']);
     assert.equal(JSON.parse(readFileSync(join(result.state,'F07/attribution.json'))).rule, rule);
+    assert.equal(JSON.parse(readFileSync(join(result.state,'F07/result.json'))).rule, rule);
     assert.equal(JSON.parse(readFileSync(join(result.state,'F07/result.json'))).sameDigestL01, 'pending');
   });
 }

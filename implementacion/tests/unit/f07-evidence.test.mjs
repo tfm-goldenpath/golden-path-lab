@@ -117,3 +117,17 @@ test('malformed evidence and changing inventory contents cannot establish isolat
     assert.throws(() => checkAlteration(before,bad,f.image));
   }
 });
+
+for (const restore of [false, true]) {
+  test(`direct ${restore ? 'restoration' : 'removal'} rejects nested run-name suffixes before registry access`, async () => {
+    for (const repo of ['other/quotes-node-run-fixture', 'quotes-node-run-fixture/quotes-node-run-fixture', 'other/nested/quotes-node-run-fixture']) {
+      const f = fixture({types, repo}), backup = await f.run();
+      const state = stateFor(f);
+      let requests = 0;
+      await assert.rejects(mutateSignature({state, run:'run-fixture', image:f.image, backup, restore,
+        request:async () => { requests++; throw new Error('Unexpected registry access'); },
+      }), /Unauthorized F07 mutation target/);
+      assert.equal(requests, 0, 'both DELETE and PUT must reject the target before registry access');
+    }
+  });
+}

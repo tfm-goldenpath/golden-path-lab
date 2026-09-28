@@ -171,3 +171,29 @@ No application, policy or test oracle changes were needed for this retry.
 
 Earlier failed attempts remain historical observations. Human review is still
 pending. No hosted mutation, publication or workflow dispatch was performed.
+
+## PR #17 review corrections
+
+GitHub Copilot's automated review identified two defects on `2d490bc`:
+[repository targeting](https://github.com/tfm-goldenpath/golden-path-lab/pull/17#discussion_r4119158057)
+and [recorded rule attribution](https://github.com/tfm-goldenpath/golden-path-lab/pull/17#discussion_r4119158095).
+Codex reproduced both with focused regressions before implementing the fixes.
+Direct removal and restoration now require the complete repository path to equal
+`quotes-node-<run-id>`, so a nested path cannot pass by sharing that suffix.
+`F07/result.json` retains the actual attributed rule, matching `attribution.json`
+for both `require-image-signature` and `autogen-require-image-signature`.
+
+Verification on the modified working tree over `2d490bc`:
+
+- The new target regressions initially failed because the helper reached the
+  registry instead of rejecting the target; the generated-rule assertion initially
+  failed because the result recorded the base rule. Both now pass.
+- All 14 F07 evidence tests and 17 scenario tests passed, followed by the complete
+  `make -C implementacion test` suite outside the sandbox with the pinned tools.
+- A fresh pinned-zot protocol proof passed in `run-2DUw70qG`, retaining exact
+  removal/restoration evidence under `implementacion/evidence/raw/run-2DUw70qG/`.
+- Regression logs and `review-fixes-full-suite.log` are retained under
+  `implementacion/evidence/raw/f07-development-20260928/`.
+
+These corrections do not add coordinator wiring, local Kubernetes admission or
+hosted acceptance. The review above is automated; human review remains pending.

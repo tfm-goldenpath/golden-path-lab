@@ -41,7 +41,7 @@ scenario_f07_admission() (
       [[ "$original" != 0 ]] || original=1
     }
     if [[ "$original" == 0 && "$restore_status" == 0 ]]; then
-      jq -n --arg image "$image" '{scenario:"F07",image:$image,status:"DIRECTED_REJECTION_AND_RESTORATION",policy:"tfm-signature",rule:"require-image-signature",sameDigestL01:"pending",measurement:"functional-integration-only"}' > "$state_dir/F07/result.json" || original=$?
+      jq -n --arg image "$image" --arg rule "$rule" '{scenario:"F07",image:$image,status:"DIRECTED_REJECTION_AND_RESTORATION",policy:"tfm-signature",rule:$rule,sameDigestL01:"pending",measurement:"functional-integration-only"}' > "$state_dir/F07/result.json" || original=$?
     fi
     [[ "$restore_status" == 0 ]] || printf 'ERROR: F07 restoration failed; retain the backup and restore.log.\n' >&2
     # Keep both statuses in recovery.json; an existing failure wins as exit code.
