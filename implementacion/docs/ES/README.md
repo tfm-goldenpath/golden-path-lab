@@ -10,6 +10,7 @@ Esta documentación ofrece apoyo en español. La implementación y la documentac
 | [Arquitectura modular](architecture.md) | Responsabilidades, interfaces y límites de verificación de los componentes. |
 | [Contratos de entrega](delivery-contracts.md) | Identidad del artefacto, evidencias obligatorias y comprobaciones de autorización. |
 | [Desarrollo asistido por IA](ai-assisted-development.md) | Asistencia acotada, responsabilidad humana, instrucciones, skill de escenarios y atribución veraz. |
+| [Compatibilidad F07 alojada](cases/F07/hosted-compatibility.md) | Cobertura local, investigación GHCR acotada y comandos inactivos. |
 | [Ficha del caso L01/F13](cases/L01-F13/README.md) | Comportamiento esperado de la entrega legítima, la ausencia de resultados y las comprobaciones dirigidas de F11. |
 | [Guía de ejecución L01/F13](cases/L01-F13/runbook.md) | Comandos locales y alojados, resultados esperados, diagnóstico y limpieza. |
 | [Configuración de GitHub — en inglés](../EN/github-configuration.md) | Protecciones y configuración propuestas para el repositorio; el documento no activa esas opciones. |

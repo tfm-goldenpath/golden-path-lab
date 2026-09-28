@@ -2,9 +2,9 @@
 
 [Documentación en español](README.md) · [English version](../EN/cosign-bundle-migration.md)
 
-**Estado: PASS local de compatibilidad y PASS alojado de L01/F13/F11 en `82728c5`.** La [ejecución alojada 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827) ejercitó OIDC, verificación de certificado/SCT y transparencia con GHCR y Kyverno. Las revisiones posteriores refuerzan la recuperación del blob de configuración, el empaquetado, la vinculación del contenido autenticado y la comparación de inventarios F13; esos cambios necesitan otra integración sobre su commit exacto. Sigue pendiente la admisión negativa real de F07. La base clásica publicada es **v0.1.0**, commit `9f1999e`; sus resultados no validan bundles. Véase la [revisión de la PR y recomendación de versiones](../../registros/pr15_review_ES.md).
+**Estado: PASS local de compatibilidad y PASS alojado de L01/F13/F11 en `82728c5`.** La [ejecución alojada 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827) ejercitó OIDC, verificación de certificado/SCT y transparencia con GHCR y Kyverno. Las revisiones posteriores refuerzan la recuperación del blob de configuración, el empaquetado, la vinculación del contenido autenticado y la comparación de inventarios F13; esos cambios necesitan otra integración sobre su commit exacto. F07 dirigido local pasó en `run-xFGRe6X1`; F07 alojado sigue NOT_EXECUTED. Consulta la [investigación acotada](cases/F07/hosted-compatibility.md). La base clásica publicada es **v0.1.0**, commit `9f1999e`; sus resultados no validan bundles. Véase la [revisión de la PR y recomendación de versiones](../../registros/pr15_review_ES.md).
 
-La [ejecución local `run-De88fpWy`](../../registros/cosign_bundles_validation_ES.md) terminó con PASS, herramientas fijadas, zot/kind nuevos y recuperación estricta del inventario: F13 y F11 se rechazaron por los motivos previstos, L01 fue admitido y la sustitución por otro digest verificado completó el despliegue. El anfitrión utilizó Docker Engine 24.0.5, cgroup v1 y `GP_CGROUP_V1_COMPAT=1` explícito. Es evidencia de compatibilidad, no el entorno prescrito de campaña ni una medición temporal. El intento valida el árbol de trabajo modificado sobre `9f1999e`, con huella fuente `8d79c68d46569c826fb43d693c03dc767631c715f039021717642d3d2991cc0a`; no ejecuta v0.1.0 sin cambios. La revisión alojada posterior valida B en `82728c5`; siguen pendientes F07 y la integración de las correcciones posteriores.
+La [ejecución local `run-De88fpWy`](../../registros/cosign_bundles_validation_ES.md) terminó con PASS, herramientas fijadas, zot/kind nuevos y recuperación estricta del inventario: F13 y F11 se rechazaron por los motivos previstos, L01 fue admitido y la sustitución por otro digest verificado completó el despliegue. El anfitrión utilizó Docker Engine 24.0.5, cgroup v1 y `GP_CGROUP_V1_COMPAT=1` explícito. Es evidencia de compatibilidad, no el entorno prescrito de campaña ni una medición temporal. El intento valida el árbol de trabajo modificado sobre `9f1999e`, con huella fuente `8d79c68d46569c826fb43d693c03dc767631c715f039021717642d3d2991cc0a`; no ejecuta v0.1.0 sin cambios. La revisión alojada posterior valida B en `82728c5`; siguen pendientes F07 alojado y la validación alojada de las correcciones posteriores. F07 local pasó después en `run-xFGRe6X1`.
 
 ## Perfil seleccionado
 
@@ -43,14 +43,14 @@ La prueba criptográfica sin conexión utiliza `attest-blob` con predicados sint
 - [x] Observado en `82728c5`: comprobar B en GitHub/GHCR con OIDC real, identidad exacta autorizada, confianza autenticada del certificado y transparencia/evidencia temporal exigida.
 - [x] Observado en `82728c5`: repetir en B la atribución de F13 a resultados ausentes y la admisión posterior de L01 para el mismo digest. El intento local `run-De88fpWy` superó la secuencia con recuperación estricta antes/después y aceptación L01 del mismo digest.
 - [x] Observado en `82728c5`: repetir en B el rechazo F11 y la sustitución L01 con evidencias propias, despliegue completado y comparación funcional. El intento local `run-De88fpWy` superó ambas comprobaciones con recuperación estricta del inventario.
-- [ ] Completar la admisión negativa real de F07: mantener SBOM/procedencia/resultados válidos pero omitir el predicado de firma; admisión debe rechazarlo. Las sondas criptográficas y regresiones de políticas satisfactorias no sustituyen esta comprobación. Conservar los contratos negativos de firmas alteradas, claves/identidades no autorizadas, digests ajenos y resultados incompatibles o fallidos; un error de recuperación/verificación detiene el paso obligatorio.
+- [x] Observar rechazo F07 local y L01 restaurado con el mismo digest en `run-xFGRe6X1` (véase el [registro](../EN/cases/F07/record.md)). F07 alojado sigue pendiente. Oráculo local: mantener SBOM/procedencia/resultados válidos pero omitir el predicado de firma; admisión debe rechazarlo. Las sondas criptográficas y regresiones de políticas satisfactorias no sustituyen esta comprobación. Conservar los contratos negativos de firmas alteradas, claves/identidades no autorizadas, digests ajenos y resultados incompatibles o fallidos; un error de recuperación/verificación detiene el paso obligatorio.
 - [x] Conservar las evidencias de ambas imágenes locales y verificar el archivo y sus 111 huellas internas: [registro de validación](../../registros/cosign_bundles_validation_ES.md). Incluye ocho bundles, claves públicas de desarrollo, CycloneDX original, salidas de verificadores, perfiles, políticas y respuestas de admisión; excluye credenciales y claves privadas.
 - [x] Conservar el paquete de B y comprobar sus 103 hashes internos en `82728c5`, con material de confianza y procedencia nativa.
 - [x] Registrar la huella del árbol local, commit base, versiones, identificador de ejecución y límites.
 - [x] Registrar commit y resultados alojados en el registro de revisión de la PR.
 - [ ] Revalidar las correcciones en su revisión exacta, completar F07 y repetir el piloto afectado antes de fijar la campaña.
 
-Se mantienen `make test`, `make demo` y el workflow manual `golden-path.yml`; preparar el candidato no publica la rama ni ejecuta GitHub. Publica las correcciones revisadas y ejecuta su commit exacto; la ejecución alojada de `82728c5` no valida cambios posteriores. La admisión negativa real de F07 sigue siendo una tarea de aceptación. Una integración fallida se conserva como tal y no justifica rebajar la confianza de B.
+Se mantienen `make test`, `make demo` y el workflow manual `golden-path.yml`; preparar el candidato no publica la rama ni ejecuta GitHub. Publica las correcciones revisadas y ejecuta su commit exacto; la ejecución alojada de `82728c5` no valida cambios posteriores. F07 alojado sigue siendo una tarea de aceptación; F07 dirigido local pasó en `run-xFGRe6X1`. Una integración fallida se conserva como tal y no justifica rebajar la confianza de B.
 
 ## Recomendación de hitos y versiones
 
@@ -96,11 +96,11 @@ La [ejecución alojada 36314305654](https://github.com/tfm-goldenpath/golden-pat
 
 La revisión previa incluyó ocho diagnósticos sintéticos del inventario, once pruebas del auxiliar y diez de generación de políticas. Docker no estaba disponible durante esa revisión: las salidas sintéticas no prueban firma real, admisión ni sobrecarga experimental. Las [fuentes técnicas y criterios equivalentes en inglés](../EN/cosign-bundle-migration.md#sources) completan esta explicación.
 
-### Condición previa de F07
+### Condición de compatibilidad F07
 
-El [registro operativo](../EN/cases/F07/record.md) identifica fuente documental,
-actor, regla y evidencias. Existen pruebas locales del módulo y los validadores,
-y la sonda del protocolo de registro pasó fuera del sandbox en `run-IOwYIXos`.
-Siguen pendientes la conexión al coordinador y la admisión real. La admisión real de F07 no está completada.
-La compatibilidad GHCR con los permisos actuales no se ha demostrado; no hubo
-mutación alojada ni ejecución remota del workflow.
+La coordinación local y admisión dirigida real pasaron en `run-xFGRe6X1`;
+conserva el [registro operativo](../EN/cases/F07/record.md). La
+[investigación GHCR](cases/F07/hosted-compatibility.md) mantiene F07 alojado en
+NOT_EXECUTED: no se ha demostrado eliminación/restauración precisa con el token
+actual. La sonda y el parche del workflow están inactivos; publicación y ejecución
+requieren autorización separada. Siguiente tarea: `test/f07-ci-verification-l04`.

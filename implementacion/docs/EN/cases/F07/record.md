@@ -19,6 +19,46 @@ Prepared before implementation on base `0c0b928ace01145408f826acabd20f288a5684ad
 
 Human review: pending. Implementation assistance: GitHub Copilot and Codex (GPT-6), requirements from the user; individual edits are not attributed where that detail was not recorded. Final decision pending human review.
 
+## Hosted compatibility investigation — 2026-09-28
+
+Branch `test/f07-hosted-admission-compatibility`, working tree based on
+`5375ae5dbbdbf8109c93824b595c6a49d854cd93`. The one-session investigation stops at
+**unproven compatibility**. Hosted F07 remains **NOT_EXECUTED**. Official GHCR
+package/version documentation does not establish precise OCI manifest DELETE and
+exact restoration with the existing workflow token; OCI deletion is optional.
+This is not an observed GHCR denial or a claim that every possible design is
+unsupported. See [sources, probe design and commands](hosted-compatibility.md).
+
+Prepared a standalone, inactive protocol helper, shell wrapper and unapplied
+workflow patch. The probe requires a fresh workflow-bound receipt, exact image
+and run label, normal successful hosted delivery, authenticated bundles and native
+provenance tied to the current run/attempt. It retains backups and inventories,
+checks image bytes/shared blobs, refuses fallback-index mutation and attempts exact
+restoration on failures/interruption. It calls no package REST deletion API and
+adds no workflow permission. Even protocol completion leaves hosted F07 unexecuted;
+it cannot substitute for a later denial plus restored same-digest L01 control.
+The local guard, coordinator, policies, trust and normal results issuance are unchanged.
+
+No fixture publication, GHCR capability request, mutation, dispatch, push or release
+was performed. No new hosted evidence package exists. Synthetic regressions are
+labelled and retained separately from the earlier local integration observations.
+The next bounded task is **`test/f07-ci-verification-l04`**; academic F07's CI barrier
+and L04 remain pending. A future protocol trial needs separate publication and
+execution authorization, one fresh fixture and an audited package.
+
+Development checks and source hashes are retained under the ignored directory
+`evidence/raw/f07-hosted-investigation-20260928/`. The final full suite passed: 6 environment tests, 360 service/unit tests (including
+22 probe/wrapper regressions), 15 Python tests, 52 Conftest decisions, 18 + 14
+Kyverno cases and real local Cosign cryptographic checks. Bash syntax, relative
+documentation links and the unapplied workflow patch check passed. Earlier
+sandbox runs failed on existing subprocess restrictions (`spawnSync EPERM`);
+the approved run outside the sandbox passed. Logs preserve both outcomes. The probe's HTTP/recovery tests are local
+simulations; they do not authenticate hosted evidence or prove GHCR support.
+
+AI assistance: Codex (GPT-6) investigated official documentation, prepared the
+probe and regressions, ran local checks and synchronized current EN/ES summaries.
+Human review, hosted execution authorization and final acceptance remain pending.
+
 ## Local coordinator increment — 2026-09-28
 
 Implemented on `test/f07-local-admission-integration`, working tree based on

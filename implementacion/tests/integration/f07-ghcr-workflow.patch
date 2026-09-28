@@ -1,0 +1,25 @@
+--- a/.github/workflows/golden-path.yml
++++ b/.github/workflows/golden-path.yml
+@@ -45,6 +45,8 @@
+           docker info > /dev/null
+       - name: Check the environment configuration
+         run: make test-env
++      - name: Arm the separately authorized F07 protocol fixture
++        run: node tests/helpers/f07-ghcr-protocol.mjs arm "$RUNNER_TEMP/f07-ghcr-receipt.json"
+       - name: Build and prepare the delivery
+         id: prepare
+         env:
+@@ -80,6 +82,13 @@
+           GH_TOKEN: ${{ github.token }}
+           GP_STATE_DIR: ${{ steps.prepare.outputs.state_dir }}
+         run: bash scripts/demo.sh github finish
++      - name: Probe GHCR manifest deletion and exact restoration
++        env:
++          GH_TOKEN: ${{ github.token }}
++          GP_STATE_DIR: ${{ steps.prepare.outputs.state_dir }}
++          GP_F07_IMAGE: ${{ steps.prepare.outputs.image }}@${{ steps.prepare.outputs.digest }}
++          GP_F07_PROTOCOL: authorized
++        run: bash tests/integration/f07-ghcr-protocol.sh "$RUNNER_TEMP/f07-ghcr-receipt.json"
+       - name: Collect evidence and clean up the lab
+         if: ${{ always() && steps.prepare.outputs.state_dir != '' }}
+         env:
