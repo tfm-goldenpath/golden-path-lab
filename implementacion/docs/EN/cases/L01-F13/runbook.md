@@ -6,7 +6,7 @@
 
 The first demonstration integrates `quotes-node`, an image registry, early policies, vulnerability scanning, an SBOM, signatures, provenance and Kubernetes admission. It combines **L01**, a complete legitimate delivery, with **F13**, a missing mandatory results attestation. The [case specification](README.md) defines the oracle and limitations.
 
-Outputs below are **expected results**, not a claim that a new run has been performed. The bundle profile passed local compatibility and [hosted OIDC/SCT/transparency validation at `82728c5`](../../../../registros/pr15_review_EN.md); subsequent review corrections need integration on their exact revision, and actual F07 negative admission remains pending. Unit tests alone do not establish Docker/Kubernetes integration, and the local lane does not establish GitHub OIDC identity. Each run's evidence records its observed result.
+Outputs below are **expected results**, not a claim that a new run has been performed. The bundle profile passed local compatibility and [hosted OIDC/SCT/transparency validation at `82728c5`](../../../../registros/pr15_review_EN.md); local directed F07 subsequently passed in `run-xFGRe6X1` (see the F07 record below), while hosted F07 remains pending. Unit tests alone do not establish Docker/Kubernetes integration, and the local lane does not establish GitHub OIDC identity. Each run's evidence records its observed result.
 
 ## 1. Open the correct environment
 
@@ -178,7 +178,7 @@ The classic [run 36310983700](https://github.com/tfm-goldenpath/golden-path-lab/
 
 Start a fresh dispatch on the published `feat/cosign-bundles` commit and verify its `headSha` before interpreting the result. Acceptance requires F13 rejection **only** for missing results, L01 admission after results issuance, F11 rejection and a ready replacement digest with its own verified evidence. In addition, the migration acceptance checks must show that other valid bundles cannot substitute for the independent image-signature predicate, and reject tampering, unauthorized trust and wrong digests. Preserve retrieval, signature, provenance and network failures as integration failures.
 
-[Local bundle run `run-De88fpWy`](../../../../registros/cosign_bundles_validation_EN.md) passed with pinned tools, fresh zot/kind and strict inventory retrieval: attributed F13/F11 rejections, L01 admission and rollout of the independently verified replacement digest. The host used Docker Engine 24.0.5/cgroup v1 with explicit `GP_CGROUP_V1_COMPAT=1`. This is compatibility evidence, not the campaign environment or a timing measurement. The run used the modified working tree based on `9f1999e`, identified by the source snapshot in the linked record. Hosted validation subsequently passed at `82728c5`; integration of the later review corrections and actual F07 negative admission remain pending. Keep raw bundles, verifier outputs and applied policies proving the profile exercised.
+[Local bundle run `run-De88fpWy`](../../../../registros/cosign_bundles_validation_EN.md) passed with pinned tools, fresh zot/kind and strict inventory retrieval: attributed F13/F11 rejections, L01 admission and rollout of the independently verified replacement digest. The host used Docker Engine 24.0.5/cgroup v1 with explicit `GP_CGROUP_V1_COMPAT=1`. This is compatibility evidence, not the campaign environment or a timing measurement. The run used the modified working tree based on `9f1999e`, identified by the source snapshot in the linked record. Hosted validation subsequently passed at `82728c5`. Local directed F07 passed in `run-xFGRe6X1`; hosted F07 remains pending (see the F07 record below). Keep raw bundles, verifier outputs and applied policies proving the profile exercised.
 
 Kyverno 1.19.1's bundle verifier reports `no matching signatures found` both for missing predicates and some trust failures. F13 therefore requires exactly one identified `tfm-results`/`require-results` rejection (including its generated Deployment rule), valid bundle-only inventories captured before and after denial, with the original preflight revalidated before the request, absent results and present image-signature/SBOM/provenance predicates for the same digest. Other admission policies must pass, and L01 must subsequently admit that same digest after results issuance before the overall run can pass. Inventory parsing is structural evidence, not signature authentication. Additional rules, malformed or unavailable inventories and unrelated verification errors fail the test.
 
@@ -221,20 +221,25 @@ SBOMs and vulnerability reports can expose component names and versions. Review 
 | Run workflow is absent | Check the root location, default-branch presence and Actions enablement. |
 | GHCR or attestation permissions fail | Review job and organization/repository permissions; do not add long-lived credentials to the code. |
 
-## F07 extension status
+## F07 local admission
 
-The [F07 operational record](../F07/record.md) fixes the directed oracle and records
-an unwired local implementation. `make demo` still runs L01/F13/F11. F07 must not be
-loaded into the coordinator until the pinned local registry proves exact removal
-and restoration of its original signature artifact. The registry-only protocol
-probe is `bash implementacion/tests/integration/f07-registry.sh` from the repository
-root; it uses labelled synthetic unit fixtures and does not prove admission.
-The retry outside the sandbox passed the protocol proof in `run-IOwYIXos`;
-coordinator wiring and actual local admission remain pending. Hosted
-compatibility, authorized hosted execution and exact-revision admission remain
-pending. Academic F07's early CI barrier and legitimate L04 remain separate.
+`make demo` now sequences F13 → normal results authorization → local F07
+backup/removal/rejection/exact restoration → same-digest L01 and HTTP probes →
+F11 → independently verified L01 replacement. See the [operational record](../F07/record.md)
+for actual observations and remaining acceptance gates.
 
-F07 helper calls require the exact repository path `quotes-node-<run-id>`;
-nested repositories that merely end with that name are rejected before registry
-access. The directed result retains the actual attributed Kyverno rule, including
-`autogen-require-image-signature` for a generated Deployment rule.
+Retain `F07/before.json`, `negative.json`, `after-denial.json` and `restored.json`,
+raw OCI backups, `*.verify.txt`, `*.statement.json`, `controller.json`,
+`admission.log`, `admission.json`, `attribution.json` and `recovery.json`.
+`F07/result.json` deliberately leaves the positive control pending.
+`F07-completed.json` is written only after L01 admission/probes and the original
+digest's Deployment/ready Pod checks (`F07/L01-*.json`). The final `result.json`
+includes this completion record only when F11 and image replacement also succeed.
+A later failure preserves the intermediate evidence and packages overall FAIL.
+
+Hosted delivery keeps its existing flow and records F07 as `NOT_EXECUTED` with
+GHCR compatibility pending. It never invokes the mutation helper. Academic F07's
+early CI barrier and L04 remain pending; this directed check adds no catalogue
+scenario or campaign measurement. No hosted dispatch or package privileges are
+part of the local command. A failed restoration is an integration failure; retain
+the original backup and both statuses in `recovery.json` for diagnosis.

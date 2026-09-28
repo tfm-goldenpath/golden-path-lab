@@ -8,6 +8,11 @@ export function verifyImageRollout(previousImage, image, deployment, pods) {
   assertDigest(previousImage);
   assertDigest(image);
   if (previousImage.split('@')[1] === image.split('@')[1]) throw new Error('Replacement digest must differ');
+  return { ...verifyDeployedImage(image, deployment, pods), fromImage: previousImage };
+}
+
+export function verifyDeployedImage(image, deployment, pods) {
+  assertDigest(image);
   const desired = deployment?.spec?.replicas;
   const generation = deployment?.metadata?.generation;
   const status = deployment?.status;
@@ -33,11 +38,15 @@ export function verifyImageRollout(previousImage, image, deployment, pods) {
     }
     return { name: pod.metadata.name, uid: pod.metadata.uid, imageID: runtime.imageID };
   });
-  return { status: 'PASS', fromImage: previousImage, toImage: image, observedGeneration: status.observedGeneration, pods: observed };
+  return { status: 'PASS', toImage: image, observedGeneration: status.observedGeneration, pods: observed };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [previousImage, image, deploymentFile, podsFile] = process.argv.slice(2);
-  console.log(JSON.stringify(verifyImageRollout(previousImage, image,
-    JSON.parse(fs.readFileSync(deploymentFile, 'utf8')), JSON.parse(fs.readFileSync(podsFile, 'utf8'))), null, 2));
+  const deployment = JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));
+  const pods = JSON.parse(fs.readFileSync(podsFile, 'utf8'));
+  const result = previousImage === '--same-image'
+    ? verifyDeployedImage(image, deployment, pods)
+    : verifyImageRollout(previousImage, image, deployment, pods);
+  console.log(JSON.stringify(result, null, 2));
 }

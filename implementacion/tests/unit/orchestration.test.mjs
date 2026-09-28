@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const bash = process.env.BASH_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash');
 const modules = ['context', 'lab', 'delivery', 'attestations', 'workload'];
-const scenarios = ['l01', 'f13', 'f11'];
+const scenarios = ['l01', 'f13', 'f07', 'f11'];
 const repository = 'registry.invalid/quotes';
 const digest = `sha256:${'a'.repeat(64)}`;
 const image = `${repository}@${digest}`;
@@ -66,13 +66,31 @@ scenario_f13_prepare() { step f13-prepare; }
 lab_install_admission() { step admission; }
 scenario_f13_admission() { step f13-deny; }
 attestations_authorize_results() { step authorize; }
+scenario_f07_admission() { step f07; step f07-restore; }
+scenario_f07_complete() {
+  step f07-complete
+  command jq -n --arg image "$image" '{status:"DIRECTED_ACCEPTANCE_COMPLETE",image:$image,sameDigestL01:"accepted-and-healthy"}' > "$state_dir/F07-completed.json"
+}
+scenario_f07_pending() {
+  step f07-pending
+  command jq -n '{status:"NOT_EXECUTED",reason:"Hosted GHCR mutation compatibility pending"}' > "$state_dir/F07-completed.json"
+}
 scenario_l01_accept() { step l01; }
 scenario_f11_admission() { step f11-update; }
-scenario_l01_update() { step l01-update; }
-cleanup() { event cleanup; return "$GP_CLEANUP_STATUS"; }
+scenario_l01_update() {
+  step l01-update
+  command jq -n '{status:"PASS"}' > "$state_dir/L01-image-update.json"
+}
+cleanup() {
+  event cleanup
+  local status=FAIL
+  if [[ -f "$state_dir/result.json" ]]; then status=$(command jq -r .status "$state_dir/result.json"); fi
+  command python3 "$GP_SOURCE_ROOT/scripts/package-evidence.py" "$state_dir" "$GP_FIXTURE_ROOT/packages" "$status"
+  return "$GP_CLEANUP_STATUS"
+}
 # jq only serializes the final report in this fixture. Any newly reached tool
 # must fail explicitly instead of reaching a live registry, cluster or service.
-jq() { event report; printf '{"status":"PASS","image":"%s"}\n' "$image"; }
+jq() { event report; command jq "$@"; }
 for tool in docker kind kubectl cosign trivy conftest helm curl node python3 git tar sha256sum; do
   eval "$tool() { event unexpected-tool-$tool; return 91; }"
 done
@@ -137,6 +155,25 @@ function run(f, args, extra = {}) {
 }
 
 const stages = (result) => result.events.map((entry) => entry.stage);
+
+function auditPackage(f) {
+  const result = spawnSync('python3', ['-c', `
+import hashlib,json,sys,tarfile
+from pathlib import Path
+archive_path=Path(sys.argv[1])
+assert hashlib.sha256(archive_path.read_bytes()).hexdigest()==Path(str(archive_path)+'.sha256').read_text().split()[0]
+with tarfile.open(archive_path) as archive:
+    for line in archive.extractfile('state/SHA256SUMS.txt').read().decode().splitlines():
+        digest,name=line.split('  ',1)
+        assert hashlib.sha256(archive.extractfile('state/'+name).read()).hexdigest()==digest
+    summary=json.load(archive.extractfile('state/execution-summary.json'))
+    report=json.load(archive.extractfile('state/result.json')) if 'state/result.json' in archive.getnames() else None
+    print(json.dumps({'summary':summary,'report':report}))
+`, join(f.root, 'packages/state.tar.gz')], {encoding:'utf8'});
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout);
+}
 
 for (const [mode, ref, failBundle = 0] of [
   ['local', 'main'], ['github', 'main'], ['github', 'feat/cosign-bundles'],
@@ -382,7 +419,7 @@ printf '%s' "$PWD" > "$GP_FIXTURE_ROOT/cwd-before"
 for module in context lab delivery attestations workload; do
   source "$GP_SOURCE_ROOT/scripts/lib/$module.sh"
 done
-for scenario in l01 f13 f11; do
+for scenario in l01 f13 f07 f11; do
   source "$GP_SOURCE_ROOT/tests/scenarios/$scenario.sh"
 done
 set +o > "$GP_FIXTURE_ROOT/options-after"
@@ -413,6 +450,10 @@ for (const [stage, status, cleanupStatus] of [['analyze', 37, 0], ['prepare-upda
     assert.ok(!stages(result).includes('report'));
     assert.ok(!existsSync(join(f.state, 'result.json')));
     assert.doesNotMatch(result.stdout, /\bPASS\b/);
+    assert.equal(JSON.parse(readFileSync(join(f.state, 'execution-summary.json'))).status, 'FAIL');
+    const packaged = auditPackage(f);
+    assert.equal(packaged.summary.status, 'FAIL');
+    assert.equal(packaged.report, null);
   });
 }
 
@@ -439,10 +480,14 @@ test('finish restores the prepared image and preserves F13 → authorization →
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(stages(result), [
     'environment', 'load-state', 'load-image', 'verify', 'f13-prepare', 'admission',
-    'f13-deny', 'authorize', 'l01', 'f11-update', 'l01-update', 'report', 'cleanup',
+    'f13-deny', 'authorize', 'f07-pending', 'l01', 'f11-update', 'l01-update', 'report', 'cleanup',
   ]);
   for (const entry of result.events.slice(2)) assert.equal(entry.artifact, image, entry.stage);
-  assert.deepEqual(JSON.parse(readFileSync(join(f.state, 'result.json'), 'utf8')), { status: 'PASS', image });
+  const report = JSON.parse(readFileSync(join(f.state, 'result.json'), 'utf8'));
+  assert.equal(report.status, 'PASS');
+  assert.equal(report.image, image);
+  assert.equal(report.F07.status, 'NOT_EXECUTED');
+  assert.deepEqual(auditPackage(f).report, report);
 });
 
 test('reference runs only R and cleans up on exit', (t) => {
@@ -455,3 +500,31 @@ test('reference runs only R and cleans up on exit', (t) => {
   ]);
   assert.equal(JSON.parse(readFileSync(join(f.state, 'result.json'), 'utf8')).image, image);
 });
+
+ test('local coordinator requires F07 restoration then same-digest L01 before completion', t => {
+  const f = fixture(t);
+  const result = run(f, ['scripts/demo.sh', 'local']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(stages(result).slice(stages(result).indexOf('f13-deny')), [
+    'f13-deny', 'authorize', 'f07', 'f07-restore', 'l01', 'f07-complete',
+    'f11-update', 'l01-update', 'report', 'cleanup']);
+  assert.equal(JSON.parse(readFileSync(join(f.state, 'result.json'))).F07.sameDigestL01, 'accepted-and-healthy');
+  assert.equal(auditPackage(f).report.F07.status, 'DIRECTED_ACCEPTANCE_COMPLETE');
+  for (const entry of result.events.filter(e => ['f07', 'f07-restore', 'l01', 'f07-complete'].includes(e.stage)))
+    assert.equal(entry.artifact, image);
+ });
+ for (const stage of ['f07', 'f07-restore', 'l01', 'f07-complete', 'f11-update', 'l01-update']) {
+  test(`local coordinator stops on ${stage} failure without PASS`, t => {
+    const f = fixture(t);
+    const result = run(f, ['scripts/demo.sh', 'local'], {GP_FAIL_STAGE:stage});
+    assert.equal(result.status, 37, result.stderr);
+    assert.equal(stages(result).at(-1), 'cleanup');
+    assert.ok(!stages(result).includes('report'));
+    assert.ok(!existsSync(join(f.state, 'result.json')));
+    assert.doesNotMatch(result.stdout, /\bPASS\b/);
+    assert.equal(JSON.parse(readFileSync(join(f.state, 'execution-summary.json'))).status, 'FAIL');
+    const packaged = auditPackage(f);
+    assert.equal(packaged.summary.status, 'FAIL');
+    assert.equal(packaged.report, null);
+  });
+ }

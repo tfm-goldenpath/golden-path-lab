@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { verifyImageRollout } from '../../scripts/check-image-rollout.mjs';
+import { verifyImageRollout, verifyDeployedImage } from '../../scripts/check-image-rollout.mjs';
 
 const before = `registry.invalid/quotes@sha256:${'a'.repeat(64)}`;
 const after = `registry.invalid/quotes@sha256:${'b'.repeat(64)}`;
@@ -47,6 +47,7 @@ for (const [name, mutate] of [
   test(`L01 rejects ${name}`, () => {
     const f = fixture(); mutate(f);
     assert.throws(() => verifyImageRollout(before, after, f.deployment, f.pods));
+    assert.throws(() => verifyDeployedImage(after, f.deployment, f.pods));
   });
 }
 
@@ -54,4 +55,10 @@ test('terminating previous Pods do not count as active replacement replicas', ()
   const { deployment, pods } = fixture();
   pods.items.push({ metadata: { deletionTimestamp: '2026-09-27T12:00:00Z' }, spec: { containers: [{ image: before }] } });
   assert.equal(verifyImageRollout(before, after, deployment, pods).status, 'PASS');
+});
+
+test('F07 same-digest control uses the same Deployment and runtime readiness checks', () => {
+  const {deployment, pods} = fixture();
+  assert.equal(verifyDeployedImage(after, deployment, pods).toImage, after);
+  assert.throws(() => verifyDeployedImage(before, deployment, pods));
 });

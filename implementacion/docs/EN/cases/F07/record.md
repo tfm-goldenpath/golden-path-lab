@@ -19,7 +19,98 @@ Prepared before implementation on base `0c0b928ace01145408f826acabd20f288a5684ad
 
 Human review: pending. Implementation assistance: GitHub Copilot and Codex (GPT-6), requirements from the user; individual edits are not attributed where that detail was not recorded. Final decision pending human review.
 
-## Implementation status and gates
+## Local coordinator increment — 2026-09-28
+
+Implemented on `test/f07-local-admission-integration`, working tree based on
+`dae6656ca93e2238211ebdb6617069786b7ba2ef`. Local coordination now runs:
+
+```text
+F13 → normal results authorization → F07 backup/removal/rejection/restoration
+→ L01 same-digest admission and HTTP probes → F07 completion → F11 → L01 replacement
+```
+
+`f07.sh` loads after the shared classifier in `f13.sh`. The coordinator calls the
+scenario directly, preserving Bash error propagation and its shared cleanup owner.
+The existing run-owned zot mutation, authentication and recovery logic is reused.
+`F07/result.json` remains an intermediate observation with `sameDigestL01: pending`.
+After L01 succeeds, `scenario_f07_complete` checks successful recovery, the original
+image reference, Deployment rollout and ready Pods' runtime image IDs through the
+shared rollout validator. It writes `F07-completed.json`; later F11/replacement
+failures still prevent final PASS. The replacement validator retains its distinct
+digest requirement. Hosted coordination records F07 `NOT_EXECUTED`, with GHCR
+compatibility pending, and never invokes local mutation.
+
+### Actual local observations
+
+Fresh **`run-xFGRe6X1` passed** with real zot, Cosign 3.1.3 and Kyverno 1.19.1.
+No tool versions, admission policies, trust or results issuance were weakened.
+The Linux host reported Docker `29.8.0-1`, cgroup v2. This is local integration,
+not GitHub OIDC acceptance or campaign measurement.
+
+| Evidence | Observed value |
+|---|---|
+| Original digest | `sha256:cd3ab8caa3278b46205653994431cd0bca64e2bb2c91d58326993352436ffff7` |
+| Replacement digest | `sha256:d739c340e7873fb981565afcaa7401b0556e95a346f3033e44e1666eeaf9f9c5` |
+| Source snapshot recorded by the run | `ff97115b53ca59736d6a5cb7fa9d2cd4f14dd59b7234357d028d49a89938987a` |
+| F07 rejection | Singleton `tfm-signature` / `autogen-require-image-signature`; pinned bundle absence diagnostic |
+| Recovery | `originalStatus: 0`, `restorationStatus: 0`, restoration attempted |
+| Positive control | Same original digest admitted; health/version/quote checks passed; ready Pod digest checked |
+| Remaining local sequence | F13/F11 attributable rejection and independently verified replacement passed |
+| Archive | `evidence/packages/run-xFGRe6X1.tar.gz`, 144 hashed files verified |
+| Archive SHA-256 | `f3a356f013f9aa429a961eea7fc5a9f7d75afd5892ca22c52aa6488be0ba3571` |
+
+The run's `production-source-sha256.txt` identifies the unchanged production files
+used by this execution; those hashes were checked against the final working tree.
+The development evidence directory also retains `final-source-sha256.txt`,
+including the unchanged scenario modules and the final regression sources.
+Additional package regressions and documentation were completed during/after the
+run, so its aggregate source snapshot is distinguished from the final test tree.
+
+Retain the ignored raw directory `evidence/raw/run-xFGRe6X1/`: four F07 inventories
+(`before`, `negative`, `after-denial`, `restored`), raw OCI bytes, four authenticated
+bundle outputs/statements, effective controller arguments, raw denial, attribution,
+recovery, original HTTP observations and `F07/L01-*.json`. Offline inventory audit
+confirmed only the independent signature was absent and the original artifact was
+restored exactly. Both archive checksum and every member checksum were verified;
+private material and run state were excluded. Audit reports and development logs
+are in `evidence/raw/f07-local-integration-20260928/`.
+
+Earlier attempts are retained: initial launch stopped at missing `kind`, before a
+run; the pinned binary was installed and its checksum verified. `run-wbknqgzL`
+then failed building the image because outbound container DNS was blocked. Its
+archive remains FAIL/F07 not executed, with all 12 member hashes verified.
+Read-only diagnostics found an obsolete legacy `FORWARD DROP` chain conflicting
+with Docker's nftables rules. With explicit approval, two temporary legacy rules
+allowed traffic from the kind bridge and established return traffic for the retry.
+The wrapper removed both rules after the run and exited zero. No host firewall
+change is included in this repository increment.
+
+### Checks and assistance
+
+- New coordinator tests first failed for skipped F07 order/failure handling after
+  sandbox `spawnSync EPERM` was resolved by approved execution outside the sandbox.
+- Focused coordinator/F07 recovery/packaging/rollout run: 63 tests passed before
+  the additional completion/package audit cases.
+- Final `make -C implementacion test`, with existing pinned tools on PATH: passed;
+  6 environment tests, 338 service/unit tests, 15 Python tests, 52 Conftest decisions,
+  18 + 14 Kyverno cases and the real local Cosign bundle cryptography checks.
+- Actual F07-function regressions preserve unexpected admission, trust/transport/
+  inventory failures, primary plus restoration errors and catchable interruption.
+  Their archives retain failed observations and verified checksums. Coordinator
+  tests use the real entry point with synthetic stages and real report/packaging
+  serialization; they establish ordering/failure propagation, not live admission.
+
+Academic F07's early CI barrier and L04 remain pending. GHCR compatibility and
+hosted F07 are not executed or covered. No extra catalogue scenario, campaign
+measurement, hosted dispatch, merge or release is claimed.
+
+AI contribution: GitHub Copilot (GPT-6) assisted implementation for this PR,
+as reported by the contributor. Codex (GPT-6) also implemented coordinator/completion
+changes, proposed regressions, ran validation and drafted documentation in this
+session using the supplied oracle.
+Human review, human acceptance and final decision: **pending**.
+
+## PR #17 baseline and gates (historical)
 
 The branch contains an unwired local scenario, a strict predicate/manifest mapping,
 raw OCI backup, a digest-checked single-manifest DELETE/PUT helper and F07 evidence
