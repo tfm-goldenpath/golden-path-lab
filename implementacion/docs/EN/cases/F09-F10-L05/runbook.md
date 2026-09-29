@@ -79,16 +79,33 @@ The first L05 rollout uses the successful L04 replacement as its predecessor;
 missing or unsuccessful L04 evidence stops L05 before building. The second uses
 the first L05 delivery. The parent's initial image is not the active predecessor.
 
-After applying each exact revision policy, the laboratory waits for policy Ready,
-restarts its admission-controller Deployment and waits for rollout. Pinned Kyverno
-1.19.1 does not populate `Ready.observedGeneration`; it retains Ready across spec
-updates. Its [startup sequence](https://github.com/kyverno/kyverno/blob/v1.19.1/cmd/kyverno/main.go)
+Initial installation applies the policies without restarting the controller.
+A later exact-revision update (L05) restarts it to refresh its policy cache:
+pinned Kyverno 1.19.1 does not populate `Ready.observedGeneration`. Its
+[startup sequence](https://github.com/kyverno/kyverno/blob/v1.19.1/cmd/kyverno/main.go)
 synchronizes informers and [warms the policy cache](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/controllers/policycache/controller.go)
-before starting the webhook server. Startup cache errors, rollout failure,
-non-ready policies or changes in the applied policy UID/generation/spec stop the
-delivery. Applied/loaded snapshots and startup logs are retained. This restart
-also runs at initial installation, before workloads, and never inside a
-fault/recovery trial. It is a procedure for the owned laboratory controller.
+before serving admission. Restarts remain outside every fault/recovery trial.
+
+Both paths wait for rollout and for current, non-terminating Ready Pods owned by
+the current Deployment revision. The `kyverno-svc` EndpointSlices must route to
+those Pods at the pinned webhook port. Up to 30 observations, separated by two
+seconds, allow endpoint convergence; API errors or malformed snapshots abort.
+This bounds polling attempts, not total wall time including API requests.
+Logs are read by the selected Pod names, never by Deployment auto-selection.
+Applied policy UIDs/generations/specs must remain unchanged and Ready.
+
+Finally a restricted-actor **server dry-run** of the protected manifest must
+respond: initial installation requires the exact singleton missing-results denial;
+an L05 revision update requires acceptance of its already authorized delivery.
+The initial dry-run is an availability preflight, not an additional F13 result.
+The original F13 inventory checks and actual request still run unchanged. There
+are no retries of webhook errors, and timeouts never count as policy detection.
+The gate does not weaken identity, evidence or policy requirements.
+
+Each readiness observation and dry-run response is retained. Cleanup also records
+current Pods, EndpointSlices and explicit per-Pod logs after a failure, even when
+readiness never completed. See the [readiness correction record](../../../../registros/kyverno_readiness_fix_EN.md)
+for the two failed hosted attempts and actual validation limits.
 
 ## Hosted boundary
 

@@ -37,3 +37,7 @@ delivery remain **NOT_EXECUTED** in this increment. Human acceptance is pending.
 The subsequent [PR #24 review](../../../../registros/pr24_review_EN.md) records
 comment fixes and audits CI `36631532871` plus hosted run `36631562615`. The latter
 ran baseline `38631e1`, so it does not close this family's integration requirements.
+
+Merged hosted run `36636319864` failed twice at F13 with webhook timeouts, before
+this family's scenarios. The [readiness correction](../../../../registros/kyverno_readiness_fix_EN.md)
+retains the same scenario oracles and records the fix's validation limits.

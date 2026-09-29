@@ -205,7 +205,7 @@ inventario. Firma el fixture antes de mutar, sin publicarlo en esa fase. El gate
 productivo autentica lo recibido y distingue ausencia aislada de procedencia y
 repositorio autenticado no autorizado; otros errores detienen la entrega.
 CI y admisión exigen origen, revisión, tipo y constructor configurados.
-`lab_apply_admission_policies` reutiliza el renderer sin reinstalar Kyverno.
+`lab_apply_admission_policies` reutiliza el renderer sin reinstalar Kyverno. La instalación inicial evita reiniciar; las actualizaciones renuevan el controlador. `check-admission-controller.mjs` comprueba generación, ReplicaSet, Pods Ready y EndpointSlices. El gate lee logs por Pod y realiza un dry-run de servidor con el actor restringido; al instalar reutiliza el clasificador estricto de `f13.sh`. Este preflight no sustituye el escenario F13 ni cambia sus resultados esperados.
 
 `l05.sh` realiza dos ejecuciones legítimas seleccionadas por `l05-source.mjs`, que
 exporta blobs Git inmutables de un par ordenado en `main` con árboles de aplicación

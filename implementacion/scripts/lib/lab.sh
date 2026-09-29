@@ -32,6 +32,7 @@ cleanup() {
     if [[ -n "$private" && -f "$private/kubeconfig" ]]; then
       capture_diagnostic "$state_dir/cluster-pods.txt" k get pods -A -o wide || package_status=1
       capture_diagnostic "$state_dir/cluster-events.txt" k get events -A --sort-by=.lastTimestamp || package_status=1
+      lab_capture_admission_diagnostics || package_status=1
     fi
     local status=FAIL
     [[ -f "$state_dir/result.json" ]] && status=$(jq -r '.status' "$state_dir/result.json")
@@ -126,10 +127,12 @@ lab_install_admission() {
     '{global:{image:{registry:"ghcr.io"}}, admissionController:{replicas:1,container:{image:{tag:($tag+"@"+$admission)},extraArgs:{imageVerifyCacheEnabled:"false",allowInsecureRegistry:$insecure}},initContainer:{image:{tag:($tag+"@"+$init)}}},backgroundController:{enabled:false},cleanupController:{enabled:false},reportsController:{enabled:false},webhooksCleanup:{enabled:false},crds:{migration:{enabled:false}}}' > "$state_dir/kyverno-values.json"
   helm --kubeconfig "$private/kubeconfig" --kube-context "kind-$cluster" upgrade --install kyverno "$private/kyverno.tgz" --namespace kyverno \
     --values "$state_dir/kyverno-values.json" --wait --timeout 5m
-  lab_apply_admission_policies
+  lab_apply_admission_policies initial
 }
 
 lab_apply_admission_policies() {
+  local lifecycle=${1:-update} pod rejection reason
+  [[ "$lifecycle" == initial || "$lifecycle" == update ]] || fail "Invalid admission lifecycle."
   local -a renderer_args
   renderer_args=(--mode "$mode" --repository "$repository" --commit "$commit" --image-repository "$image_repo" --sbom-version "$(get sbomVersion)" --output "$state_dir/admission-policies.json")
   if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
@@ -137,16 +140,19 @@ lab_apply_admission_policies() {
   k apply -f "$state_dir/admission-policies.json"
   k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-applied.json"
   k wait --for=condition=Ready clusterpolicy/tfm-runtime clusterpolicy/tfm-signature clusterpolicy/tfm-sbom clusterpolicy/tfm-provenance clusterpolicy/tfm-results --timeout=120s
-  # Kyverno 1.19.1 does not populate Ready.observedGeneration. A Ready value
-  # retained from an older spec cannot establish cache freshness. Startup syncs
-  # informers and warms the policy cache before serving admission (see runbook).
-  # This is lab administration, before any fault/recovery trial begins.
-  k -n kyverno rollout restart deployment/kyverno-admission-controller
-  k -n kyverno rollout status deployment/kyverno-admission-controller --timeout=180s
-  k -n kyverno logs deployment/kyverno-admission-controller --all-containers=true > "$state_dir/admission-cache-startup.log"
-  if grep -Eq 'failed to bootstrap non leader controllers|failed to wait for cache sync' "$state_dir/admission-cache-startup.log"; then
-    fail 'Admission controller failed to load the policy cache.'
+  # Only an existing policy revision needs a fresh cache. Initial installation
+  # must not disrupt the controller immediately before F13.
+  if [[ "$lifecycle" == update ]]; then
+    k -n kyverno rollout restart deployment/kyverno-admission-controller
   fi
+  k -n kyverno rollout status deployment/kyverno-admission-controller --timeout=180s
+  lab_wait_admission_controller
+  while IFS= read -r pod; do
+    k -n kyverno logs "pod/$pod" -c kyverno --timestamps=true > "$state_dir/admission-startup-$pod.log"
+    if grep -Eq 'failed to bootstrap non leader controllers|failed to wait for cache sync' "$state_dir/admission-startup-$pod.log"; then
+      fail 'Admission controller failed to load the policy cache.'
+    fi
+  done < <(jq -r '.pods[]' "$state_dir/admission-controller-ready.json")
   k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-loaded.json"
   jq -e -n --slurpfile applied "$state_dir/admission-policy-applied.json" --slurpfile loaded "$state_dir/admission-policy-loaded.json" '
     def identity: [.items[] | {name:.metadata.name,uid:.metadata.uid,generation:.metadata.generation,spec}] | sort_by(.name);
@@ -157,4 +163,48 @@ lab_apply_admission_policies() {
       any(.status.conditions[]?; .type == "Ready" and .status == "True")))
   ' > "$state_dir/admission-policy-loaded-check.json"
   [[ "$(actor tfm-golden auth can-i update clusterpolicies.kyverno.io 2>/dev/null || true)" == no ]] || fail 'The delivery actor has permission to change the enforcement barriers.'
+  # Exercise the actual API-server -> webhook path without persisting a workload.
+  # At initial install results are deliberately absent. Reuse the strict shared
+  # classifier loaded from f13.sh; this preflight does not count as an F13 trial.
+  if actor tfm-golden apply --dry-run=server -f "$state_dir/tfm-golden.json" > "$state_dir/admission-readiness-probe.log" 2>&1; then
+    [[ "$lifecycle" == update ]] || fail 'Admission readiness probe unexpectedly accepted missing results.'
+  else
+    [[ "$lifecycle" == initial ]] || fail 'Legitimate admission readiness probe failed.'
+    rejection=$(scenario_admission_single_reason "$state_dir/admission-readiness-probe.log" tfm-results require-results) || fail 'Admission readiness probe has no attributable results denial.'
+    reason="${rejection#*$'\t'}"
+    [[ "$reason" == 'image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: sigstore bundle verification failed: no matching signatures found' ]] || fail 'Admission readiness probe failed for an unexpected reason.'
+  fi
+}
+
+# Poll only Kubernetes convergence. API errors/malformed observations abort;
+# webhook timeouts are never retried or converted into a successful rejection.
+lab_wait_admission_controller() {
+  local attempt status prefix
+  for attempt in {1..30}; do
+    prefix="$state_dir/admission-controller-$attempt"
+    k -n kyverno get deployment kyverno-admission-controller -o json > "$prefix-deployment.json"
+    k -n kyverno get replicasets -o json > "$prefix-replicasets.json"
+    k -n kyverno get pods -o json > "$prefix-pods.json"
+    k -n kyverno get endpointslices -l kubernetes.io/service-name=kyverno-svc -o json > "$prefix-endpoints.json"
+    status=0
+    node "$root/scripts/check-admission-controller.mjs" "$prefix-deployment.json" "$prefix-replicasets.json" "$prefix-pods.json" "$prefix-endpoints.json" > "$prefix-check.json" || status=$?
+    if [[ "$status" == 0 ]]; then
+      cp "$prefix-check.json" "$state_dir/admission-controller-ready.json"
+      return
+    fi
+    [[ "$status" == 2 ]] || fail 'Unable to validate admission controller observations.'
+    sleep 2
+  done
+  fail 'Admission controller Pods and Service endpoints did not converge.'
+}
+
+lab_capture_admission_diagnostics() {
+  local pod status=0
+  capture_diagnostic "$state_dir/admission-failure-pods.json" k -n kyverno get pods -o json || status=1
+  capture_diagnostic "$state_dir/admission-failure-endpoints.json" k -n kyverno get endpointslices -l kubernetes.io/service-name=kyverno-svc -o json || status=1
+  # Names are from the owned lab namespace, not Deployment log auto-selection.
+  while IFS= read -r pod; do
+    capture_diagnostic "$state_dir/admission-failure-$pod.log" k -n kyverno logs "pod/$pod" -c kyverno --timestamps=true --tail=500 || status=1
+  done < <(jq -r '.items[]? | .metadata.name | select(test("^kyverno-admission-controller-[a-z0-9-]+$"))' "$state_dir/admission-failure-pods.json" 2>/dev/null)
+  return "$status"
 }

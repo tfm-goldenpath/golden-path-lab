@@ -85,6 +85,7 @@ The [initial plan](implementation-plan.md) retains earlier proposed directories;
 | [Classic chain adapter](../../scripts/complete-classic-chain.mjs) | Historical v0.1.0 support for authenticated Fulcio chain annotations and before/after reports in classic OCI manifests. Its code/tests remain pending full hosted acceptance of the [bundle candidate](cosign-bundle-migration.md); the active path does not invoke it or modify bundle metadata. |
 | [Workload](../../scripts/lib/workload.sh) | Manifest/image → deployment request and HTTP check. Admission and functional response are distinct observations. |
 | [Image rollout check](../../scripts/check-image-rollout.mjs) | Original/replacement references + observed Deployment/Pods → proof that a distinct digest completed rollout and runs in ready Pods. It does not replace admission or signature verification. |
+| [Admission controller readiness](../../scripts/check-admission-controller.mjs) | Deployment, ReplicaSets, Pods and EndpointSlices → current Ready Pod targets. `lab.sh` then checks an actual server dry-run; snapshots alone do not establish responsiveness. |
 | [Scenarios](../../tests/scenarios/) | Delivery context → L01/F13/F11 preparation and expectations. Attribute a rejection to its intended condition. |
 | [Conftest policies](../../policies/conftest/) | Workflow, manifest or Trivy JSON → Rego decisions. [Policy fixtures](../../tests/policies/run_rego.py) and [real-file checks](../../scripts/check-policies.sh) exercise the rules. |
 | [Contract helper](../../scripts/lab-contracts.mjs) | Parameters → manifests/predicates; verified documents → subject/type/content checks. [Contract tests](../../tests/unit/contracts.test.mjs) do not perform cryptography. |
@@ -186,7 +187,7 @@ isolation helpers. Fixture signing occurs before mutation with no upload. The
 production gate authenticates every received bundle and classifies only isolated
 missing provenance or authenticated repository mismatch. Other errors stop delivery.
 Both CI and admission require configured build type and builder as well as origin.
-`lab_apply_admission_policies` reuses the renderer without reinstalling Kyverno.
+`lab_apply_admission_policies` reuses the renderer without reinstalling Kyverno. Initial installation avoids restart; revision updates refresh the controller. The readiness gate checks current Pod/endpoint convergence, reads named-Pod logs and issues a restricted-actor server dry-run. Its initial expected missing-results response uses the shared strict classifier loaded from `f13.sh`; this preflight does not replace the F13 scenario.
 
 `l05.sh` owns two legitimate executions selected explicitly through `l05-source.mjs`.
 The helper exports immutable Git blobs from an ordered pair on local `main` and
