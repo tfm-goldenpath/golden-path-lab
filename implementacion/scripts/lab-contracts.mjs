@@ -57,8 +57,31 @@ export function validateStatementPredicate(predicate, type, repository, commit) 
   else if (type === 'https://sigstore.dev/cosign/sign/v1') {
     if (!predicate || typeof predicate !== 'object' || Array.isArray(predicate)) throw new Error('Invalid image-signature predicate');
   }
-  else if (predicate.buildDefinition?.externalParameters?.workflow?.repository !== repository
-    || predicate.buildDefinition?.resolvedDependencies?.[0]?.digest?.gitCommit !== commit) throw new Error('Incorrect build origin');
+  else if (type === 'https://slsa.dev/provenance/v1') validateProvenance(predicate, {repository, commit, mode:'local'});
+  else throw new Error('Unsupported predicate type');
+}
+// Content checks only. The caller must authenticate the exact statement first.
+// Expected values come from run configuration, never from the predicate.
+export function validateProvenance(predicate, {repository, commit, mode, identity}) {
+  if (!['local','github'].includes(mode) || !/^https:\/\/[^\s]+$/.test(repository || '')
+      || !/^[a-f0-9]{40}$/.test(commit || '') || (mode === 'github' && !identity?.startsWith(repository + '/.github/workflows/'))) {
+    throw new Error('Invalid expected provenance authorization');
+  }
+  const fields = [
+    ['PROVENANCE_REPOSITORY', predicate?.buildDefinition?.externalParameters?.workflow?.repository, repository],
+    ['PROVENANCE_REVISION', predicate?.buildDefinition?.resolvedDependencies?.[0]?.digest?.gitCommit, commit],
+    ['PROVENANCE_BUILD_TYPE', predicate?.buildDefinition?.buildType, mode === 'local' ? 'https://tfm-goldenpath.dev/buildtypes/local/v1' : 'https://actions.github.io/buildtypes/workflow/v1'],
+    ['PROVENANCE_BUILDER', predicate?.runDetails?.builder?.id, mode === 'local' ? 'https://tfm-goldenpath.dev/builders/local-development' : identity],
+  ];
+  if (fields.some(([,actual]) => typeof actual !== 'string' || !actual.trim())) throw new Error('PROVENANCE_STRUCTURE: required string field missing');
+  if (!/^https:\/\/[^\s]+$/.test(fields[0][1]) || !/^[a-f0-9]{40}$/.test(fields[1][1])) throw new Error('PROVENANCE_STRUCTURE: malformed origin');
+  const violations = fields.filter(([,actual,expected]) => actual !== expected).map(([code]) => code);
+  if (violations.length) {
+    const error = new Error(violations.join(', ') + ': authenticated provenance violates configured authorization');
+    error.provenanceFailure = {violations};
+    throw error;
+  }
+  return predicate;
 }
 export function checkStatements(text, digest, predicateType, validate) {
   if (typeof digest !== 'string' || !/^(?:sha256:)?[a-f0-9]{64}$/.test(digest)) {

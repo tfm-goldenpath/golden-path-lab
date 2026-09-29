@@ -196,3 +196,21 @@ L04; `demo.sh` conserva la limpieza de infraestructura. Consulta el
 ## Incremento F05 / F06 / L03
 
 CI valida el esquema oficial CycloneDX 1.7 antes de firmar y tras autenticar el bundle exacto. Los requisitos del laboratorio y la asociación al digest siguen siendo controles separados. Kyverno comprueba campos seleccionados, no el esquema completo. L03 añade un componente real fijado a la imagen de sustitución; no demuestra completitud del inventario. Consulte el [procedimiento y límites](cases/F05-F06-L03/runbook.md).
+
+## Procedencia y revisiones inmutables
+
+`tests/scenarios/provenance.sh` coordina F09/F10 y su recuperación;
+`provenance-scenario-evidence.mjs` reutiliza controles de propiedad, respaldo e
+inventario. Firma el fixture antes de mutar, sin publicarlo en esa fase. El gate
+productivo autentica lo recibido y distingue ausencia aislada de procedencia y
+repositorio autenticado no autorizado; otros errores detienen la entrega.
+CI y admisión exigen origen, revisión, tipo y constructor configurados.
+`lab_apply_admission_policies` reutiliza el renderer sin reinstalar Kyverno.
+
+`l05.sh` realiza dos ejecuciones legítimas seleccionadas por `l05-source.mjs`, que
+exporta blobs Git inmutables de un par ordenado en `main` con árboles de aplicación
+distintos. Se comprueban hashes, pruebas propias y fuentes reales antes de construir.
+Cada revisión tiene política exacta y evidencia nueva. La selección precede a la
+infraestructura; las entregas L05 siguen a los ensayos existentes sin cambiar
+políticas dentro de estos. Ver [guía](cases/F09-F10-L05/runbook.md). L05 hosted
+requiere dos ejecuciones Actions reales, no dos checkouts en una ejecución.

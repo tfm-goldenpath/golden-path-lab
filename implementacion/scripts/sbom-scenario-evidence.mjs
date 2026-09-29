@@ -23,8 +23,8 @@ export function planFault(before,image,profile,donor) {
   return {selected,donorImage:donor.inventory.image,entry:{...other.entry,digest:hash(bytes),size:bytes.length},
     raw:{manifestDigest:hash(bytes),manifest:bytes.toString('base64'),config:other.raw.config,bundle:other.raw.bundle}};
 }
-export function checkIsolation(before,current,image,profile,plan,restored=false) {
-  validateBackup(before,image,profile,SBOM);
+export function checkIsolation(before,current,image,profile,plan,restored=false,selectedType=SBOM) {
+  validateBackup(before,image,profile,selectedType);
   const expected=structuredClone(before.inventory);
   if (!restored) {
     expected.descriptors=expected.descriptors.filter(d=>d.digest!==plan.selected.entry.digest);
@@ -35,7 +35,7 @@ export function checkIsolation(before,current,image,profile,plan,restored=false)
   if (!restored && plan.raw) expectedRaw.push(plan.raw);
   const sort=a=>[...a].sort((x,y)=>x.manifestDigest.localeCompare(y.manifestDigest));
   if (JSON.stringify(sort(expectedRaw))!==JSON.stringify(sort(current.rawArtifacts))) throw new Error('Target or non-target OCI bytes changed');
-  return {image,check:restored?'exact-restoration':'isolated-sbom-fault',bundleBytesUnchanged:!!plan.raw};
+  return {image,check:restored?'exact-restoration':selectedType===SBOM?'isolated-sbom-fault':'isolated-provenance-fault',bundleBytesUnchanged:!!plan.raw};
 }
 async function send(url,options={},statuses=[200]) {
   const r=await fetch(url,{...options,redirect:'manual',signal:AbortSignal.timeout(30000)});

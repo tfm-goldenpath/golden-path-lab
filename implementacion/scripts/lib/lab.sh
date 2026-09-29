@@ -114,7 +114,6 @@ lab_prepare_namespaces() {
 }
 
 lab_install_admission() {
-  local -a renderer_args=()
   record 'Install mandatory admission checks and trust limited to this lab'
   curl -fsSL --retry 3 "$(jq -r '.charts.kyverno.url' "$lock")" -o "$private/kyverno.tgz"
   printf '%s  %s\n' "$(jq -r '.charts.kyverno.sha256' "$lock")" "$private/kyverno.tgz" | sha256sum -c --status
@@ -127,10 +126,35 @@ lab_install_admission() {
     '{global:{image:{registry:"ghcr.io"}}, admissionController:{replicas:1,container:{image:{tag:($tag+"@"+$admission)},extraArgs:{imageVerifyCacheEnabled:"false",allowInsecureRegistry:$insecure}},initContainer:{image:{tag:($tag+"@"+$init)}}},backgroundController:{enabled:false},cleanupController:{enabled:false},reportsController:{enabled:false},webhooksCleanup:{enabled:false},crds:{migration:{enabled:false}}}' > "$state_dir/kyverno-values.json"
   helm --kubeconfig "$private/kubeconfig" --kube-context "kind-$cluster" upgrade --install kyverno "$private/kyverno.tgz" --namespace kyverno \
     --values "$state_dir/kyverno-values.json" --wait --timeout 5m
+  lab_apply_admission_policies
+}
+
+lab_apply_admission_policies() {
+  local -a renderer_args
   renderer_args=(--mode "$mode" --repository "$repository" --commit "$commit" --image-repository "$image_repo" --sbom-version "$(get sbomVersion)" --output "$state_dir/admission-policies.json")
   if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
   python3 policies/kyverno/render.py "${renderer_args[@]}"
   k apply -f "$state_dir/admission-policies.json"
+  k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-applied.json"
   k wait --for=condition=Ready clusterpolicy/tfm-runtime clusterpolicy/tfm-signature clusterpolicy/tfm-sbom clusterpolicy/tfm-provenance clusterpolicy/tfm-results --timeout=120s
+  # Kyverno 1.19.1 does not populate Ready.observedGeneration. A Ready value
+  # retained from an older spec cannot establish cache freshness. Startup syncs
+  # informers and warms the policy cache before serving admission (see runbook).
+  # This is lab administration, before any fault/recovery trial begins.
+  k -n kyverno rollout restart deployment/kyverno-admission-controller
+  k -n kyverno rollout status deployment/kyverno-admission-controller --timeout=180s
+  k -n kyverno logs deployment/kyverno-admission-controller --all-containers=true > "$state_dir/admission-cache-startup.log"
+  if grep -Eq 'failed to bootstrap non leader controllers|failed to wait for cache sync' "$state_dir/admission-cache-startup.log"; then
+    fail 'Admission controller failed to load the policy cache.'
+  fi
+  k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-loaded.json"
+  jq -e -n --slurpfile applied "$state_dir/admission-policy-applied.json" --slurpfile loaded "$state_dir/admission-policy-loaded.json" '
+    def identity: [.items[] | {name:.metadata.name,uid:.metadata.uid,generation:.metadata.generation,spec}] | sort_by(.name);
+    ($applied[0] | identity) == ($loaded[0] | identity) and
+    ($loaded[0].items | length == 5 and all(.[];
+      (.metadata.uid | type == "string" and length > 0) and
+      (.metadata.generation | type == "number" and . > 0) and
+      any(.status.conditions[]?; .type == "Ready" and .status == "True")))
+  ' > "$state_dir/admission-policy-loaded-check.json"
   [[ "$(actor tfm-golden auth can-i update clusterpolicies.kyverno.io 2>/dev/null || true)" == no ]] || fail 'The delivery actor has permission to change the enforcement barriers.'
 }

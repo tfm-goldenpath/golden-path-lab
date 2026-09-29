@@ -210,8 +210,7 @@ removed. No repository settings or hosted workflow dispatch occurred.
 
 | Activity | Actual assistance | Human review | Decision |
 |---|---|---|---|
-| Implementation, regression tests, diagnostics, evidence audit and documentation | Github Copilot with GPT-6 using the supplied human-approved oracles | Pending | Pending |
+| Implementation, regression tests, diagnostics, evidence audit and documentation | GitHub Copilot with GPT-6, using the supplied human-approved oracles | Pending | Pending |
 
-GitHub Copilot was requested but was not the tool used in this session. Prior
-records retain their original attribution. No remote PR, push, dispatch, merge,
-release or settings change was performed.
+The confirmed development-tool attribution does not establish human review or
+acceptance. Those remain pending against the checklist above.

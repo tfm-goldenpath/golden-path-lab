@@ -96,7 +96,7 @@ test('hosted provenance uses the exact retrieved bundle with all existing identi
   const repository='https://github.com/example/lab',commit='b'.repeat(40),ref='refs/heads/main';
   const identity=repository+'/.github/workflows/golden-path.yml@'+ref;
   const options={...f.options,mode:'github',image:'ghcr.io/example/image@sha256:'+'a'.repeat(64),repository,commit,identity,ref};
-  const output=[{verificationResult:{statement:{_type:'https://in-toto.io/Statement/v1',subject:[{name:'ghcr.io/example/image',digest:{sha256:'a'.repeat(64)}}],predicateType:provenance,predicate:{}},
+  const output=[{verificationResult:{statement:{_type:'https://in-toto.io/Statement/v1',subject:[{name:'ghcr.io/example/image',digest:{sha256:'a'.repeat(64)}}],predicateType:provenance,predicate:{buildDefinition:{buildType:"https://actions.github.io/buildtypes/workflow/v1",externalParameters:{workflow:{repository}},resolvedDependencies:[{digest:{gitCommit:commit}}]},runDetails:{builder:{id:identity}}}},
     signature:{certificate:{subjectAlternativeName:identity,issuer:'https://token.actions.githubusercontent.com',sourceRepositoryURI:repository,sourceRepositoryDigest:commit,sourceRepositoryRef:ref,runnerEnvironment:'github-hosted'}},verifiedTimestamps:[{timestamp:'2026-09-28T00:00:00Z'}]}}];
   let observed;
   const runner=(command,args,{stdio})=>{observed={command,args}; writeFileSync(stdio[1],JSON.stringify(output)); return {status:0};};
@@ -175,4 +175,34 @@ test('F06 stops at retrieval mismatch, retaining exact received bytes without re
 test('F05 retrieval failure cannot be classified as missing SBOM',async t=>{
   const f=setup(t,[signature,provenance]);f.dependencies.download=()=>{throw new Error('unreadable registry artifact');};
   await assert.rejects(f.run());assert.equal(f.report().status,'INTEGRATION_FAILURE');
+});
+
+for (const authorized of [false,true]) test(`F09 only provenance absent with all unrelated evidence authenticated (${authorized})`,async t=>{
+  const f=setup(t,[signature,sbom,...(authorized?[results]:[])]);
+  f.options.phase=authorized?'authorized':'before-results';
+  assert.equal((await f.run()).status,'MISSING_PROVENANCE');
+  assert.equal(f.report().predicate,provenance);
+  assert.equal(f.report().inventoryComplete,true);
+  assert.deepEqual([...f.calls].sort(),[signature,sbom,...(authorized?[results]:[])].sort());
+});
+
+for(const fault of ['repository','trust','revision','multiple','malformed','missing-sbom','unrelated-trust']) test(`F10 classification requires isolated authenticated repository mismatch: ${fault}`,async t=>{
+  const f=setup(t,fault==='missing-sbom'?[signature,provenance]:undefined);
+  f.dependencies.authenticate=(_o,_b,type)=>{
+    f.calls.push(type);
+    if(fault==='unrelated-trust' && type===sbom) throw new Error('untrusted SBOM');
+    if(type===provenance) {
+      const e=new Error('synthetic authentication/content failure');
+      if(!['trust','malformed'].includes(fault)) e.provenanceFailure={violations:fault==='revision'?['PROVENANCE_REVISION']:fault==='multiple'?['PROVENANCE_REPOSITORY','PROVENANCE_BUILDER']:['PROVENANCE_REPOSITORY']};
+      throw e;
+    }
+    return {};
+  };
+  if(fault==='repository') {
+    assert.equal((await f.run()).status,'PROVENANCE_REPOSITORY_UNAUTHORIZED');
+    assert.equal(f.report().provenanceAuthenticated,true);
+    assert.deepEqual([...f.calls].sort(),[signature,sbom,provenance].sort());
+  } else {
+    await assert.rejects(f.run());assert.equal(f.report().status,'INTEGRATION_FAILURE');
+  }
 });

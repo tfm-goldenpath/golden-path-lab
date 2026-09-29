@@ -121,3 +121,15 @@ rechazo exclusivo de la firma y aceptación real final de L04. Consulta el
 ## Incremento F05 / F06 / L03
 
 CI valida el esquema oficial CycloneDX 1.7 antes de firmar y tras autenticar el bundle exacto. Los requisitos del laboratorio y la asociación al digest siguen siendo controles separados. Kyverno comprueba campos seleccionados, no el esquema completo. L03 añade un componente real fijado a la imagen de sustitución; no demuestra completitud del inventario. Consulte el [procedimiento y límites](cases/F05-F06-L03/runbook.md).
+
+## F09 / F10 / L05
+
+CI y admisión exigen repositorio configurado, revisión exacta, tipo de construcción
+y constructor de la modalidad. Constructor local:
+`https://tfm-goldenpath.dev/builders/local-development`; hosted: identidad exacta del
+workflow configurado. Los valores esperados proceden de configuración confiable.
+La autenticación del bundle exacto precede a sus campos. F09 exige recuperación
+completa y otras evidencias válidas; F10 exige que falle solo la autorización del
+repositorio seleccionado. Otros fallos siguen siendo errores de integración.
+L05 exporta fuentes reales de dos revisiones inmutables distintas. L01/L03 del mismo
+commit no establece L05. Ver [procedimiento](cases/F09-F10-L05/runbook.md).

@@ -170,3 +170,13 @@ Use existing stories as the primary record, a suggested work-in-progress limit o
 - [ ] Hosted normal delivery validation on reviewed source; hosted negative F05/F06 remain **NOT_EXECUTED**.
 
 See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](docs/ES/cases/F05-F06-L03/runbook.md). L01/L03/L04 share one execution, with no additional campaign observations.
+
+## F09 / F10 / L05 bounded increment
+
+- [x] Define the [operational oracle](docs/EN/cases/F09-F10-L05/record.md) and initial failing contract/gate checks before implementing on base `38631e1`.
+- [x] Align explicit provenance repository, revision, build type and builder requirements in CI/admission; add isolated local F09/F10 preparation, attribution and exact recovery.
+- [x] Add opt-in L05 using two explicit immutable main-history commits, actual exported application source, separate tests/builds/evidence and exact revision authorization.
+- [ ] Complete and review fresh local F09/F10 CI and directed admission plus L05 rollout/HTTP. Consult the [validation record](registros/f09_f10_l05_validation_EN.md) for actual results and outstanding boundaries.
+- [ ] Demonstrate hosted L05 across two authorized actual Actions run revisions and audit both packages. Hosted F09/F10 negatives remain **NOT_EXECUTED**.
+- [x] Address the five PR #24 comments locally and audit the supplied CI/hosted logs and package; see the [review record](registros/pr24_review_EN.md). Hosted run `36631562615` checked baseline `38631e1`, not PR head `d337a3c` or the review fixes.
+- [ ] Human review and final acceptance; no campaign measurements claimed.

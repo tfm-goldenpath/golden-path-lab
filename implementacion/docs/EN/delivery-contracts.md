@@ -121,3 +121,15 @@ See the [record](cases/F08/record.md); hosted F08 remains NOT_EXECUTED.
 ## F05 / F06 / L03
 
 The replacement now adds the pinned L03 fixture component. Full schema validity, laboratory content, authenticity, digest binding and the known component change remain distinct checks. F05 requires complete retrieval and authenticated non-targets; F06 retains exact donor bytes and a structured early subject mismatch, independently authenticating the donor against its original digest. Recovery precedes normal authorization. Directed admission follows results issuance and checks only the applicable SBOM rule. See [commands, evidence and limitations](cases/F05-F06-L03/runbook.md).
+
+## F09 / F10 / L05
+
+CI and admission now require the configured repository, exact revision, lane-specific
+build type and builder. Local builder: `https://tfm-goldenpath.dev/builders/local-development`;
+hosted builder: the exact configured workflow identity. These expected values come
+from trusted run configuration. CI authenticates the exact bundle before fields;
+F09 requires complete retrieval and all unrelated contracts valid; F10 requires
+only the selected repository authorization property to fail. Other failures remain
+integration errors. See the [oracle and procedure](cases/F09-F10-L05/runbook.md).
+L05 selects two actual immutable revisions and exports their real source contents;
+same-commit L01/L03 image evolution does not establish source-revision evolution.

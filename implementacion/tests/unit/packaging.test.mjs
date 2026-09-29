@@ -40,10 +40,48 @@ with tarfile.open(sys.argv[1], 'r:gz') as archive:
         member=archive.extractfile(prefix+name)
         if member is None or hashlib.sha256(member.read()).hexdigest()!=expected:
             mismatches.append(name)
-    print(json.dumps({'names':names,'mismatches':mismatches}))
+    print(json.dumps({'names':names,'mismatches':mismatches,'summary':json.load(archive.extractfile(prefix+'execution-summary.json'))}))
 `;
   return JSON.parse(execFileSync(python, ['-c', code, filename], { encoding: 'utf8' }));
 }
+
+test('summary distinguishes retained provenance trials, partial L05 and unexecuted cases',t=>{
+  const {source,output}=fixture(t);
+  for(const name of ['L01-update/F09-CI','L01-update/F10-admission','L05-from']) {
+    fs.mkdirSync(path.join(source,name),{recursive:true});
+    fs.writeFileSync(path.join(source,name,'diagnostic.log'),'synthetic incomplete trial');
+  }
+  fs.writeFileSync(path.join(source,'F09-completed.json'),JSON.stringify({scenario:'F09',status:'PASS'}));
+  fs.writeFileSync(path.join(source,'F08-completed.json'),JSON.stringify({scenario:'F08',status:'NOT_EXECUTED'}));
+  execFileSync(python,[script,source,output,'FAIL']);
+  const {summary}=inspectArchive(path.join(output,'run-test.tar.gz'));
+  assert.match(summary.scope,/F09.*F10.*L05/);
+  assert.equal(summary.scenarios.F09.status,'PASS');
+  assert.equal(summary.scenarios.F10.status,'INCOMPLETE');
+  assert.equal(summary.scenarios.L05.status,'INCOMPLETE');
+  assert.equal(summary.scenarios.F08.status,'NOT_EXECUTED');
+  assert.equal(summary.scenarios.F06.status,'NOT_RECORDED');
+  assert.deepEqual(summary.scenarios.F09.evidence,['L01-update/F09-CI']);
+  assert.deepEqual(summary.scenarios.L05.evidence,['L05-from']);
+});
+
+for(const status of ['ACCEPTED_TWO_SOURCE_REVISIONS','NOT_EXECUTED']) test(`summary preserves recorded L05 ${status}`,t=>{
+  const {source,output}=fixture(t);
+  fs.writeFileSync(path.join(source,'L05-result.json'),JSON.stringify({scenario:'L05',status}));
+  execFileSync(python,[script,source,output,'PASS']);
+  const {summary}=inspectArchive(path.join(output,'run-test.tar.gz'));
+  assert.equal(summary.scenarios.L05.status,status);
+  assert.equal(summary.scenarios.L05.record,'L05-result.json');
+});
+
+test('malformed scenario record does not prevent preserving failure evidence',t=>{
+  const {source,output}=fixture(t);
+  fs.writeFileSync(path.join(source,'F10-completed.json'),'{');
+  execFileSync(python,[script,source,output,'FAIL']);
+  const {summary,names,mismatches}=inspectArchive(path.join(output,'run-test.tar.gz'));
+  assert.equal(summary.scenarios.F10.status,'INVALID_RECORD');
+  assert.ok(names.includes('run-test/F10-completed.json'));assert.deepEqual(mismatches,[]);
+});
 
 test('the package preserves verifiable hashes and excludes state and credentials', t => {
   const { source, output } = fixture(t);
