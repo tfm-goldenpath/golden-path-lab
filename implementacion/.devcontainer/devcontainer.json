@@ -13,7 +13,7 @@
   "remoteUser": "node",
   "containerEnv": { "KIND_EXPERIMENTAL_PROVIDER": "docker" },
   "hostRequirements": { "cpus": 2, "memory": "8gb", "storage": "32gb" },
-  "postCreateCommand": "bash scripts/check-environment.sh --tools-only",
+  "postCreateCommand": "npm ci --prefix tooling --ignore-scripts --no-audit --no-fund && bash scripts/check-environment.sh --tools-only",
   "customizations": {
     "vscode": {
       "settings": {

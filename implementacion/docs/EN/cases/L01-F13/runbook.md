@@ -61,7 +61,7 @@ This sets `failCgroupV1: false` in the kubelet of the **temporary kind nodes** a
 make demo
 ```
 
-`scripts/demo.sh` prepares an isolated laboratory with **kind, zot and local development keys**. It first builds one `linux/amd64` image shared by the reference and protected paths, then prepares a distinct image for L01's legitimate UPDATE. Both use the same source commit; a different laboratory build label changes the second digest without changing application behavior. Development keys are neither committed nor trusted by the GitHub lane.
+`scripts/demo.sh` prepares an isolated laboratory with **kind, zot and local development keys**. It first builds one `linux/amd64` image shared by the reference and protected paths, then prepares a distinct image for L01's legitimate UPDATE. Both use the same source commit; the L03 fixture adds pinned `is-number@7.0.0` to the second image without changing application behavior. Development keys are neither committed nor trusted by the GitHub lane.
 
 The service runtime uses **Node 24.21.0 on Alpine 3.23**, pinned by digest through `SERVICE_NODE_IMAGE` and separated from the Debian devcontainer. This supported Alpine `main` branch is recognized by Trivy 0.74.0's EOL metadata; see the [compatibility decision](../../../../services/quotes-node/README.md). The service has no production npm dependencies, so its Dockerfile removes npm, npx and Yarn from the delivered image. Trivy still analyzes the remaining components; this reduction does not guarantee no vulnerabilities or relax the HIGH/CRITICAL threshold.
 
@@ -279,3 +279,7 @@ and each internal hash. Failed attempts remain evidence; a generic Kyverno error
 is not attributable F08. The record distinguishes actual runs from expected flow.
 Hosted F08 and negative F07 stay `NOT_EXECUTED`. Hosted gate/L04 acceptance remains
 pending a successful separately authorized execution with audited evidence.
+
+## SBOM family increment
+
+Install schema tooling with `make setup-validation` before local tests. The replacement now includes F05/F06 early CI and directed admission checks, with exact recovery before normal authorization and shared L01/L03/L04 acceptance. See the [SBOM runbook](../F05-F06-L03/runbook.md) for validation responsibilities and the recorded integration limitation. Hosted negative F05/F06 remain NOT_EXECUTED.

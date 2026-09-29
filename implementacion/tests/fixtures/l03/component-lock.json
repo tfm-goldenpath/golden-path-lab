@@ -1,0 +1,12 @@
+{
+  "name": "is-number",
+  "version": "7.0.0",
+  "source": "https://registry.npmjs.org/is-number/-/is-number-7.0.0.tgz",
+  "tarballSha256": "7b75c1057198cf97696909a9bee176c9c5e9bcb5b03bf3ecef2f484defadd51e",
+  "license": "MIT",
+  "files": {
+    "LICENSE": "35bdd8a44339719441900fb50fbefc5e2dca1ca662cbaed7a687de842c8b70f2",
+    "index.js": "04255e482e181687823a95b207802ddd32e746c65dce4c95a5176fc192735960",
+    "package.json": "51c133f4e41df982aef69027249ff9d7262645029f437d079adc7c83328fb620"
+  }
+}

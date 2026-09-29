@@ -8,8 +8,8 @@ scenario_l01_accept() {
   cmp "$state_dir/tfm-reference-quote.json" "$state_dir/tfm-golden-quote.json"
 }
 
-# The same source is rebuilt with a different run label, producing a distinct
-# immutable image without changing the quote contract. Each image has its own
+# L03 adds a pinned, unused real package to the replacement fixture image
+# without changing the quote contract. Each image has its own
 # scan, SBOM, provenance and authorization; none are copied from the first image.
 scenario_l01_prepare_update() (
   trap - EXIT
@@ -25,12 +25,15 @@ scenario_l01_prepare_update() (
   done
   id="$(basename "$parent_state" | tr '[:upper:]' '[:lower:]')-update"
   record 'L01: build and check the replacement image'
-  delivery_build
+  cp tests/fixtures/l03/component-lock.json "$state_dir/L03-component-lock.json"
+  cp tests/fixtures/l03/Dockerfile "$state_dir/L03-Dockerfile.txt"
+  delivery_build tests/fixtures/l03 "$image"
   [[ "$digest" != "$initial_digest" ]] || fail 'L01 requires a different replacement digest.'
   load_delivery_context
   delivery_render_manifests
   delivery_check_manifest
   delivery_analyze
+  node scripts/check-sbom-evolution.mjs "$parent_state" "$state_dir" > "$state_dir/L03-components.json"
   [[ "$(get sbomVersion)" == "$(jq -er '.sbomVersion' "$parent_state/state.json")" ]] || fail 'Replacement SBOM schema differs from the installed admission contract.'
   if [[ "$mode" == github ]]; then
     printf 'update_image=%s\nupdate_digest=%s\n' "$image_repo" "$digest" >> "$GITHUB_OUTPUT"
@@ -41,7 +44,7 @@ scenario_l01_update() (
   # This subshell owns only its port-forward; infrastructure cleanup stays with
   # demo.sh. Preserve failures while ensuring a failed probe leaves no process.
   trap 'code=$?; trap - EXIT; if [[ -n "${port_pid:-}" ]]; then kill "$port_pid" 2>/dev/null || true; wait "$port_pid" 2>/dev/null || true; fi; exit "$code"' EXIT
-  local parent_state="$state_dir" previous_image="$image"
+  local parent_state="$state_dir" previous_image="$image" sbom_case
   state_dir="$parent_state/L01-update"
   [[ -d "$state_dir" && ! -L "$state_dir" && -f "$state_dir/state.json" ]] || fail 'Replacement image was not prepared.'
   load_delivery_context
@@ -51,12 +54,18 @@ scenario_l01_update() (
   if [[ "$mode" == local ]]; then
     scenario_f07_ci
     scenario_f08 before-results
+    scenario_sbom_fault F05 before-results
+    scenario_sbom_fault F06 before-results
   else
     attestations_ci_gate CI-delivery
     jq -n --arg image "$image" '{scenario:"F07",phase:"early-CI",image:$image,status:"NOT_EXECUTED",reason:"Hosted negative F07 remains pending"}' > "$parent_state/F07-CI-completed.json"
   fi
   attestations_authorize_results
-  if [[ "$mode" == local ]]; then scenario_f08 authorized; fi
+  if [[ "$mode" == local ]]; then
+    scenario_f08 authorized
+    scenario_sbom_fault F05 authorized
+    scenario_sbom_fault F06 authorized
+  fi
   record 'L01: replace the deployed image and verify the new Pods'
   actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/L01-update.log"
   probe tfm-golden
@@ -65,6 +74,7 @@ scenario_l01_update() (
   k -n tfm-golden get pods -l app=quotes-node -o json > "$state_dir/pods.json"
   node scripts/check-image-rollout.mjs "$previous_image" "$image" "$state_dir/deployment.json" "$state_dir/pods.json" > "$parent_state/L01-image-update.json"
   jq --arg image "$image" '. + {scenario:"L04",image:$image,sharedExecution:"L01-image-update",verification:"fresh-registry",functionality:"healthy"}' "$parent_state/L01-image-update.json" > "$parent_state/L04-result.json"
+  jq --slurpfile components "$state_dir/L03-components.json" '. + {scenario:"L03",components:$components[0],inventoryCompleteness:"not-established"}' "$parent_state/L04-result.json" > "$parent_state/L03-result.json"
   if [[ "$mode" == local ]]; then
     jq -n --slurpfile ci "$state_dir/F08-CI/result.json" --slurpfile admission "$state_dir/F08-admission/result.json" --slurpfile l04 "$parent_state/L04-result.json" \
       '{scenario:"F08",status:"REJECTION_AND_L04_ACCEPTANCE_COMPLETE",CI:$ci[0],admission:$admission[0],L04:$l04[0],measurement:"functional-integration-only"}' > "$parent_state/F08-completed.json"
@@ -72,4 +82,14 @@ scenario_l01_update() (
   else
     jq -n '{scenario:"F08",status:"NOT_EXECUTED",reason:"Hosted mutation is outside the supported local procedure"}' > "$parent_state/F08-completed.json"
   fi
+  for sbom_case in F05 F06; do
+    if [[ "$mode" == local ]]; then
+      jq -n --arg scenario "$sbom_case" --slurpfile ci "$state_dir/$sbom_case-CI/result.json" \
+        --slurpfile admission "$state_dir/$sbom_case-admission/result.json" --slurpfile l03 "$parent_state/L03-result.json" \
+        '{scenario:$scenario,status:"REJECTION_AND_L03_ACCEPTANCE_COMPLETE",CI:$ci[0],admission:$admission[0],L03:$l03[0],sharedExecution:"L01-image-update"}' > "$parent_state/$sbom_case-completed.json"
+    else
+      jq -n --arg scenario "$sbom_case" '{scenario:$scenario,status:"NOT_EXECUTED",reason:"Hosted negative SBOM fixtures are not implemented"}' > "$parent_state/$sbom_case-completed.json"
+    fi
+  done
+
 )

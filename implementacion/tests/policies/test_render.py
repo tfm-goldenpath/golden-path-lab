@@ -16,11 +16,18 @@ class RenderTests(unittest.TestCase):
         return {
             "mode": mode, "repository": "https://github.com/example/laboratory",
             "commit": "a" * 40, "image_repository": "registry.example/quotes-node",
-            "sbom_version": "1.6", "policy_version": "golden-path-v1",
+            "sbom_version": "1.7", "policy_version": "golden-path-v1",
             # This synthetic PEM is never used for cryptographic verification.
             "public_key": "-----BEGIN PUBLIC KEY-----\nSYNTHETIC\n-----END PUBLIC KEY-----\n",
             "identity": "https://github.com/example/laboratory/.github/workflows/golden-path.yml@refs/heads/main",
         }
+
+    def test_only_supported_sbom_version_is_rendered(self):
+        for version in ("1.6", "1.8", "1.99"):
+            config = self.config()
+            config["sbom_version"] = version
+            with self.assertRaises(ValueError):
+                renderer.render(config)
 
     def test_every_barrier_is_distinct_and_fail_closed(self):
         for mode in ("local", "github"):
@@ -159,7 +166,7 @@ class RenderTests(unittest.TestCase):
             item = renderer.render(config)["items"][2]
             attestation = item["spec"]["rules"][0]["verifyImages"][0]["attestations"][0]
             self.assertEqual(attestation["conditions"], [{"all": [
-                renderer.condition("bomFormat", "CycloneDX"), renderer.condition("specVersion", "1.6"),
+                renderer.condition("bomFormat", "CycloneDX"), renderer.condition("specVersion", "1.7"),
             ]}])
 
     def test_runtime_rules_still_cover_all_container_types_and_host_access(self):

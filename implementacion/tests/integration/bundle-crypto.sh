@@ -64,7 +64,7 @@ run 'development signing key' cosign generate-key-pair --output-key-prefix "$pro
 run 'untrusted comparison key' cosign generate-key-pair --output-key-prefix "$probe_dir/other"
 printf 'Golden Path isolated bundle cryptography probe\n' > "$probe_dir/artifact.bin"
 printf '{}\n' > "$probe_dir/signature-predicate.json"
-printf '{"bomFormat":"CycloneDX","specVersion":"1.6","version":1,"components":[{"type":"application","name":"bundle-probe"}]}\n' > "$probe_dir/sbom-predicate.json"
+printf '{"bomFormat":"CycloneDX","specVersion":"1.7","version":1,"components":[{"type":"application","name":"bundle-probe"}]}\n' > "$probe_dir/sbom-predicate.json"
 # This signed contract fixture is synthetic; it does not authorize a lab delivery.
 cat > "$probe_dir/results-predicate.json" <<'JSON'
 {
@@ -126,3 +126,15 @@ NODE
 reject 'F08 controlled signature-byte alteration' 'accepted signatures do not match threshold' \
   cosign verify-blob-attestation "${verify_args[@]}" --type "$signature_type" --bundle "$probe_dir/tampered.json"
 printf 'PASS: synthetic attest-blob cryptography checks; cosign sign, OCI registry, OIDC and admission are separate integration checks.\n'
+
+# Authenticity and official schema validity are independent requirements.
+# This deliberately malformed nested hash is signed only as a labelled probe.
+cat > "$probe_dir/invalid-sbom-predicate.json" <<'JSON'
+{"bomFormat":"CycloneDX","specVersion":"1.7","version":1,"metadata":{"component":{"type":"container","name":"synthetic"}},"components":[{"type":"library","name":"synthetic","hashes":[{"alg":"SHA-256","content":"invalid"}]}]}
+JSON
+run 'sign schema-invalid synthetic SBOM' cosign attest-blob "${sign_args[@]}" --type "$sbom_type" \
+  --predicate "$probe_dir/invalid-sbom-predicate.json" --bundle "$probe_dir/invalid-sbom.json" "$probe_dir/artifact.bin"
+run 'schema-invalid predicate retains authentic signature and subject' cosign verify-blob-attestation \
+  "${verify_args[@]}" --type "$sbom_type" --bundle "$probe_dir/invalid-sbom.json"
+reject 'authenticated but schema-invalid predicate' 'Official CycloneDX schema validation failed' \
+  node scripts/verified-bundle-statement.mjs "$probe_dir/invalid-sbom.json" "sha256:$digest" "$sbom_type" https://github.com/example/bundle-probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

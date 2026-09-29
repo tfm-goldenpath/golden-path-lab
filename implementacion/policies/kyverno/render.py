@@ -50,7 +50,7 @@ def render(config):
         raise ValueError("image-repository must be a reference without a tag, digest or wildcards")
     if not re.fullmatch(r"[0-9a-f]{40}", config["commit"]):
         raise ValueError("commit must contain 40 hexadecimal characters")
-    if not re.fullmatch(r"1\.[0-9]+", config["sbom_version"]):
+    if config["sbom_version"] not in {"1.7"}:
         raise ValueError("sbom-version must match the generated and verified CycloneDX version")
     if not config["repository"].startswith("https://"):
         raise ValueError("repository must be an explicit HTTPS URL")

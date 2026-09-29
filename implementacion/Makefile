@@ -27,3 +27,7 @@ demo:
 
 reference:
 	bash scripts/demo.sh local reference
+
+.PHONY: setup-validation
+setup-validation:
+	npm ci --prefix tooling --ignore-scripts --no-audit --no-fund

@@ -28,10 +28,10 @@ test('a verified signature is insufficient for a different digest or predicate',
 });
 test('an empty SBOM or a different format is insufficient evidence', () => {
   assert.throws(() => validateSbom({bomFormat:'SPDX'}));
-  assert.throws(() => validateSbom({bomFormat:'CycloneDX',specVersion:'1.6',version:1,components:[]}));
+  assert.throws(() => validateSbom({bomFormat:'CycloneDX',specVersion:'1.7',version:1,components:[]}));
   const component = { name: 'synthetic', type: 'library' };
-  const bom = {bomFormat:'CycloneDX',specVersion:'1.6',version:1,metadata:{component},components:[component]};
-  assert.equal(validateSbom(bom), '1.6');
+  const bom = {bomFormat:'CycloneDX',specVersion:'1.7',version:1,metadata:{component},components:[component]};
+  assert.equal(validateSbom(bom), '1.7');
   for (const invalid of [{}, null, {name:'synthetic'}, {type:'library'}, {name:'',type:'library'}]) {
     assert.throws(() => validateSbom({...bom, components:[invalid]}));
     assert.throws(() => validateSbom({...bom, metadata:{component:invalid}}));

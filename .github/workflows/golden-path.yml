@@ -40,6 +40,7 @@ jobs:
           node-version: ${{ steps.versions.outputs.node }}
       - name: Install tools with checksum verification
         run: |
+          npm ci --prefix tooling --ignore-scripts --no-audit --no-fund
           sudo env PREFIX=/usr/local bash scripts/install-security-tools.sh --with-platform-tools
           python3 --version
           docker info > /dev/null

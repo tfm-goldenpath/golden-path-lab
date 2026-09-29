@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const bash = process.env.BASH_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash');
 const modules = ['context', 'lab', 'delivery', 'attestations', 'workload'];
-const scenarios = ['l01', 'f13', 'f07', 'f08', 'f11'];
+const scenarios = ['l01', 'f13', 'f07', 'f08', 'sbom', 'f11'];
 const repository = 'registry.invalid/quotes';
 const digest = `sha256:${'a'.repeat(64)}`;
 const image = `${repository}@${digest}`;
@@ -83,6 +83,9 @@ scenario_l01_update() {
   command jq -n --arg mode "$mode" '{status:(if $mode=="local" then "CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE" else "NOT_EXECUTED" end)}' > "$state_dir/F07-CI-completed.json"
   command jq -n '{status:"PASS"}' > "$state_dir/L01-image-update.json"
   command jq -n '{status:"SYNTHETIC"}' > "$state_dir/F08-completed.json"
+  for file in F05-completed F06-completed L03-result; do
+    command jq -n '{status:"SYNTHETIC"}' > "$state_dir/$file.json"
+  done
 }
 cleanup() {
   event cleanup
@@ -422,7 +425,7 @@ printf '%s' "$PWD" > "$GP_FIXTURE_ROOT/cwd-before"
 for module in context lab delivery attestations workload; do
   source "$GP_SOURCE_ROOT/scripts/lib/$module.sh"
 done
-for scenario in l01 f13 f07 f08 f11; do
+for scenario in l01 f13 f07 f08 sbom f11; do
   source "$GP_SOURCE_ROOT/tests/scenarios/$scenario.sh"
 done
 set +o > "$GP_FIXTURE_ROOT/options-after"
@@ -542,6 +545,7 @@ for (const [mode, failure] of [['local',''],['github',''],...['update-issue','up
     writeFileSync(join(f.state,'tfm-reference-quote.json'),'{}\n');
     const child=join(f.state,'L01-update'); mkdirSync(child);
     writeFileSync(join(child,'state.json'),'{}');
+    writeFileSync(join(child,'L03-components.json'),'{"synthetic":true}');
     writeFileSync(join(child,'image-repo'),repository+'-update\n');
     writeFileSync(join(child,'digest'),'sha256:'+'b'.repeat(64)+'\n');
     appendFileSync(join(f.root,'tests/scenarios/f11.sh'),String.raw`
@@ -555,6 +559,13 @@ scenario_f07_ci() {
   step update-ci
   step update-ci-restore
   echo '{"status":"CI_REJECTION_AND_RECOVERY"}' > "$state_dir/F07-CI/result.json"
+}
+scenario_sbom_fault() {
+  step "update-$1-$2"
+  local folder=$1-CI
+  [[ "$2" != authorized ]] || folder=$1-admission
+  mkdir "$state_dir/$folder"
+  command jq -n '{status:"SYNTHETIC"}' > "$state_dir/$folder/result.json"
 }
 scenario_f08() {
   step "update-f08-$1"
@@ -589,7 +600,7 @@ node() {
     } else {
       assert.equal(result.status,0,result.stderr);
       const observed=order.filter(s=>s.startsWith('update-'));
-      assert.deepEqual(observed,['update-issue',...(mode==='local'?['update-ci','update-ci-restore','update-f08-before-results']:['update-gate']),'update-authorize',...(mode==='local'?['update-f08-authorized']:[]),'update-apply','update-probe','update-rollout']);
+      assert.deepEqual(observed,['update-issue',...(mode==='local'?['update-ci','update-ci-restore','update-f08-before-results','update-F05-before-results','update-F06-before-results']:['update-gate']),'update-authorize',...(mode==='local'?['update-f08-authorized','update-F05-authorized','update-F06-authorized']:[]),'update-apply','update-probe','update-rollout']);
       assert.equal(archived.report.L04.sharedExecution,'L01-image-update');
       assert.equal(archived.report.L04.image,repository+'-update@sha256:'+'b'.repeat(64));
       assert.equal(archived.report.F07CI.status,mode==='local'?'CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE':'NOT_EXECUTED');

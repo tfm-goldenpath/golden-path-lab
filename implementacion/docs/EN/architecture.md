@@ -51,7 +51,7 @@ Arrows describe data/control dependencies, not a requirement to serialize every 
 | Contract | Minimum information and checks |
 |---|---|
 | Image | Digest reference, `linux/amd64` and correspondence between scanned, signed and deployed objects. Distinguish OCI index and manifest when both exist. |
-| SBOM | Original CycloneDX JSON plus Cosign attestation. Check selected fields/version, expected type, signature and image association. Full-schema validation remains pending; authenticity does not prove completeness. |
+| SBOM | Original CycloneDX JSON plus Cosign attestation. CI validates official CycloneDX 1.7 draft-07 schema and lab content, then checks expected type, signature and image association. Kyverno checks selected fields; authenticity does not prove completeness. |
 | Vulnerabilities | Separate report with identifiable subject, scanner and database. Block HIGH/CRITICAL regardless of fix availability; retain incomplete-scan diagnostics. |
 | Image signature | Validity, artifact correspondence and trusted identity. Constrain OIDC issuer/identity in B and configured development trust in A. |
 | Provenance | Signature, trusted identity, digest, source repository/commit and required builder/workflow. Generating provenance does not automatically establish an SLSA level. |
@@ -127,7 +127,7 @@ Functions require the initialized context. A module must not silently redefine i
 
 ### Extending a scenario
 
-`l01.sh` checks legitimate delivery and a subsequent authorized image replacement. Its second image uses the same source commit with a different build label and gets separate image-specific evidence in `L01-update/`; existing delivery and attestation modules perform those checks. A subshell isolates the replacement context and cleans up its own probe process, while `demo.sh` owns infrastructure cleanup. `check-image-rollout.mjs` records the actual new Pod digests in `L01-image-update.json`. This checks replacement mechanics, not a functional application upgrade.
+`l01.sh` checks legitimate delivery and a subsequent authorized image replacement. Its second image uses the same source commit with a pinned L03 fixture component addition and gets separate image-specific evidence in `L01-update/`; existing delivery and attestation modules perform those checks. A subshell isolates the replacement context and cleans up its own probe process, while `demo.sh` owns infrastructure cleanup. `check-image-rollout.mjs` records the actual new Pod digests in `L01-image-update.json`. This checks replacement mechanics, not a functional application upgrade.
 
 `f13.sh` checks missing-results rejection before authorization is issued. In local mode, `f07.sh` then removes only the independent image signature after authorization, attributes rejection and restores the original artifact. Initial L01 consumes that same digest; F07 completion reuses the Deployment/Pod rollout validator after successful HTTP probes. Its intermediate result remains unchanged. Hosted mode records F07 as not executed/pending. `f11.sh` checks early privileged input and a forbidden update after legitimate admission. Common resources and evidence production stay in laboratory modules.
 
@@ -173,3 +173,7 @@ verification failures as integration failures. The scenario independently verifi
 non-targets when the gate stops at the altered bundle. `l01.sh` links completion to
 the existing L04 rollout/HTTP observation; `demo.sh` owns infrastructure cleanup.
 See the [F08 record](cases/F08/record.md) for scope and actual evidence.
+
+## SBOM control family
+
+`validate-sbom-schema.mjs` owns offline schema validation using the separate tooling lock and unmodified official schemas. `sbom-scenario-evidence.mjs` owns local fixture planning, OCI isolation and donor diagnostics; `tests/scenarios/sbom.sh` owns fault/recovery orchestration. The production downloader retains mismatched received evidence without relaxing its subject check. L03 reuses replacement analysis and authorization with a real pinned component addition. See the [runbook](cases/F05-F06-L03/runbook.md).

@@ -43,7 +43,7 @@ capture_source_context() {
   local snapshot
   commit=$(git -C "$root" rev-parse HEAD 2>/dev/null || printf '%040d' 0)
   repository=${GP_SOURCE_REPOSITORY:-https://example.invalid/tfm/local}
-  snapshot=$(find services/quotes-node policies scripts tests versions.env tools.lock.json ../.github/workflows -type f ! -path '*/__pycache__/*' ! -path '*/node_modules/*' ! -path '*/.tools/*' -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
+  snapshot=$(find services/quotes-node policies scripts tests schemas tooling/package.json tooling/package-lock.json versions.env tools.lock.json ../.github/workflows -type f ! -path '*/__pycache__/*' ! -path '*/node_modules/*' ! -path '*/.tools/*' -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
   if [[ "$mode" == github ]]; then
     [[ "${GITHUB_ACTIONS:-}" == true && "${GITHUB_EVENT_NAME:-}" == workflow_dispatch && -n "${GH_TOKEN:-}" ]] || fail 'Lane B requires a real workflow_dispatch run with the GitHub token.'
     repository="https://github.com/$GITHUB_REPOSITORY"; commit=$GITHUB_SHA

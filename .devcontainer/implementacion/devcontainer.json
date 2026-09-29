@@ -22,7 +22,7 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  "postCreateCommand": "bash implementacion/scripts/check-environment.sh --tools-only",
+  "postCreateCommand": "npm ci --prefix implementacion/tooling --ignore-scripts --no-audit --no-fund && bash implementacion/scripts/check-environment.sh --tools-only",
   "customizations": {
     "vscode": {
       "settings": {

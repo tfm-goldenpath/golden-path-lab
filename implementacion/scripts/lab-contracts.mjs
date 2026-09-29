@@ -3,6 +3,8 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 
+import {validateSchema} from './validate-sbom-schema.mjs';
+
 export const RESULTS_TYPE = 'https://tfm-goldenpath.dev/attestations/verification-results/v1';
 export const CHECKS = ['unitTests', 'manifestPolicy', 'workflowPolicy', 'vulnerabilityPolicy', 'signature', 'sbom', 'provenance'];
 export function assertDigest(image) {
@@ -30,6 +32,7 @@ export function manifest(image, namespace = 'tfm-golden', secret = false) {
   };
 }
 export function validateSbom(bom) {
+  validateSchema(bom);
   const component = value => value !== null && typeof value === 'object' && !Array.isArray(value)
     && typeof value.name === 'string' && value.name.trim().length > 0
     && typeof value.type === 'string' && value.type.trim().length > 0;

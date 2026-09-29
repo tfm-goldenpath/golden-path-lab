@@ -69,6 +69,7 @@ for (const mode of ['local','github']) test(`gate verifier binds exact bundle, d
   const bundle=f.f.bundles[0];
   const options={...f.options,mode,repository:'https://github.com/example/lab',commit:'b'.repeat(40),
     identity:'https://github.com/example/lab/.github/workflows/golden-path.yml@refs/heads/main',ref:'refs/heads/main'};
+  writeFileSync(join(f.directory,'fresh.bundle.json'),JSON.stringify(bundle));
   let observed;
   const runner=(command,args)=>{observed={command,args}; return {status:0};};
   const result=authenticateBundle(options,bundle,signature,join(f.directory,'fresh.bundle.json'),join(f.directory,'adapter'),runner);
@@ -88,7 +89,7 @@ for (const mode of ['local','github']) test(`gate verifier binds exact bundle, d
   }
   assert.throws(()=>authenticateBundle(options,bundle,signature,'fresh',join(f.directory,'rejected'),()=>({status:19})),/Cryptographic verification failed/);
   const wrong={...options,image:options.image.replace(/a{64}$/,'b'.repeat(64))};
-  assert.throws(()=>authenticateBundle(wrong,bundle,signature,'fresh',join(f.directory,'wrong'),runner),/required digest and type/);
+  assert.throws(()=>authenticateBundle(wrong,bundle,signature,join(f.directory,'fresh.bundle.json'),join(f.directory,'wrong'),runner),/required digest and type/);
 });
 test('hosted provenance uses the exact retrieved bundle with all existing identity/source constraints',t=>{
   const f=setup(t);
@@ -140,4 +141,38 @@ for (const [label,result,kind] of [
   assert.equal(f.report().status,'INTEGRATION_FAILURE');
   assert.deepEqual(f.report().verificationFailure,{predicate:signature,exitStatus:result.status,kind});
   assert.ok(!readFileSync(join(f.directory,'fresh.result.json'),'utf8').includes('CRYPTOGRAPHIC_ALTERATION'));
+});
+for (const authorized of [false,true]) test(`F05 absence requires authentication of every non-target (${authorized})`,async t=>{
+  const f=setup(t,[signature,provenance,...(authorized?[results]:[])]);
+  f.options.phase=authorized?'authorized':'before-results';
+  writeFileSync(join(f.directory,'sbom.cdx.json'),'original file cannot replace attestation');
+  writeFileSync(join(f.directory,'verified-sbom.json'),'{"stale":true}');
+  assert.equal((await f.run()).status,'MISSING_SBOM');
+  assert.deepEqual([...f.calls].sort(),[signature,provenance,...(authorized?[results]:[])].sort());
+});
+test('missing SBOM plus another requirement or failed non-target authentication is not F05',async t=>{
+  for(const types of [[provenance],[signature]]) {
+    const f=setup(t,types); await assert.rejects(f.run()); assert.equal(f.report().status,'INTEGRATION_FAILURE');
+  }
+  const f=setup(t,[signature,provenance]); f.dependencies.authenticate=()=>{throw new Error('bad key');};
+  await assert.rejects(f.run()); assert.equal(f.report().status,'INTEGRATION_FAILURE');
+});
+test('F06 stops at retrieval mismatch, retaining exact received bytes without reaching target Cosign',async t=>{
+  const f=setup(t);
+  const foreign=fixture({transform:b=>{
+    const s=JSON.parse(Buffer.from(b.dsseEnvelope.payload,'base64'));
+    if(s.predicateType===sbom) {s.subject[0].digest.sha256='b'.repeat(64);b.dsseEnvelope.payload=Buffer.from(JSON.stringify(s)).toString('base64');}
+    return b;
+  }});
+  f.dependencies.download=()=>foreign.run();
+  await assert.rejects(f.run(),/subject differs/);
+  assert.equal(f.calls.length,0);
+  const report=f.report(); assert.equal(report.subjectMismatch.predicate,sbom);
+  assert.equal(report.subjectMismatch.inventoryComplete,false);
+  const received=JSON.parse(readFileSync(join(f.directory,'fresh.subject-mismatch.json')));
+  assert.ok(received.received.bundle);assert.equal(received.boundary,'registry-inventory');
+});
+test('F05 retrieval failure cannot be classified as missing SBOM',async t=>{
+  const f=setup(t,[signature,provenance]);f.dependencies.download=()=>{throw new Error('unreadable registry artifact');};
+  await assert.rejects(f.run());assert.equal(f.report().status,'INTEGRATION_FAILURE');
 });
