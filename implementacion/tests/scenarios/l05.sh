@@ -9,11 +9,13 @@ scenario_l05_prepare() {
 
 scenario_l05() (
   trap 'code=$?; trap - EXIT; if [[ -n "${port_pid:-}" ]]; then kill "$port_pid" 2>/dev/null || true; wait "$port_pid" 2>/dev/null || true; fi; exit "$code"' EXIT
-  local parent_state="$state_dir" previous_image="$image" revision source name file
+  local parent_state="$state_dir" previous_image revision source name file
   if [[ "$mode" != local || ! -f "$parent_state/L05-source-authorization.json" ]]; then
     jq -n '{scenario:"L05",status:"NOT_EXECUTED",reason:"Requires an explicit local immutable commit pair, or two separate authorized hosted runs"}' > "$parent_state/L05-result.json"
     exit 0
   fi
+  # L01 ran in a subshell: the parent's image still identifies the initial delivery.
+  previous_image=$(jq -er 'select(.scenario == "L04" and .status == "PASS" and .functionality == "healthy" and .image == .toImage) | .toImage | select(type == "string" and test("^[^@]+@sha256:[a-f0-9]{64}$"))' "$parent_state/L04-result.json")
   for name in from to; do
     state_dir="$parent_state/L05-$name"
     mkdir "$state_dir"

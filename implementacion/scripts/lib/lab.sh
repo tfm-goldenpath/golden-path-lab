@@ -135,6 +135,26 @@ lab_apply_admission_policies() {
   if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
   python3 policies/kyverno/render.py "${renderer_args[@]}"
   k apply -f "$state_dir/admission-policies.json"
+  k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-applied.json"
   k wait --for=condition=Ready clusterpolicy/tfm-runtime clusterpolicy/tfm-signature clusterpolicy/tfm-sbom clusterpolicy/tfm-provenance clusterpolicy/tfm-results --timeout=120s
+  # Kyverno 1.19.1 does not populate Ready.observedGeneration. A Ready value
+  # retained from an older spec cannot establish cache freshness. Startup syncs
+  # informers and warms the policy cache before serving admission (see runbook).
+  # This is lab administration, before any fault/recovery trial begins.
+  k -n kyverno rollout restart deployment/kyverno-admission-controller
+  k -n kyverno rollout status deployment/kyverno-admission-controller --timeout=180s
+  k -n kyverno logs deployment/kyverno-admission-controller --all-containers=true > "$state_dir/admission-cache-startup.log"
+  if grep -Eq 'failed to bootstrap non leader controllers|failed to wait for cache sync' "$state_dir/admission-cache-startup.log"; then
+    fail 'Admission controller failed to load the policy cache.'
+  fi
+  k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-loaded.json"
+  jq -e -n --slurpfile applied "$state_dir/admission-policy-applied.json" --slurpfile loaded "$state_dir/admission-policy-loaded.json" '
+    def identity: [.items[] | {name:.metadata.name,uid:.metadata.uid,generation:.metadata.generation,spec}] | sort_by(.name);
+    ($applied[0] | identity) == ($loaded[0] | identity) and
+    ($loaded[0].items | length == 5 and all(.[];
+      (.metadata.uid | type == "string" and length > 0) and
+      (.metadata.generation | type == "number" and . > 0) and
+      any(.status.conditions[]?; .type == "Ready" and .status == "True")))
+  ' > "$state_dir/admission-policy-loaded-check.json"
   [[ "$(actor tfm-golden auth can-i update clusterpolicies.kyverno.io 2>/dev/null || true)" == no ]] || fail 'The delivery actor has permission to change the enforcement barriers.'
 }

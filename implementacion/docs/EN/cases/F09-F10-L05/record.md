@@ -33,3 +33,7 @@ Local `run-CKbpvhof` selected/exported the real revision pair but failed buildin
 the initial image because Docker DNS could not resolve Docker Hub. The failed
 archive and its 14 internal hashes verified. F09/F10 registry/admission and L05
 delivery remain **NOT_EXECUTED** in this increment. Human acceptance is pending.
+
+The subsequent [PR #24 review](../../../../registros/pr24_review_EN.md) records
+comment fixes and audits CI `36631532871` plus hosted run `36631562615`. The latter
+ran baseline `38631e1`, so it does not close this family's integration requirements.

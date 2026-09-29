@@ -12,6 +12,7 @@ function run(t,fault='') {
   for(const n of ['from','to']) mkdirSync(join(privateDir,'L05-source',n),{recursive:true});
   writeFileSync(join(state,'state.json'),JSON.stringify({sourceRepository:'https://example.invalid/lab',sourceSnapshot:'a'.repeat(64)}));
   writeFileSync(join(state,'tfm-reference-quote.json'),'{}\n');
+  if(fault!=='missing-predecessor') writeFileSync(join(state,'L04-result.json'),JSON.stringify({scenario:'L04',status:fault==='failed-predecessor'?'FAIL':'PASS',image:'registry/image@sha256:'+'b'.repeat(64),toImage:'registry/image@sha256:'+'b'.repeat(64),functionality:'healthy'}));
   writeFileSync(join(state,'L05-source-authorization.json'),JSON.stringify(Object.fromEntries(['from','to'].map((name,i)=>[name,{commit:String(i+1).repeat(40),directory:join(privateDir,'L05-source',name),snapshotSha256:String(i+1).repeat(64)}]))));
   const r=spawnSync('bash',['-c',String.raw`
 set -Eeuo pipefail
@@ -31,17 +32,21 @@ lab_apply_admission_policies() { event configure; }
 actor() { event admission; }
 k() { echo '{}'; }
 probe() { event http; echo '{}' > "$state_dir/tfm-golden-quote.json"; }
-node() { if [[ "$1" == --test ]]; then event source-tests; else event rollout; echo '{}'; fi; }
+node() { if [[ "$1" == --test ]]; then event source-tests; else event rollout; echo "$2" >> "$GP_STATE/predecessors"; echo '{}'; fi; }
 scenario_l05
 `],{env:{...process.env,BASH_ENV:'',GP_SOURCE:source,GP_STATE:state,GP_PRIVATE:privateDir,GP_FAULT:fault},encoding:'utf8'});
   assert.ifError(r.error);
-  return {...r,state,events:readFileSync(join(state,'events'),'utf8').trim().split('\n')};
+  return {...r,state,events:existsSync(join(state,'events'))?readFileSync(join(state,'events'),'utf8').trim().split('\n'):[]};
 }
 test('L05 requires separate fresh tests/evidence and exact authorization before each admission',t=>{
   const r=run(t);assert.equal(r.status,0,r.stderr);
   const stages=['tests','source-tests','build','manifest','policy','scan','verify','results','configure','admission','http','rollout'];
   assert.deepEqual(r.events,['from','to'].flatMap(n=>stages.map(s=>n+':'+s)));
   const result=JSON.parse(readFileSync(join(r.state,'L05-result.json')));assert.notEqual(result.from.commit,result.to.commit);assert.notEqual(result.from.image,result.to.image);
+  assert.deepEqual(readFileSync(join(r.state,'predecessors'),'utf8').trim().split('\n'),['registry/image@sha256:'+'b'.repeat(64),'registry/image@sha256:from']);
+});
+for(const fault of ['missing-predecessor','failed-predecessor']) test(`L05 stops before delivery on ${fault}`,t=>{
+  const r=run(t,fault);assert.notEqual(r.status,0);assert.deepEqual(r.events,[]);
 });
 for(const step of ['tests','source-tests','build','scan','verify','results','configure','admission','http','rollout']) test(`L05 stops on second revision ${step} failure and preserves first result`,t=>{
   const r=run(t,'to:'+step);assert.notEqual(r.status,0,r.stderr);

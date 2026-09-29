@@ -1,5 +1,9 @@
 # F09 / F10 / L05 implementation and validation
 
+Subsequent PR #24 execution/comment review and local corrections are recorded
+[separately](pr24_review_EN.md). The original implementation-session observations
+below refer to changes subsequently committed as `d337a3c`.
+
 Date: 2026-09-29. Branch: `test/f09-f10-l05-provenance`.
 Base: `38631e14a6f44838b32c959f138c13ac06b5cecd` (`main`). Changes remain in the
 working tree for review. Human review and final decision: **pending**.

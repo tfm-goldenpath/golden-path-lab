@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Export only actual immutable Git objects; never change the user's index/HEAD.
 import {execFileSync} from 'node:child_process';
-import {mkdirSync,writeFileSync,existsSync} from 'node:fs';
+import {mkdirSync,writeFileSync,existsSync,chmodSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
 const [repository,from,to,destination]=process.argv.slice(2);
@@ -28,7 +28,8 @@ try {
       if(!['100644','100755'].includes(mode) || type!=='blob' || path.split('/').some(p=>!p || p==='.' || p==='..') || path.startsWith('/') || path.includes('\\')) throw new Error('Unsupported source tree entry');
       const bytes=git('cat-file','blob',oid),file=join(directory,path);
       mkdirSync(dirname(file),{recursive:true});writeFileSync(file,bytes,{flag:'wx',mode:mode==='100755'?0o755:0o644});
-      files.push({path,gitBlob:oid,sha256:createHash('sha256').update(bytes).digest('hex')});
+      chmodSync(file,mode==='100755'?0o755:0o644); // Preserve Git modes even under a restrictive umask.
+      files.push({path,mode,gitBlob:oid,sha256:createHash('sha256').update(bytes).digest('hex')});
     }
     result[name]={commit:revision,tree:trees[index],applicationTree:applicationTrees[index],directory,files,snapshotSha256:createHash('sha256').update(JSON.stringify(files)).digest('hex')};
   }

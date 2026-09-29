@@ -61,8 +61,8 @@ make -C implementacion demo
 
 `l05-source.mjs` exports actual Git blobs into owned temporary storage without
 checking out a branch or changing the index. It records commits, trees and file
-hashes. Before each build, input capture checks exported contents against that
-record; edits after selection fail. Both builds still use the currently pinned
+hashes and Git file modes. Before each build, input capture checks exported bytes
+and permissions against that record; edits or chmod after selection fail. Both builds still use the currently pinned
 Node base passed explicitly as a build argument. This is a source-revision
 experiment, not reconstruction of every historical build tool or base image.
 
@@ -74,6 +74,21 @@ policy for exactly that revision before admission. Each must roll out a distinct
 digest and pass the HTTP contract. Policy changes occur between legitimate
 executions, never within F09/F10 fault/recovery trials. No broad revision allow-list
 is introduced. With no pair supplied, the result is explicitly `NOT_EXECUTED`.
+
+The first L05 rollout uses the successful L04 replacement as its predecessor;
+missing or unsuccessful L04 evidence stops L05 before building. The second uses
+the first L05 delivery. The parent's initial image is not the active predecessor.
+
+After applying each exact revision policy, the laboratory waits for policy Ready,
+restarts its admission-controller Deployment and waits for rollout. Pinned Kyverno
+1.19.1 does not populate `Ready.observedGeneration`; it retains Ready across spec
+updates. Its [startup sequence](https://github.com/kyverno/kyverno/blob/v1.19.1/cmd/kyverno/main.go)
+synchronizes informers and [warms the policy cache](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/controllers/policycache/controller.go)
+before starting the webhook server. Startup cache errors, rollout failure,
+non-ready policies or changes in the applied policy UID/generation/spec stop the
+delivery. Applied/loaded snapshots and startup logs are retained. This restart
+also runs at initial installation, before workloads, and never inside a
+fault/recovery trial. It is a procedure for the owned laboratory controller.
 
 ## Hosted boundary
 
@@ -102,5 +117,9 @@ recovery observations. Gate output lives alongside them in `L01-update/`.
 `L05-source-authorization.json`, `L05-from/`, `L05-to/` and `L05-result.json` retain
 source selection and distinct execution results. Packaging includes these paths
 and excludes private keys, credentials, state and exported temporary sources.
+`execution-summary.json` lists each scenario's recorded status and evidence paths.
+Retained partial files without a completion record are `INCOMPLETE`; absent records
+are `NOT_RECORDED`, not inferred passes or claims of execution. Explicit
+`NOT_EXECUTED` and malformed `INVALID_RECORD` observations remain distinguishable.
 See the [validation record](../../../../registros/f09_f10_l05_validation_EN.md)
 for actual checks, unavailable boundaries and test-first evidence.

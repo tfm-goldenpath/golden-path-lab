@@ -178,4 +178,5 @@ See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](
 - [x] Add opt-in L05 using two explicit immutable main-history commits, actual exported application source, separate tests/builds/evidence and exact revision authorization.
 - [ ] Complete and review fresh local F09/F10 CI and directed admission plus L05 rollout/HTTP. Consult the [validation record](registros/f09_f10_l05_validation_EN.md) for actual results and outstanding boundaries.
 - [ ] Demonstrate hosted L05 across two authorized actual Actions run revisions and audit both packages. Hosted F09/F10 negatives remain **NOT_EXECUTED**.
+- [x] Address the five PR #24 comments locally and audit the supplied CI/hosted logs and package; see the [review record](registros/pr24_review_EN.md). Hosted run `36631562615` checked baseline `38631e1`, not PR head `d337a3c` or the review fixes.
 - [ ] Human review and final acceptance; no campaign measurements claimed.

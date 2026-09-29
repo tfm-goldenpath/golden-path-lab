@@ -44,7 +44,8 @@ make -C implementacion demo
 ```
 
 Se exportan blobs Git reales a almacenamiento temporal propio sin modificar HEAD,
-índice ni cambios del usuario. Se registran commits, árboles y hashes; cambios
+índice ni cambios del usuario. Se registran commits, árboles, hashes y modos Git;
+cambios de contenido o permisos mediante chmod
 posteriores a la selección invalidan la construcción. Se mantiene la imagen Node
 actual fijada por digest, pasada explícitamente al Dockerfile histórico. No se
 reconstruye todo el entorno histórico.
@@ -55,6 +56,19 @@ Cada revisión se autoriza de forma exacta antes de su admisión. Se exigen dige
 distintos, rollout y HTTP válidos. Las políticas cambian entre entregas legítimas,
 nunca durante un ensayo de fallo/recuperación. Sin el par, L05 queda
 `NOT_EXECUTED`. Un cambio solo de metadatos no basta.
+
+El primer rollout L05 usa como predecesor el reemplazo L04 completado y saludable;
+si falta ese resultado o falló, L05 se detiene antes de construir. El segundo usa
+la primera entrega L05, no la imagen inicial conservada por el proceso padre.
+
+Tras aplicar cada política exacta, el laboratorio espera Ready, reinicia su
+Deployment de admisión y espera el rollout. Kyverno 1.19.1 no rellena
+`Ready.observedGeneration`: Ready puede proceder de la especificación anterior.
+El arranque sincroniza informers y carga la caché de políticas antes del servidor
+webhook; las fuentes fijadas están enlazadas en la guía EN. Errores de carga,
+rollout fallido, políticas no listas o cambios de UID/generación/especificación
+detienen la entrega. Se conservan snapshots y logs. Se hace también al instalar,
+antes de desplegar; nunca durante los ensayos de fallo/recuperación.
 
 ## Hosted y evidencia
 
@@ -74,3 +88,8 @@ los informes del gate, `L05-source-authorization.json`, `L05-from/`, `L05-to/` y
 exportadas temporales. Ver [oráculo](record.md), [guía EN](../../../EN/cases/F09-F10-L05/runbook.md)
 y [validación](../../../../registros/f09_f10_l05_validation_EN.md). Son comprobaciones
 funcionales, no datos de campaña; revisión humana pendiente.
+
+`execution-summary.json` enumera estados registrados y rutas por escenario.
+Archivos parciales sin registro final indican `INCOMPLETE`; sin registro,
+`NOT_RECORDED`. No se infiere éxito. Se distinguen `NOT_EXECUTED` explícito y
+`INVALID_RECORD` para registros malformados.

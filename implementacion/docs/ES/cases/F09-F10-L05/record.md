@@ -33,3 +33,7 @@ La ejecución `run-CKbpvhof` seleccionó y exportó las revisiones reales, pero 
 al construir la imagen inicial por DNS de Docker hacia Docker Hub. Se verificaron
 el archivo fallido y sus 14 hashes internos. F09/F10 en registro/admisión y las
 entregas L05 permanecen **NOT_EXECUTED** en este incremento. Aceptación humana pendiente.
+
+La [revisión posterior del PR #24](../../../../registros/pr24_review_ES.md) registra
+correcciones y auditoría de CI `36631532871` e integración `36631562615`. Esta
+última ejecutó la base `38631e1`; no cierra la aceptación de esta familia.

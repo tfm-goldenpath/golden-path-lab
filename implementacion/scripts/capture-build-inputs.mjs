@@ -21,14 +21,14 @@ function walk(directory) {
     if(stat.isDirectory()) walk(path);
     else if(stat.isFile()) {
       const bytes=readFileSync(path);
-      files.push({path:relative(root,path),sha256:createHash('sha256').update(bytes).digest('hex'),content:bytes.toString('utf8')});
+      files.push({path:relative(root,path),mode:(0o100000 | (stat.mode & 0o7777)).toString(8),sha256:createHash('sha256').update(bytes).digest('hex'),content:bytes.toString('utf8')});
     }
   }
 }
 walk(root);
 if(authorized) {
-  const actual=files.map(({path,sha256})=>({path,sha256})).sort((a,b)=>a.path.localeCompare(b.path));
-  const expected=authorized.files.map(({path,sha256})=>({path,sha256})).sort((a,b)=>a.path.localeCompare(b.path));
+  const actual=files.map(({path,mode,sha256})=>({path,mode,sha256})).sort((a,b)=>a.path.localeCompare(b.path));
+  const expected=authorized.files.map(({path,mode,sha256})=>({path,mode,sha256})).sort((a,b)=>a.path.localeCompare(b.path));
   if(JSON.stringify(actual)!==JSON.stringify(expected)) throw new Error('L05 exported source changed after selection');
 }
 if(context==='tests/fixtures/l03') {

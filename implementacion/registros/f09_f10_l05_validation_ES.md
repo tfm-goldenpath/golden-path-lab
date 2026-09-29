@@ -1,5 +1,9 @@
 # Validación F09 / F10 / L05
 
+La [revisión posterior del PR #24](pr24_review_ES.md) registra las ejecuciones y
+correcciones posteriores. Las observaciones originales siguientes corresponden
+al trabajo después registrado en el commit `d337a3c`.
+
 Fecha: 2026-09-29. Rama: `test/f09-f10-l05-provenance`.
 Base: `38631e14a6f44838b32c959f138c13ac06b5cecd`. Cambios locales sin commit;
 revisión humana y decisión final pendientes. [Registro principal y hashes EN](f09_f10_l05_validation_EN.md).

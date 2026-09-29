@@ -1,7 +1,7 @@
 // Real temporary Git histories; no registry, signing or admission claim.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,chmodSync,statSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync,spawnSync} from 'node:child_process';
@@ -23,6 +23,25 @@ test('L05 exports actual distinct immutable source contents without changing che
   assert.equal(readFileSync(join(f.root,'export/from/src/index.js'),'utf8'),'export const version=1;\n');
   assert.equal(readFileSync(join(f.root,'export/to/src/index.js'),'utf8'),'export const version=2;\n');
   assert.equal(readFileSync(f.file,'utf8'),'uncommitted user content\n');assert.equal(f.git('rev-parse','HEAD'),f.to);
+});
+
+for (const mode of [0o755,0o600,0o4644]) test(`L05 rejects exported file mode tampering ${mode.toString(8)}`,t=>{
+  const f=setup(t),r=f.run();assert.equal(r.status,0,r.stderr);
+  const report=JSON.parse(r.stdout),auth=join(f.root,'authorization.json');writeFileSync(auth,r.stdout);
+  const file=join(report.to.directory,'src/index.js');
+  chmodSync(file,mode);
+  const changed=spawnSync('node',[resolve(import.meta.dirname,'../../scripts/capture-build-inputs.mjs'),report.to.directory,'base',f.to,auth,'to'],{encoding:'utf8'});
+  assert.notEqual(changed.status,0);assert.match(changed.stderr,/source changed/);
+});
+
+test('L05 records and exports executable Git modes',t=>{
+  const f=setup(t);f.git('checkout','--', 'implementacion/services/quotes-node/src/index.js');
+  chmodSync(f.file,0o755);f.git('add','.');f.git('commit','-m','executable');
+  const r=f.run(f.from,f.git('rev-parse','HEAD'));assert.equal(r.status,0,r.stderr);
+  const report=JSON.parse(r.stdout);
+  assert.equal(report.from.files[0].mode,'100644');assert.equal(report.to.files[0].mode,'100755');
+  assert.equal(statSync(join(report.to.directory,'src/index.js')).mode & 0o7777,0o755);
+  assert.notEqual(report.from.snapshotSha256,report.to.snapshotSha256);
 });
 for(const invalid of ['same','abbreviation','unknown','unreachable','same-tree']) test(`L05 refuses ${invalid} revision selection`,t=>{
   const f=setup(t);let a=f.from,b=f.to;

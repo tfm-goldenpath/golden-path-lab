@@ -37,6 +37,36 @@ def write_metadata(destination, text):
         if os.path.exists(temporary):
             os.unlink(temporary)
 
+def scenario_summary(source, files):
+    """Report retained observations, never infer success from a directory."""
+    summaries = {}
+    for case in ('L01', 'L03', 'L04', 'F05', 'F06', 'F07', 'F07CI', 'F08', 'F09', 'F10', 'F11', 'F13', 'L05'):
+        directories = {
+            'L01': ['L01-update'], 'L03': ['L01-update'], 'L04': ['L01-update'],
+            'F07': ['F07'], 'F07CI': ['L01-update/F07-CI'],
+            'L05': ['L05-from', 'L05-to'],
+        }.get(case, ['L01-update/' + case + '-' + phase for phase in ('CI', 'admission')])
+        retained = [name for name in directories if any(p.parent == source / name for p in files)]
+        entry = {'status': 'INCOMPLETE' if retained else 'NOT_RECORDED', 'evidence': retained}
+        stem = 'F07-CI' if case == 'F07CI' else case
+        record = source / (stem + ('-result.json' if case.startswith('L') else '-completed.json'))
+        aggregate = source / 'result.json'
+        candidate = record if record in files else aggregate if aggregate in files else None
+        if candidate:
+            try:
+                value = json.loads(candidate.read_text())
+                if candidate == aggregate:
+                    value = value.get(case) if isinstance(value, dict) else None
+                if value is not None:
+                    status = value.get('status', 'RECORDED') if isinstance(value, dict) else value
+                    if not isinstance(status, str) or not status:
+                        raise ValueError('Invalid scenario status')
+                    entry.update(status=status, record=candidate.relative_to(source).as_posix())
+            except (ValueError, UnicodeError):
+                entry.update(status='INVALID_RECORD', record=candidate.relative_to(source).as_posix())
+        summaries[case] = entry
+    return summaries
+
 def package(source, output, status):
     source, output = Path(source).resolve(), Path(output).resolve()
     allowed = {'.json', '.log', '.txt', '.yaml'}
@@ -69,8 +99,9 @@ def package(source, output, status):
         if metadata.is_symlink():
             raise ValueError('Refusing symlinked evidence metadata: ' + metadata.name)
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'L01 image replacement + F13 + F11 integration demonstration; optional F07/F08 directed evidence; not the experimental campaign',
+        'scope': 'L01/L03/L04 delivery + F13/F11; optional F05/F06/F07/F08/F09/F10 trials and L05 source deliveries; not the experimental campaign',
         'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
+        'scenarios': scenario_summary(source, files),
         'secretsIncluded': False}, indent=2) + '\n')
     files = [p for p in files if p != summary] + [summary]
     write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.relative_to(source).as_posix() + '\n' for p in files))
