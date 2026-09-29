@@ -285,3 +285,12 @@ separa ejecuciones observadas de expectativas. F08 y F07 negativo alojados sigue
 ## Incremento de la familia SBOM
 
 Instale el validador con `make setup-validation` antes de las pruebas locales. La sustitución incorpora F05/F06 en CI y admisión dirigida, con recuperación exacta antes de autorizar y aceptación compartida L01/L03/L04. Consulte el [procedimiento SBOM](../F05-F06-L03/runbook.md) y su limitación de integración registrada. F05/F06 negativos alojados permanecen NOT_EXECUTED.
+
+### Inicialización de admisión
+
+La instalación inicial no reinicia Kyverno. El laboratorio espera Pods actuales
+Ready y endpoints coincidentes, y hace un dry-run de servidor con el actor
+restringido: exige el rechazo exacto por resultados ausentes. Este preflight no
+sustituye inventarios ni petición original F13. Los timeouts siguen siendo errores
+de integración. Se conservan logs por Pod y EndpointSlices, también después del
+fallo. Ver el [registro de corrección](../../../../registros/kyverno_readiness_fix_ES.md).

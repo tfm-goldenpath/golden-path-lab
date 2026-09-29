@@ -61,14 +61,27 @@ El primer rollout L05 usa como predecesor el reemplazo L04 completado y saludabl
 si falta ese resultado o falló, L05 se detiene antes de construir. El segundo usa
 la primera entrega L05, no la imagen inicial conservada por el proceso padre.
 
-Tras aplicar cada política exacta, el laboratorio espera Ready, reinicia su
-Deployment de admisión y espera el rollout. Kyverno 1.19.1 no rellena
-`Ready.observedGeneration`: Ready puede proceder de la especificación anterior.
-El arranque sincroniza informers y carga la caché de políticas antes del servidor
-webhook; las fuentes fijadas están enlazadas en la guía EN. Errores de carga,
-rollout fallido, políticas no listas o cambios de UID/generación/especificación
-detienen la entrega. Se conservan snapshots y logs. Se hace también al instalar,
-antes de desplegar; nunca durante los ensayos de fallo/recuperación.
+La instalación inicial aplica políticas sin reiniciar el controlador. Una
+actualización posterior de revisión exacta (L05) conserva el reinicio para renovar
+la caché: Kyverno 1.19.1 no rellena `Ready.observedGeneration`. Las fuentes fijadas
+y su secuencia de arranque están enlazadas en la guía EN. Nunca se reinicia durante
+un ensayo de fallo/recuperación.
+
+Ambas rutas esperan rollout y Pods Ready, no terminantes, pertenecientes a la
+revisión actual del Deployment. Los EndpointSlices de `kyverno-svc` deben apuntar
+a esos Pods en el puerto fijado. Se permiten hasta 30 observaciones separadas por
+dos segundos para convergencia; errores de API o snapshots malformados detienen
+el proceso. Este límite no incluye el tiempo de las peticiones API. Los logs se
+leen por nombre de Pod, nunca mediante selección automática del Deployment.
+Las políticas deben conservar UID, generación y especificación, y seguir Ready.
+
+Un **dry-run de servidor** con el actor restringido comprueba la respuesta real:
+al instalar exige el rechazo único y exacto por resultados ausentes; al actualizar
+L05 exige aceptar la entrega ya autorizada. El primer dry-run no cuenta como otra
+observación F13; sus inventarios y petición original siguen comprobándose.
+No se reintentan errores webhook ni se atribuyen timeouts a detección de política.
+La limpieza retiene Pods, EndpointSlices y logs por Pod posteriores al fallo.
+Ver el [registro de corrección](../../../../registros/kyverno_readiness_fix_ES.md).
 
 ## Hosted y evidencia
 

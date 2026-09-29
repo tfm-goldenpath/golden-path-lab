@@ -180,3 +180,8 @@ See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](
 - [ ] Demonstrate hosted L05 across two authorized actual Actions run revisions and audit both packages. Hosted F09/F10 negatives remain **NOT_EXECUTED**.
 - [x] Address the five PR #24 comments locally and audit the supplied CI/hosted logs and package; see the [review record](registros/pr24_review_EN.md). Hosted run `36631562615` checked baseline `38631e1`, not PR head `d337a3c` or the review fixes.
 - [ ] Human review and final acceptance; no campaign measurements claimed.
+
+## Merged-run admission readiness correction
+
+- [x] Reproduce the readiness regression and implement initial/update separation, current Pod/endpoint checks, explicit logs and server dry-run; see the [record](registros/kyverno_readiness_fix_EN.md).
+- [ ] Validate the fix in real admission and a separately authorized hosted run on the fix revision. Failed run `36636319864` attempts 1/2 remain integration errors, not F13 detections.

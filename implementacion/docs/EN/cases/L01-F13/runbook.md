@@ -283,3 +283,13 @@ pending a successful separately authorized execution with audited evidence.
 ## SBOM family increment
 
 Install schema tooling with `make setup-validation` before local tests. The replacement now includes F05/F06 early CI and directed admission checks, with exact recovery before normal authorization and shared L01/L03/L04 acceptance. See the [SBOM runbook](../F05-F06-L03/runbook.md) for validation responsibilities and the recorded integration limitation. Hosted negative F05/F06 remain NOT_EXECUTED.
+
+### Admission initialization
+
+Initial policy installation does not restart Kyverno. The laboratory waits for
+current Ready controller Pods and matching Service endpoints, then performs a
+restricted-actor server dry-run requiring the exact missing-results denial. This
+is an availability preflight; F13 still performs its original inventory checks
+and actual request. Timeouts remain integration errors. Named-Pod logs and
+EndpointSlices are retained, including after failure. See the
+[readiness correction record](../../../../registros/kyverno_readiness_fix_EN.md).

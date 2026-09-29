@@ -37,3 +37,7 @@ entregas L05 permanecen **NOT_EXECUTED** en este incremento. Aceptación humana 
 La [revisión posterior del PR #24](../../../../registros/pr24_review_ES.md) registra
 correcciones y auditoría de CI `36631532871` e integración `36631562615`. Esta
 última ejecutó la base `38631e1`; no cierra la aceptación de esta familia.
+
+La ejecución merged `36636319864` falló dos veces en F13 por timeout webhook,
+antes de esta familia. La [corrección de disponibilidad](../../../../registros/kyverno_readiness_fix_ES.md)
+conserva los mismos oráculos y registra sus límites de validación.
