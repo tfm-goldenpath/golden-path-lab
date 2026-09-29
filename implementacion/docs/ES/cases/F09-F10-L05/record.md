@@ -41,3 +41,9 @@ correcciones y auditoría de CI `36631532871` e integración `36631562615`. Esta
 La ejecución merged `36636319864` falló dos veces en F13 por timeout webhook,
 antes de esta familia. La [corrección de disponibilidad](../../../../registros/kyverno_readiness_fix_ES.md)
 conserva los mismos oráculos y registra sus límites de validación.
+
+El [preflight local posterior sobre main `80c12bc`](../../../../registros/f09_f10_l05_integration_validation_ES.md)
+verificó/exportó ambos commits distintos, pero falló por versiones y DNS de BuildKit
+en kind. No se lanzó demo: F09/F10 y recuperación, entregas L05 y disponibilidad
+tras actualización/reinicio siguen **NOT_EXECUTED**. Se verificaron checksum y
+15 hashes internos del diagnóstico; no se generaron firmas nuevas.

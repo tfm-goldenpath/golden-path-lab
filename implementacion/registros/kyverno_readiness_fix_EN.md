@@ -99,3 +99,11 @@ this correction. Human review and acceptance remain pending.
 | Activity | AI contribution | Human review | Decision |
 |---|---|---|---|
 | Readiness fix, regressions, diagnostics and EN/ES documentation | Github Copilot (GPT-6) | Pending | Pending |
+
+## Subsequent validation boundary
+
+The user reports hosted run `36640544300` successful at merged main `80c12bc`,
+covering normal delivery and initial readiness. That report was not independently
+audited in this follow-up. It does not cover F09/F10, L05 or policy update/restart.
+The [new local preflight](f09_f10_l05_integration_validation_EN.md) failed before
+demo on environment pins and BuildKit DNS; update/restart remains NOT_EXECUTED.

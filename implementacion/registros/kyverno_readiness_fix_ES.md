@@ -34,3 +34,11 @@ y **15 hashes internos** del paquete FAIL y se confirmó la limpieza. No se
 modificaron firewall ni daemon. La resolución del timeout hosted sigue pendiente
 de una ejecución real autorizada sobre la revisión corregida. Sintaxis Bash,
 enlaces locales y `git diff --check` correctos. Cambios sin commit ni publicación.
+
+## Límite de validación posterior
+
+El usuario informa éxito hosted `36640544300` en main `80c12bc` para entrega normal
+y disponibilidad inicial; no se auditó independientemente en este seguimiento.
+No cubre F09/F10, L05 ni actualización/reinicio. El [preflight local nuevo](f09_f10_l05_integration_validation_ES.md)
+falló antes de demo por versiones y DNS BuildKit; actualización/reinicio sigue
+NOT_EXECUTED.

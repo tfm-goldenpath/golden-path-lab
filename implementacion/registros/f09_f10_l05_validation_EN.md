@@ -152,3 +152,10 @@ checks cannot close these boundaries.
 
 No push, PR publication, remote workflow dispatch, repository-setting change or
 thesis edit was performed. Existing prompt files were preserved.
+
+## Follow-up from current main
+
+See the [local integration preflight](f09_f10_l05_integration_validation_EN.md)
+at `80c12bc`: source pair verified, environment versions and BuildKit DNS blocked
+execution before demo. The new diagnostic package is audited; F09/F10/L05 remain
+NOT_EXECUTED. Earlier observations above are preserved.
