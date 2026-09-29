@@ -64,7 +64,7 @@ Esta opción configura `failCgroupV1: false` en el kubelet de los nodos **tempor
 make demo
 ```
 
-Esta entrada utiliza `scripts/demo.sh` para preparar un laboratorio aislado con **kind, zot y claves locales de desarrollo**. Construye primero una imagen `linux/amd64` compartida por la referencia y la vía protegida, y prepara otra para el UPDATE legítimo de L01. Ambas usan el mismo commit fuente; una etiqueta de construcción del laboratorio diferente cambia el segundo digest sin cambiar el comportamiento de la aplicación. Las claves de desarrollo no se guardan en Git ni son identidades válidas para la vía GitHub.
+Esta entrada utiliza `scripts/demo.sh` para preparar un laboratorio aislado con **kind, zot y claves locales de desarrollo**. Construye primero una imagen `linux/amd64` compartida por la referencia y la vía protegida, y prepara otra para el UPDATE legítimo de L01. Ambas usan el mismo commit fuente; el fixture L03 añade `is-number@7.0.0` fijado a la segunda imagen sin cambiar el comportamiento de la aplicación. Las claves de desarrollo no se guardan en Git ni son identidades válidas para la vía GitHub.
 
 La imagen de ejecución de `quotes-node` usa **Node 24.21.0 sobre Alpine 3.23**, fijada por digest en `SERVICE_NODE_IMAGE`, separada de la imagen Debian del devcontainer. Esta rama `main` de Alpine conserva soporte y aparece en los metadatos de fin de soporte de Trivy 0.74.0; véase la [decisión de compatibilidad](../../environment.md). El servicio no tiene dependencias npm de producción; por ello su Dockerfile retira npm, npx y Yarn de la imagen entregada y conserva el runtime Node necesario. Trivy sigue analizando la imagen resultante y sus componentes: esta reducción no implica ausencia de vulnerabilidades ni elimina el umbral HIGH/CRITICAL.
 
@@ -281,3 +281,7 @@ Conserva `L01-update/F08-CI/`, `L01-update/F08-admission/`, `CI-F08*` y
 archivo y todos los hashes internos, incluidos los intentos fallidos. El registro
 separa ejecuciones observadas de expectativas. F08 y F07 negativo alojados siguen
 `NOT_EXECUTED`; gate/L04 alojado requiere ejecución autorizada y evidencia auditada.
+
+## Incremento de la familia SBOM
+
+Instale el validador con `make setup-validation` antes de las pruebas locales. La sustitución incorpora F05/F06 en CI y admisión dirigida, con recuperación exacta antes de autorizar y aceptación compartida L01/L03/L04. Consulte el [procedimiento SBOM](../F05-F06-L03/runbook.md) y su limitación de integración registrada. F05/F06 negativos alojados permanecen NOT_EXECUTED.

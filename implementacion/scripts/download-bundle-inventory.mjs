@@ -221,7 +221,16 @@ export async function downloadBundleInventory({ mode, image, actor, token, reque
     const bundle = jsonOf(bytes);
     // Validate every returned wrapper, including unrelated predicate types.
     const [statement] = parseEnvelopes(JSON.stringify(bundle), {bundlesOnly:true});
-    if (statement.subject.some(subject => subject.digest.sha256 !== digest.slice(7))) throw new Error('Bundle subject differs from the requested image.');
+    if (statement.subject.some(subject => subject.digest.sha256 !== digest.slice(7))) {
+      const error = new Error('Bundle subject differs from the requested image.');
+      error.subjectMismatch = {kind:'SUBJECT_MISMATCH',boundary:'registry-inventory',image,
+        predicate:statement.predicateType,expectedDigest:digest,subjects:statement.subject,
+        inventoryComplete:false,descriptors:before.descriptors,source:before.source,
+        received:{manifestDigest:entry.digest,manifest:manifestBytes.toString('base64'),
+          config:configs.get(config.digest).toString('base64'),bundle:bytes.toString('base64')},
+        bundleDigest:layer.digest};
+      throw error;
+    }
     rawArtifacts.push({manifestDigest:entry.digest, manifest:manifestBytes.toString('base64'),
       config:configs.get(config.digest).toString('base64'), bundle:bytes.toString('base64')});
     bundles.push(bundle);
@@ -244,6 +253,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (metadata) writeFileSync(metadata, JSON.stringify(inventory, null, 2) + '\n');
     console.log(JSON.stringify(bundles, null, 2));
   } catch (error) {
+    if (error.subjectMismatch && process.argv[4]) writeFileSync(process.argv[4] + '.subject-mismatch.json', JSON.stringify(error.subjectMismatch, null, 2) + '\n');
     console.error('Bundle inventory failed: ' + error.message);
     process.exitCode = 1;
   }

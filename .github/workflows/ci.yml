@@ -36,6 +36,7 @@ jobs:
           node-version: ${{ steps.versions.outputs.node }}
       - name: Install tools with checksum verification
         run: |
+          npm ci --prefix tooling --ignore-scripts --no-audit --no-fund
           PREFIX="$HOME/.local" bash scripts/install-security-tools.sh
           printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Run service and policy tests

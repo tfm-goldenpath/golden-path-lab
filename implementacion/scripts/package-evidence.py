@@ -43,7 +43,7 @@ def package(source, output, status):
     excluded = {'state.json', 'config.json', 'kubeconfig', 'cosign.key', 'SHA256SUMS.txt'}
     files = []
     candidates = list(source.iterdir())
-    for name in ('L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission'):
+    for name in ('L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission', 'L01-update/F05-CI', 'L01-update/F05-admission', 'L01-update/F06-CI', 'L01-update/F06-admission'):
         directory = source / name
         if directory.is_symlink() or directory.resolve() != directory:
             raise ValueError('Refusing symlinked scenario evidence directory')

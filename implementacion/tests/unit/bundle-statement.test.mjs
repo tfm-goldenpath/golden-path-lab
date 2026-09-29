@@ -31,7 +31,7 @@ const component = {name:'fixture',type:'application'};
 test('content extraction retains the same saved statement for every locally signed evidence type', () => {
   for (const [type, predicate] of [
     [imageType, {}],
-    [sbomType, {bomFormat:'CycloneDX',specVersion:'1.6',version:1,metadata:{component},components:[component]}],
+    [sbomType, {bomFormat:'CycloneDX',specVersion:'1.7',version:1,metadata:{component},components:[component]}],
     [provenanceType, {buildDefinition:{externalParameters:{workflow:{repository}},resolvedDependencies:[{digest:{gitCommit:commit}}]}}],
     [RESULTS_TYPE, results('PASS')],
   ]) {
@@ -46,7 +46,7 @@ test('saved bundle content rejects a different subject/type and unacceptable pre
   assert.throws(() => statementFromVerifiedBundle(JSON.stringify(saved), `sha256:${'c'.repeat(64)}`, RESULTS_TYPE, repository, commit));
   assert.throws(() => statementFromVerifiedBundle(JSON.stringify(saved), digest, imageType, repository, commit));
   for (const [type, predicate] of [
-    [RESULTS_TYPE, results('FAIL')], [sbomType, {bomFormat:'CycloneDX',specVersion:'1.6'}],
+    [RESULTS_TYPE, results('FAIL')], [sbomType, {bomFormat:'CycloneDX',specVersion:'1.7'}],
     [provenanceType, {buildDefinition:{externalParameters:{workflow:{repository:'other'}}}}],
   ]) {
     assert.throws(() => statementFromVerifiedBundle(JSON.stringify(bundle(type, predicate)), digest, type, repository, commit),

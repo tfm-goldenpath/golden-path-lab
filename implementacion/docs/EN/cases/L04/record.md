@@ -175,3 +175,7 @@ this same replacement execution, with separate pre-results CI and authorized
 admission observations. Recovery requires exact restoration and fresh verification
 before continuation. L04 remains one shared counterpart; its hosted acceptance
 item stays pending until an authorized successful run and evidence audit exist.
+
+## Subsequent F05/F06/L03 increment
+
+The current replacement fixture adds real pinned `is-number@7.0.0`; its known inventory change is now tracked as L03. Future L01/L03/L04 acceptance shares the same replacement execution and must not be counted as independent observations. The historical runs above retain their original label-only scope. See the [L03 record](../L03/record.md) for the new implementation and outstanding integration.

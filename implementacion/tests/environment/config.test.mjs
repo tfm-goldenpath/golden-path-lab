@@ -52,7 +52,7 @@ test('build references and checks use the same pinned versions', () => {
   for (const key of ['KIND_SHA256', 'KUBECTL_SHA256', 'BUILDX_SHA256']) assert.match(versions[key], /^[a-f0-9]{64}$/);
   assert.match(versions.KIND_NODE_IMAGE, new RegExp(`^kindest/node:v${versions.KUBERNETES_VERSION.replaceAll('.', '\\.')}@`));
   assert.equal(config.remoteUser, 'node');
-  assert.equal(config.postCreateCommand, 'bash scripts/check-environment.sh --tools-only');
+  assert.equal(config.postCreateCommand, 'npm ci --prefix tooling --ignore-scripts --no-audit --no-fund && bash scripts/check-environment.sh --tools-only');
 });
 
 const codespacesConfigUrl = new URL('../.devcontainer/implementacion/devcontainer.json', root);
@@ -95,5 +95,5 @@ test('Codespaces reuses the build and versions from implementacion', {
   assert.deepEqual(hostedLock, JSON.parse(read('.devcontainer/devcontainer-lock.json')));
   assert.deepEqual(hosted.hostRequirements, local.hostRequirements);
   assert.equal(hosted.remoteUser, local.remoteUser);
-  assert.equal(hosted.postCreateCommand, 'bash implementacion/scripts/check-environment.sh --tools-only');
+  assert.equal(hosted.postCreateCommand, 'npm ci --prefix implementacion/tooling --ignore-scripts --no-audit --no-fund && bash implementacion/scripts/check-environment.sh --tools-only');
 });

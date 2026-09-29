@@ -51,7 +51,7 @@ La orquestación coordina el recorrido. Las flechas representan datos y dependen
 | Contrato | Información mínima y comprobación |
 |---|---|
 | Imagen | Referencia por digest y plataforma `linux/amd64`. Comprobar la correspondencia entre objeto analizado, firmado y desplegado; identificar índice OCI y manifiesto si aparecen ambos. |
-| SBOM | CycloneDX JSON conservado como archivo original y como contenido de una atestación Cosign. La base comprueba campos mínimos, versión seleccionada, tipo esperado, firma y asociación con la imagen. La validación completa del esquema sigue pendiente; su autenticidad no acredita la completitud del inventario. |
+| SBOM | CycloneDX JSON conservado como archivo original y como contenido de una atestación Cosign. La base comprueba campos mínimos, versión seleccionada, tipo esperado, firma y asociación con la imagen. CI valida el esquema oficial CycloneDX 1.7 antes de firmar y tras autenticar el bundle exacto; Kyverno comprueba campos seleccionados; su autenticidad no acredita la completitud del inventario. |
 | Vulnerabilidades | Informe separado del SBOM, con objeto analizado, versión del analizador y base de datos identificables. Aplicar el bloqueo de HIGH o CRITICAL, exista o no corrección; conservar también el diagnóstico de análisis incompleto. |
 | Firma de imagen | Verificar validez, correspondencia con el artefacto e identidad admitida. En la vía B comprobar emisor e identidad OIDC autorizados; en la vía A utilizar exclusivamente la confianza de desarrollo configurada. |
 | Procedencia | Verificar firma e identidad autorizada, digest, repositorio fuente, commit y constructor o workflow requerido. Fijar la representación exacta durante la integración con Kyverno; generar procedencia no demuestra automáticamente un nivel SLSA. |
@@ -192,3 +192,7 @@ fallos como incidencias de integración. El escenario autentica por separado las
 evidencias no alteradas. L01 enlaza la finalización con el mismo rollout/HTTP de
 L04; `demo.sh` conserva la limpieza de infraestructura. Consulta el
 [registro F08](cases/F08/record.md).
+
+## Incremento F05 / F06 / L03
+
+CI valida el esquema oficial CycloneDX 1.7 antes de firmar y tras autenticar el bundle exacto. Los requisitos del laboratorio y la asociación al digest siguen siendo controles separados. Kyverno comprueba campos seleccionados, no el esquema completo. L03 añade un componente real fijado a la imagen de sustitución; no demuestra completitud del inventario. Consulte el [procedimiento y límites](cases/F05-F06-L03/runbook.md).

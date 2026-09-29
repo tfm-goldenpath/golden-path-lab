@@ -51,6 +51,7 @@ attestations_issue_delivery() {
   # https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/sign/sign.go
   cosign sign "${sign_args[@]}" --bundle "$state_dir/image.bundle.json" "$image"
   attestations_verify_bundle image.bundle.json https://sigstore.dev/cosign/sign/v1 verified-image-bundle.txt verified-signature.json
+  node scripts/validate-sbom-schema.mjs "$state_dir/sbom.cdx.json" "$state_dir/sbom-schema-presigning.json"
   cosign attest "${sign_args[@]}" --bundle "$state_dir/sbom.bundle.json" --type cyclonedx --predicate "$state_dir/sbom.cdx.json" "$image"
   attestations_verify_bundle sbom.bundle.json https://cyclonedx.org/bom verified-sbom-bundle.txt verified-sbom.json
   if [[ "$mode" == local ]]; then

@@ -18,7 +18,7 @@ const shellPath = (value) => value.replaceAll('\\', '/');
 // or replace a run against the admission webhook.
 const missingResults = (trust = 'keyless') => `image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: .attestations[0].attestors[0].entries[0].${trust}: attestions not found for predicate type ${resultsType}`;
 const missingBundle = 'image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: sigstore bundle verification failed: no matching signatures found';
-const sbom = {bomFormat:'CycloneDX', specVersion:'1.6', version:1,
+const sbom = {bomFormat:'CycloneDX', specVersion:'1.7', version:1,
   metadata:{component:{name:'synthetic', type:'container'}}, components:[{name:'synthetic', type:'library'}]};
 function bundle(type, predicate = {}, hash = digest.slice(7)) {
   return {mediaType:'application/vnd.dev.sigstore.bundle.v0.3+json',

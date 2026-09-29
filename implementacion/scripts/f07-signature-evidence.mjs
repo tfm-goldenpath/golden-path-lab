@@ -37,7 +37,7 @@ export function authorizeReplacement(state, parent, run, image) {
         !parent[key] || state[key] !== parent[key])) throw new Error('Unauthorized F07 replacement target');
 }
 
-export function validateBackup(snapshot, image, profile = 'authorized') {
+export function validateBackup(snapshot, image, profile = 'authorized', selectedType = IMAGE_SIGNATURE_TYPE) {
   if (snapshot.inventory?.image !== image) throw new Error('Backup image differs from the authorized target.');
   const digest = image.split('@')[1];
   checkBundleProfile(JSON.stringify(snapshot.bundles), digest, profile);
@@ -76,11 +76,11 @@ export function validateBackup(snapshot, image, profile = 'authorized') {
     if (statement.subject.some(subject => subject.digest.sha256 !== digest.slice(7))
         || statement.predicateType !== mapping[0].predicateType) throw new Error('OCI predicate or subject mismatch.');
     bundles.push(bundle);
-    if (statement.predicateType === IMAGE_SIGNATURE_TYPE) candidates.push({raw, manifest, entry});
+    if (statement.predicateType === selectedType) candidates.push({raw, manifest, entry});
   }
   if (artifacts.filter(item => item.kind === 'sigstore-bundle-v0.3').length !== rawDigests.size
       || JSON.stringify(bundles) !== JSON.stringify(snapshot.bundles)) throw new Error('Incomplete OCI backup.');
-  if (candidates.length !== 1) throw new Error('F07 requires one unambiguous image-signature artifact.');
+  if (candidates.length !== 1) throw new Error('Requires one unambiguous artifact for ' + selectedType);
   return candidates[0];
 }
 

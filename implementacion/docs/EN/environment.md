@@ -74,6 +74,7 @@ Cleanup removes the temporary cluster and probe tag while retaining base images/
 ## Troubleshooting and subsequent integration
 
 - **OCI Feature id contains invalid characters:** the feature key must end with `docker-in-docker:4.1.0`; retain its digest in the lockfile, not the key. Update both configurations/locks before rebuilding.
+- **BuildKit DNS timeout on kind:** see the [firewall diagnosis and recovery guide](kind-network-firewall.md) for the observed legacy/nft conflict, temporary rules and proposed Codespaces fix.
 - **Docker unavailable:** check the host engine and then the internal Docker-in-Docker service.
 - **Version mismatch:** rebuild after changing references; do not replace pins with `latest`.
 - **Download/checksum failure:** check network, proxy and official release. Installation stops on mismatch.

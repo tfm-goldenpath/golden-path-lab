@@ -73,7 +73,7 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [ ] Complete operational F01/F02/F11/F12 records and remaining injections. Test F01 as configuration without enabling privileged execution of untrusted code.
 - [ ] Assess optional local hooks once the preceding commands work and have tests. Introduce them only for useful early feedback; mandatory controls remain in CI, and skipping a hook must not bypass them. Hooks are not a pilot prerequisite.
 - [x] Integrate Trivy with separate original CycloneDX JSON and real scan reports, tool/database identification, synthetic policy tests and observed image scans.
-- [ ] Complete full SBOM schema validation; current checks validate selected contract fields, not full schema or inventory completeness.
+- [x] Implement offline official CycloneDX 1.7 JSON Schema validation before signing and after authenticating the exact bundle; retain separate lab checks and reports. This does not establish inventory completeness.
 - [ ] Prepare real inputs for F03/F04/L02, giving flexible priority to a direct production Node dependency for F03. Confirm severity, fix availability and a functional upgrade before fixing the scenario.
 - [x] Sign and verify image/SBOM bundles with explicit identity, predicate, content and digest checks; retain actual cryptographic negative probes, including signature-byte alteration.
 - [ ] Complete operational F05–F08, including hosted negative F07/F08; local F07 passed in `run-xFGRe6X1` and controlled F08 CI/admission passed in `run-IIWR8RLL` (see the F08 record). Synthetic cryptographic probes do not complete these scenario executions.
@@ -159,3 +159,14 @@ Java, ARM, additional trusted providers, SARIF and Dependency Review, malware/se
 ## Lightweight tracking
 
 Use existing stories as the primary record, a suggested work-in-progress limit of two tasks and a brief decision/evidence note when relevant. Do not create an hourly diary or duplicate results in this TODO. Mark a task complete only when the evidence specified by its outcome condition exists.
+
+## F05 / F06 / L03 bounded increment
+
+- [x] Fix operational records on base `b380836f0264698c0cdd8e5e8f750427def63761` using supplied approved oracles and the locally available academic catalogue.
+- [x] Implement pinned offline schema validation, isolated local SBOM faults, early mismatch evidence, recovery, and a real pinned L03 component fixture.
+- [x] Pass the full suite and independently observe real host-built L03 images, Trivy component difference, schema validity, unchanged vulnerability policy and offline digest-bound SBOM signatures; audit the 35-file supplementary archive.
+- [x] Complete fresh local registry/admission integration in `run-nWpDa9ZN`: F05/F06 CI and directed SBOM admission rejection, exact recovery, and shared L01/L03/L04 acceptance. Audited 776 package hashes, 108 valid bundles and two expected F08 rejections. The approved temporary kind-forwarding rules were removed; failed runs remain preserved. See [per-boundary observations](registros/f05_f06_l03_validation_EN.md).
+- [ ] Human review and final acceptance.
+- [ ] Hosted normal delivery validation on reviewed source; hosted negative F05/F06 remain **NOT_EXECUTED**.
+
+See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](docs/ES/cases/F05-F06-L03/runbook.md). L01/L03/L04 share one execution, with no additional campaign observations.

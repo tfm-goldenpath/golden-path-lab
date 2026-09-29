@@ -4,7 +4,7 @@ import { checkMissingResults } from '../../scripts/check-missing-results.mjs';
 import { RESULTS_TYPE } from '../../scripts/lab-contracts.mjs';
 
 const digest = 'sha256:' + 'a'.repeat(64);
-const bom = {bomFormat:'CycloneDX',specVersion:'1.6',version:1,metadata:{component:{name:'synthetic',type:'container'}},components:[{name:'synthetic',type:'library'}]};
+const bom = {bomFormat:'CycloneDX',specVersion:'1.7',version:1,metadata:{component:{name:'synthetic',type:'container'}},components:[{name:'synthetic',type:'library'}]};
 function envelope(type = 'https://cyclonedx.org/bom', predicate = bom, hash = digest.slice(7)) {
   return {payloadType:'application/vnd.in-toto+json', signatures:[{sig:Buffer.from('synthetic-not-a-real-signature').toString('base64')}],
     payload:Buffer.from(JSON.stringify({_type:'https://in-toto.io/Statement/v1', subject:[{name:'registry.example/quotes',digest:{sha256:hash}}],predicateType:type,predicate})).toString('base64')};
@@ -154,7 +154,7 @@ test('bundle matching preserves the expected digest and required SBOM checks', (
   assert.throws(() => checkMissingResults(JSON.stringify(bundle(envelope(undefined, bom, 'b'.repeat(64)))), digest), /SBOM attestation/);
   const inventory = [bundle(), bundle(envelope(RESULTS_TYPE, {result:'PASS'}, 'b'.repeat(64)))];
   assert.equal(checkMissingResults(JSON.stringify(inventory), digest).reason, 'RESULTS_ATTESTATION_MISSING');
-  assert.throws(() => checkMissingResults(JSON.stringify(bundle(envelope(undefined, {}))), digest), /Incomplete CycloneDX/);
+  assert.throws(() => checkMissingResults(JSON.stringify(bundle(envelope(undefined, {}))), digest), /Incomplete CycloneDX|Unsupported CycloneDX/);
 });
 
 test('malformed or unsupported bundles fail closed even beside a valid SBOM', () => {

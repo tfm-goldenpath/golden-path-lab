@@ -19,7 +19,7 @@ The independent image-signature contract requires `https://sigstore.dev/cosign/s
 | Service | Health, version/commit, deterministic synthetic quote and rejection of invalid inputs. | Not an actuarial engine; no personal data. |
 | Image | `@sha256` reference, same image for scanning/signing/deployment, AMD64 platform. | Does not evaluate ARM or full multi-platform index semantics. |
 | Vulnerabilities | Real Trivy report separate from SBOM; Conftest blocks HIGH/CRITICAL even without a fix. | Depends on identified components and available vulnerability information. |
-| SBOM | Original CycloneDX JSON and Cosign attestation; signature, predicate type and matching subject. Local validation requires format, version, main component and nonempty component list. | Partial structural validation, not the entire official schema or semantic inventory accuracy/completeness. |
+| SBOM | Original CycloneDX JSON and Cosign attestation; signature, predicate type and matching subject. CI validates the unmodified official draft-07 schema before signing and after authenticating the exact bundle. Main component and nonempty component list remain additional laboratory requirements. | Official CycloneDX 1.7 schema validation in CI; selected-field admission checks do not establish semantic inventory accuracy/completeness. |
 | Image signature | Cryptographic validity, the independent `https://sigstore.dev/cosign/sign/v1` predicate and trust configured for the selected lane. | A valid signature does not mean vulnerability-free or malware-free software. |
 | Provenance | Expected subject, type and origin, with different build contracts in A and B. | No claim of SLSA Build L3 or isolation from complete builder compromise. |
 | Results | Signed custom predicate, `golden-path-v1` policy, source and mandatory checks reporting PASS. | A statement by the authorized process, not VSA conformance or a replacement for direct verification. |
@@ -117,3 +117,7 @@ restoration and fresh successful verification precede continuation. Directed
 admission additionally requires cache disabled, unchanged policy specs, positive
 server dry-run, singleton signature-rule rejection and eventual real L04 acceptance.
 See the [record](cases/F08/record.md); hosted F08 remains NOT_EXECUTED.
+
+## F05 / F06 / L03
+
+The replacement now adds the pinned L03 fixture component. Full schema validity, laboratory content, authenticity, digest binding and the known component change remain distinct checks. F05 requires complete retrieval and authenticated non-targets; F06 retains exact donor bytes and a structured early subject mismatch, independently authenticating the donor against its original digest. Recovery precedes normal authorization. Directed admission follows results issuance and checks only the applicable SBOM rule. See [commands, evidence and limitations](cases/F05-F06-L03/runbook.md).

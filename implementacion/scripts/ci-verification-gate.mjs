@@ -43,7 +43,7 @@ export function authenticateBundle({mode, image, directory, repository, commit, 
     save(prefix + '.provenance-contract.json', contract);
     return output;
   }
-  return statementFromVerifiedBundle(JSON.stringify(bundle), digest, type, repository, commit);
+  return statementFromVerifiedBundle(readFileSync(file, 'utf8'), digest, type, repository, commit, prefix + '.schema.json');
 }
 
 export async function verifyDelivery(options, {download = downloadBundleInventory, authenticate = authenticateBundle} = {}) {
@@ -71,22 +71,25 @@ export async function verifyDelivery(options, {download = downloadBundleInventor
       save(bundlePrefix + '.statement.json', content);
       authenticated.set(type, content);
     }
-    for (const type of [SBOM, PROVENANCE, ...(phase === 'authorized' ? [RESULTS_TYPE] : [])]) {
+    for (const type of [PROVENANCE, ...(phase === 'authorized' ? [RESULTS_TYPE] : [])]) {
       if (!authenticated.has(type)) throw new Error('Missing required attestation: ' + type);
     }
     if (phase === 'before-results' && authenticated.has(RESULTS_TYPE)) throw new Error('Results already exist before authorization');
     const missing = !authenticated.has(IMAGE_SIGNATURE_TYPE);
-    const result = {image, digest, phase, status:missing ? 'MISSING_IMAGE_SIGNATURE' : 'VERIFIED',
-      predicate:IMAGE_SIGNATURE_TYPE, inventoryComplete:true, authenticatedPredicates:[...authenticated.keys()]};
+    const missingSbom = !authenticated.has(SBOM);
+    if (missing && missingSbom) throw new Error('Multiple mandatory predicates missing');
+    const result = {image, digest, phase, status:missing ? 'MISSING_IMAGE_SIGNATURE' : missingSbom ? 'MISSING_SBOM' : 'VERIFIED',
+      predicate:missingSbom ? SBOM : IMAGE_SIGNATURE_TYPE, inventoryComplete:true, authenticatedPredicates:[...authenticated.keys()]};
     save(output + '.result.json', result);
-    if (!missing) {
+    if (!missing && !missingSbom) {
       for (const [type, name] of [[IMAGE_SIGNATURE_TYPE, 'signature'], [SBOM, 'sbom'], [PROVENANCE, 'provenance']]) {
         save(join(directory, 'verified-' + name + '.json'), authenticated.get(type));
       }
     }
     return result;
   } catch (error) {
-    save(output + '.result.json', {image, phase, status:'INTEGRATION_FAILURE', reason:error.message, ...(error.verificationFailure ? {verificationFailure:error.verificationFailure} : {})});
+    if (error.subjectMismatch) save(output + '.subject-mismatch.json', error.subjectMismatch);
+    save(output + '.result.json', {image, phase, status:'INTEGRATION_FAILURE', reason:error.message, ...(error.subjectMismatch ? {subjectMismatch:error.subjectMismatch} : {}), ...(error.verificationFailure ? {verificationFailure:error.verificationFailure} : {})});
     throw error;
   }
 }

@@ -70,6 +70,13 @@ scenario_f07_ci() {
   mkdir "$state_dir/F07-CI"
   command jq -n '{status:"CI_REJECTION_AND_RECOVERY"}' > "$state_dir/F07-CI/result.json"
 }
+scenario_sbom_fault() {
+  step "$1-$2"
+  local folder=$1-CI
+  [[ "$2" != authorized ]] || folder=$1-admission
+  mkdir "$state_dir/$folder"
+  command jq -n '{status:"SYNTHETIC"}' > "$state_dir/$folder/result.json"
+}
 scenario_f08() {
   step "f08-$1"
   local folder=F08-CI
@@ -108,6 +115,7 @@ k() {
   fi
 }
 node() {
+  if [[ "$1" == scripts/check-sbom-evolution.mjs ]]; then step component-check; echo '{"synthetic":true}'; return; fi
   [[ "$1" == scripts/check-image-rollout.mjs ]] || fail 'Unexpected scenario Node invocation'
   event rollout-check "$*"
   command node "$@"
@@ -188,7 +196,7 @@ for (const mode of ['local', 'github']) {
     const f = fixture(t);
     const result = run(f, { GP_MODE: mode });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.deepEqual(result.stages, ['build', 'manifests', 'manifest-policy', 'analyze', 'issue', ...(mode === 'local' ? ['f07-ci', 'f07-ci-restore'] : []), 'verify', ...(mode === 'local' ? ['f08-before-results'] : []), 'authorize', ...(mode === 'local' ? ['f08-authorized'] : []),
+    assert.deepEqual(result.stages, ['build', 'manifests', 'manifest-policy', 'analyze', 'component-check', 'issue', ...(mode === 'local' ? ['f07-ci', 'f07-ci-restore'] : []), 'verify', ...(mode === 'local' ? ['f08-before-results','F05-before-results','F06-before-results'] : []), 'authorize', ...(mode === 'local' ? ['f08-authorized','F05-authorized','F06-authorized'] : []),
       'apply', 'probe', 'deployment', 'pods', 'rollout-check', 'parent-cleanup']);
     const child = join(f.state, 'L01-update');
     assert.equal(JSON.parse(readFileSync(join(child, 'state.json'), 'utf8')).digest, replacementDigest);
@@ -224,14 +232,14 @@ for (const mode of ['local', 'github']) {
   });
 }
 
-for (const stage of ['build', 'manifest-policy', 'analyze', 'issue', 'f07-ci', 'f07-ci-restore', 'f08-before-results', 'f08-authorized', 'verify', 'authorize', 'apply', 'probe']) {
+for (const stage of ['build', 'manifest-policy', 'analyze', 'component-check', 'issue', 'f07-ci', 'f07-ci-restore', 'f08-before-results', 'f08-authorized', 'F05-before-results', 'F06-before-results', 'F05-authorized', 'F06-authorized', 'component-check', 'verify', 'authorize', 'apply', 'probe']) {
   test(`real L01 scenario propagates ${stage} failure without reaching later delivery steps`, t => {
     const f = fixture(t);
     const result = run(f, { GP_FAIL_STAGE: stage, GP_MODE:'local' });
     assert.equal(result.status, 37, result.stdout + result.stderr);
     assert.ok(result.stages.includes(stage));
     assert.ok(!result.stages.includes('rollout-check'));
-    if (['build', 'manifest-policy', 'analyze', 'issue', 'verify', 'f07-ci', 'f07-ci-restore', 'f08-before-results', 'f08-authorized', 'authorize'].includes(stage)) {
+    if (['build', 'manifest-policy', 'analyze', 'component-check', 'issue', 'verify', 'f07-ci', 'f07-ci-restore', 'f08-before-results', 'f08-authorized', 'authorize'].includes(stage)) {
       assert.ok(!result.stages.includes('apply'), 'A failed prerequisite must prevent deployment');
     }
     if (stage === 'verify') assert.ok(!result.stages.includes('authorize'));

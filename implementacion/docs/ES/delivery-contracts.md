@@ -19,7 +19,7 @@ La firma de imagen independiente exige `https://sigstore.dev/cosign/sign/v1` par
 | Servicio | Salud, versión/commit y cotización sintética determinista; entradas inválidas rechazadas. | No representa un motor actuarial ni procesa datos personales. |
 | Imagen | Referencia `@sha256`, misma imagen en análisis, firmas y despliegue; plataforma AMD64. | No evalúa ARM ni toda la semántica de índices multiplataforma. |
 | Vulnerabilidades | Informe real de Trivy separado del SBOM; Conftest bloquea HIGH/CRITICAL aunque no exista corrección. | El resultado depende de los componentes identificados y de los datos disponibles para el analizador. |
-| SBOM | CycloneDX JSON original y atestación Cosign; firma, tipo de predicado y sujeto coincidente. El validador local exige formato, versión, componente principal y una lista de componentes no vacía. | La comprobación estructural es parcial: no valida todavía todo el esquema oficial ni la exactitud o completitud semántica del inventario. |
+| SBOM | CycloneDX JSON original y atestación Cosign; firma, tipo de predicado y sujeto coincidente. El validador local exige formato, versión, componente principal y una lista de componentes no vacía. | CI valida el esquema oficial CycloneDX 1.7; esto no establece la exactitud o completitud semántica del inventario. Kyverno solo comprueba campos seleccionados. |
 | Firma de imagen | Verificación criptográfica, predicado independiente `https://sigstore.dev/cosign/sign/v1` y confianza definida según la vía. | Una firma válida no implica ausencia de vulnerabilidades ni de código malicioso. |
 | Procedencia | Sujeto, tipo y origen esperado; contratos de construcción distintos en A y B. | No se declara SLSA Build L3 ni aislamiento frente al compromiso total del constructor. |
 | Resultados | Predicado propio firmado, política `golden-path-v1`, origen y comprobaciones obligatorias con resultado PASS. | Es una declaración del proceso autorizado; no es una implementación conforme de VSA ni sustituye las verificaciones directas. |
@@ -117,3 +117,7 @@ basta. La restauración exacta y verificación nueva preceden la continuación. 
 admisión dirigida exige caché deshabilitada, políticas sin cambios, dry-run positivo,
 rechazo exclusivo de la firma y aceptación real final de L04. Consulta el
 [registro](cases/F08/record.md); F08 alojado sigue NOT_EXECUTED.
+
+## Incremento F05 / F06 / L03
+
+CI valida el esquema oficial CycloneDX 1.7 antes de firmar y tras autenticar el bundle exacto. Los requisitos del laboratorio y la asociación al digest siguen siendo controles separados. Kyverno comprueba campos seleccionados, no el esquema completo. L03 añade un componente real fijado a la imagen de sustitución; no demuestra completitud del inventario. Consulte el [procedimiento y límites](cases/F05-F06-L03/runbook.md).

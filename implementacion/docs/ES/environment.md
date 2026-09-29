@@ -81,6 +81,7 @@ Al terminar se elimina el clúster temporal y la etiqueta de la imagen de sonda.
 ## Diagnóstico
 
 - **OCI Feature id contains invalid characters:** comprobar que la clave de la feature termina en `docker-in-docker:4.1.0`. El digest se conserva en el archivo de bloqueo, no en esa clave. Actualizar ambas configuraciones y sus archivos de bloqueo antes de reconstruir.
+- **Timeout DNS de BuildKit en kind:** consultar el [diagnóstico y recuperación del firewall](kind-network-firewall.md), con la solución temporal y la propuesta para Codespaces.
 - **Docker no responde:** comprobar el motor anfitrión para abrir el contenedor; dentro de él, revisar el servicio Docker-in-Docker y reabrir el devcontainer.
 - **Versión distinta:** reconstruir el devcontainer después de modificar las referencias. No sustituir valores por `latest` para continuar.
 - **Descarga o checksum incorrectos:** comprobar red, proxy y publicación oficial. La instalación se detiene ante una discrepancia.

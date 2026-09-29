@@ -18,14 +18,15 @@ delivery_preflight() {
 }
 
 delivery_build() {
-  local node_image
+  local node_image context=${1:-services/quotes-node} base=${2:-}
   node_image=${GP_NODE_IMAGE:-$SERVICE_NODE_IMAGE}
   [[ "$node_image" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'The base image must be pinned by digest.'
   put nodeImage "$node_image"
+  node scripts/capture-build-inputs.mjs "$context" "${base:-$node_image}" "$commit" > "$state_dir/build-inputs.json"
   record "Build image $id"
   docker buildx build --builder "$builder" --platform linux/amd64 --provenance=false --sbom=false --push \
-    --build-arg "NODE_IMAGE=$node_image" --build-arg "BUILD_COMMIT=$commit" --label "tfm.lab.run=$id" \
-    --tag "$image_repo:$id" --metadata-file "$state_dir/build-metadata.json" services/quotes-node
+    --build-arg "BASE_IMAGE=$base" --build-arg "NODE_IMAGE=$node_image" --build-arg "BUILD_COMMIT=$commit" --label "tfm.lab.run=$id" \
+    --tag "$image_repo:$id" --metadata-file "$state_dir/build-metadata.json" "$context"
   digest=$(jq -er '."containerimage.digest"' "$state_dir/build-metadata.json")
   [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]] || fail 'Buildx did not return a valid image digest.'
   put digest "$digest"
@@ -54,5 +55,6 @@ delivery_analyze() {
   [[ ! -f "$TRIVY_CACHE_DIR/db/trivy.db" ]] || sha256sum "$TRIVY_CACHE_DIR/db/trivy.db" > "$state_dir/trivy-db-checksum.txt"
   conftest test --policy policies/conftest --namespace trivy --output json "$state_dir/vulnerabilities.json" > "$state_dir/vulnerability-policy.json"
   trivy image "${trivy_args[@]}" --format cyclonedx --output "$state_dir/sbom.cdx.json" "$image"
+  node scripts/validate-sbom-schema.mjs "$state_dir/sbom.cdx.json" "$state_dir/sbom-schema-generation.json"
   sbom_version=$(node "$contract" sbom "$state_dir/sbom.cdx.json"); put sbomVersion "$sbom_version"
 }
