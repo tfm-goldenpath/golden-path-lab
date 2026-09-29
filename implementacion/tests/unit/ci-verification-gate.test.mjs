@@ -127,3 +127,17 @@ echo forbidden-deployment
   assert.doesNotMatch(result.stdout,/forbidden/);
   assert.equal(JSON.parse(readFileSync(join(f.directory,'CI-authorization.result.json'))).status,'INTEGRATION_FAILURE');
 });
+
+for (const [label,result,kind] of [
+  ['rejection',{status:1},'VERIFIER_REJECTION'],
+  ['spawn error',{status:null,error:new Error('ENOENT')},'VERIFIER_ERROR'],
+  ['signal',{status:null,signal:'SIGTERM'},'VERIFIER_ERROR'],
+  ['unexpected exit',{status:2},'VERIFIER_ERROR'],
+]) test(`gate retains ${label} diagnostics without classifying F08`,async t=>{
+  const f=setup(t);
+  f.dependencies.authenticate=(options,bundle,type,file,prefix)=>type===signature ? authenticateBundle(options,bundle,type,file,prefix,()=>result) : bundle;
+  await assert.rejects(f.run(),/Cryptographic verification failed/);
+  assert.equal(f.report().status,'INTEGRATION_FAILURE');
+  assert.deepEqual(f.report().verificationFailure,{predicate:signature,exitStatus:result.status,kind});
+  assert.ok(!readFileSync(join(f.directory,'fresh.result.json'),'utf8').includes('CRYPTOGRAPHIC_ALTERATION'));
+});

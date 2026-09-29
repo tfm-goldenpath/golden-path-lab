@@ -100,3 +100,20 @@ La recuperación conserva ambos errores. `L04-result.json` y
 `F07-CI-completed.json` requieren superar el control positivo. Son registros
 vinculados de una ejecución, no escenarios adicionales ni mediciones. Consulta el
 [registro y los comandos](cases/L04/record.md).
+
+## Diagnóstico controlado F08
+
+F08 modifica un valor de firma ECDSA del reemplazo local, conserva DSSE/base64/DER
+legibles, payload, material de verificación y demás artefactos. Publica blob y
+manifiesto nuevos con tamaños y hashes recalculados y retira el referrer original
+durante la comprobación negativa. Exige una única firma objetivo y mantiene las
+políticas y confianza.
+
+El gate conserva `verificationFailure` con predicado, estado del proceso y tipo
+de fallo, sin autorizar tras un rechazo. F08 combina ese resultado con inventarios
+actuales, aceptación original, confianza sin cambios, autenticación independiente
+del resto y comparación criptográfica original/variante. Un mensaje genérico no
+basta. La restauración exacta y verificación nueva preceden la continuación. La
+admisión dirigida exige caché deshabilitada, políticas sin cambios, dry-run positivo,
+rechazo exclusivo de la firma y aceptación real final de L04. Consulta el
+[registro](cases/F08/record.md); F08 alojado sigue NOT_EXECUTED.

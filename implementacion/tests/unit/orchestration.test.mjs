@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const bash = process.env.BASH_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash');
 const modules = ['context', 'lab', 'delivery', 'attestations', 'workload'];
-const scenarios = ['l01', 'f13', 'f07', 'f11'];
+const scenarios = ['l01', 'f13', 'f07', 'f08', 'f11'];
 const repository = 'registry.invalid/quotes';
 const digest = `sha256:${'a'.repeat(64)}`;
 const image = `${repository}@${digest}`;
@@ -82,6 +82,7 @@ scenario_l01_update() {
   command jq -n '{status:"PASS",sharedExecution:"L01-image-update"}' > "$state_dir/L04-result.json"
   command jq -n --arg mode "$mode" '{status:(if $mode=="local" then "CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE" else "NOT_EXECUTED" end)}' > "$state_dir/F07-CI-completed.json"
   command jq -n '{status:"PASS"}' > "$state_dir/L01-image-update.json"
+  command jq -n '{status:"SYNTHETIC"}' > "$state_dir/F08-completed.json"
 }
 cleanup() {
   event cleanup
@@ -421,7 +422,7 @@ printf '%s' "$PWD" > "$GP_FIXTURE_ROOT/cwd-before"
 for module in context lab delivery attestations workload; do
   source "$GP_SOURCE_ROOT/scripts/lib/$module.sh"
 done
-for scenario in l01 f13 f07 f11; do
+for scenario in l01 f13 f07 f08 f11; do
   source "$GP_SOURCE_ROOT/tests/scenarios/$scenario.sh"
 done
 set +o > "$GP_FIXTURE_ROOT/options-after"
@@ -533,7 +534,7 @@ test('reference runs only R and cleans up on exit', (t) => {
 
 // Keep both the coordinator and replacement function real; substitute only the
 // external stages. The actual gate, recovery and rollout have separate tests.
-for (const [mode, failure] of [['local',''],['github',''],...['update-issue','update-ci','update-ci-restore','update-authorize','update-apply','update-probe'].map(stage=>['local',stage])]) {
+for (const [mode, failure] of [['local',''],['github',''],...['update-issue','update-ci','update-ci-restore','update-f08-before-results','update-f08-authorized','update-authorize','update-apply','update-probe'].map(stage=>['local',stage])]) {
   test(`real coordinator and replacement preserve CI/L04 ordering (${mode}, ${failure || 'success'})`,t=>{
     const f=fixture(t);
     writeFileSync(join(f.state,'image-repo'),repository+'\n');
@@ -554,6 +555,13 @@ scenario_f07_ci() {
   step update-ci
   step update-ci-restore
   echo '{"status":"CI_REJECTION_AND_RECOVERY"}' > "$state_dir/F07-CI/result.json"
+}
+scenario_f08() {
+  step "update-f08-$1"
+  local folder=F08-CI
+  [[ "$1" != authorized ]] || folder=F08-admission
+  mkdir "$state_dir/$folder"
+  echo '{"status":"REJECTION_AND_RECOVERY"}' > "$state_dir/$folder/result.json"
 }
 attestations_authorize_results() {
   if [[ "$state_dir" == */L01-update ]]; then step update-authorize; else step authorize; fi
@@ -581,7 +589,7 @@ node() {
     } else {
       assert.equal(result.status,0,result.stderr);
       const observed=order.filter(s=>s.startsWith('update-'));
-      assert.deepEqual(observed,['update-issue',...(mode==='local'?['update-ci','update-ci-restore']:['update-gate']),'update-authorize','update-apply','update-probe','update-rollout']);
+      assert.deepEqual(observed,['update-issue',...(mode==='local'?['update-ci','update-ci-restore','update-f08-before-results']:['update-gate']),'update-authorize',...(mode==='local'?['update-f08-authorized']:[]),'update-apply','update-probe','update-rollout']);
       assert.equal(archived.report.L04.sharedExecution,'L01-image-update');
       assert.equal(archived.report.L04.image,repository+'-update@sha256:'+'b'.repeat(64));
       assert.equal(archived.report.F07CI.status,mode==='local'?'CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE':'NOT_EXECUTED');

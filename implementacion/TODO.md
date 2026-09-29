@@ -6,7 +6,7 @@ The [modular architecture](docs/EN/architecture.md) separates orchestration, pol
 
 The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the functional contract and H0–H6 acceptance conditions behind increments 0–3. This checklist tracks implementation and acceptance separately.
 
-## Available increment: L01/L04, F13, local F07 and F11 checks
+## Available increment: L01/L04, F13, local F07/F08 and F11 checks
 
 - [x] Implement `quotes-node`, policies, evidence validators and pinned tools, detailed in increments 0–3.
 - [x] Provide `make demo`, `make reference`, CI and manual hosted integration, with digest-based delivery, L01/F13, directed F11 checks and evidence packages.
@@ -17,7 +17,7 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 - [x] Observe the corrected chains and results verified in hosted admission in [run 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179), commit `1ae111fc6e1614b32ee86461771836ada60e1d42`: F13 correctly rejected, L01 admitted and healthy, F11 correctly denied by Kyverno. The overall run failed because the rejection parser counted kubectl's preamble `to:` as an extra policy; the final legitimate update was not reached.
 - [x] Review the downloaded hosted bundle package at `82728c5`: archive checksum, 103 internal hashes and eight independently verified bundles. Preserve that scope in the [review record](registros/pr15_review_EN.md); the latest main-run package still needs its own audit.
 
-Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md); the [delivery contracts](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Executable scenario modules cover L01/L04, F13, local early CI and directed admission F07, and F11 checks. Hosted F07 remains NOT_EXECUTED. Policy tests and cryptographic probes do not complete the twenty scenario records, establish TDD history or constitute pilot measurements.
+Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md); the [delivery contracts](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Executable scenario modules cover L01/L04, F13, local early CI and directed admission F07/F08, and F11 checks. Hosted F07/F08 remain NOT_EXECUTED. Policy tests and cryptographic probes do not complete the twenty scenario records, establish TDD history or constitute pilot measurements.
 
 ## 0. Preparation and environment
 
@@ -76,7 +76,7 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [ ] Complete full SBOM schema validation; current checks validate selected contract fields, not full schema or inventory completeness.
 - [ ] Prepare real inputs for F03/F04/L02, giving flexible priority to a direct production Node dependency for F03. Confirm severity, fix availability and a functional upgrade before fixing the scenario.
 - [x] Sign and verify image/SBOM bundles with explicit identity, predicate, content and digest checks; retain actual cryptographic negative probes, including signature-byte alteration.
-- [ ] Complete operational F05–F08, including hosted negative F07 and well-formed altered-signature F08; local directed admission passed in `run-xFGRe6X1`. Synthetic cryptographic probes do not complete these scenario executions.
+- [ ] Complete operational F05–F08, including hosted negative F07/F08; local F07 passed in `run-xFGRe6X1` and controlled F08 CI/admission passed in `run-IIWR8RLL` (see the F08 record). Synthetic cryptographic probes do not complete these scenario executions.
 - [x] Issue a signed versioned results predicate only after successful mandatory pre-admission controls, retain report hashes and record the later admission response separately.
 - [x] Implement direct admission and results checks for the protected namespace and selected CREATE/UPDATE operations; observe L01/F13 and F11 in the recorded integrations.
 - [ ] Complete remaining F13/F14 operational acceptance and scope checks; retain the same-digest positive control and distinguish attributable rejection from operational failure.
@@ -87,6 +87,13 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [ ] Complete the remaining directed barriers and operational failures in the scenario records, including F07/F09/F10. Do not infer a later barrier was reached from an earlier rejection.
 
 **Outcome:** a complete verifiable path with the selected controls and observable causes of acceptance/rejection. Favorable results for every scenario in the future corpus are not required.
+
+## F08 bounded increment
+
+- [x] Fix the [F08 operational oracle](docs/EN/cases/F08/record.md) on base `1369a0c`, then implement local signature-only OCI replacement, fresh CI attribution, guarded recovery and directed admission using shared L04.
+- [x] Retain and audit fresh local F08 `run-IIWR8RLL`: CI and directed Kyverno rejection, exact recovery and shared L04 acceptance; 452 package hashes, 44 valid bundles and two rejected variants audited. Preserve DNS-failed `run-lnUGtdTB` (12 hashes audited). Final suite: 443 service/unit tests plus environment, policy and Cosign checks; see the F08 record.
+- [ ] Human review and final acceptance of F08.
+- [ ] Retain a successful hosted normal gate/L04 run and audit its evidence before closing hosted acceptance. Hosted negative F07 and F08 remain **NOT_EXECUTED**, with no new mutation permissions or workflow activation.
 
 ## 4. Next milestone: Scenario coverage and pilot
 

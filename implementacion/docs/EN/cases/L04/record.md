@@ -167,3 +167,11 @@ measurements are unchanged.
 AI assistance: GPT-6 implemented the gate, scenario/recovery integration,
 regressions, local verification and EN/ES documentation. Human review and final
 acceptance remain pending.
+
+## F08 extension
+
+The [F08 record](../F08/record.md) adds controlled signature-value alteration to
+this same replacement execution, with separate pre-results CI and authorized
+admission observations. Recovery requires exact restoration and fresh verification
+before continuation. L04 remains one shared counterpart; its hosted acceptance
+item stays pending until an authorized successful run and evidence audit exist.

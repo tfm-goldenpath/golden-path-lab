@@ -254,3 +254,28 @@ replacement admission/rollout/HTTP observation with L04. Inspect `F07-CI-complet
 The [operational record](../L04/record.md) distinguishes actual runs, failures and
 unexecuted hosted checks, and supplies local/GitHub commands. Hosted negative F07
 remains NOT_EXECUTED; no prepared GHCR probe is invoked.
+
+## F08 on the local replacement
+
+`make demo` now also exercises [F08](../F08/record.md) on `L01-update`:
+
+```text
+scheduled signing → F07 CI removal/recovery → F08 CI alteration/recovery
+→ normal results authorization → directed F08 admission/recovery
+→ shared L01/L04 replacement admission, ready Pod digest and HTTP checks
+```
+
+The F08 negative inventory contains one readable independent image signature
+with an altered cryptographic value. Fresh CI verification must reject it;
+original acceptance, exact isolation and separately authenticated non-targets
+support attribution. Recovery removes the injected manifest, restores the exact
+original set and freshly verifies it. No signing occurs during fault or recovery.
+The authorized directed check first requires successful server dry-run admission,
+then singleton image-signature rejection; eventual real L04 admission is mandatory.
+
+Retain `L01-update/F08-CI/`, `L01-update/F08-admission/`, all `CI-F08*` files and
+`F08-completed.json`, alongside L04 and source identity. Audit the archive checksum
+and each internal hash. Failed attempts remain evidence; a generic Kyverno error
+is not attributable F08. The record distinguishes actual runs from expected flow.
+Hosted F08 and negative F07 stay `NOT_EXECUTED`. Hosted gate/L04 acceptance remains
+pending a successful separately authorized execution with audited evidence.
