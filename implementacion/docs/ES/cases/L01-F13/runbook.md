@@ -258,3 +258,26 @@ la admisión, despliegue y HTTP de sustitución L01. Revisa `F07-CI-completed.js
 [registro operativo](../L04/record.md) distingue ejecuciones reales, fallos y
 comprobaciones alojadas no ejecutadas, e incluye comandos locales/GitHub.
 F07 negativo alojado permanece NOT_EXECUTED; no se invoca la sonda GHCR.
+
+## F08 sobre el reemplazo local
+
+`make demo` incorpora [F08](../F08/record.md) en `L01-update`:
+
+```text
+firma programada → F07 CI y recuperación → F08 CI y recuperación
+→ autorización normal → F08 dirigido de admisión y recuperación
+→ reemplazo compartido L01/L04, digest real de Pods y HTTP
+```
+
+La firma permanece legible; solo se altera su valor criptográfico. La atribución
+requiere aceptación original, aislamiento exacto, autenticación independiente del
+resto y rechazo criptográfico real. La recuperación elimina el manifiesto inyectado,
+restaura el conjunto original y vuelve a verificar, sin firmar de nuevo. La prueba
+de admisión exige primero dry-run de servidor satisfactorio y después rechazo de
+la regla de firma; la aceptación real final de L04 sigue siendo obligatoria.
+
+Conserva `L01-update/F08-CI/`, `L01-update/F08-admission/`, `CI-F08*` y
+`F08-completed.json`, junto con L04 e identidad del código. Audita el hash del
+archivo y todos los hashes internos, incluidos los intentos fallidos. El registro
+separa ejecuciones observadas de expectativas. F08 y F07 negativo alojados siguen
+`NOT_EXECUTED`; gate/L04 alojado requiere ejecución autorizada y evidencia auditada.

@@ -14,7 +14,7 @@ const bundle = (type, imageDigest, index) => ({mediaType:BUNDLE, verificationMat
     payload:bytes({_type:'https://in-toto.io/Statement/v1', subject:[{name:'synthetic',digest:{sha256:imageDigest.slice(7)}}],
       predicateType:type, predicate:{}}).toString('base64')}});
 
-export function fixture({mode = 'local', imageDigest = defaultImageDigest, host = '172.18.0.2:5000', repo = 'quotes-node-run-fixture', types = ['https://sigstore.dev/cosign/sign/v1', 'https://cyclonedx.org/bom', 'https://slsa.dev/provenance/v1']} = {}) {
+export function fixture({transform = value => value, mode = 'local', imageDigest = defaultImageDigest, host = '172.18.0.2:5000', repo = 'quotes-node-run-fixture', types = ['https://sigstore.dev/cosign/sign/v1', 'https://cyclonedx.org/bom', 'https://slsa.dev/provenance/v1']} = {}) {
   const origin = mode === 'local' ? 'http://' + host : 'https://ghcr.io';
   const repository = mode === 'local' ? repo : 'example/quotes-run-fixture';
   const image = origin.replace(/^https?:\/\//, '') + '/' + repository + '@' + imageDigest;
@@ -23,7 +23,7 @@ export function fixture({mode = 'local', imageDigest = defaultImageDigest, host 
   const fallbackPath = path + '/manifests/' + imageDigest.replace(':', '-');
   const contents = new Map();
   const descriptors = [];
-  const bundles = types.map((type, index) => bundle(type, imageDigest, index));
+  const bundles = types.map((type, index) => transform(bundle(type, imageDigest, index)));
   const layerPaths = [];
   const configPaths = [];
   const manifestPaths = [];

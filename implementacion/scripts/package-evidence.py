@@ -43,7 +43,7 @@ def package(source, output, status):
     excluded = {'state.json', 'config.json', 'kubeconfig', 'cosign.key', 'SHA256SUMS.txt'}
     files = []
     candidates = list(source.iterdir())
-    for name in ('L01-update', 'F07', 'L01-update/F07-CI'):
+    for name in ('L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission'):
         directory = source / name
         if directory.is_symlink() or directory.resolve() != directory:
             raise ValueError('Refusing symlinked scenario evidence directory')
@@ -69,7 +69,7 @@ def package(source, output, status):
         if metadata.is_symlink():
             raise ValueError('Refusing symlinked evidence metadata: ' + metadata.name)
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'L01 image replacement + F13 + F11 integration demonstration; optional F07 directed evidence; not the experimental campaign',
+        'scope': 'L01 image replacement + F13 + F11 integration demonstration; optional F07/F08 directed evidence; not the experimental campaign',
         'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
         'secretsIncluded': False}, indent=2) + '\n')
     files = [p for p in files if p != summary] + [summary]

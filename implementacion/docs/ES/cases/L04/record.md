@@ -107,3 +107,11 @@ no forman parte del cambio. No hubo publicación ni ejecución alojada. F07 nega
 alojado sigue NOT_EXECUTED; la aceptación alojada del gate normal/L04 necesita su
 propia ejecución autorizada y auditoría. Revisión humana y aceptación final
 pendientes. Asistencia de este incremento: GPT-6.
+
+## Extensión F08
+
+El [registro F08](../F08/record.md) añade alteración controlada del valor de firma
+al mismo reemplazo, con observaciones separadas de CI previo a resultados y
+admisión autorizada. La recuperación exige restauración exacta y verificación
+nueva antes de continuar. L04 conserva un único contrapunto compartido; su
+aceptación alojada sigue pendiente de ejecución autorizada satisfactoria y auditoría.

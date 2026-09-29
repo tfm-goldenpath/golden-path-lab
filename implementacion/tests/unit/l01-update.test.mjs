@@ -70,6 +70,13 @@ scenario_f07_ci() {
   mkdir "$state_dir/F07-CI"
   command jq -n '{status:"CI_REJECTION_AND_RECOVERY"}' > "$state_dir/F07-CI/result.json"
 }
+scenario_f08() {
+  step "f08-$1"
+  local folder=F08-CI
+  [[ "$1" != authorized ]] || folder=F08-admission
+  mkdir "$state_dir/$folder"
+  command jq -n '{status:"REJECTION_AND_RECOVERY"}' > "$state_dir/$folder/result.json"
+}
 attestations_authorize_results() {
   step authorize
   printf '{"image":"%s","authorized":true}\n' "$image" > "$state_dir/verified-results.json"
@@ -181,7 +188,7 @@ for (const mode of ['local', 'github']) {
     const f = fixture(t);
     const result = run(f, { GP_MODE: mode });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.deepEqual(result.stages, ['build', 'manifests', 'manifest-policy', 'analyze', 'issue', ...(mode === 'local' ? ['f07-ci', 'f07-ci-restore'] : []), 'verify', 'authorize',
+    assert.deepEqual(result.stages, ['build', 'manifests', 'manifest-policy', 'analyze', 'issue', ...(mode === 'local' ? ['f07-ci', 'f07-ci-restore'] : []), 'verify', ...(mode === 'local' ? ['f08-before-results'] : []), 'authorize', ...(mode === 'local' ? ['f08-authorized'] : []),
       'apply', 'probe', 'deployment', 'pods', 'rollout-check', 'parent-cleanup']);
     const child = join(f.state, 'L01-update');
     assert.equal(JSON.parse(readFileSync(join(child, 'state.json'), 'utf8')).digest, replacementDigest);
@@ -217,14 +224,14 @@ for (const mode of ['local', 'github']) {
   });
 }
 
-for (const stage of ['build', 'manifest-policy', 'analyze', 'issue', 'f07-ci', 'f07-ci-restore', 'verify', 'authorize', 'apply', 'probe']) {
+for (const stage of ['build', 'manifest-policy', 'analyze', 'issue', 'f07-ci', 'f07-ci-restore', 'f08-before-results', 'f08-authorized', 'verify', 'authorize', 'apply', 'probe']) {
   test(`real L01 scenario propagates ${stage} failure without reaching later delivery steps`, t => {
     const f = fixture(t);
     const result = run(f, { GP_FAIL_STAGE: stage, GP_MODE:'local' });
     assert.equal(result.status, 37, result.stdout + result.stderr);
     assert.ok(result.stages.includes(stage));
     assert.ok(!result.stages.includes('rollout-check'));
-    if (['build', 'manifest-policy', 'analyze', 'issue', 'verify', 'f07-ci', 'f07-ci-restore', 'authorize'].includes(stage)) {
+    if (['build', 'manifest-policy', 'analyze', 'issue', 'verify', 'f07-ci', 'f07-ci-restore', 'f08-before-results', 'f08-authorized', 'authorize'].includes(stage)) {
       assert.ok(!result.stages.includes('apply'), 'A failed prerequisite must prevent deployment');
     }
     if (stage === 'verify') assert.ok(!result.stages.includes('authorize'));

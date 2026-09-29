@@ -50,11 +50,13 @@ scenario_l01_update() (
   attestations_issue_delivery
   if [[ "$mode" == local ]]; then
     scenario_f07_ci
+    scenario_f08 before-results
   else
     attestations_ci_gate CI-delivery
     jq -n --arg image "$image" '{scenario:"F07",phase:"early-CI",image:$image,status:"NOT_EXECUTED",reason:"Hosted negative F07 remains pending"}' > "$parent_state/F07-CI-completed.json"
   fi
   attestations_authorize_results
+  if [[ "$mode" == local ]]; then scenario_f08 authorized; fi
   record 'L01: replace the deployed image and verify the new Pods'
   actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/L01-update.log"
   probe tfm-golden
@@ -64,6 +66,10 @@ scenario_l01_update() (
   node scripts/check-image-rollout.mjs "$previous_image" "$image" "$state_dir/deployment.json" "$state_dir/pods.json" > "$parent_state/L01-image-update.json"
   jq --arg image "$image" '. + {scenario:"L04",image:$image,sharedExecution:"L01-image-update",verification:"fresh-registry",functionality:"healthy"}' "$parent_state/L01-image-update.json" > "$parent_state/L04-result.json"
   if [[ "$mode" == local ]]; then
+    jq -n --slurpfile ci "$state_dir/F08-CI/result.json" --slurpfile admission "$state_dir/F08-admission/result.json" --slurpfile l04 "$parent_state/L04-result.json" \
+      '{scenario:"F08",status:"REJECTION_AND_L04_ACCEPTANCE_COMPLETE",CI:$ci[0],admission:$admission[0],L04:$l04[0],measurement:"functional-integration-only"}' > "$parent_state/F08-completed.json"
     jq --slurpfile l04 "$parent_state/L04-result.json" '.status="CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE" | .L04=$l04[0]' "$state_dir/F07-CI/result.json" > "$parent_state/F07-CI-completed.json"
+  else
+    jq -n '{scenario:"F08",status:"NOT_EXECUTED",reason:"Hosted mutation is outside the supported local procedure"}' > "$parent_state/F08-completed.json"
   fi
 )

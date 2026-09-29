@@ -180,3 +180,15 @@ finalización tras despliegue y HTTP. `demo.sh` conserva secuencia global,
 resultados y limpieza compartida. El modo explícito `ci-replacement` valida la
 propiedad de padre/candidato sin relajar el perfil autorizado de admisión.
 Consulta el [registro operativo](cases/L04/record.md).
+
+## Comprobaciones F08 sobre el reemplazo
+
+`tests/scenarios/f08.sh` gestiona alteración y recuperación locales antes de emitir
+resultados y después de la autorización normal. El helper F08 reutiliza validadores
+de propiedad y respaldo F07, publica nuevos digests OCI y prueba el aislamiento.
+Su diagnóstico ECDSA apoya la atribución y no autoriza entregas. El gate compartido
+sigue siendo de solo lectura; conserva datos del proceso verificador y clasifica
+fallos como incidencias de integración. El escenario autentica por separado las
+evidencias no alteradas. L01 enlaza la finalización con el mismo rollout/HTTP de
+L04; `demo.sh` conserva la limpieza de infraestructura. Consulta el
+[registro F08](cases/F08/record.md).

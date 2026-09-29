@@ -99,3 +99,21 @@ inputs are integration failures; unexpected acceptance is unfavorable. Recovery
 retains both errors. `L04-result.json` and `F07-CI-completed.json` are written only
 after successful positive control. These are linked records of one execution,
 not extra scenarios or campaign measurements. See the [record and commands](cases/L04/record.md).
+
+## Controlled F08 diagnostic
+
+F08 changes one ECDSA signature value on the local replacement, preserving readable
+DSSE/base64/DER, payload, verification material and other artifacts. The registry
+receives a new bundle blob and manifest with recalculated descriptors; the original
+signature referrer is unavailable during the negative check. Exactly one target
+signature is required. No delivery control or trust policy is relaxed.
+
+The gate retains `verificationFailure` (predicate, exit status and verifier rejection
+versus execution error) without turning a failed verification into authorization.
+F08 combines that fresh failure with strict current inventories, original acceptance,
+unchanged trust, independent authentication of non-targets and a direct original/
+variant cryptographic check. A threshold message alone is insufficient. Exact
+restoration and fresh successful verification precede continuation. Directed
+admission additionally requires cache disabled, unchanged policy specs, positive
+server dry-run, singleton signature-rule rejection and eventual real L04 acceptance.
+See the [record](cases/F08/record.md); hosted F08 remains NOT_EXECUTED.

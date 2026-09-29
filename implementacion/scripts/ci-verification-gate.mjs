@@ -31,7 +31,12 @@ export function authenticateBundle({mode, image, directory, repository, commit, 
   let result;
   try { result = run(hostedProvenance ? 'gh' : 'cosign', args, {stdio:['ignore', stdout, stderr], timeout:120_000}); }
   finally { closeSync(stdout); closeSync(stderr); }
-  if (result.error || result.status !== 0) throw new Error('Cryptographic verification failed for ' + type);
+  if (result.error || result.status !== 0) {
+    const error = new Error('Cryptographic verification failed for ' + type);
+    error.verificationFailure = {predicate:type, exitStatus:result.status,
+      kind:result.error || result.signal || result.status !== 1 ? 'VERIFIER_ERROR' : 'VERIFIER_REJECTION'};
+    throw error;
+  }
   if (hostedProvenance) {
     const output = JSON.parse(readFileSync(prefix + '.verify.json', 'utf8'));
     const contract = validateGithubVerificationResults(output, {image:image.split('@')[0], digest, repository, commit, identity, ref});
@@ -81,7 +86,7 @@ export async function verifyDelivery(options, {download = downloadBundleInventor
     }
     return result;
   } catch (error) {
-    save(output + '.result.json', {image, phase, status:'INTEGRATION_FAILURE', reason:error.message});
+    save(output + '.result.json', {image, phase, status:'INTEGRATION_FAILURE', reason:error.message, ...(error.verificationFailure ? {verificationFailure:error.verificationFailure} : {})});
     throw error;
   }
 }

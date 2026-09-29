@@ -160,3 +160,16 @@ its replacement execution for L04 and records completion only after rollout and
 HTTP checks. `demo.sh` retains overall sequencing, final results and shared cleanup.
 The explicit `ci-replacement` helper mode validates parent/child ownership without
 relaxing the authorized admission profile. See the [operational record](cases/L04/record.md).
+
+## F08 replacement checks
+
+`tests/scenarios/f08.sh` owns the controlled local alteration and recovery at two
+points in the existing replacement: before results and after normal authorization.
+`scripts/f08-signature-evidence.mjs` reuses F07 ownership/backup validators, publishes
+new OCI content digests and proves signature isolation. Its local ECDSA diagnostic
+supports scenario attribution; it cannot grant delivery authorization. The shared
+CI gate remains read-only and records verifier exit details while classifying
+verification failures as integration failures. The scenario independently verifies
+non-targets when the gate stops at the altered bundle. `l01.sh` links completion to
+the existing L04 rollout/HTTP observation; `demo.sh` owns infrastructure cleanup.
+See the [F08 record](cases/F08/record.md) for scope and actual evidence.
