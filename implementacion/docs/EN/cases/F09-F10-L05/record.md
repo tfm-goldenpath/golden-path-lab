@@ -41,3 +41,9 @@ ran baseline `38631e1`, so it does not close this family's integration requireme
 Merged hosted run `36636319864` failed twice at F13 with webhook timeouts, before
 this family's scenarios. The [readiness correction](../../../../registros/kyverno_readiness_fix_EN.md)
 retains the same scenario oracles and records the fix's validation limits.
+
+The subsequent [local preflight on main `80c12bc`](../../../../registros/f09_f10_l05_integration_validation_EN.md)
+verified/exported the distinct immutable source pair but failed environment pins
+and BuildKit DNS on kind. No full demo was launched; F09/F10 rejection/recovery,
+L05 deliveries and update/restart readiness remain **NOT_EXECUTED**. The diagnostic
+archive checksum and all 15 internal hashes passed; no signatures were generated.

@@ -177,6 +177,7 @@ See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](
 - [x] Align explicit provenance repository, revision, build type and builder requirements in CI/admission; add isolated local F09/F10 preparation, attribution and exact recovery.
 - [x] Add opt-in L05 using two explicit immutable main-history commits, actual exported application source, separate tests/builds/evidence and exact revision authorization.
 - [ ] Complete and review fresh local F09/F10 CI and directed admission plus L05 rollout/HTTP. Consult the [validation record](registros/f09_f10_l05_validation_EN.md) for actual results and outstanding boundaries.
+- [x] Retain and audit the [main `80c12bc` local preflight](registros/f09_f10_l05_integration_validation_EN.md): distinct source pair exported; environment pins and real BuildKit DNS failed. Diagnostic checksum and 15 internal hashes verified. No full demo launched; rejection/recovery, both L05 deliveries and update/restart remain **NOT_EXECUTED**.
 - [ ] Demonstrate hosted L05 across two authorized actual Actions run revisions and audit both packages. Hosted F09/F10 negatives remain **NOT_EXECUTED**.
 - [x] Address the five PR #24 comments locally and audit the supplied CI/hosted logs and package; see the [review record](registros/pr24_review_EN.md). Hosted run `36631562615` checked baseline `38631e1`, not PR head `d337a3c` or the review fixes.
 - [ ] Human review and final acceptance; no campaign measurements claimed.
@@ -184,4 +185,4 @@ See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](
 ## Merged-run admission readiness correction
 
 - [x] Reproduce the readiness regression and implement initial/update separation, current Pod/endpoint checks, explicit logs and server dry-run; see the [record](registros/kyverno_readiness_fix_EN.md).
-- [ ] Validate the fix in real admission and a separately authorized hosted run on the fix revision. Failed run `36636319864` attempts 1/2 remain integration errors, not F13 detections.
+- [ ] Complete readiness validation: user reports hosted `36640544300` passed normal delivery/initial readiness at `80c12bc`; not independently audited in this follow-up. L05 policy update/restart remains **NOT_EXECUTED** after the blocked local preflight. Failed run `36636319864` attempts 1/2 remain integration errors, not F13 detections.

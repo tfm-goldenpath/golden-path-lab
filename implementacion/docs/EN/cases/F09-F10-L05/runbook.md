@@ -140,3 +140,40 @@ are `NOT_RECORDED`, not inferred passes or claims of execution. Explicit
 `NOT_EXECUTED` and malformed `INVALID_RECORD` observations remain distinguishable.
 See the [validation record](../../../../registros/f09_f10_l05_validation_EN.md)
 for actual checks, unavailable boundaries and test-first evidence.
+
+## Environment preflight before retrying
+
+The [main `80c12bc` preflight](../../../../registros/f09_f10_l05_integration_validation_EN.md)
+failed environment pins and reproduced Docker Hub DNS failure from BuildKit on
+kind. F09/F10/L05 remain NOT_EXECUTED. Select **Golden Path - implementation**
+when creating/rebuilding the devcontainer or Codespace; see the
+[environment guide](../../environment.md). Preserve existing evidence first.
+After the environment owner resolves the prerequisites, run the following.
+Stop at a failed check; do not repeat the full demo or automatically apply the
+historical firewall workaround. The bounded probe uses the same BuildKit image
+and network as local delivery; smoke-env alone does not establish that path.
+
+```bash
+# Run from the repository root in the selected devcontainer.
+(
+  set -euo pipefail
+  export PATH="$PWD/implementacion/.tools/bin:$PATH"
+  make -C implementacion doctor
+  make -C implementacion smoke-env
+  source implementacion/versions.env
+  probe_dir=$(mktemp -d)
+  probe_builder="gp-connectivity-$(date -u +%s)-$$"
+  trap 'docker buildx rm "$probe_builder"; rm -rf -- "$probe_dir"' EXIT
+  docker network inspect kind >/dev/null
+  docker buildx create --name "$probe_builder" --driver docker-container \
+    --driver-opt network=kind \
+    --driver-opt "image=$(jq -r '.images.buildkit.reference' implementacion/tools.lock.json)"
+  printf 'FROM %s\n' "$SERVICE_NODE_IMAGE" > "$probe_dir/Dockerfile"
+  timeout --signal=TERM --kill-after=10s 60s docker buildx build \
+    --builder "$probe_builder" --platform linux/amd64 --pull \
+    --progress=plain --provenance=false "$probe_dir"
+  GP_L05_FROM_COMMIT=7243334fe4ee7073801a86b25c90986b7d3c5ece \
+  GP_L05_TO_COMMIT=fc58e220e2d3f38d13216b23e61ffc31271f112f \
+  make -C implementacion demo
+)
+```

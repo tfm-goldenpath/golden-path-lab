@@ -48,3 +48,10 @@ para el desarrollo anterior; se corrigió el texto contradictorio de su registro
 sin presentarlo como auditoría independiente de logs del cliente. Revisión humana
 pendiente. No se publicaron cambios, PR ni workflows; no se modificaron ajustes del
 repositorio, archivos de prompt existentes ni la tesis.
+
+## Seguimiento desde main actual
+
+El [preflight local](f09_f10_l05_integration_validation_ES.md) en `80c12bc`
+verificó los commits, pero versiones y DNS BuildKit impidieron lanzar demo.
+Paquete de diagnóstico auditado; F09/F10/L05 siguen NOT_EXECUTED. Se conservan las
+observaciones históricas anteriores.

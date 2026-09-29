@@ -106,3 +106,40 @@ funcionales, no datos de campaña; revisión humana pendiente.
 Archivos parciales sin registro final indican `INCOMPLETE`; sin registro,
 `NOT_RECORDED`. No se infiere éxito. Se distinguen `NOT_EXECUTED` explícito y
 `INVALID_RECORD` para registros malformados.
+
+## Preflight del entorno antes de reintentar
+
+El [preflight de main `80c12bc`](../../../../registros/f09_f10_l05_integration_validation_ES.md)
+falló por versiones y reprodujo el timeout DNS de Docker Hub desde BuildKit en
+kind. F09/F10/L05 siguen NOT_EXECUTED. Seleccionar **Golden Path - implementation**
+al crear/reconstruir devcontainer o Codespace; consultar la
+[guía de entorno](../../environment.md). Conservar primero la evidencia existente.
+Tras resolver los requisitos con el propietario del entorno, ejecutar estos
+comandos desde la raíz. Detenerse si falla una comprobación; no repetir el demo
+ni aplicar automáticamente reglas históricas de firewall. La sonda usa la misma
+imagen BuildKit y red que la entrega local; smoke-env no demuestra esa ruta.
+
+```bash
+# Run from the repository root in the selected devcontainer.
+(
+  set -euo pipefail
+  export PATH="$PWD/implementacion/.tools/bin:$PATH"
+  make -C implementacion doctor
+  make -C implementacion smoke-env
+  source implementacion/versions.env
+  probe_dir=$(mktemp -d)
+  probe_builder="gp-connectivity-$(date -u +%s)-$$"
+  trap 'docker buildx rm "$probe_builder"; rm -rf -- "$probe_dir"' EXIT
+  docker network inspect kind >/dev/null
+  docker buildx create --name "$probe_builder" --driver docker-container \
+    --driver-opt network=kind \
+    --driver-opt "image=$(jq -r '.images.buildkit.reference' implementacion/tools.lock.json)"
+  printf 'FROM %s\n' "$SERVICE_NODE_IMAGE" > "$probe_dir/Dockerfile"
+  timeout --signal=TERM --kill-after=10s 60s docker buildx build \
+    --builder "$probe_builder" --platform linux/amd64 --pull \
+    --progress=plain --provenance=false "$probe_dir"
+  GP_L05_FROM_COMMIT=7243334fe4ee7073801a86b25c90986b7d3c5ece \
+  GP_L05_TO_COMMIT=fc58e220e2d3f38d13216b23e61ffc31271f112f \
+  make -C implementacion demo
+)
+```
