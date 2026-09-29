@@ -17,8 +17,11 @@ CHECKS = (
 )
 
 
-def condition(expression, value):
-    return {"key": "{{ " + expression + " || '' }}", "operator": "Equals", "value": value}
+def condition(expression, value, message=None):
+    result = {"key": "{{ " + expression + " || '' }}", "operator": "Equals", "value": value}
+    if message:
+        result["message"] = message
+    return result
 
 
 def match_resources():
@@ -157,9 +160,11 @@ def render(config):
     ])
     provenance = attestation_policy("tfm-provenance", "require-provenance", PROVENANCE_TYPE, [
         condition("buildDefinition.buildType", "https://actions.github.io/buildtypes/workflow/v1"
-                  if config["mode"] == "github" else "https://tfm-goldenpath.dev/buildtypes/local/v1"),
-        condition("buildDefinition.externalParameters.workflow.repository", config["repository"]),
-        condition("buildDefinition.resolvedDependencies[0].digest.gitCommit", config["commit"]),
+                  if config["mode"] == "github" else "https://tfm-goldenpath.dev/buildtypes/local/v1", "PROVENANCE_BUILD_TYPE"),
+        condition("buildDefinition.externalParameters.workflow.repository", config["repository"], "PROVENANCE_REPOSITORY"),
+        condition("buildDefinition.resolvedDependencies[0].digest.gitCommit", config["commit"], "PROVENANCE_REVISION"),
+        condition("runDetails.builder.id", config["identity"] if config["mode"] == "github"
+                  else "https://tfm-goldenpath.dev/builders/local-development", "PROVENANCE_BUILDER"),
     ])
     results = attestation_policy("tfm-results", "require-results", RESULTS_TYPE, [
         condition("policyVersion", config.get("policy_version", "golden-path-v1")),

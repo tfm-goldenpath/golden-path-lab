@@ -1,3 +1,4 @@
+import {validateProvenance} from './lab-contracts.mjs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -49,6 +50,8 @@ export function validateGithubVerificationResults(results, expected) {
       requireCondition(certificate.runnerEnvironment === 'github-hosted', 'The laboratory requires a GitHub-hosted runner.');
       requireCondition(Array.isArray(verification.verifiedTimestamps) && verification.verifiedTimestamps.some(timestamp =>
         typeof timestamp?.timestamp === 'string' && Number.isFinite(Date.parse(timestamp.timestamp))), 'Missing verified signing timestamp.');
+
+      validateProvenance(statement.predicate, {...expected, mode:'github'});
 
       return {
         authorised: true,

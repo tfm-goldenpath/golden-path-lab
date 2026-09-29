@@ -61,27 +61,38 @@ export async function verifyDelivery(options, {download = downloadBundleInventor
     const statements = parseEnvelopes(JSON.stringify(snapshot.bundles), {bundlesOnly:true});
     if (statements.some(s => s.subject.some(subject => subject.digest.sha256 !== digest.slice(7)))) throw new Error('Inventory subject mismatch');
     const authenticated = new Map();
+    let provenanceFailure;
+    const seen = new Set();
     for (let i = 0; i < statements.length; i++) {
       const type = statements[i].predicateType;
       if (![IMAGE_SIGNATURE_TYPE, SBOM, PROVENANCE, RESULTS_TYPE].includes(type)) throw new Error('Unexpected evidence predicate');
+      if (seen.has(type)) throw new Error('Duplicate evidence predicate');
+      seen.add(type);
       const bundlePrefix = output + '-' + i;
       const file = bundlePrefix + '.bundle.json';
       save(file, snapshot.bundles[i]);
-      const content = await authenticate(options, snapshot.bundles[i], type, file, bundlePrefix);
+      let content;
+      try { content = await authenticate(options, snapshot.bundles[i], type, file, bundlePrefix); }
+      catch (error) {
+        // Local content errors are emitted only after exact bundle authentication.
+        // Continue checking every unrelated artifact before attributing F10.
+        if (mode !== 'local' || type !== PROVENANCE || JSON.stringify(error.provenanceFailure?.violations) !== JSON.stringify(['PROVENANCE_REPOSITORY'])) throw error;
+        provenanceFailure = error.provenanceFailure;
+        continue;
+      }
       save(bundlePrefix + '.statement.json', content);
       authenticated.set(type, content);
     }
-    for (const type of [PROVENANCE, ...(phase === 'authorized' ? [RESULTS_TYPE] : [])]) {
-      if (!authenticated.has(type)) throw new Error('Missing required attestation: ' + type);
-    }
+    if (phase === 'authorized' && !authenticated.has(RESULTS_TYPE)) throw new Error('Missing required results');
     if (phase === 'before-results' && authenticated.has(RESULTS_TYPE)) throw new Error('Results already exist before authorization');
-    const missing = !authenticated.has(IMAGE_SIGNATURE_TYPE);
-    const missingSbom = !authenticated.has(SBOM);
-    if (missing && missingSbom) throw new Error('Multiple mandatory predicates missing');
-    const result = {image, digest, phase, status:missing ? 'MISSING_IMAGE_SIGNATURE' : missingSbom ? 'MISSING_SBOM' : 'VERIFIED',
-      predicate:missingSbom ? SBOM : IMAGE_SIGNATURE_TYPE, inventoryComplete:true, authenticatedPredicates:[...authenticated.keys()]};
+    const missingTypes = [IMAGE_SIGNATURE_TYPE, SBOM, PROVENANCE].filter(type => !authenticated.has(type) && !(type === PROVENANCE && provenanceFailure));
+    if (missingTypes.length > 1 || (missingTypes.length && provenanceFailure)) throw new Error('Multiple mandatory predicates missing or invalid');
+    const statuses = new Map([[IMAGE_SIGNATURE_TYPE,'MISSING_IMAGE_SIGNATURE'],[SBOM,'MISSING_SBOM'],[PROVENANCE,'MISSING_PROVENANCE']]);
+    const result = {image, digest, phase, status:provenanceFailure ? 'PROVENANCE_REPOSITORY_UNAUTHORIZED' : missingTypes.length ? statuses.get(missingTypes[0]) : 'VERIFIED',
+      predicate:provenanceFailure ? PROVENANCE : missingTypes[0], inventoryComplete:true, authenticatedPredicates:[...authenticated.keys()],
+      ...(provenanceFailure ? {provenanceFailure, provenanceAuthenticated:true} : {})};
     save(output + '.result.json', result);
-    if (!missing && !missingSbom) {
+    if (result.status === 'VERIFIED') {
       for (const [type, name] of [[IMAGE_SIGNATURE_TYPE, 'signature'], [SBOM, 'sbom'], [PROVENANCE, 'provenance']]) {
         save(join(directory, 'verified-' + name + '.json'), authenticated.get(type));
       }

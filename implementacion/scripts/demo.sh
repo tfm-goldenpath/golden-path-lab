@@ -10,7 +10,7 @@ source versions.env
 for module in context lab delivery attestations workload; do
   source "$root/scripts/lib/$module.sh"
 done
-for scenario in l01 f13 f07 f08 sbom f11; do
+for scenario in l01 f13 f07 f08 sbom provenance l05 f11; do
   source "$root/tests/scenarios/$scenario.sh"
 done
 context_init
@@ -37,6 +37,7 @@ else
   exec > >(tee -a "$state_dir/run.log") 2>&1
   delivery_preflight
   capture_source_context
+  scenario_l05_prepare
   lab_create
   delivery_build
   lab_prepare_namespaces
@@ -79,14 +80,18 @@ if [[ "$mode" == local ]]; then
 fi
 scenario_f11_admission
 scenario_l01_update
+scenario_l05
 jq -n --arg image "$image" --arg mode "$mode" --arg repo "$repository" --arg commit "$commit" \
   --slurpfile f07 "$state_dir/F07-completed.json" \
   --slurpfile f05 "$state_dir/F05-completed.json" \
   --slurpfile f06 "$state_dir/F06-completed.json" \
+  --slurpfile f09 "$state_dir/F09-completed.json" \
+  --slurpfile f10 "$state_dir/F10-completed.json" \
+  --slurpfile l05 "$state_dir/L05-result.json" \
   --slurpfile l03 "$state_dir/L03-result.json" \
   --slurpfile f08 "$state_dir/F08-completed.json" \
   --slurpfile ci "$state_dir/F07-CI-completed.json" \
   --slurpfile l04 "$state_dir/L04-result.json" \
   --slurpfile update "$state_dir/L01-image-update.json" \
-  '{status:"PASS",mode:$mode,evidenceFormat:"sigstore-bundle-v0.3",image:$image,source:{repository:$repo,commit:$commit},reference:"healthy",L01:"accepted-and-healthy",F13:"denied-by-require-results",F07:$f07[0],F07CI:$ci[0],F08:$f08[0],F05:$f05[0],F06:$f06[0],L03:$l03[0],L04:$l04[0],F11:{early:"denied",admissionUpdate:"denied"},legitimateUpdate:$update[0],measurement:"functional-integration-only"}' > "$state_dir/result.json"
+  '{status:"PASS",mode:$mode,evidenceFormat:"sigstore-bundle-v0.3",image:$image,source:{repository:$repo,commit:$commit},reference:"healthy",L01:"accepted-and-healthy",F13:"denied-by-require-results",F07:$f07[0],F07CI:$ci[0],F08:$f08[0],F05:$f05[0],F06:$f06[0],L03:$l03[0],F09:$f09[0],F10:$f10[0],L05:$l05[0],L04:$l04[0],F11:{early:"denied",admissionUpdate:"denied"},legitimateUpdate:$update[0],measurement:"functional-integration-only"}' > "$state_dir/result.json"
 record "PASS: L01 accepted; F13 and F11 rejected; F07 status recorded for the selected lane. Evidence: $state_dir"

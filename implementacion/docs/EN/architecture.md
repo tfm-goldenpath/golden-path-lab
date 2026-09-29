@@ -177,3 +177,22 @@ See the [F08 record](cases/F08/record.md) for scope and actual evidence.
 ## SBOM control family
 
 `validate-sbom-schema.mjs` owns offline schema validation using the separate tooling lock and unmodified official schemas. `sbom-scenario-evidence.mjs` owns local fixture planning, OCI isolation and donor diagnostics; `tests/scenarios/sbom.sh` owns fault/recovery orchestration. The production downloader retains mismatched received evidence without relaxing its subject check. L03 reuses replacement analysis and authorization with a real pinned component addition. See the [runbook](cases/F05-F06-L03/runbook.md).
+
+## Provenance family and immutable source revisions
+
+`tests/scenarios/provenance.sh` owns F09/F10 preparation, fault trials and recovery;
+`provenance-scenario-evidence.mjs` reuses local ownership, backup and inventory
+isolation helpers. Fixture signing occurs before mutation with no upload. The
+production gate authenticates every received bundle and classifies only isolated
+missing provenance or authenticated repository mismatch. Other errors stop delivery.
+Both CI and admission require configured build type and builder as well as origin.
+`lab_apply_admission_policies` reuses the renderer without reinstalling Kyverno.
+
+`l05.sh` owns two legitimate executions selected explicitly through `l05-source.mjs`.
+The helper exports immutable Git blobs from an ordered pair on local `main` and
+records distinct application trees. Delivery checks export hashes, reruns source
+tests and builds actual source contents. Each revision has its own exact policy
+and fresh image evidence. The coordinator selects sources before infrastructure
+creation and runs L05 after existing fault trials; no policy changes occur inside
+those trials. See the [runbook](cases/F09-F10-L05/runbook.md). Hosted L05 requires
+two actual Actions runs; additional checkouts do not change native run identity.

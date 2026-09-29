@@ -155,9 +155,10 @@ class RenderTests(unittest.TestCase):
             item = renderer.render(config)["items"][3]
             attestation = item["spec"]["rules"][0]["verifyImages"][0]["attestations"][0]
             self.assertEqual(attestation["conditions"], [{"all": [
-                renderer.condition("buildDefinition.buildType", builder),
-                renderer.condition("buildDefinition.externalParameters.workflow.repository", config["repository"]),
-                renderer.condition("buildDefinition.resolvedDependencies[0].digest.gitCommit", config["commit"]),
+                renderer.condition("buildDefinition.buildType", builder, "PROVENANCE_BUILD_TYPE"),
+                renderer.condition("buildDefinition.externalParameters.workflow.repository", config["repository"], "PROVENANCE_REPOSITORY"),
+                renderer.condition("buildDefinition.resolvedDependencies[0].digest.gitCommit", config["commit"], "PROVENANCE_REVISION"),
+                renderer.condition("runDetails.builder.id", config["identity"] if mode == "github" else "https://tfm-goldenpath.dev/builders/local-development", "PROVENANCE_BUILDER"),
             ]}])
 
     def test_sbom_keeps_generated_format_and_version_requirements(self):

@@ -32,7 +32,7 @@ test('content extraction retains the same saved statement for every locally sign
   for (const [type, predicate] of [
     [imageType, {}],
     [sbomType, {bomFormat:'CycloneDX',specVersion:'1.7',version:1,metadata:{component},components:[component]}],
-    [provenanceType, {buildDefinition:{externalParameters:{workflow:{repository}},resolvedDependencies:[{digest:{gitCommit:commit}}]}}],
+    [provenanceType, {buildDefinition:{buildType:"https://tfm-goldenpath.dev/buildtypes/local/v1",externalParameters:{workflow:{repository}},resolvedDependencies:[{digest:{gitCommit:commit}}]},runDetails:{builder:{id:"https://tfm-goldenpath.dev/builders/local-development"}}}],
     [RESULTS_TYPE, results('PASS')],
   ]) {
     const saved = bundle(type, predicate);
@@ -50,7 +50,7 @@ test('saved bundle content rejects a different subject/type and unacceptable pre
     [provenanceType, {buildDefinition:{externalParameters:{workflow:{repository:'other'}}}}],
   ]) {
     assert.throws(() => statementFromVerifiedBundle(JSON.stringify(bundle(type, predicate)), digest, type, repository, commit),
-      /authorized contract|Incomplete CycloneDX|Incorrect build origin/);
+      /authorized contract|Incomplete CycloneDX|PROVENANCE_STRUCTURE/);
   }
 });
 

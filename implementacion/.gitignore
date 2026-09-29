@@ -15,3 +15,6 @@ coverage/
 /evidence/packages/
 /evidence/environment/
 # Reports are not ignored globally: evidence intended for publication requires review.
+
+# Raw test-first observations; reviewed summaries live in registros.
+/evidence/tdd/

@@ -138,3 +138,24 @@ run 'schema-invalid predicate retains authentic signature and subject' cosign ve
   "${verify_args[@]}" --type "$sbom_type" --bundle "$probe_dir/invalid-sbom.json"
 reject 'authenticated but schema-invalid predicate' 'Official CycloneDX schema validation failed' \
   node scripts/verified-bundle-statement.mjs "$probe_dir/invalid-sbom.json" "sha256:$digest" "$sbom_type" https://github.com/example/bundle-probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+# F10 is an authentic local lab predicate for the exact digest, with only the
+# selected repository property unauthorized. This is not native GitHub evidence.
+provenance_type=https://slsa.dev/provenance/v1
+node scripts/lab-contracts.mjs provenance https://github.com/example/bundle-probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa "$digest" offline-probe "$probe_dir/provenance-predicate.json"
+run 'sign valid local provenance' cosign attest-blob "${sign_args[@]}" --type "$provenance_type" \
+  --predicate "$probe_dir/provenance-predicate.json" --bundle "$probe_dir/provenance.json" "$probe_dir/artifact.bin"
+run 'authenticate valid provenance' cosign verify-blob-attestation "${verify_args[@]}" --type "$provenance_type" --bundle "$probe_dir/provenance.json"
+run 'accept valid authenticated provenance contract' node scripts/verified-bundle-statement.mjs "$probe_dir/provenance.json" "sha256:$digest" "$provenance_type" https://github.com/example/bundle-probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+node --input-type=module - "$probe_dir/provenance-predicate.json" "$probe_dir/f10-predicate.json" <<'NODE'
+import fs from 'node:fs';
+import {fixturePredicate} from './scripts/provenance-scenario-evidence.mjs';
+fs.writeFileSync(process.argv[3],JSON.stringify(fixturePredicate(JSON.parse(fs.readFileSync(process.argv[2])))));
+NODE
+run 'sign labelled F10 repository fixture' cosign attest-blob "${sign_args[@]}" --type "$provenance_type" \
+  --predicate "$probe_dir/f10-predicate.json" --bundle "$probe_dir/f10.json" "$probe_dir/artifact.bin"
+run 'authenticate exact F10 bundle before evaluating fields' cosign verify-blob-attestation "${verify_args[@]}" --type "$provenance_type" --bundle "$probe_dir/f10.json"
+reject 'F10 authenticated repository authorization' PROVENANCE_REPOSITORY \
+  node scripts/verified-bundle-statement.mjs "$probe_dir/f10.json" "sha256:$digest" "$provenance_type" https://github.com/example/bundle-probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+reject 'F10 fixture for another digest is not F10' 'provided artifact digest does not match any digest in statement' \
+  cosign verify-blob-attestation --key "$probe_dir/local.pub" --insecure-ignore-tlog --digest "$wrong_digest" --digestAlg sha256 --type "$provenance_type" --bundle "$probe_dir/f10.json"

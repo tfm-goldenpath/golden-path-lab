@@ -2,13 +2,20 @@
 import {readFileSync,readdirSync,lstatSync} from 'node:fs';
 import {join,relative,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
-const [context,base,commit]=process.argv.slice(2), root=resolve(context);
+const [context,base,commit,authorizationFile,execution]=process.argv.slice(2), root=resolve(context);
 const allowed=['services/quotes-node','tests/fixtures/l03'];
-if (!allowed.includes(context)) throw new Error('Unexpected build context');
+let authorized;
+if (!allowed.includes(context)) {
+  if (!authorizationFile || !['from','to'].includes(execution)) throw new Error('Unexpected build context');
+  const authorization=JSON.parse(readFileSync(authorizationFile));
+  authorized=authorization[execution];
+  if(authorization.scenario!=='L05' || !/^[a-f0-9]{40}$/.test(authorization.authorizedMain || '')
+      || authorized?.directory!==root || authorized.commit!==commit || !Array.isArray(authorized.files)) throw new Error('Build context differs from L05 source authorization');
+}
 const files=[];
 function walk(directory) {
   for(const name of readdirSync(directory).sort()) {
-    if(['node_modules','test'].includes(name)) continue;
+    if(!authorized && ['node_modules','test'].includes(name)) continue;
     const path=join(directory,name),stat=lstatSync(path);
     if(stat.isSymbolicLink()) throw new Error('Symlink in build context');
     if(stat.isDirectory()) walk(path);
@@ -19,6 +26,11 @@ function walk(directory) {
   }
 }
 walk(root);
+if(authorized) {
+  const actual=files.map(({path,sha256})=>({path,sha256})).sort((a,b)=>a.path.localeCompare(b.path));
+  const expected=authorized.files.map(({path,sha256})=>({path,sha256})).sort((a,b)=>a.path.localeCompare(b.path));
+  if(JSON.stringify(actual)!==JSON.stringify(expected)) throw new Error('L05 exported source changed after selection');
+}
 if(context==='tests/fixtures/l03') {
   const lock=JSON.parse(readFileSync(join(root,'component-lock.json')));
   if(lock.name!=='is-number' || lock.version!=='7.0.0') throw new Error('Unexpected L03 component pin');

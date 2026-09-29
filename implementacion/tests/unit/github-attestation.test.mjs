@@ -21,7 +21,7 @@ function fixture() {
         _type: 'https://in-toto.io/Statement/v1',
         subject: [{ name: expected.image, digest: { sha256: expected.digest.slice(7) } }],
         predicateType: 'https://slsa.dev/provenance/v1',
-        predicate: { buildDefinition: {}, runDetails: {} },
+        predicate: {buildDefinition:{buildType:'https://actions.github.io/buildtypes/workflow/v1',externalParameters:{workflow:{repository:expected.repository}},resolvedDependencies:[{digest:{gitCommit:expected.commit}}]},runDetails:{builder:{id:expected.identity}}},
       },
       signature: {
         certificate: {
@@ -115,4 +115,13 @@ test('selects an authorised result when other entries do not match', () => {
 test('rejects an inconsistent policy before examining attestations', () => {
   assert.throws(() => validateGithubVerificationResults(fixture(), { ...expected, ref: 'refs/heads/other' }), /Workflow identity/);
   assert.throws(() => validateGithubVerificationResults(fixture(), { ...expected, commit: 'latest' }), /Invalid source commit/);
+});
+
+for(const field of ['repository','revision','buildType','builder']) test(`hosted authenticated content must also match admission: ${field}`,()=>{
+  const results=fixture(),p=results[0].verificationResult.statement.predicate;
+  if(field==='repository') p.buildDefinition.externalParameters.workflow.repository='https://example.invalid/other';
+  if(field==='revision') p.buildDefinition.resolvedDependencies[0].digest.gitCommit='c'.repeat(40);
+  if(field==='buildType') p.buildDefinition.buildType='https://example.invalid/build';
+  if(field==='builder') p.runDetails.builder.id='https://example.invalid/builder';
+  assert.throws(()=>validateGithubVerificationResults(results,expected),/PROVENANCE_/);
 });

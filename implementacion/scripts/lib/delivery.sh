@@ -22,7 +22,7 @@ delivery_build() {
   node_image=${GP_NODE_IMAGE:-$SERVICE_NODE_IMAGE}
   [[ "$node_image" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'The base image must be pinned by digest.'
   put nodeImage "$node_image"
-  node scripts/capture-build-inputs.mjs "$context" "${base:-$node_image}" "$commit" > "$state_dir/build-inputs.json"
+  node scripts/capture-build-inputs.mjs "$context" "${base:-$node_image}" "$commit" "${3:-}" "${4:-}" > "$state_dir/build-inputs.json"
   record "Build image $id"
   docker buildx build --builder "$builder" --platform linux/amd64 --provenance=false --sbom=false --push \
     --build-arg "BASE_IMAGE=$base" --build-arg "NODE_IMAGE=$node_image" --build-arg "BUILD_COMMIT=$commit" --label "tfm.lab.run=$id" \

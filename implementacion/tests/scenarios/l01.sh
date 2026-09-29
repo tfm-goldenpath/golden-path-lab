@@ -44,7 +44,7 @@ scenario_l01_update() (
   # This subshell owns only its port-forward; infrastructure cleanup stays with
   # demo.sh. Preserve failures while ensuring a failed probe leaves no process.
   trap 'code=$?; trap - EXIT; if [[ -n "${port_pid:-}" ]]; then kill "$port_pid" 2>/dev/null || true; wait "$port_pid" 2>/dev/null || true; fi; exit "$code"' EXIT
-  local parent_state="$state_dir" previous_image="$image" sbom_case
+  local parent_state="$state_dir" previous_image="$image" evidence_case
   state_dir="$parent_state/L01-update"
   [[ -d "$state_dir" && ! -L "$state_dir" && -f "$state_dir/state.json" ]] || fail 'Replacement image was not prepared.'
   load_delivery_context
@@ -56,6 +56,8 @@ scenario_l01_update() (
     scenario_f08 before-results
     scenario_sbom_fault F05 before-results
     scenario_sbom_fault F06 before-results
+    scenario_provenance_fault F09 before-results
+    scenario_provenance_fault F10 before-results
   else
     attestations_ci_gate CI-delivery
     jq -n --arg image "$image" '{scenario:"F07",phase:"early-CI",image:$image,status:"NOT_EXECUTED",reason:"Hosted negative F07 remains pending"}' > "$parent_state/F07-CI-completed.json"
@@ -65,6 +67,8 @@ scenario_l01_update() (
     scenario_f08 authorized
     scenario_sbom_fault F05 authorized
     scenario_sbom_fault F06 authorized
+    scenario_provenance_fault F09 authorized
+    scenario_provenance_fault F10 authorized
   fi
   record 'L01: replace the deployed image and verify the new Pods'
   actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/L01-update.log"
@@ -82,13 +86,15 @@ scenario_l01_update() (
   else
     jq -n '{scenario:"F08",status:"NOT_EXECUTED",reason:"Hosted mutation is outside the supported local procedure"}' > "$parent_state/F08-completed.json"
   fi
-  for sbom_case in F05 F06; do
+  for evidence_case in F05 F06 F09 F10; do
     if [[ "$mode" == local ]]; then
-      jq -n --arg scenario "$sbom_case" --slurpfile ci "$state_dir/$sbom_case-CI/result.json" \
-        --slurpfile admission "$state_dir/$sbom_case-admission/result.json" --slurpfile l03 "$parent_state/L03-result.json" \
-        '{scenario:$scenario,status:"REJECTION_AND_L03_ACCEPTANCE_COMPLETE",CI:$ci[0],admission:$admission[0],L03:$l03[0],sharedExecution:"L01-image-update"}' > "$parent_state/$sbom_case-completed.json"
+      local completion=REJECTION_AND_L03_ACCEPTANCE_COMPLETE
+      [[ "$evidence_case" != F09 && "$evidence_case" != F10 ]] || completion=CI_AND_DIRECTED_RECOVERY_COMPLETE
+      jq -n --arg status "$completion" --arg scenario "$evidence_case" --slurpfile ci "$state_dir/$evidence_case-CI/result.json" \
+        --slurpfile admission "$state_dir/$evidence_case-admission/result.json" --slurpfile l03 "$parent_state/L03-result.json" \
+        '{scenario:$scenario,status:$status,CI:$ci[0],admission:$admission[0],L03:$l03[0],sharedExecution:"L01-image-update"}' > "$parent_state/$evidence_case-completed.json"
     else
-      jq -n --arg scenario "$sbom_case" '{scenario:$scenario,status:"NOT_EXECUTED",reason:"Hosted negative SBOM fixtures are not implemented"}' > "$parent_state/$sbom_case-completed.json"
+      jq -n --arg scenario "$evidence_case" '{scenario:$scenario,status:"NOT_EXECUTED",reason:"Hosted negative evidence fixtures are not implemented"}' > "$parent_state/$evidence_case-completed.json"
     fi
   done
 

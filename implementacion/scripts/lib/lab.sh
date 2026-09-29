@@ -114,7 +114,6 @@ lab_prepare_namespaces() {
 }
 
 lab_install_admission() {
-  local -a renderer_args=()
   record 'Install mandatory admission checks and trust limited to this lab'
   curl -fsSL --retry 3 "$(jq -r '.charts.kyverno.url' "$lock")" -o "$private/kyverno.tgz"
   printf '%s  %s\n' "$(jq -r '.charts.kyverno.sha256' "$lock")" "$private/kyverno.tgz" | sha256sum -c --status
@@ -127,6 +126,11 @@ lab_install_admission() {
     '{global:{image:{registry:"ghcr.io"}}, admissionController:{replicas:1,container:{image:{tag:($tag+"@"+$admission)},extraArgs:{imageVerifyCacheEnabled:"false",allowInsecureRegistry:$insecure}},initContainer:{image:{tag:($tag+"@"+$init)}}},backgroundController:{enabled:false},cleanupController:{enabled:false},reportsController:{enabled:false},webhooksCleanup:{enabled:false},crds:{migration:{enabled:false}}}' > "$state_dir/kyverno-values.json"
   helm --kubeconfig "$private/kubeconfig" --kube-context "kind-$cluster" upgrade --install kyverno "$private/kyverno.tgz" --namespace kyverno \
     --values "$state_dir/kyverno-values.json" --wait --timeout 5m
+  lab_apply_admission_policies
+}
+
+lab_apply_admission_policies() {
+  local -a renderer_args
   renderer_args=(--mode "$mode" --repository "$repository" --commit "$commit" --image-repository "$image_repo" --sbom-version "$(get sbomVersion)" --output "$state_dir/admission-policies.json")
   if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
   python3 policies/kyverno/render.py "${renderer_args[@]}"
