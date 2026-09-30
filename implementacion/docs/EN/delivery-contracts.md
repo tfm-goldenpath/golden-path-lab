@@ -154,3 +154,12 @@ same-digest L01 admission/rollout/HTTP complete each trial. See the
 Local live and hosted negative boundaries remain NOT_EXECUTED in this handoff.
 The F09/F10/L05 gaps recorded by PR #26 remain open. The versioned laboratory
 results predicate is retained; no full VSA conformance is claimed.
+
+Hosted issuance retries only the observed GitHub ambient-OIDC JSON parse failure
+before signing starts, up to three attempts with two/four-second delays. Each
+attempt is retained as `<bundle>.signing-attempt-N.log`; `<bundle>.signing.json`
+records the final command status. Existing/partial bundles, signing/publication
+markers and other failures prevent retry. Signing success still requires the
+normal cryptographic/content verification and CI gate. See the
+[PR #27 failure audit](../../registros/pr27_hosted_oidc_failure_EN.md); actual
+hosted recovery remains unvalidated.

@@ -195,3 +195,9 @@ See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](
 - [ ] Execute local F13/F14 CI, directed admission and same-digest recovery in the pinned devcontainer; npm is now pinned to 11.19.0, but the retry stops at kubectl v1.37.0 versus v1.35.8; Docker and Buildx also differ from their pins. Historical BuildKit DNS blocker is not retested. See [commands](docs/EN/cases/F13-F14/runbook.md).
 - [ ] Hosted negative trials remain NOT_EXECUTED; no GHCR mutation permissions added.
 - [ ] Human review and final acceptance. PR #26's F09/F10/L05 gaps remain open; no campaign measurements or VSA-conformance claim.
+
+## PR #27 hosted OIDC response failure
+
+- [x] Audit hosted `36741081776` at `d39086c`: initial delivery, preissuance F13, L01 and directed F11 reached their expected observations; replacement signing failed while parsing the GitHub OIDC response. Verify package checksum and 153 internal hashes. See [record](registros/pr27_hosted_oidc_failure_EN.md).
+- [x] Add a bounded retry only for malformed ambient-OIDC responses before signing, retain attempts, and preserve mandatory verification and failure propagation.
+- [ ] Validate the fix in a fresh authorized hosted run; replacement completion and F13/F14 negative coverage are not established by the failed run. Human review remains pending.
