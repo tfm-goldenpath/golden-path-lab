@@ -40,7 +40,7 @@ def write_metadata(destination, text):
 def scenario_summary(source, files):
     """Report retained observations, never infer success from a directory."""
     summaries = {}
-    for case in ('L01', 'L03', 'L04', 'F05', 'F06', 'F07', 'F07CI', 'F08', 'F09', 'F10', 'F11', 'F13Preissuance', 'F13', 'F14', 'L05'):
+    for case in ('F01', 'F02', 'L01', 'L03', 'L04', 'F05', 'F06', 'F07', 'F07CI', 'F08', 'F09', 'F10', 'F11', 'F13Preissuance', 'F13', 'F14', 'L05'):
         directories = {
             'L01': ['L01-update'], 'L03': ['L01-update'], 'L04': ['L01-update'],
             'F07': ['F07'], 'F07CI': ['L01-update/F07-CI'],
@@ -100,8 +100,14 @@ def package(source, output, status):
     for metadata in (summary, sums):
         if metadata.is_symlink():
             raise ValueError('Refusing symlinked evidence metadata: ' + metadata.name)
+    static = source / 'result.json'
+    try:
+        value = json.loads(static.read_text()) if static in files else {}
+        static_workflow = isinstance(value, dict) and value.get('kind') == 'workflow-static'
+    except (ValueError, UnicodeError):
+        static_workflow = False
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'L01/L03/L04 delivery + preissuance F13/F11; optional F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
+        'scope': 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13/F11; optional F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
         'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
         'scenarios': scenario_summary(source, files),
         'secretsIncluded': False}, indent=2) + '\n')

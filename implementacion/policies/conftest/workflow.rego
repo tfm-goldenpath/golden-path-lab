@@ -2,18 +2,25 @@ package workflow
 
 import rego.v1
 
+# The pinned YAML parser represents an unquoted `on` key as "true".
+# Examine both representations, including inputs which contain both keys.
+event_sources contains events if {
+    some key in {"on", "true"}
+    events := input[key]
+}
+
 triggers contains event if {
-    on := object.get(input, "on", {})
+    some on in event_sources
     is_object(on)
     some event in object.keys(on)
 }
 triggers contains event if {
-    on := object.get(input, "on", [])
+    some on in event_sources
     is_array(on)
     some event in on
 }
 triggers contains event if {
-    event := object.get(input, "on", "")
+    some event in event_sources
     is_string(event)
 }
 

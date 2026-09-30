@@ -39,7 +39,16 @@ jobs:
           npm ci --prefix tooling --ignore-scripts --no-audit --no-fund
           PREFIX="$HOME/.local" bash scripts/install-security-tools.sh
           printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
-      - name: Run service and policy tests
+      - name: Run service, policy and static workflow scenarios
         run: |
           python3 scripts/check-tool-versions.py
-          make test
+          make test WORKFLOW_EVIDENCE=evidence/raw/workflow-ci
+      - name: Retain static workflow scenario evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: workflow-policy-${{ github.run_id }}-${{ github.run_attempt }}
+          path: implementacion/evidence/raw/workflow-ci/**
+          if-no-files-found: warn
+          retention-days: 14
+          include-hidden-files: false

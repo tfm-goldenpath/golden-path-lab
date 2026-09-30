@@ -287,3 +287,22 @@ test('postissuance F13/F14 retain failed recovery separately from preissuance ob
   assert.equal(summary.scenarios.F13Preissuance.status,'EVIDENCE_RETAINED');
   const audit=inspectArchive(path.join(output,'run-test.tar.gz'));assert.deepEqual(audit.mismatches,[]);
 });
+
+test('static workflow package preserves case scope and exact evidence', t => {
+  const {source,output}=fixture(t);
+  fs.writeFileSync(path.join(source,'result.json'),JSON.stringify({kind:'workflow-static',status:'PASS',
+    L01:{status:'WORKFLOW_ACCEPTED'},F01:{status:'STATIC_REJECTION_CONFIRMED'},F02:{status:'STATIC_REJECTION_CONFIRMED'}}));
+  for(const name of ['L01.yaml','F01.yaml','F02.yaml','F01-diff.txt','workflow.rego.txt','tool.json','F02-stderr.log']) {
+    fs.writeFileSync(path.join(source,name),'synthetic package fixture');
+  }
+  execFileSync(python,[script,source,output,'PASS']);
+  const {summary,names,mismatches}=inspectArchive(path.join(output,'run-test.tar.gz'));
+  assert.match(summary.scope,/static workflow/);
+  assert.equal(summary.scenarios.L01.status,'WORKFLOW_ACCEPTED');
+  assert.equal(summary.scenarios.F01.status,'STATIC_REJECTION_CONFIRMED');
+  assert.equal(summary.scenarios.F02.status,'STATIC_REJECTION_CONFIRMED');
+  assert.equal(summary.scenarios.F13.status,'NOT_RECORDED');
+  assert.ok(names.includes('run-test/workflow.rego.txt'));
+  assert.ok(names.includes('run-test/F01-diff.txt'));
+  assert.deepEqual(mismatches,[]);
+});

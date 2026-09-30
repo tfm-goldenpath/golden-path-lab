@@ -20,7 +20,7 @@ test-policies:
 test-bundles:
 	bash tests/integration/bundle-crypto.sh
 
-test: test-env test-unit test-policies test-bundles
+test: test-env test-unit test-policies test-bundles test-workflows
 
 demo:
 	bash scripts/demo.sh local
@@ -31,3 +31,7 @@ reference:
 .PHONY: setup-validation
 setup-validation:
 	npm ci --prefix tooling --ignore-scripts --no-audit --no-fund
+
+.PHONY: test-workflows
+test-workflows:
+	python3 tests/scenarios/workflows.py $(if $(WORKFLOW_EVIDENCE),--output "$(WORKFLOW_EVIDENCE)")

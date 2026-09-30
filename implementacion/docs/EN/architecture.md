@@ -210,3 +210,13 @@ never the received predicate. `l01.sh` invokes these trials after normal results
 issuance and preserves their same-digest L01 recovery records; `demo.sh` owns
 shared cleanup. See [scope and evidence](cases/F13-F14/runbook.md). Preissuance
 F13 and its shared readiness/admission classifier remain unchanged.
+
+## Static workflow family
+
+`tests/scenarios/workflows.py` owns inert F01/F02 preparation, exact expected
+outcomes and evidence retention. `scripts/workflow-evaluation.py` invokes Conftest
+and classifies structured decisions/errors; `policies/conftest/workflow.rego`
+owns acceptance. `make test-workflows` is the static entry point, included in
+`make test` and ordinary CI. It needs no delivery run context or cluster and does
+not belong in `demo.sh`. The existing real-workflow check remains mandatory.
+See the [runbook](cases/F01-F02/runbook.md).
