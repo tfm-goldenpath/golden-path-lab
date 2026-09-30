@@ -133,3 +133,21 @@ completa y otras evidencias válidas; F10 exige que falle solo la autorización 
 repositorio seleccionado. Otros fallos siguen siendo errores de integración.
 L05 exporta fuentes reales de dos revisiones inmutables distintas. L01/L03 del mismo
 commit no establece L05. Ver [procedimiento](cases/F09-F10-L05/runbook.md).
+
+## F13 posterior a emisión / F14
+
+Se conserva F13 previo a emisión/readiness como `F13Preissuance`. Tras autorizar
+normalmente la imagen de reemplazo, F13 retira solo resultados y F14 reproduce
+bytes P0 auténticos y exitosos sin P1 disponible. P1 sigue siendo `golden-path-v1`;
+P0 es `laboratory-results-p0-fixture`, no una política histórica de producción.
+
+CI autorizado distingue `MISSING_RESULTS` y `RESULTS_POLICY_VERSION_MISMATCH`
+únicamente tras recuperación completa y validación de toda evidencia ajena.
+Autentica los bytes exactos antes de evaluar campos. Otros campos inválidos,
+duplicados o errores de verificación/registro siguen siendo errores de integración.
+Kyverno exige la misma P1 y añade `RESULTS_POLICY_VERSION`. Cada ensayo requiere
+denegación única de resultados, aislamiento, restauración exacta, CI fresco y
+L01 del mismo digest con admisión, rollout y HTTP. Véanse [oráculo](cases/F13-F14/record.md)
+y [comandos](cases/F13-F14/runbook.md). Barreras reales locales y negativos hosted:
+NOT_EXECUTED; las brechas F09/F10/L05 de PR #26 permanecen abiertas. Se conserva el
+predicado versionado del laboratorio sin afirmar conformidad VSA completa.

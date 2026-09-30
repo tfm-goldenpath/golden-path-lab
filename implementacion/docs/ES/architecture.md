@@ -214,3 +214,15 @@ Cada revisión tiene política exacta y evidencia nueva. La selección precede a
 infraestructura; las entregas L05 siguen a los ensayos existentes sin cambiar
 políticas dentro de estos. Ver [guía](cases/F09-F10-L05/runbook.md). L05 hosted
 requiere dos ejecuciones Actions reales, no dos checkouts en una ejecución.
+
+## Familia de autorización de resultados
+
+`tests/scenarios/results.sh` separa la preparación legítima P0 de su reproducción
+y controla la restauración F13/F14. `results-evidence.mjs`, en esa misma carpeta,
+reutiliza respaldo, aislamiento y mutación reversible del registro propio; la
+familia de procedencia conserva el comportamiento compartido. La aceptación de
+producción reside en `lab-contracts.mjs`, CI fresco y el renderizador Kyverno.
+P1 procede del código de confianza, no del predicado recibido. `l01.sh` ejecuta
+los ensayos después de emitir resultados y conserva recuperación L01 del mismo
+digest; `demo.sh` mantiene la limpieza compartida. Véase el [procedimiento](cases/F13-F14/runbook.md).
+F13 previo a emisión y su clasificador compartido de readiness/admisión no cambian.

@@ -78,6 +78,7 @@ scenario_sbom_fault() {
   command jq -n '{status:"SYNTHETIC"}' > "$state_dir/$folder/result.json"
 }
 scenario_provenance_fault() { scenario_sbom_fault "$@"; }
+scenario_results_fault() { scenario_sbom_fault "$1" authorized; }
 scenario_f08() {
   step "f08-$1"
   local folder=F08-CI
@@ -197,7 +198,7 @@ for (const mode of ['local', 'github']) {
     const f = fixture(t);
     const result = run(f, { GP_MODE: mode });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.deepEqual(result.stages, ['build', 'manifests', 'manifest-policy', 'analyze', 'component-check', 'issue', ...(mode === 'local' ? ['f07-ci', 'f07-ci-restore'] : []), 'verify', ...(mode === 'local' ? ['f08-before-results','F05-before-results','F06-before-results','F09-before-results','F10-before-results'] : []), 'authorize', ...(mode === 'local' ? ['f08-authorized','F05-authorized','F06-authorized','F09-authorized','F10-authorized'] : []),
+    assert.deepEqual(result.stages, ['build', 'manifests', 'manifest-policy', 'analyze', 'component-check', 'issue', ...(mode === 'local' ? ['f07-ci', 'f07-ci-restore'] : []), 'verify', ...(mode === 'local' ? ['f08-before-results','F05-before-results','F06-before-results','F09-before-results','F10-before-results'] : []), 'authorize', ...(mode === 'local' ? ['F13-authorized','F14-authorized','f08-authorized','F05-authorized','F06-authorized','F09-authorized','F10-authorized'] : []),
       'apply', 'probe', 'deployment', 'pods', 'rollout-check', 'parent-cleanup']);
     const child = join(f.state, 'L01-update');
     assert.equal(JSON.parse(readFileSync(join(child, 'state.json'), 'utf8')).digest, replacementDigest);
@@ -233,7 +234,7 @@ for (const mode of ['local', 'github']) {
   });
 }
 
-for (const stage of ['build', 'manifest-policy', 'analyze', 'component-check', 'issue', 'f07-ci', 'f07-ci-restore', 'f08-before-results', 'f08-authorized', 'F05-before-results', 'F06-before-results','F09-before-results','F10-before-results', 'F05-authorized', 'F06-authorized','F09-authorized','F10-authorized', 'component-check', 'verify', 'authorize', 'apply', 'probe']) {
+for (const stage of ['build', 'manifest-policy', 'analyze', 'component-check', 'issue', 'f07-ci', 'f07-ci-restore', 'f08-before-results', 'f08-authorized', 'F05-before-results', 'F06-before-results','F09-before-results','F10-before-results', 'F13-authorized', 'F14-authorized', 'F05-authorized', 'F06-authorized','F09-authorized','F10-authorized', 'component-check', 'verify', 'authorize', 'apply', 'probe']) {
   test(`real L01 scenario propagates ${stage} failure without reaching later delivery steps`, t => {
     const f = fixture(t);
     const result = run(f, { GP_FAIL_STAGE: stage, GP_MODE:'local' });

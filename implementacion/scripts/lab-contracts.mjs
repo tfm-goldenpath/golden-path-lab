@@ -43,11 +43,20 @@ export function validateSbom(bom) {
   }
   return bom.specVersion;
 }
+// Trusted laboratory requirement shared by issuance and authenticated CI content.
+export const RESULTS_POLICY_VERSION = 'golden-path-v1';
 export function validateResults(value, repository, commit) {
-  if (value?.policyVersion !== 'golden-path-v1' || value.result !== 'PASS'
-    || value.source?.repository !== repository || value.source?.commit !== commit
-    || !/^[0-9a-f]{40}$/.test(commit) || CHECKS.some(check => value.checks?.[check] !== 'PASS')) {
-    throw new Error('Results attestation does not satisfy the authorized contract');
+  const violations = [];
+  if (typeof value?.policyVersion !== 'string' || !value.policyVersion.trim()) violations.push('RESULTS_STRUCTURE');
+  if (value?.policyVersion !== RESULTS_POLICY_VERSION) violations.push('RESULTS_POLICY_VERSION');
+  if (value?.result !== 'PASS') violations.push('RESULTS_UNSUCCESSFUL');
+  if (value?.source?.repository !== repository || value?.source?.commit !== commit
+      || !/^https:\/\/[^\s]+$/.test(repository || '') || !/^[0-9a-f]{40}$/.test(commit || '')) violations.push('RESULTS_SOURCE');
+  if (CHECKS.some(check => value?.checks?.[check] !== 'PASS')) violations.push('RESULTS_CHECKS');
+  if (violations.length) {
+    const error = new Error(violations.join(', ') + ': Results attestation does not satisfy the authorized contract');
+    error.resultsFailure = {violations, expectedPolicy:RESULTS_POLICY_VERSION, actualPolicy:value?.policyVersion};
+    throw error;
   }
   return value;
 }
@@ -130,7 +139,7 @@ function main([command, ...args]) {
         return [key, { file, sha256: createHash('sha256').update(bytes).digest('hex') }];
       }));
       // Only the orchestrator calls this after successful exit codes and content validation.
-      const result = { policyVersion: 'golden-path-v1', source: { repository, commit }, result: 'PASS',
+      const result = { policyVersion: RESULTS_POLICY_VERSION, source: { repository, commit }, result: 'PASS',
         checks: Object.fromEntries(CHECKS.map(check => [check, 'PASS'])), evidence };
       write(out, validateResults(result, repository, commit)); break;
     }

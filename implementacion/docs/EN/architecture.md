@@ -197,3 +197,16 @@ and fresh image evidence. The coordinator selects sources before infrastructure
 creation and runs L05 after existing fault trials; no policy changes occur inside
 those trials. See the [runbook](cases/F09-F10-L05/runbook.md). Hosted L05 requires
 two actual Actions runs; additional checkouts do not change native run identity.
+
+## Results authorization family
+
+`tests/scenarios/results.sh` separates authorized laboratory P0 preparation from
+registry replay and owns each F13/F14 restoration trap. Its
+`results-evidence.mjs` helper in the same directory reuses owned-registry backup,
+isolation and reversible mutation operations; provenance retains the same shared
+mutation behavior. Production acceptance remains in `lab-contracts.mjs`, the
+fresh CI gate and Kyverno renderer. The expected P1 comes from trusted code,
+never the received predicate. `l01.sh` invokes these trials after normal results
+issuance and preserves their same-digest L01 recovery records; `demo.sh` owns
+shared cleanup. See [scope and evidence](cases/F13-F14/runbook.md). Preissuance
+F13 and its shared readiness/admission classifier remain unchanged.

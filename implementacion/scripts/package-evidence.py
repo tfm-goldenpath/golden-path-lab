@@ -40,7 +40,7 @@ def write_metadata(destination, text):
 def scenario_summary(source, files):
     """Report retained observations, never infer success from a directory."""
     summaries = {}
-    for case in ('L01', 'L03', 'L04', 'F05', 'F06', 'F07', 'F07CI', 'F08', 'F09', 'F10', 'F11', 'F13', 'L05'):
+    for case in ('L01', 'L03', 'L04', 'F05', 'F06', 'F07', 'F07CI', 'F08', 'F09', 'F10', 'F11', 'F13Preissuance', 'F13', 'F14', 'L05'):
         directories = {
             'L01': ['L01-update'], 'L03': ['L01-update'], 'L04': ['L01-update'],
             'F07': ['F07'], 'F07CI': ['L01-update/F07-CI'],
@@ -64,6 +64,8 @@ def scenario_summary(source, files):
                     entry.update(status=status, record=candidate.relative_to(source).as_posix())
             except (ValueError, UnicodeError):
                 entry.update(status='INVALID_RECORD', record=candidate.relative_to(source).as_posix())
+        if case == 'F13Preissuance' and entry['status'] == 'NOT_RECORDED' and source / 'F13-after-denial.json' in files:
+            entry.update(status='EVIDENCE_RETAINED', record='F13-after-denial.json')
         summaries[case] = entry
     return summaries
 
@@ -73,7 +75,7 @@ def package(source, output, status):
     excluded = {'state.json', 'config.json', 'kubeconfig', 'cosign.key', 'SHA256SUMS.txt'}
     files = []
     candidates = list(source.iterdir())
-    for name in ('L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission', 'L01-update/F05-CI', 'L01-update/F05-admission', 'L01-update/F06-CI', 'L01-update/F06-admission', 'L01-update/F09-CI', 'L01-update/F09-admission', 'L01-update/F10-CI', 'L01-update/F10-admission', 'L05-from', 'L05-to'):
+    for name in ('L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission', 'L01-update/F05-CI', 'L01-update/F05-admission', 'L01-update/F06-CI', 'L01-update/F06-admission', 'L01-update/F09-CI', 'L01-update/F09-admission', 'L01-update/F10-CI', 'L01-update/F10-admission', 'L01-update/F13-admission', 'L01-update/F14-admission', 'L05-from', 'L05-to'):
         directory = source / name
         if directory.is_symlink() or directory.resolve() != directory:
             raise ValueError('Refusing symlinked scenario evidence directory')
@@ -99,7 +101,7 @@ def package(source, output, status):
         if metadata.is_symlink():
             raise ValueError('Refusing symlinked evidence metadata: ' + metadata.name)
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'L01/L03/L04 delivery + F13/F11; optional F05/F06/F07/F08/F09/F10 trials and L05 source deliveries; not the experimental campaign',
+        'scope': 'L01/L03/L04 delivery + preissuance F13/F11; optional F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
         'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
         'scenarios': scenario_summary(source, files),
         'secretsIncluded': False}, indent=2) + '\n')

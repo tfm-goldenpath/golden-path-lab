@@ -186,3 +186,12 @@ See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](
 
 - [x] Reproduce the readiness regression and implement initial/update separation, current Pod/endpoint checks, explicit logs and server dry-run; see the [record](registros/kyverno_readiness_fix_EN.md).
 - [ ] Complete readiness validation: user reports hosted `36640544300` passed normal delivery/initial readiness at `80c12bc`; not independently audited in this follow-up. L05 policy update/restart remains **NOT_EXECUTED** after the blocked local preflight. Failed run `36636319864` attempts 1/2 remain integration errors, not F13 detections.
+
+## F13/F14 results authorization
+
+- [x] Define post-issuance F13 removal, authentic laboratory P0 replay F14 and same-digest L01 recovery; preserve separate preissuance F13/readiness checks. See [oracle](docs/EN/cases/F13-F14/record.md).
+- [x] Add fresh authorized CI attribution, fixed P1 agreement with Kyverno, isolated owned-registry trials, exact recovery and evidence packaging; retain the custom versioned results predicate.
+- [x] Add actual-function regressions and real offline P0 signing/authentication probes. See [verification record](registros/f13_f14_results_authorization_EN.md).
+- [ ] Execute local F13/F14 CI, directed admission and same-digest recovery in the pinned devcontainer; npm is now pinned to 11.19.0, but the retry stops at kubectl v1.37.0 versus v1.35.8; Docker and Buildx also differ from their pins. Historical BuildKit DNS blocker is not retested. See [commands](docs/EN/cases/F13-F14/runbook.md).
+- [ ] Hosted negative trials remain NOT_EXECUTED; no GHCR mutation permissions added.
+- [ ] Human review and final acceptance. PR #26's F09/F10/L05 gaps remain open; no campaign measurements or VSA-conformance claim.
