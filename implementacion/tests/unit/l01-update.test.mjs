@@ -144,7 +144,7 @@ function fixture(t) {
   const stateText = JSON.stringify({ imageRepository, digest: initialDigest,
     sourceRepository: 'https://github.com/example/lab', sourceCommit: 'c'.repeat(40), sbomVersion: '1.6' });
   writeFileSync(join(state, 'state.json'), stateText);
-  for (const name of ['unit-tests.log', 'workflow-policy.json', 'versions.txt', 'tools-lock.json']) {
+  for (const name of ['unit-tests.log', 'workflow-policy.json', 'versions.txt', 'tools-lock.json', 'database-identity.json']) {
     writeFileSync(join(state, name), `shared-source-evidence:${name}\n`);
   }
   for (const name of ['sbom.cdx.json', 'vulnerabilities.json', 'verified-results.json', 'verified-provenance.json']) {
@@ -208,7 +208,7 @@ for (const mode of ['local', 'github']) {
       assert.equal(evidence.parentOnly, undefined, 'Image-specific evidence must not be copied');
       assert.equal(JSON.parse(readFileSync(join(f.state, name), 'utf8')).image, initialImage);
     }
-    for (const name of ['unit-tests.log', 'workflow-policy.json', 'versions.txt', 'tools-lock.json']) {
+    for (const name of ['unit-tests.log', 'workflow-policy.json', 'versions.txt', 'tools-lock.json', 'database-identity.json']) {
       assert.equal(readFileSync(join(child, name), 'utf8'), readFileSync(join(f.state, name), 'utf8'));
     }
     assert.equal(result.events.find(e => e.stage === 'build').detail, 'run-parent-update');

@@ -184,3 +184,15 @@ referencias solo por tag; no cambian ese alcance, el repositorio autorizado ni
 `mutateDigest=false`. CI autentica el digest y L01/L06 aportan controles positivos.
 La denegación exige atribución exacta y NotFound tras CREATE o identidad/spec
 inalterados tras UPDATE. Compartir CREATE L01/L06 no añade escenarios.
+
+## Análisis del SBOM original
+
+Se genera CycloneDX antes del análisis; Trivy analiza ese archivo con una base
+congelada. El informe original conserva `ArtifactType=cyclonedx`. Reference,
+RepoDigests e ImageID deben coincidir con el SBOM y el digest entregado. Los hashes
+de ambos archivos se verifican antes de autorizar resultados; también en
+prepare/finish hosted. HIGH/CRITICAL bloquean con o sin corrección. Se verifican
+hashes de base/metadatos antes y después; conservar sus bytes fuera de Git para
+reproducir el ensayo. [F03/F04/L02](cases/F03-F04-L02/runbook.md) reutilizan este
+camino; los negativos no reciben resultados exitosos ni despliegue protegido.
+Kyverno no incorpora un escáner ni cambia la confianza o los contratos firmados.

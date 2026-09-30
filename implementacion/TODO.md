@@ -71,11 +71,11 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [ ] Exercise compatible workflow portions with `act` and record their limits; local signing and `act` do not establish hosted OIDC behavior.
 - [x] Add Conftest workflow/manifest policies, legitimate inputs and independently mutated policy fixtures; exercise early and directed F11 rejection.
 - [x] Complete operational F01/F02 static records and inert injections; see the workflow family below.
-- [x] Implement F11/F12 runtime records and manifest injections with shared L06 checks; live acceptance remains pending below.
+- [x] Implement F11/F12 runtime records and manifest injections with shared L06 checks; supplied hosted review and pending local validation are recorded below.
 - [ ] Assess optional local hooks once the preceding commands work and have tests. Introduce them only for useful early feedback; mandatory controls remain in CI, and skipping a hook must not bypass them. Hooks are not a pilot prerequisite.
 - [x] Integrate Trivy with separate original CycloneDX JSON and real scan reports, tool/database identification, synthetic policy tests and observed image scans.
 - [x] Implement offline official CycloneDX 1.7 JSON Schema validation before signing and after authenticating the exact bundle; retain separate lab checks and reports. This does not establish inventory completeness.
-- [ ] Prepare real inputs for F03/F04/L02, giving flexible priority to a direct production Node dependency for F03. Confirm severity, fix availability and a functional upgrade before fixing the scenario.
+- [ ] Confirm the selected F03/F04/L02 package fixtures in real images. Direct production npm candidates, package scans, inventories and harmless compatibility checks are prepared; image-level severity, remediation and service compatibility remain pending in the new family record.
 - [x] Sign and verify image/SBOM bundles with explicit identity, predicate, content and digest checks; retain actual cryptographic negative probes, including signature-byte alteration.
 - [ ] Complete operational F05–F08, including hosted negative F07/F08; local F07 passed in `run-xFGRe6X1` and controlled F08 CI/admission passed in `run-IIWR8RLL` (see the F08 record). Synthetic cryptographic probes do not complete these scenario executions.
 - [x] Issue a signed versioned results predicate only after successful mandatory pre-admission controls, retain report hashes and record the later admission response separately.
@@ -224,5 +224,14 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [x] Add Deployment CREATE/legal template UPDATE and isolated Pod CREATE trials; prove NotFound or unchanged UID/generation/spec after rejection. Share L01 creation with L06 and require a real annotation update, rollout, Ready Pods and HTTP.
 - [x] Add function, state, tag, packaging and real policy regressions; wire both lanes through shared modules without new permissions. See [checks, evidence and commands](docs/EN/cases/F11-F12-L06/runbook.md).
 - [ ] Execute local runtime admission in the pinned environment: doctor still stops at kubectl v1.37.0 versus v1.35.8. Smoke/BuildKit/demo were not reached; the previous network blocker is not resolved by this work.
-- [ ] Execute and audit hosted F11/F12/L06 on the reviewed revision. User reports baseline hosted `36750845686` successful at `d864654`; no independent package audit or new workflow dispatch here.
+- [x] Record the user-supplied review of hosted `36768108684` for the runtime increment merged at `eed5aad2828a7156e4c49bf2e2f3d9c2b0476137`: 449 verified internal hashes, eight authenticated original/replacement bundles, attributable F11/F12 and successful L06. This increment did not independently repeat that audit. Local validation remains pending; historical observations and F09/F10/L05, F13/F14 gaps are preserved.
 - [ ] Human review and final acceptance. Preserve F09/F10/L05 and F13/F14 live gaps; shared observations do not change the twenty-scenario denominator.
+
+## F03 / F04 / L02 vulnerability family
+
+- [x] Define post-build oracles and isolated npm candidates; real filesystem scans confirm the target CRITICAL/HIGH/MEDIUM findings and minimist target removal. See [record](docs/EN/cases/F03-F04-L02/record.md).
+- [x] Implement original image SBOM → real Trivy SBOM scan → production Conftest with image association, frozen DB checks, strict target attribution and separate positive authorization.
+- [x] Add local `make vulnerabilities`, isolated build contexts/locks, function regressions and explicit package directories; normal hosted delivery remains the regression path.
+- [ ] Complete real fixture image scans, F03 reference HTTP comparison and positive admission/rollout/HTTP in the pinned environment. Doctor currently rejects kubectl 1.37.0 versus 1.35.8; preserve previous local blockers.
+- [ ] Run normal hosted regression for the changed analysis sequence after separate publication/dispatch authorization. Additional hosted F03/F04/L02 execution is unsupported and NOT_EXECUTED.
+- [ ] Human review and final acceptance. No campaign measurements or change to the twenty-scenario denominator.

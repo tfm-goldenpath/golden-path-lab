@@ -237,3 +237,15 @@ restoration, before L01 creation. L06 then owns negative legal template UPDATEs
 and a successful annotation update before the existing image replacement.
 Policy specs and namespace identity/protection remain constant across this
 comparison. See the [operation record](cases/F11-F12-L06/record.md).
+
+## Vulnerability family boundary
+
+`make vulnerabilities` invokes the local phase of the existing coordinator.
+`delivery.sh` owns snapshot preparation, original SBOM generation, scanning and
+production evaluation; `vulnerability-evidence.mjs` checks image/file association
+and authorization eligibility. The scenario module owns fixture selection,
+expected target attribution, remediation comparison and local operation order.
+`capture-build-inputs.mjs` allows only four pinned fixture contexts, while
+`package-evidence.py` retains their explicit child directories. Database bytes
+are preserved outside Git; packages carry their identity. No new workflow or
+Kyverno scanner is introduced. See [F03/F04/L02](cases/F03-F04-L02/record.md).

@@ -11,13 +11,14 @@ export function verifyImageRollout(previousImage, image, deployment, pods) {
   return { ...verifyDeployedImage(image, deployment, pods), fromImage: previousImage };
 }
 
-export function verifyDeployedImage(image, deployment, pods) {
+export function verifyDeployedImage(image, deployment, pods, namespace = 'tfm-golden') {
+  if (!['tfm-golden', 'tfm-reference'].includes(namespace)) throw new Error('Unexpected workload namespace');
   assertDigest(image);
   const desired = deployment?.spec?.replicas;
   const generation = deployment?.metadata?.generation;
   const status = deployment?.status;
   const container = deployment?.spec?.template?.spec?.containers?.find(c => c.name === 'quotes-node');
-  if (deployment?.metadata?.name !== 'quotes-node' || deployment.metadata.namespace !== 'tfm-golden'
+  if (deployment?.metadata?.name !== 'quotes-node' || deployment.metadata.namespace !== namespace
     || container?.image !== image || !Number.isInteger(desired) || desired < 1
     || !Number.isInteger(generation) || generation < 1 || !(status?.observedGeneration >= generation)
     || ['replicas', 'updatedReplicas', 'readyReplicas', 'availableReplicas'].some(key => status[key] !== desired)) {
@@ -29,7 +30,7 @@ export function verifyDeployedImage(image, deployment, pods) {
   const observed = active.map(pod => {
     const spec = pod.spec?.containers?.find(c => c.name === 'quotes-node');
     const runtime = pod.status?.containerStatuses?.find(c => c.name === 'quotes-node');
-    if (pod.metadata?.namespace !== 'tfm-golden' || pod.metadata.labels?.app !== 'quotes-node'
+    if (pod.metadata?.namespace !== namespace || pod.metadata.labels?.app !== 'quotes-node'
       || spec?.image !== image || pod.status?.phase !== 'Running'
       || !pod.status?.conditions?.some(c => c.type === 'Ready' && c.status === 'True')
       || runtime?.ready !== true || !runtime.state?.running
@@ -42,11 +43,11 @@ export function verifyDeployedImage(image, deployment, pods) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const [previousImage, image, deploymentFile, podsFile] = process.argv.slice(2);
+  const [previousImage, image, deploymentFile, podsFile, namespace] = process.argv.slice(2);
   const deployment = JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));
   const pods = JSON.parse(fs.readFileSync(podsFile, 'utf8'));
   const result = previousImage === '--same-image'
-    ? verifyDeployedImage(image, deployment, pods)
+    ? verifyDeployedImage(image, deployment, pods, namespace)
     : verifyImageRollout(previousImage, image, deployment, pods);
   console.log(JSON.stringify(result, null, 2));
 }

@@ -190,3 +190,19 @@ The fresh authorized CI gate authenticates the backing digest; L01/L06 provide
 its legitimate admission and runtime controls. Rejection requires exact policy
 attribution plus NotFound after CREATE or unchanged desired spec/identity after
 UPDATE. Shared L01/L06 creation adds no scenario to the catalogue.
+
+## Original SBOM vulnerability analysis
+
+Delivery now generates the original CycloneDX inventory before analysis, then
+runs pinned Trivy on that file with one preserved database snapshot. Raw reports
+retain `ArtifactType=cyclonedx`. The report's Reference, RepoDigests and ImageID
+must agree with the original SBOM and delivered digest; file hashes bind the
+analysis receipt to both inputs. HIGH/CRITICAL remain blocking regardless of
+correction availability. The receipt and image-specific hashes are rechecked
+before successful results issuance, including across hosted prepare/finish.
+A snapshot's DB and metadata hashes are checked before/after scans; preserve its
+bytes outside Git to reproduce the recorded analysis. This establishes bounded
+scanner evidence, not universal vulnerability absence or SBOM completeness.
+[F03/F04/L02](cases/F03-F04-L02/record.md) use this shared path; negatives never
+receive successful results or enter the protected namespace. Kyverno's evidence
+contracts and trust remain unchanged; it does not run a vulnerability scanner.

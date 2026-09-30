@@ -1,0 +1,8 @@
+{
+  "name": "l02",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "lodash.unset": "4.5.2"
+  }
+}

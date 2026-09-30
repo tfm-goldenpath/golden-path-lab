@@ -81,6 +81,18 @@ def cases():
                 value["Results"][0]["Vulnerabilities"] = [{"VulnerabilityID": "CVE-SYNTHETIC", "PkgName": "fixture", "Severity": severity, "FixedVersion": fixed}]
             add("trivy-" + severity + ("-fixed" if fixed else "-no-fix"), "trivy", vulnerability, "VULNERABILITY_BLOCK")
     add("trivy-medium-allow", "trivy", lambda value: value["Results"][0].update(Vulnerabilities=[{"VulnerabilityID": "CVE-SYNTHETIC", "PkgName": "fixture", "Severity": "MEDIUM"}]), None)
+    def sbom_report(value):
+        value.update(ArtifactType="cyclonedx")
+        value["Metadata"].update(Reference="registry/image@sha256:" + "a" * 64,
+                                 RepoDigests=["registry/image@sha256:" + "a" * 64], ImageID="sha256:" + "b" * 64)
+    add("trivy-original-cyclonedx", "trivy", sbom_report, None)
+    add("trivy-cyclonedx-without-image", "trivy", lambda value: value.update(ArtifactType="cyclonedx"), "TRIVY_REPORT_INVALID")
+    for severity in ["HIGH", "CRITICAL"]:
+        for fixed in ["", "2.0.0"]:
+            def sbom_finding(value, severity=severity, fixed=fixed):
+                sbom_report(value)
+                value["Results"][0]["Vulnerabilities"] = [{"VulnerabilityID":"CVE-SYNTHETIC", "PkgName":"fixture", "Severity":severity, "FixedVersion":fixed}]
+            add("trivy-cyclonedx-" + severity + ("-fix" if fixed else "-no-fix"), "trivy", sbom_finding, ["VULNERABILITY_BLOCK"])
     add("trivy-empty-results", "trivy", lambda value: value.update(Results=[]), "TRIVY_REPORT_INVALID")
     add("trivy-missing-results", "trivy", lambda value: value.pop("Results"), "TRIVY_REPORT_INVALID")
     add("trivy-object-vulnerabilities", "trivy", lambda value: value["Results"][0].update(Vulnerabilities={}), "TRIVY_RESULT_INVALID")

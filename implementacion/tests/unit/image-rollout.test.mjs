@@ -62,3 +62,11 @@ test('F07 same-digest control uses the same Deployment and runtime readiness che
   assert.equal(verifyDeployedImage(after, deployment, pods).toImage, after);
   assert.throws(() => verifyDeployedImage(before, deployment, pods));
 });
+
+test('reference compatibility explicitly selects its namespace without weakening protected callers',()=>{
+  const {deployment,pods}=fixture();deployment.metadata.namespace='tfm-reference';pods.items[0].metadata.namespace='tfm-reference';
+  assert.equal(verifyDeployedImage(after,deployment,pods,'tfm-reference').status,'PASS');
+  assert.throws(()=>verifyDeployedImage(after,deployment,pods));
+  assert.throws(()=>verifyImageRollout(before,after,deployment,pods));
+  assert.throws(()=>verifyDeployedImage(after,deployment,pods,'default'));
+});

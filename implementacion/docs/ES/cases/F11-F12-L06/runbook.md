@@ -1,5 +1,18 @@
 # Ejecución y evidencias F11/F12/L06
 
+## Estado hosted actual (revisión aportada, 2026-09-30)
+
+El usuario informa éxito en [36768108684](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36768108684)
+para el incremento runtime integrado en `eed5aad2828a7156e4c49bf2e2f3d9c2b0476137`.
+Su revisión del paquete verificó 449 hashes internos, ocho bundles autenticados
+originales/de reemplazo, rechazos atribuibles F11/F12 y éxito L06. Esta revisión
+fue aportada por el usuario y no se repitió independientemente en el incremento
+de vulnerabilidades. Validación local pendiente; siguen abiertos F09/F10/L05 y
+F13/F14. Se conserva debajo el estado histórico NOT_EXECUTED de la entrega
+original. Compartir L01/L06 no incrementa el catálogo de veinte escenarios.
+
+## Registro original de entrega
+
 Desde la raíz, en el devcontainer con versiones fijadas:
 
 ```bash

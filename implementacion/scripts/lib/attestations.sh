@@ -108,6 +108,7 @@ attestations_verify_delivery() {
 attestations_authorize_results() {
   # Re-read the registry immediately before issuance; no saved report grants it.
   attestations_ci_gate CI-authorization
+  node scripts/vulnerability-evidence.mjs authorize "$state_dir" "$image" > "$state_dir/analysis-authorization.json"
   node "$contract" results "$state_dir" "$repository" "$commit" "$state_dir/results-predicate.json"
   attestations_sign_bundle results.bundle.json attest "${sign_args[@]}" --type "$results_type" --predicate "$state_dir/results-predicate.json"
   attestations_verify_bundle results.bundle.json "$results_type" verified-results-bundle.txt verified-results.json

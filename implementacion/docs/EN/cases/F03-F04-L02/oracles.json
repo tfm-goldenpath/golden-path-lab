@@ -1,0 +1,107 @@
+{
+  "family": [
+    "F03",
+    "F04",
+    "L02"
+  ],
+  "detectionPhase": "post-build SBOM analysis before successful results authorization and protected deployment",
+  "scope": "local real integration; fixed database snapshot; linux/amd64; isolated production npm dependencies",
+  "sourceBaseline": "eed5aad2828a7156e4c49bf2e2f3d9c2b0476137",
+  "humanReview": "pending",
+  "cases": {
+    "F03-vulnerable": {
+      "scenario": "F03",
+      "package": "minimist",
+      "version": "1.2.5",
+      "target": "CVE-2021-44906",
+      "severity": "CRITICAL",
+      "fixedVersion": "1.2.6",
+      "source": "https://github.com/advisories/GHSA-xvch-5gv4-984h",
+      "expected": "VULNERABILITY_BLOCK",
+      "protectedDeployment": "prohibited",
+      "resultsAuthorization": "prohibited"
+    },
+    "F03-repaired": {
+      "scenario": "F03",
+      "package": "minimist",
+      "version": "1.2.8",
+      "target": "CVE-2021-44906",
+      "expected": "target absent; entire report free of HIGH/CRITICAL; equivalent harmless option parsing and service HTTP; fresh authorized delivery"
+    },
+    "F04": {
+      "scenario": "F04",
+      "package": "ip",
+      "version": "2.0.1",
+      "target": "CVE-2024-29415",
+      "severity": "HIGH",
+      "source": "https://github.com/advisories/GHSA-2p57-rm9w-gvfp",
+      "fixScope": "No patched npm ip version in the reviewed advisory and fixed scanner snapshot; no universal claim about other ecosystems, forks or future fixes",
+      "expected": "VULNERABILITY_BLOCK",
+      "protectedDeployment": "prohibited",
+      "resultsAuthorization": "prohibited"
+    },
+    "L02": {
+      "scenario": "L02",
+      "package": "lodash.unset",
+      "version": "4.5.2",
+      "target": "CVE-2026-2950",
+      "severity": "MEDIUM",
+      "source": "https://github.com/lodash/lodash/security/advisories/GHSA-f23m-r3pf-42rh",
+      "expected": "target MEDIUM present; no HIGH/CRITICAL anywhere; fresh signature, SBOM, provenance, results, admission, Ready digest and HTTP"
+    }
+  },
+  "constants": [
+    "baseline service image",
+    "source revision",
+    "database bytes and metadata",
+    "tool pins",
+    "vulnerability threshold",
+    "repository and trust",
+    "restricted actor",
+    "protected namespace"
+  ],
+  "operations": [
+    "build isolated fixture",
+    "generate original CycloneDX",
+    "scan original SBOM offline using snapshot",
+    "validate association and component",
+    "evaluate production Conftest",
+    "attribute expected target and account for all additional findings",
+    "exercise F03 reference functionality",
+    "authorize and admit positive images only"
+  ],
+  "invalidResults": [
+    "scanner/database/registry/evaluator errors",
+    "malformed report",
+    "wrong image/component",
+    "database drift",
+    "unexpected acceptance",
+    "missing target",
+    "unrelated denials",
+    "target persists after correction",
+    "global threshold fails after correction",
+    "functional or rollout failure"
+  ],
+  "selectionDate": "2026-09-30",
+  "imageValidation": "PENDING; candidate definitions fail closed unless verified in real images",
+  "advisorySnapshots": {
+    "GHSA-f23m-r3pf-42rh": {
+      "source": "https://github.com/advisories/GHSA-f23m-r3pf-42rh",
+      "updatedAt": "2026-04-01T23:50:28Z",
+      "sha256": "f8ebb961ce3ef236be661d990e891aad92282953ad0b5d13cc5c5492cb715497",
+      "retained": "evidence/raw/vulnerability-development/GHSA-f23m-r3pf-42rh.json"
+    },
+    "GHSA-2p57-rm9w-gvfp": {
+      "source": "https://github.com/advisories/GHSA-2p57-rm9w-gvfp",
+      "updatedAt": "2025-01-17T21:31:39Z",
+      "sha256": "dc018c5fb25a3bff4414174fcf8670fd59951d847de1ed3e1f1a9f63c63be526",
+      "retained": "evidence/raw/vulnerability-development/GHSA-2p57-rm9w-gvfp.json"
+    },
+    "GHSA-xvch-5gv4-984h": {
+      "source": "https://github.com/advisories/GHSA-xvch-5gv4-984h",
+      "updatedAt": "2024-06-21T21:33:52Z",
+      "sha256": "4b78f52af13678264cb1cb4a94b829b3a451cbff472170844ebc1e0cd50c9082",
+      "retained": "evidence/raw/vulnerability-development/GHSA-xvch-5gv4-984h.json"
+    }
+  }
+}

@@ -1,5 +1,18 @@
 # Runtime family: execution and evidence
 
+## Current hosted status (supplied review, 2026-09-30)
+
+The user reports successful [hosted run 36768108684](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36768108684)
+for the runtime increment merged at `eed5aad2828a7156e4c49bf2e2f3d9c2b0476137`.
+Their reviewed package contains 449 verified internal hashes, eight authenticated
+original/replacement bundles, attributable F11/F12 rejections and successful L06
+checks. This review was supplied by the user; it was not independently repeated
+in the vulnerability increment. Local validation remains pending. F09/F10/L05
+and F13/F14 live-integration gaps remain open. The original handoff below retains
+its historical NOT_EXECUTED observations; shared L01/L06 adds no scenario count.
+
+## Original handoff record
+
 Read the [oracle](record.md) and [operation matrix](operations.json). Both lanes
 use the shared coordinator, existing tools, policies and trust profiles. There
 are no new GHCR mutation permissions or workflow shell implementations.
