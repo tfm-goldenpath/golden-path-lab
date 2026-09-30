@@ -226,3 +226,12 @@ P1 procede del código de confianza, no del predicado recibido. `l01.sh` ejecuta
 los ensayos después de emitir resultados y conserva recuperación L01 del mismo
 digest; `demo.sh` mantiene la limpieza compartida. Véase el [procedimiento](cases/F13-F14/runbook.md).
 F13 previo a emisión y su clasificador compartido de readiness/admisión no cambian.
+
+## Familia estática de workflows
+
+`tests/scenarios/workflows.py` prepara F01/F02 inertes, fija resultados esperados
+y conserva evidencia. `scripts/workflow-evaluation.py` invoca Conftest y clasifica
+decisiones/errores; `policies/conftest/workflow.rego` define aceptación.
+`make test-workflows`, incluido en `make test` y CI ordinario, no requiere contexto
+de entrega ni clúster y no se añade a `demo.sh`. Sigue vigente el control de
+workflows reales. Véase la [guía](cases/F01-F02/runbook.md).

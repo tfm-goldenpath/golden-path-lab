@@ -158,5 +158,18 @@ de dos/cuatro segundos. `<bundle>.signing-attempt-N.log` conserva cada intento y
 `<bundle>.signing.json` su estado final. Bundles existentes/parciales, señales de
 firma/publicación y otros errores impiden reintentar. El éxito de firma sigue
 exigiendo verificación criptográfica/de contenido y gate CI. Véase la
-[auditoría de PR #27](../../registros/pr27_hosted_oidc_failure_ES.md); la recuperación
-hosted real continúa pendiente.
+[auditoría de PR #27](../../registros/pr27_hosted_oidc_failure_ES.md); el usuario informa del éxito
+hosted posterior `36746422169` en `d66d223`. No se auditó su paquete en F01/F02
+y los negativos hosted F13/F14 siguen omitidos.
+
+## Aceptación estática de workflows: F01 / F02
+
+Los [ensayos](cases/F01-F02/runbook.md) aplican la política Conftest de producción
+al original L01 inerte y a variantes aisladas F01/F02. Exigen diagnósticos
+estructurados exactos, separan errores del proceso y nunca ejecutan comandos de
+las entradas. El parser YAML fijado convierte `on` sin comillas en `true`; la
+política consulta ambas claves. Prohibir pull_request_target no es análisis de
+flujo. Se conserva el alcance de SHA completo para Actions/workflows externos y
+la excepción local `./`. CI sigue validando workflows reales. El merge depende
+de reglas externas y CI confiable, no de los tests solos. La aceptación estática
+no demuestra autorización de entrega, cierra brechas en vivo ni añade mediciones.

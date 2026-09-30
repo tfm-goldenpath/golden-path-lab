@@ -70,7 +70,8 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [x] Exercise lane A with zot, kind and a development key in the documented compatibility environment, keeping its trust model distinct from lane B.
 - [ ] Exercise compatible workflow portions with `act` and record their limits; local signing and `act` do not establish hosted OIDC behavior.
 - [x] Add Conftest workflow/manifest policies, legitimate inputs and independently mutated policy fixtures; exercise early and directed F11 rejection.
-- [ ] Complete operational F01/F02/F11/F12 records and remaining injections. Test F01 as configuration without enabling privileged execution of untrusted code.
+- [x] Complete operational F01/F02 static records and inert injections; see the workflow family below.
+- [ ] Complete F11/F12 runtime records and remaining injections.
 - [ ] Assess optional local hooks once the preceding commands work and have tests. Introduce them only for useful early feedback; mandatory controls remain in CI, and skipping a hook must not bypass them. Hooks are not a pilot prerequisite.
 - [x] Integrate Trivy with separate original CycloneDX JSON and real scan reports, tool/database identification, synthetic policy tests and observed image scans.
 - [x] Implement offline official CycloneDX 1.7 JSON Schema validation before signing and after authenticating the exact bundle; retain separate lab checks and reports. This does not establish inventory completeness.
@@ -200,4 +201,17 @@ See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](
 
 - [x] Audit hosted `36741081776` at `d39086c`: initial delivery, preissuance F13, L01 and directed F11 reached their expected observations; replacement signing failed while parsing the GitHub OIDC response. Verify package checksum and 153 internal hashes. See [record](registros/pr27_hosted_oidc_failure_EN.md).
 - [x] Add a bounded retry only for malformed ambient-OIDC responses before signing, retain attempts, and preserve mandatory verification and failure propagation.
-- [ ] Validate the fix in a fresh authorized hosted run; replacement completion and F13/F14 negative coverage are not established by the failed run. Human review remains pending.
+- [ ] Audit the user-reported successful hosted run `36746422169` at `d66d223` and complete human review. Hosted F13/F14 negatives were skipped; the failed run does not establish their coverage.
+
+## F01 / F02 static workflow family
+
+- [x] Define the [operational oracle](docs/EN/cases/F01-F02/record.md) on main `d66d223`; retain the L01 workflow-only counterpart and inert inputs outside active workflows.
+- [x] Add a shared pinned Conftest evaluator, exact diagnostic attribution, isolated alterations, evidence and ordinary CI execution while preserving checks of actual workflows.
+- [x] Correct event lookup for the pinned YAML parser's unquoted `on` → `true` representation. Keep Action-reference scope unchanged.
+- [x] Observe actual static L01 acceptance and isolated F01/F02 rejection; retain the initial unexpected F01 acceptance and subsequent checks in the [validation record](registros/f01_f02_workflows_EN.md).
+- [ ] Human review and final acceptance; no campaign measurements or new complete delivery execution.
+
+User-provided context reports hosted run `36746422169` succeeded at `d66d223` after
+the OIDC correction. This increment does not independently audit that package.
+Hosted F13/F14 negatives were skipped; F09/F10/L05 and F13/F14 live gaps remain
+open. F11/F12/L06 runtime work is outside this increment.

@@ -161,5 +161,19 @@ attempt is retained as `<bundle>.signing-attempt-N.log`; `<bundle>.signing.json`
 records the final command status. Existing/partial bundles, signing/publication
 markers and other failures prevent retry. Signing success still requires the
 normal cryptographic/content verification and CI gate. See the
-[PR #27 failure audit](../../registros/pr27_hosted_oidc_failure_EN.md); actual
-hosted recovery remains unvalidated.
+[PR #27 failure audit](../../registros/pr27_hosted_oidc_failure_EN.md); the user reports subsequent normal hosted run `36746422169` succeeded at
+`d66d223`. Its package was not audited in the F01/F02 increment and hosted
+F13/F14 negative trials remain skipped.
+
+## Static workflow acceptance: F01 / F02
+
+The [workflow trials](cases/F01-F02/runbook.md) run the production Conftest policy
+on an accepted inert L01 original and isolated F01/F02 variants. They require
+exact structured diagnostics, preserve process errors separately and never run
+candidate commands. The pinned YAML parser converts unquoted `on` to `true`;
+event lookup handles both keys. The conservative pull_request_target prohibition
+is not data-flow analysis. Full-SHA rules retain external Action/reusable workflow
+scope and the local `./` exception. Ordinary CI still validates actual workflows.
+Merge enforcement depends on external repository rulesets and trusted CI, not on
+these tests alone. Static acceptance does not establish delivery authorization,
+close live-integration gaps or add campaign observations.
