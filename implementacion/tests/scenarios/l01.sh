@@ -20,7 +20,7 @@ scenario_l01_prepare_update() (
   cp "$parent_state/state.json" "$state_dir/state.json"
   # Source/workflow tests describe the same source; image-specific checks below
   # are performed again against the replacement digest.
-  for file in unit-tests.log workflow-policy.json versions.txt tools-lock.json; do
+  for file in unit-tests.log workflow-policy.json versions.txt tools-lock.json database-identity.json; do
     cp "$parent_state/$file" "$state_dir/$file"
   done
   id="$(basename "$parent_state" | tr '[:upper:]' '[:lower:]')-update"

@@ -1,3 +1,4 @@
+import {syntheticAnalysis} from './support/vulnerability-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -98,6 +99,7 @@ for (const authenticationStatus of [0, 19]) {
     mkdirSync(state);
     for (const file of ['unit-tests.log', 'manifest-policy.json', 'workflow-policy.json', 'vulnerability-policy.json',
       'verified-signature.json', 'verified-sbom.json', 'verified-provenance.json']) writeFileSync(join(state,file), '{}\n');
+    syntheticAnalysis(state);
     const saved = bundle(RESULTS_TYPE, results('FAIL'));
     const alternate = bundle(RESULTS_TYPE, results('PASS')).dsseEnvelope;
     checkStatements(JSON.stringify(alternate), digest, RESULTS_TYPE, predicate => validateResults(predicate,repository,commit));

@@ -247,3 +247,14 @@ para finish. El clasificador conserva `quotes-node` por defecto; solo se explici
 el nombre de los Pods aislados. No cambian políticas, confianza ni privilegios.
 L06 comparte CREATE de L01 y exige un UPDATE real de anotación antes del reemplazo
 de imagen. Véase el [registro](cases/F11-F12-L06/record.md).
+
+## Frontera de la familia de vulnerabilidades
+
+`make vulnerabilities` invoca la fase local del coordinador existente.
+`delivery.sh` prepara la base, genera el SBOM original, analiza y evalúa la política;
+`vulnerability-evidence.mjs` comprueba asociación y aptitud para autorización.
+El escenario conserva selección de fixtures, atribución, comparación y orden local.
+La captura admite cuatro contextos fijados; el empaquetador conserva sus
+subdirectorios explícitos. La base se conserva fuera de Git con su identidad en
+el paquete. No se añade workflow ni escáner a Kyverno.
+Véase [F03/F04/L02](cases/F03-F04-L02/runbook.md).

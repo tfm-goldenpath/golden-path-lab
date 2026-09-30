@@ -2,11 +2,24 @@ package trivy
 
 import rego.v1
 
+# The SBOM scan contract is observed from pinned Trivy 0.74.0. Raw reports
+# remain unchanged; delivery additionally binds the original SBOM and its hash.
+valid_artifact if input.ArtifactType == "container_image"
+valid_artifact if {
+    input.ArtifactType == "cyclonedx"
+    is_string(input.Metadata.Reference)
+    regex.match(`^.+@sha256:[a-f0-9]{64}$`, input.Metadata.Reference)
+    is_array(input.Metadata.RepoDigests)
+    input.Metadata.Reference in input.Metadata.RepoDigests
+    is_string(input.Metadata.ImageID)
+    input.Metadata.ImageID != ""
+}
+
 valid_report if {
     input.SchemaVersion == 2
     is_string(input.ArtifactName)
     input.ArtifactName != ""
-    input.ArtifactType == "container_image"
+    valid_artifact
     is_object(input.Metadata)
     is_array(input.Results)
     count(input.Results) > 0

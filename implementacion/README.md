@@ -1,6 +1,6 @@
 # Golden Path: verifiable delivery laboratory
 
-This laboratory uses **quotes-node**, a synthetic quotation service without production dependencies. **L01** demonstrates a legitimate delivery followed by replacement with a different, independently verified image digest. **F13** checks that a missing signed results attestation prevents deployment. The **F11/F12/L06** family adds privileged/tag-reference rejection on CREATE and legal template UPDATE, plus a meaningful permitted update; [live acceptance remains pending](docs/EN/cases/F11-F12-L06/runbook.md).
+This laboratory uses **quotes-node**, a synthetic quotation service without production dependencies. **L01** demonstrates a legitimate delivery followed by replacement with a different, independently verified image digest. **F13** checks that a missing signed results attestation prevents deployment. The **F11/F12/L06** family adds privileged/tag-reference rejection on CREATE and legal template UPDATE, plus a meaningful permitted update; [hosted success is recorded from a supplied review; local acceptance remains pending](docs/EN/cases/F11-F12-L06/runbook.md).
 
 The [execution guide](docs/EN/cases/L01-F13/runbook.md) covers Codespaces, Dev Containers and GitHub, including expected results and troubleshooting. The [L01/F13 case](docs/EN/cases/L01-F13/README.md) explains the experimental claim. Historical [validation records](registros/validacion_integracion.md) distinguish observed runs from pending work and retain their original Spanish wording.
 
@@ -128,3 +128,5 @@ This organization supports:
 R and G reuse one image in this functional demonstration. This is not a timing-campaign pair and does not replace the twenty scenarios in the [plan](TODO.md).
 
 The results attestation uses a versioned custom predicate, not a complete VSA implementation. The original CycloneDX SBOM is retained and signed. Structural checks cover the selected contract fields, not every official-schema element or inventory completeness.
+
+The [F03/F04/L02 procedure](docs/EN/cases/F03-F04-L02/runbook.md) adds `make vulnerabilities` for isolated local fixtures, frozen scanner data and fresh positive authorization. Real package selection is recorded; fixture image/admission integration remains NOT_EXECUTED behind the pinned environment prerequisite.

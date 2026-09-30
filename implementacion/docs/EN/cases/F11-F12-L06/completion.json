@@ -117,5 +117,21 @@
     "status": "user-reported success; package not independently audited"
   },
   "measurement": "functional integration only; no campaign observations; shared L01/L06 does not increase catalogue count",
-  "toolVersions": "evidence/raw/runtime-development/16-tool-versions.json"
+  "toolVersions": "evidence/raw/runtime-development/16-tool-versions.json",
+  "currentHostedStatus": {
+    "status": "USER_SUPPLIED_REVIEW",
+    "runId": "36768108684",
+    "url": "https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36768108684",
+    "mergedRevision": "eed5aad2828a7156e4c49bf2e2f3d9c2b0476137",
+    "conclusion": "hosted success; attributable F11/F12 and successful L06",
+    "verifiedInternalHashes": 449,
+    "authenticatedOriginalReplacementBundles": 8,
+    "independentlyCheckedThisIncrement": false,
+    "localValidation": "pending",
+    "preservedGaps": [
+      "F09/F10/L05 live integration",
+      "F13/F14 live integration"
+    ]
+  },
+  "historicalRecords": "Existing scenario statuses and checks retain the original handoff observation; currentHostedStatus is a later user-supplied review."
 }

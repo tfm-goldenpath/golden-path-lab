@@ -45,17 +45,70 @@ delivery_check_manifest() {
   conftest test --policy policies/conftest --namespace manifests --output json "$state_dir/tfm-golden.json" > "$state_dir/manifest-policy.json"
 }
 
-delivery_analyze() {
-  local sbom_version; local -a trivy_args=()
-  trivy_args=(--image-src remote --timeout 15m --scanners vuln)
-  export TRIVY_CACHE_DIR="${TRIVY_CACHE_DIR:-$root/.tmp/trivy-cache}"
-  [[ "$mode" != local ]] || trivy_args+=(--insecure)
-  trivy image "${trivy_args[@]}" --format json --output "$state_dir/vulnerabilities.json" "$image"
+# Record the exact external request and failure code without masking the caller.
+delivery_analysis_command() {
+  local prefix=$1 status=0; shift
+  printf '%q ' "$@" > "$state_dir/$prefix-request.txt"
+  printf '\n' >> "$state_dir/$prefix-request.txt"
+  "$@" > "$state_dir/$prefix.log" 2>&1 || status=$?
+  printf '%s\n' "$status" > "$state_dir/$prefix-exit.txt"
+  return "$status"
+}
+
+# One immutable snapshot is shared by all images in a run. Its bytes are retained
+# outside Git and the small identity record travels with each image's evidence.
+delivery_database_prepare() {
+  local cache=${TRIVY_CACHE_DIR:-$root/.tmp/trivy-cache} snapshot
+  if jq -e '.vulnerabilityDatabase' "$state_dir/state.json" >/dev/null; then
+    snapshot=$(get vulnerabilityDatabase)
+  else
+    snapshot="$root/.tmp/vulnerability-db-$(basename "$state_dir")"
+    [[ ! -e "$snapshot" ]] || fail 'Database snapshot already exists; use a fresh run.'
+    if [[ -n "${GP_VULNERABILITY_DB:-}" ]]; then
+      cache=$(realpath -- "$GP_VULNERABILITY_DB")
+    else
+      delivery_analysis_command database-download trivy image --cache-dir "$cache" --download-db-only
+    fi
+    mkdir -p "$snapshot/db"
+    cp --reflink=auto "$cache/db/trivy.db" "$cache/db/metadata.json" "$snapshot/db/"
+    python3 scripts/vulnerability-database.py identify "$snapshot" > "$state_dir/database-identity.json"
+    put vulnerabilityDatabase "$snapshot"
+  fi
+  python3 scripts/vulnerability-database.py check "$snapshot" "$state_dir/database-identity.json"
+}
+
+delivery_scan() {
+  local snapshot sbom_version; local -a args=(--image-src remote --timeout 15m)
+  delivery_database_prepare
+  snapshot=$(get vulnerabilityDatabase)
+  [[ "$mode" != local ]] || args+=(--insecure)
   trivy --version > "$state_dir/trivy-version.txt"
-  [[ ! -f "$TRIVY_CACHE_DIR/db/metadata.json" ]] || cp "$TRIVY_CACHE_DIR/db/metadata.json" "$state_dir/trivy-db.json"
-  [[ ! -f "$TRIVY_CACHE_DIR/db/trivy.db" ]] || sha256sum "$TRIVY_CACHE_DIR/db/trivy.db" > "$state_dir/trivy-db-checksum.txt"
-  conftest test --policy policies/conftest --namespace trivy --output json "$state_dir/vulnerabilities.json" > "$state_dir/vulnerability-policy.json"
-  trivy image "${trivy_args[@]}" --format cyclonedx --output "$state_dir/sbom.cdx.json" "$image"
+  cp "$snapshot/db/metadata.json" "$state_dir/trivy-db.json"
+  # Original inventory first. Do not request vulnerability enrichment here.
+  delivery_analysis_command sbom-generation trivy image "${args[@]}" --cache-dir "$snapshot" --skip-db-update --skip-java-db-update \
+    --format cyclonedx --output "$state_dir/sbom.cdx.json" "$image"
   node scripts/validate-sbom-schema.mjs "$state_dir/sbom.cdx.json" "$state_dir/sbom-schema-generation.json"
   sbom_version=$(node "$contract" sbom "$state_dir/sbom.cdx.json"); put sbomVersion "$sbom_version"
+  delivery_analysis_command vulnerability-scan trivy sbom --timeout 15m --cache-dir "$snapshot" --skip-db-update --skip-java-db-update \
+    --offline-scan --scanners vuln --ignore-unfixed=false --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+    --pkg-types os,library --ignorefile /dev/null --format json \
+    --output "$state_dir/vulnerabilities.json" "$state_dir/sbom.cdx.json"
+  python3 scripts/vulnerability-database.py check "$snapshot" "$state_dir/database-identity.json"
+  node scripts/vulnerability-evidence.mjs association "$state_dir" "$image" > "$state_dir/analysis-association.json"
+}
+
+# Capture only this evaluator's expected nonzero status. Scanner and validation
+# failures above always stop the stage. The caller must assert PASS or BLOCKED.
+delivery_evaluate_vulnerabilities() {
+  local status=0
+  conftest test --policy policies/conftest --namespace trivy --output json "$state_dir/vulnerabilities.json" \
+    > "$state_dir/vulnerability-policy.json" 2> "$state_dir/vulnerability-policy-stderr.log" || status=$?
+  printf '%s\n' "$status" > "$state_dir/vulnerability-policy-exit.txt"
+  node scripts/vulnerability-evidence.mjs receipt "$state_dir" "$image" "$status" > "$state_dir/analysis.json"
+}
+
+delivery_analyze() {
+  delivery_scan
+  delivery_evaluate_vulnerabilities
+  node scripts/vulnerability-evidence.mjs authorize "$state_dir" "$image" > "$state_dir/analysis-authorization.json"
 }

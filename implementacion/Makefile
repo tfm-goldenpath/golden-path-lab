@@ -35,3 +35,7 @@ setup-validation:
 .PHONY: test-workflows
 test-workflows:
 	python3 tests/scenarios/workflows.py $(if $(WORKFLOW_EVIDENCE),--output "$(WORKFLOW_EVIDENCE)")
+
+.PHONY: vulnerabilities
+vulnerabilities: doctor
+	bash scripts/demo.sh local vulnerabilities

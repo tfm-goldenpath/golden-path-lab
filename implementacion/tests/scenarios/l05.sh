@@ -20,6 +20,7 @@ scenario_l05() (
     state_dir="$parent_state/L05-$name"
     mkdir "$state_dir"
     cp "$parent_state/state.json" "$state_dir/state.json"
+    cp "$parent_state/database-identity.json" "$state_dir/database-identity.json"
     revision=$(jq -er --arg name "$name" '.[$name].commit' "$parent_state/L05-source-authorization.json")
     source=$(jq -er --arg name "$name" '.[$name].directory' "$parent_state/L05-source-authorization.json")
     [[ "$source" == "$private/L05-source/$name" && -d "$source" && ! -L "$source" ]] || fail 'L05 source export is outside owned private storage.'

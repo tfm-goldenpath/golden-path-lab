@@ -9,7 +9,8 @@ The synthetic `quotes-node` service makes delivery behavior observable without r
 
 The [F11/F12/L06 runtime extension](implementacion/docs/EN/cases/F11-F12-L06/runbook.md)
 adds Deployment CREATE/template UPDATE and isolated Pod checks. Implementation
-and offline tests are available; live local/hosted acceptance remains pending.
+and offline tests are available; the supplied hosted review records success, while
+local acceptance remains pending.
 
 ## Quick start in Codespaces or a devcontainer
 
@@ -85,3 +86,5 @@ The published **v0.2.0** at `dd381d3` includes PR #15's [Cosign bundle migration
 Complete the bundle acceptance checks and affected pilot before freezing the adopted campaign profile; keep classic development timings separate from bundle campaign measurements. Continue the remaining scenario fixtures and evaluation runner under the unchanged twenty-scenario method. Short-lived branches merge into `main`; scenarios remain versioned tests. Preserve results from later corrections as separate revisions.
 
 The [implementation plan](implementacion/TODO.md) lists deliverables; older unchecked entries must be reconciled with the implemented increments and their remaining acceptance conditions. License selection remains pending; this repository does not yet declare a reuse license.
+
+Current runtime status: the user-supplied review of [hosted 36768108684](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36768108684), merged at `eed5aad2828a7156e4c49bf2e2f3d9c2b0476137`, records F11/F12 rejections and L06 success (449 internal hashes, eight authenticated bundles). This increment did not repeat the audit; local validation and the existing F09/F10/L05 and F13/F14 gaps remain pending. The [local F03/F04/L02 procedure](implementacion/docs/EN/cases/F03-F04-L02/runbook.md) retains separate package-selection and image/admission execution status.

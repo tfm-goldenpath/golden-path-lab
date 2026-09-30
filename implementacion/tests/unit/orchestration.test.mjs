@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const bash = process.env.BASH_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash');
 const modules = ['context', 'lab', 'delivery', 'attestations', 'workload'];
-const scenarios = ['l01', 'f13', 'f07', 'f08', 'sbom', 'provenance', 'results', 'l05', 'runtime', 'f11'];
+const scenarios = ['l01', 'f13', 'f07', 'f08', 'sbom', 'provenance', 'results', 'l05', 'runtime', 'f11', 'vulnerabilities'];
 const repository = 'registry.invalid/quotes';
 const digest = `sha256:${'a'.repeat(64)}`;
 const image = `${repository}@${digest}`;
@@ -618,3 +618,16 @@ node() {
     }
   });
 }
+
+// The vulnerability lane owns no separate cleanup trap. A failed stage or root
+// cleanup cannot produce a successful process exit, including this new phase.
+for(const [fault,cleanupStatus] of [['','0'],['family','0'],['','43']]) test(`local vulnerability entry point failure=${fault}, cleanup=${cleanupStatus}`,t=>{
+  const f=fixture(t);
+  appendFileSync(join(f.root,'tests/scenarios/vulnerabilities.sh'), '\nscenario_vulnerabilities() { step family; command jq -n \'{status:"PASS",scope:"synthetic-orchestration"}\' > "$state_dir/result.json"; }\n');
+  const r=run(f,['scripts/demo.sh','local','vulnerabilities'],{GP_FAIL_STAGE:fault,GP_CLEANUP_STATUS:cleanupStatus});
+  assert.equal(r.status,fault?37:cleanupStatus==='0'?0:1,r.stderr);
+  const events=readFileSync(f.events,'utf8');assert.match(events,/family\|/);assert.match(events,/cleanup\|/);assert.doesNotMatch(events,/f13-prepare|runtime-create|prepare-update/);
+});
+test('unsupported hosted vulnerability phase stops before infrastructure or publication',t=>{
+  const f=fixture(t);const r=run(f,['scripts/demo.sh','github','vulnerabilities']);assert.notEqual(r.status,0);assert.equal(readFileSync(f.events,'utf8'),'');assert.match(r.stderr,/local-only/);
+});

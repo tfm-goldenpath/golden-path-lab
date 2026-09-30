@@ -5,15 +5,16 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$root"
 mode=${1:-local}; phase=${2:-run}
 [[ "$mode" == local || "$mode" == github ]] || { echo 'Mode: local or github' >&2; exit 2; }
-case "$phase" in run|prepare|finish|reference|cleanup) ;; *) echo 'Invalid phase' >&2; exit 2 ;; esac
+case "$phase" in run|prepare|finish|reference|cleanup|vulnerabilities) ;; *) echo 'Invalid phase' >&2; exit 2 ;; esac
 source versions.env
 for module in context lab delivery attestations workload; do
   source "$root/scripts/lib/$module.sh"
 done
-for scenario in l01 f13 f07 f08 sbom provenance results l05 runtime f11; do
+for scenario in l01 f13 f07 f08 sbom provenance results l05 runtime f11 vulnerabilities; do
   source "$root/tests/scenarios/$scenario.sh"
 done
 context_init
+[[ "$phase" != vulnerabilities || "$mode" == local ]] || fail 'Vulnerability fixtures are local-only.'
 
 on_exit() {
   local code=$?
@@ -37,13 +38,18 @@ else
   exec > >(tee -a "$state_dir/run.log") 2>&1
   delivery_preflight
   capture_source_context
-  scenario_l05_prepare
+  if [[ "$phase" != vulnerabilities ]]; then scenario_l05_prepare; fi
   lab_create
   delivery_build
   lab_prepare_namespaces
   delivery_render_manifests
 fi
 load_delivery_context
+
+if [[ "$phase" == vulnerabilities ]]; then
+  scenario_vulnerabilities
+  exit 0
+fi
 
 if [[ "$phase" != finish ]]; then
   workload_reference

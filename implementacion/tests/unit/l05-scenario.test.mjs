@@ -11,6 +11,7 @@ function run(t,fault='') {
   const state=join(root,'run-test'),privateDir=join(root,'private');mkdirSync(state);
   for(const n of ['from','to']) mkdirSync(join(privateDir,'L05-source',n),{recursive:true});
   writeFileSync(join(state,'state.json'),JSON.stringify({sourceRepository:'https://example.invalid/lab',sourceSnapshot:'a'.repeat(64)}));
+  writeFileSync(join(state,'database-identity.json'),'{"synthetic":true}');
   writeFileSync(join(state,'tfm-reference-quote.json'),'{}\n');
   if(fault!=='missing-predecessor') writeFileSync(join(state,'L04-result.json'),JSON.stringify({scenario:'L04',status:fault==='failed-predecessor'?'FAIL':'PASS',image:'registry/image@sha256:'+'b'.repeat(64),toImage:'registry/image@sha256:'+'b'.repeat(64),functionality:'healthy'}));
   writeFileSync(join(state,'L05-source-authorization.json'),JSON.stringify(Object.fromEntries(['from','to'].map((name,i)=>[name,{commit:String(i+1).repeat(40),directory:join(privateDir,'L05-source',name),snapshotSha256:String(i+1).repeat(64)}]))));

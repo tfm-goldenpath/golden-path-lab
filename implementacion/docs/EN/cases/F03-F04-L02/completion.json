@@ -1,0 +1,192 @@
+{
+  "family": [
+    "F03",
+    "F04",
+    "L02"
+  ],
+  "sourceBaseline": "eed5aad2828a7156e4c49bf2e2f3d9c2b0476137",
+  "branch": "test/f03-f04-l02-vulnerabilities",
+  "status": "IMPLEMENTED_IMAGE_INTEGRATION_PENDING",
+  "phase": "post-build",
+  "humanReview": "pending",
+  "finalHumanDecision": "pending",
+  "AI": {
+    "tool": "Codex",
+    "model": "GPT-6 (session identification; more specific deployment identifier not exposed)",
+    "contribution": "fixture research, implementation, tests and documentation"
+  },
+  "observations": {
+    "f03-vulnerable": {
+      "status": "PACKAGE_SELECTION_CONFIRMED_IMAGE_PENDING",
+      "realFilesystemScan": "EXECUTED",
+      "harmlessDependencyCheck": "PASS",
+      "imageDigest": null,
+      "imageBuildAndScan": "NOT_EXECUTED",
+      "authorization": "NOT_EXECUTED",
+      "admissionAndHttp": "NOT_EXECUTED",
+      "report": "evidence/raw/vulnerability-development/f03-vulnerable-filesystem-report.json",
+      "reportSha256": "a71d25ef87675049320d7ce3f08f86b318ca83d3eb9147de03d15ffd9b5b0d9a",
+      "findings": [
+        {
+          "VulnerabilityID": "CVE-2021-44906",
+          "PkgName": "minimist",
+          "InstalledVersion": "1.2.5",
+          "Severity": "CRITICAL",
+          "FixedVersion": "1.2.6, 0.2.4"
+        }
+      ],
+      "realFilesystemSbomComponents": [
+        {
+          "name": "minimist",
+          "version": "1.2.5",
+          "purl": "pkg:npm/minimist@1.2.5"
+        }
+      ]
+    },
+    "f03-repaired": {
+      "status": "PACKAGE_SELECTION_CONFIRMED_IMAGE_PENDING",
+      "realFilesystemScan": "EXECUTED",
+      "harmlessDependencyCheck": "PASS",
+      "imageDigest": null,
+      "imageBuildAndScan": "NOT_EXECUTED",
+      "authorization": "NOT_EXECUTED",
+      "admissionAndHttp": "NOT_EXECUTED",
+      "report": "evidence/raw/vulnerability-development/f03-repaired-filesystem-report.json",
+      "reportSha256": "5495699e332bd1bf687b994ec1b2c7d6552ecb6a698b109c098bf391216a2dcd",
+      "findings": [],
+      "realFilesystemSbomComponents": [
+        {
+          "name": "minimist",
+          "version": "1.2.8",
+          "purl": "pkg:npm/minimist@1.2.8"
+        }
+      ]
+    },
+    "f04": {
+      "status": "PACKAGE_SELECTION_CONFIRMED_IMAGE_PENDING",
+      "realFilesystemScan": "EXECUTED",
+      "harmlessDependencyCheck": "PASS",
+      "imageDigest": null,
+      "imageBuildAndScan": "NOT_EXECUTED",
+      "authorization": "NOT_EXECUTED",
+      "admissionAndHttp": "NOT_EXECUTED",
+      "report": "evidence/raw/vulnerability-development/f04-filesystem-report.json",
+      "reportSha256": "4b597dd7e2011cf50b9540fd588965901a3eed88efc4db64a9c2d6960fc52a3c",
+      "findings": [
+        {
+          "VulnerabilityID": "CVE-2024-29415",
+          "PkgName": "ip",
+          "InstalledVersion": "2.0.1",
+          "Severity": "HIGH",
+          "FixedVersion": null
+        }
+      ],
+      "realFilesystemSbomComponents": [
+        {
+          "name": "ip",
+          "version": "2.0.1",
+          "purl": "pkg:npm/ip@2.0.1"
+        }
+      ]
+    },
+    "l02": {
+      "status": "PACKAGE_SELECTION_CONFIRMED_IMAGE_PENDING",
+      "realFilesystemScan": "EXECUTED",
+      "harmlessDependencyCheck": "PASS",
+      "imageDigest": null,
+      "imageBuildAndScan": "NOT_EXECUTED",
+      "authorization": "NOT_EXECUTED",
+      "admissionAndHttp": "NOT_EXECUTED",
+      "report": "evidence/raw/vulnerability-development/l02-filesystem-report.json",
+      "reportSha256": "1485b91c3399c15d1daed75980fcfcf523a48e42c1f149ca3051e5207bb4fd4f",
+      "findings": [
+        {
+          "VulnerabilityID": "CVE-2025-13465",
+          "PkgName": "lodash.unset",
+          "InstalledVersion": "4.5.2",
+          "Severity": "MEDIUM",
+          "FixedVersion": null
+        },
+        {
+          "VulnerabilityID": "CVE-2026-2950",
+          "PkgName": "lodash.unset",
+          "InstalledVersion": "4.5.2",
+          "Severity": "MEDIUM",
+          "FixedVersion": "4.18.0"
+        }
+      ],
+      "realFilesystemSbomComponents": [
+        {
+          "name": "lodash.unset",
+          "version": "4.5.2",
+          "purl": "pkg:npm/lodash.unset@4.5.2"
+        }
+      ]
+    }
+  },
+  "checks": {
+    "sharedSuite": {
+      "status": "PASS",
+      "environmentTests": 6,
+      "serviceUnitTests": 797,
+      "pythonPolicyTests": 43,
+      "conftestDecisions": 62,
+      "kyvernoEngineChecks": 16,
+      "realLocalCosign": "PASS",
+      "staticWorkflowTrials": "PASS",
+      "log": "evidence/raw/vulnerability-development/14-shared-suite.log"
+    },
+    "finalFocused": {
+      "status": "PASS",
+      "tests": 106,
+      "log": "evidence/raw/vulnerability-development/18-final-regressions.log"
+    },
+    "integrationPrerequisite": {
+      "status": "FAIL",
+      "reason": "kubectl 1.37.0 differs from pinned 1.35.8",
+      "log": "evidence/raw/vulnerability-development/16-integration-entrypoint.log"
+    },
+    "editorial": {
+      "status": "PASS",
+      "checks": [
+        "bash syntax",
+        "Node syntax",
+        "JSON parsing",
+        "six new family documentation links",
+        "git diff --check"
+      ]
+    }
+  },
+  "database": {
+    "schema": 1,
+    "sha256": {
+      "trivy.db": "b3c1bef699d2fb9fed55c280ddfe9f681cf43b117cc73e54f852c1d840d8399e",
+      "metadata.json": "1e3cc0661923e54ef8baf714edbbd66865f78144ab1ea8d409e67d163dfb10a1"
+    },
+    "metadata": {
+      "Version": 2,
+      "NextUpdate": "2026-09-30T13:11:12.644596686Z",
+      "UpdatedAt": "2026-09-29T13:11:12.644596957Z",
+      "DownloadedAt": "2026-09-29T15:20:56.306443611Z"
+    },
+    "retrieval": {
+      "kind": "preserved-snapshot",
+      "directory": "/workspaces/golden-path-lab/implementacion/.tmp/vulnerability-selection/db-snapshot",
+      "requirement": "Retain this snapshot outside Git for exact replay"
+    }
+  },
+  "realImageSbomCharacterization": {
+    "status": "PASS",
+    "scope": "scan of a retained original image SBOM; association and production Conftest passed",
+    "image": "172.18.0.3:5000/quotes-node-run-iiwr8rll@sha256:9d173bde16bb95567d77d64d0ae9bc65a7d6ba3b4f90b5a6b4ca107a7775a442",
+    "report": "evidence/raw/vulnerability-development/retained-image/vulnerabilities.json"
+  },
+  "preservedGaps": [
+    "F09/F10/L05 live integration",
+    "F13/F14 live integration",
+    "local runtime validation"
+  ],
+  "hosted": "NOT_EXECUTED; fixture issuance unsupported; normal hosted regression not dispatched",
+  "measurement": "No campaign observations; existing twenty-scenario catalogue unchanged",
+  "evidencePackage": "evidence/packages/vulnerability-development.tar.gz"
+}
