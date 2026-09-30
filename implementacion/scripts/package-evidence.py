@@ -40,13 +40,14 @@ def write_metadata(destination, text):
 def scenario_summary(source, files):
     """Report retained observations, never infer success from a directory."""
     summaries = {}
-    for case in ('F01', 'F02', 'L01', 'L03', 'L04', 'F05', 'F06', 'F07', 'F07CI', 'F08', 'F09', 'F10', 'F11', 'F13Preissuance', 'F13', 'F14', 'L05'):
+    for case in ('F01', 'F02', 'L01', 'L03', 'L04', 'F05', 'F06', 'F07', 'F07CI', 'F08', 'F09', 'F10', 'F11', 'F12', 'L06', 'F13Preissuance', 'F13', 'F14', 'L05'):
         directories = {
             'L01': ['L01-update'], 'L03': ['L01-update'], 'L04': ['L01-update'],
             'F07': ['F07'], 'F07CI': ['L01-update/F07-CI'],
             'L05': ['L05-from', 'L05-to'],
+            **{case: ['runtime/' + case] for case in ('F11', 'F12', 'L06')},
         }.get(case, ['L01-update/' + case + '-' + phase for phase in ('CI', 'admission')])
-        retained = [name for name in directories if any(p.parent == source / name for p in files)]
+        retained = [name for name in directories if any(source / name in p.parents for p in files)]
         entry = {'status': 'INCOMPLETE' if retained else 'NOT_RECORDED', 'evidence': retained}
         stem = 'F07-CI' if case == 'F07CI' else case
         record = source / (stem + ('-result.json' if case.startswith('L') else '-completed.json'))
@@ -75,7 +76,10 @@ def package(source, output, status):
     excluded = {'state.json', 'config.json', 'kubeconfig', 'cosign.key', 'SHA256SUMS.txt'}
     files = []
     candidates = list(source.iterdir())
-    for name in ('L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission', 'L01-update/F05-CI', 'L01-update/F05-admission', 'L01-update/F06-CI', 'L01-update/F06-admission', 'L01-update/F09-CI', 'L01-update/F09-admission', 'L01-update/F10-CI', 'L01-update/F10-admission', 'L01-update/F13-admission', 'L01-update/F14-admission', 'L05-from', 'L05-to'):
+    runtime_directories = ['runtime'] + ['runtime/' + case for case in ('F11', 'F12', 'L06')] + [
+        'runtime/' + case + '/' + operation for case in ('F11', 'F12')
+        for operation in ('Deployment-CREATE', 'Deployment-UPDATE', 'Pod-CREATE')]
+    for name in (*runtime_directories, 'L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission', 'L01-update/F05-CI', 'L01-update/F05-admission', 'L01-update/F06-CI', 'L01-update/F06-admission', 'L01-update/F09-CI', 'L01-update/F09-admission', 'L01-update/F10-CI', 'L01-update/F10-admission', 'L01-update/F13-admission', 'L01-update/F14-admission', 'L05-from', 'L05-to'):
         directory = source / name
         if directory.is_symlink() or directory.resolve() != directory:
             raise ValueError('Refusing symlinked scenario evidence directory')
@@ -107,7 +111,7 @@ def package(source, output, status):
     except (ValueError, UnicodeError):
         static_workflow = False
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13/F11; optional F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
+        'scope': 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13 and runtime F11/F12/L06; optional F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
         'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
         'scenarios': scenario_summary(source, files),
         'secretsIncluded': False}, indent=2) + '\n')

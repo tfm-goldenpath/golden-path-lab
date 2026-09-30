@@ -173,3 +173,14 @@ flujo. Se conserva el alcance de SHA completo para Actions/workflows externos y
 la excepción local `./`. CI sigue validando workflows reales. El merge depende
 de reglas externas y CI confiable, no de los tests solos. La aceptación estática
 no demuestra autorización de entrega, cierra brechas en vivo ni añade mediciones.
+
+
+## Comparaciones de manifiestos en ejecución
+
+[F11/F12/L06](cases/F11-F12-L06/record.md) mantienen evidencia válida del digest.
+F12 usa únicamente el tag original persistido y exige resolución de lectura al
+mismo digest antes y después. Las reglas de firma limitadas a digest no verifican
+referencias solo por tag; no cambian ese alcance, el repositorio autorizado ni
+`mutateDigest=false`. CI autentica el digest y L01/L06 aportan controles positivos.
+La denegación exige atribución exacta y NotFound tras CREATE o identidad/spec
+inalterados tras UPDATE. Compartir CREATE L01/L06 no añade escenarios.

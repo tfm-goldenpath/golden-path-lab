@@ -293,3 +293,12 @@ is an availability preflight; F13 still performs its original inventory checks
 and actual request. Timeouts remain integration errors. Named-Pod logs and
 EndpointSlices are retained, including after failure. See the
 [readiness correction record](../../../../registros/kyverno_readiness_fix_EN.md).
+
+
+## F11/F12/L06 runtime extension
+
+The shared coordinator now schedules F11/F12 negative Deployment CREATEs before
+L01, then legal template UPDATE negatives and a meaningful L06 annotation update.
+Isolated direct Pod CREATEs use separate names/labels. See the
+[runtime runbook](../F11-F12-L06/runbook.md) for exact oracles, evidence and pending
+local/hosted boundaries. Earlier run records retain their original scope.

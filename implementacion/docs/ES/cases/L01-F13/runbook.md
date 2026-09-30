@@ -294,3 +294,12 @@ restringido: exige el rechazo exacto por resultados ausentes. Este preflight no
 sustituye inventarios ni petición original F13. Los timeouts siguen siendo errores
 de integración. Se conservan logs por Pod y EndpointSlices, también después del
 fallo. Ver el [registro de corrección](../../../../registros/kyverno_readiness_fix_ES.md).
+
+
+## Extensión F11/F12/L06
+
+El coordinador ejecuta CREATE negativos F11/F12 antes de L01, después UPDATE
+negativos de plantilla y un UPDATE real de anotación L06. Los CREATE de Pod
+usan nombres/etiquetas aislados. Véase la [guía de ejecución](../F11-F12-L06/runbook.md)
+para oráculos, evidencia y límites local/hosted pendientes. Los registros previos
+conservan su alcance original.

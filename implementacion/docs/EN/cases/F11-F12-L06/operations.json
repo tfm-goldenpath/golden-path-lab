@@ -1,0 +1,18 @@
+{
+  "family": ["F11", "F12", "L06"],
+  "baseRevision": "d86465410d74e39ef8e77a9979995bcb268abf9a",
+  "oracle": "User runtime-family requirements; human review pending",
+  "namespace": "tfm-golden",
+  "actor": "existing restricted deployment actor",
+  "constant": ["authorized image digest and evidence", "namespace protection", "admission policies", "trust profile", "actor privileges"],
+  "operations": [
+    {"scenario":"F11","operation":"Deployment CREATE / template UPDATE / isolated Pod CREATE","early":["PRIVILEGED","ESCALATION"],"policy":"tfm-runtime","rule":"restricted-containers","diagnostic":"pattern mismatch at privileged or allowPrivilegeEscalation"},
+    {"scenario":"F12","operation":"Deployment CREATE / template UPDATE / isolated Pod CREATE","early":["DIGEST"],"policy":"tfm-runtime","rule":"authorized-image-repository","diagnostic":"IMAGE_REPOSITORY deny condition"},
+    {"scenario":"L06","operation":"Deployment CREATE shared with L01 / annotation template UPDATE / isolated Pod CREATE","expected":"accept; update changes template and generation; rollout, Ready Pods and HTTP"}
+  ],
+  "stateAssertions": {"rejectedCreate":"actual named NotFound before and after", "rejectedUpdate":"same UID, generation and desired spec", "controllerPods":"separate rollout observations, never direct Pod trials"},
+  "F11Alteration":"privileged=true AND allowPrivilegeEscalation=true; baseline false conflicts with privileged=true; coordinated API-valid mutation, not single-field isolation",
+  "F12Alteration":"image reference only; original persisted build tag resolves to authorized digest before and after each trial; no automatic conversion",
+  "execution": {"local":"NOT_EXECUTED", "hosted":"NOT_EXECUTED"},
+  "measurement":"functional integration only; shared L01/L06 does not increase the twenty-scenario count"
+}

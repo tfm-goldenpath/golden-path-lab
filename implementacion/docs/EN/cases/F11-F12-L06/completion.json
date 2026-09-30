@@ -1,0 +1,121 @@
+{
+  "baseRevision": "d86465410d74e39ef8e77a9979995bcb268abf9a",
+  "branch": "test/f11-f12-l06-runtime",
+  "source": "uncommitted working tree; final file hashes retained in development evidence",
+  "oracle": "operations.json",
+  "implementation": "IMPLEMENTED",
+  "humanReview": "PENDING",
+  "finalHumanDecision": "PENDING",
+  "assistance": {
+    "tool": "Codex",
+    "model": "GPT-6",
+    "snapshot": "not exposed",
+    "contribution": [
+      "implementation",
+      "tests",
+      "documentation"
+    ]
+  },
+  "scenarios": {
+    "F11": {
+      "earlyPolicy": {
+        "status": "PASS",
+        "scope": "Real Conftest on synthetic policy fixtures; no authenticated live delivery"
+      },
+      "local": {
+        "status": "NOT_EXECUTED",
+        "reason": "Environment prerequisite failed; no smoke, connectivity or demo attempted"
+      },
+      "hosted": {
+        "status": "NOT_EXECUTED",
+        "reason": "No workflow dispatched"
+      },
+      "operations": {
+        "Deployment CREATE": "NOT_EXECUTED",
+        "Deployment template UPDATE": "NOT_EXECUTED",
+        "direct Pod CREATE": "NOT_EXECUTED"
+      }
+    },
+    "F12": {
+      "earlyPolicy": {
+        "status": "PASS",
+        "scope": "Real Conftest on synthetic policy fixtures; no authenticated live delivery"
+      },
+      "local": {
+        "status": "NOT_EXECUTED",
+        "reason": "Environment prerequisite failed; no smoke, connectivity or demo attempted"
+      },
+      "hosted": {
+        "status": "NOT_EXECUTED",
+        "reason": "No workflow dispatched"
+      },
+      "operations": {
+        "Deployment CREATE": "NOT_EXECUTED",
+        "Deployment template UPDATE": "NOT_EXECUTED",
+        "direct Pod CREATE": "NOT_EXECUTED"
+      }
+    },
+    "L06": {
+      "earlyPolicy": {
+        "status": "PASS",
+        "scope": "Real Conftest on synthetic policy fixtures; no authenticated live delivery"
+      },
+      "local": {
+        "status": "NOT_EXECUTED",
+        "reason": "Environment prerequisite failed; no smoke, connectivity or demo attempted"
+      },
+      "hosted": {
+        "status": "NOT_EXECUTED",
+        "reason": "No workflow dispatched"
+      },
+      "operations": {
+        "Deployment CREATE": "NOT_EXECUTED",
+        "Deployment template UPDATE": "NOT_EXECUTED",
+        "direct Pod CREATE": "NOT_EXECUTED"
+      }
+    }
+  },
+  "checks": {
+    "sharedSuite": {
+      "status": "PASS",
+      "command": "PATH=\"$PWD/implementacion/.tools/bin:$PATH\" make -C implementacion test",
+      "evidence": "evidence/raw/runtime-development/14-final-suite.log",
+      "environmentTests": 6,
+      "serviceAndUnitTests": 759,
+      "pythonPolicyTests": 43,
+      "realConftestDecisions": 56,
+      "kyvernoEngineChecks": 16,
+      "realLocalCosign": "PASS",
+      "staticWorkflowTrials": "PASS"
+    },
+    "environment": {
+      "status": "FAIL",
+      "evidence": "evidence/raw/runtime-development/09-doctor.log",
+      "reason": "kubectl v1.37.0 differs from pinned v1.35.8"
+    },
+    "finalFocusedRegressions": {
+      "status": "PASS",
+      "tests": 132,
+      "evidence": "evidence/raw/runtime-development/15-final-targeted.log"
+    },
+    "editorial": {
+      "status": "PASS",
+      "checks": [
+        "bash syntax",
+        "git diff --check",
+        "23 runtime documentation links resolve"
+      ]
+    }
+  },
+  "preservedGaps": [
+    "F09/F10/L05 live integration",
+    "F13/F14 live integration"
+  ],
+  "hostedBaseline": {
+    "runId": "36750845686",
+    "revision": "d864654",
+    "status": "user-reported success; package not independently audited"
+  },
+  "measurement": "functional integration only; no campaign observations; shared L01/L06 does not increase catalogue count",
+  "toolVersions": "evidence/raw/runtime-development/16-tool-versions.json"
+}

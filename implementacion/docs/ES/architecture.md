@@ -235,3 +235,15 @@ decisiones/errores; `policies/conftest/workflow.rego` define aceptación.
 `make test-workflows`, incluido en `make test` y CI ordinario, no requiere contexto
 de entrega ni clúster y no se añade a `demo.sh`. Sigue vigente el control de
 workflows reales. Véase la [guía](cases/F01-F02/runbook.md).
+
+
+## Familia de ejecución F11 / F12 / L06
+
+`tests/scenarios/runtime.sh` coordina CREATE negativos antes de L01 y UPDATE de
+plantilla después de L01, además de Pods aislados. `f11.sh` conserva el fixture
+válido y la atribución de campos. `runtime-evidence.mjs` verifica los oráculos y
+resuelve tags en lectura; no autoriza entregas. `delivery.sh` persiste `buildTag`
+para finish. El clasificador conserva `quotes-node` por defecto; solo se explicita
+el nombre de los Pods aislados. No cambian políticas, confianza ni privilegios.
+L06 comparte CREATE de L01 y exige un UPDATE real de anotación antes del reemplazo
+de imagen. Véase el [registro](cases/F11-F12-L06/record.md).

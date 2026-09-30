@@ -1,6 +1,6 @@
 # Golden Path: verifiable delivery laboratory
 
-This laboratory uses **quotes-node**, a synthetic quotation service without production dependencies. **L01** demonstrates a legitimate delivery followed by replacement with a different, independently verified image digest. **F13** checks that a missing signed results attestation prevents deployment. An additional **F11** check rejects a privileged workload before deployment and during a Kubernetes update.
+This laboratory uses **quotes-node**, a synthetic quotation service without production dependencies. **L01** demonstrates a legitimate delivery followed by replacement with a different, independently verified image digest. **F13** checks that a missing signed results attestation prevents deployment. The **F11/F12/L06** family adds privileged/tag-reference rejection on CREATE and legal template UPDATE, plus a meaningful permitted update; [live acceptance remains pending](docs/EN/cases/F11-F12-L06/runbook.md).
 
 The [execution guide](docs/EN/cases/L01-F13/runbook.md) covers Codespaces, Dev Containers and GitHub, including expected results and troubleshooting. The [L01/F13 case](docs/EN/cases/L01-F13/README.md) explains the experimental claim. Historical [validation records](registros/validacion_integracion.md) distinguish observed runs from pending work and retain their original Spanish wording.
 
@@ -29,7 +29,7 @@ make demo
 
 Omit the first command when opening `implementacion` directly. The devcontainer installs pinned versions of Node, Docker, kind, Trivy, Conftest, Cosign, Helm, Kyverno CLI and act. It requests 2 CPUs, 8 GB of memory and 32 GB of storage. Effective Codespaces quotas depend on the account and its usage.
 
-`make demo` creates an ephemeral laboratory. A successful run prints `== PASS: L01 accepted; F13 and F11 rejected. Evidence: <run-directory> ==`, followed by cleanup and packaging output. `<run-directory>` is the actual evidence directory for that run. Cleanup removes the temporary cluster, registry and keys while retaining evidence.
+`make demo` creates an ephemeral laboratory. A successful run prints `== PASS: L01 accepted; F13 and F11 rejected; F07 status recorded for the selected lane. Evidence: <run-directory> ==`, followed by cleanup and packaging output. `<run-directory>` is the actual evidence directory for that run. Cleanup removes the temporary cluster, registry and keys while retaining evidence.
 
 ```mermaid
 flowchart LR
@@ -40,8 +40,9 @@ flowchart LR
   D --> E[F13: missing authorization is rejected]
   E --> F[Issue signed results]
   F --> G[Kyverno verifies evidence]
-  G --> H[L01: admission and HTTP check]
-  H --> I[F11: privileged update is rejected]
+  G --> N[F11/F12: negative CREATE checks]
+  N --> H[L01/L06: creation and HTTP check]
+  H --> I[F11/F12 negative UPDATE; L06 annotation update]
   I --> J[L01: verify and authorize replacement image]
   J --> K[Admission, rollout and running image digest]
 ```
@@ -56,7 +57,7 @@ A HIGH/CRITICAL finding blocks delivery even when no fix is available. An incomp
 | `make test` | Check environment, API, contracts, orchestration, packaging and policies without requiring a cluster. |
 | `make smoke-env` | Build and load an image directly into kind; does not verify a registry or signatures. |
 | `make reference` | Deploy by digest into `tfm-reference` and check the HTTP response. |
-| `make demo` | Exercise R/G, L01/L04, F13, local CI/admission F07 and F11 checks. |
+| `make demo` | Exercise R/G, L01/L04, F13, local CI/admission F07 and F11/F12/L06 runtime checks. |
 
 The reference request is `POST /quotes` with `{"insuredAmountCents":100000,"coverage":"basic"}`. Both R and G must return:
 
@@ -112,7 +113,7 @@ In `quotes-node`, [index.js](services/quotes-node/src/index.js) starts the proce
 
 Bash modules define functions without starting operations when imported. They share an explicit run context—mode, phase, resources, image, identity and evidence paths—within one process. `demo.sh` owns execution order and cleanup; these modules are not isolated processes or a portable framework. The interfaces remain `make demo`, `make reference`, and the GitHub phases **prepare → actions/attest → finish → cleanup**.
 
-F13 checks rejection before results authorization exists; the evidence is then signed and L01 uses **the same digest**. F11 checks privileged input through early policy and then as an update to the admitted workload. New cases add preparation and expectations under `tests/scenarios/`, reuse common functions and retain attributable diagnostics without weakening policies. See [extending a scenario](docs/EN/architecture.md#extending-a-scenario).
+F13 checks rejection before results authorization exists; the evidence is then signed and L01 uses **the same digest**. F11/F12 check privileged and tag-only inputs through early policy and protected CREATE/UPDATE operations. L06 shares L01 creation and requires a real annotation update, rollout and HTTP; direct Pods use isolated names and labels. New cases add preparation and expectations under `tests/scenarios/`, reuse common functions and retain attributable diagnostics without weakening policies. See [extending a scenario](docs/EN/architecture.md#extending-a-scenario).
 
 This organization supports:
 

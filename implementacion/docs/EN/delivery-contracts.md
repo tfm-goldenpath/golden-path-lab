@@ -177,3 +177,16 @@ scope and the local `./` exception. Ordinary CI still validates actual workflows
 Merge enforcement depends on external repository rulesets and trusted CI, not on
 these tests alone. Static acceptance does not establish delivery authorization,
 close live-integration gaps or add campaign observations.
+
+
+## Runtime manifest comparisons
+
+[F11/F12/L06](cases/F11-F12-L06/record.md) keep authorized image evidence constant.
+F12 changes only the reference to the persisted original build tag; bounded
+read-only resolution must match the backing digest on both sides of each trial.
+Digest-scoped signature rules do not authenticate tag-only references. Their
+matching scope, repository restriction and `mutateDigest=false` remain unchanged.
+The fresh authorized CI gate authenticates the backing digest; L01/L06 provide
+its legitimate admission and runtime controls. Rejection requires exact policy
+attribution plus NotFound after CREATE or unchanged desired spec/identity after
+UPDATE. Shared L01/L06 creation adds no scenario to the catalogue.

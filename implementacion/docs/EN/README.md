@@ -11,6 +11,7 @@ English is the primary language for implementation and technical contribution. S
 | [Delivery contracts](delivery-contracts.md) | Artifact identity, required evidence and authorization checks. |
 | [AI-assisted development](ai-assisted-development.md) | Scoped assistance, human responsibility, shared instructions, scenario skill and truthful attribution. |
 | [F01/F02 workflow trials](cases/F01-F02/runbook.md) | Inert static workflow cases, exact Conftest attribution and retained evidence. |
+| [F11/F12/L06 runtime trials](cases/F11-F12-L06/runbook.md) | Deployment CREATE/template UPDATE, isolated Pods, attribution and state evidence; live acceptance pending. |
 | [F07 early CI / L04](cases/L04/record.md) | Fresh verification, exact recovery and shared legitimate replacement. |
 | [F07 hosted compatibility](cases/F07/hosted-compatibility.md) | Local coverage, bounded GHCR findings and inactive protocol commands. |
 | [L01/F13 case specification](cases/L01-F13/README.md) | Expected behavior of legitimate delivery, missing results and directed F11 checks. |
