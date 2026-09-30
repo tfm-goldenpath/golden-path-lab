@@ -20,6 +20,42 @@ attestations_verify_bundle() {
   fi
 }
 
+# Cosign 3.1.3 retries GitHub OIDC transport errors, but not malformed JSON
+# responses. Retry only that observed error before signing has begun. Never
+# retry a possibly published artifact, verification, or a policy rejection.
+attestations_sign_bundle() {
+  local file=$1 attempt status log outcome
+  shift
+  if [[ "$mode" == local ]]; then
+    cosign "$@" --bundle "$state_dir/$file" "$image"
+    return
+  fi
+  [[ "$mode" == github && ( "$file" == image.bundle.json || "$file" == sbom.bundle.json || "$file" == results.bundle.json ) ]] || return 2
+  [[ ! -e "$state_dir/$file" && ! -L "$state_dir/$file" && ! -e "$state_dir/$file.signing.json" ]] || {
+    printf 'ERROR: refusing to overwrite existing signing evidence: %s\n' "$file" >&2
+    return 1
+  }
+  for attempt in 1 2 3; do
+    log="$state_dir/$file.signing-attempt-$attempt.log"
+    [[ ! -e "$log" && ! -L "$log" ]] || return 1
+    if cosign "$@" --bundle "$state_dir/$file" "$image" > "$log" 2>&1; then status=0; else status=$?; fi
+    cat "$log" >&2
+    outcome=FAILED
+    [[ "$status" != 0 ]] || outcome=COMMAND_SUCCEEDED
+    jq -n --arg image "$image" --arg status "$outcome" --argjson attempts "$attempt" --argjson exitStatus "$status" \
+      '{image:$image,status:$status,attempts:$attempts,exitStatus:$exitStatus,verification:"separate-required-step"}' > "$state_dir/$file.signing.json"
+    [[ "$status" != 0 ]] || return 0
+    if [[ "$status" != 1 || "$attempt" == 3 || -e "$state_dir/$file" || -L "$state_dir/$file" ]] \
+        || ! grep -Fxq 'Generating ephemeral keys...' "$log" \
+        || ! grep -Fq 'fetching ambient OIDC credentials: invalid character ' "$log" \
+        || grep -Eq 'Signing artifact|Wrote bundle|Pushing signature' "$log"; then
+      return "$status"
+    fi
+    printf 'GitHub OIDC response was not JSON before signing; retrying attempt %s of 3.\n' "$((attempt + 1))" >&2
+    sleep "$((attempt * 2))"
+  done
+}
+
 attestations_issue_delivery() {
   record 'Issue the image signature, SBOM and provenance'
   sign_args=(--yes)
@@ -49,10 +85,10 @@ attestations_issue_delivery() {
   # Pinned Cosign 3.1.3 image signing emits a DSSE cosign/sign/v1 statement
   # in bundle mode; sign-blob's messageSignature is a different operation.
   # https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/sign/sign.go
-  cosign sign "${sign_args[@]}" --bundle "$state_dir/image.bundle.json" "$image"
+  attestations_sign_bundle image.bundle.json sign "${sign_args[@]}"
   attestations_verify_bundle image.bundle.json https://sigstore.dev/cosign/sign/v1 verified-image-bundle.txt verified-signature.json
   node scripts/validate-sbom-schema.mjs "$state_dir/sbom.cdx.json" "$state_dir/sbom-schema-presigning.json"
-  cosign attest "${sign_args[@]}" --bundle "$state_dir/sbom.bundle.json" --type cyclonedx --predicate "$state_dir/sbom.cdx.json" "$image"
+  attestations_sign_bundle sbom.bundle.json attest "${sign_args[@]}" --type cyclonedx --predicate "$state_dir/sbom.cdx.json"
   attestations_verify_bundle sbom.bundle.json https://cyclonedx.org/bom verified-sbom-bundle.txt verified-sbom.json
   if [[ "$mode" == local ]]; then
     cosign attest "${sign_args[@]}" --bundle "$state_dir/provenance.bundle.json" --type slsaprovenance1 --predicate "$state_dir/provenance.json" "$image"
@@ -73,7 +109,7 @@ attestations_authorize_results() {
   # Re-read the registry immediately before issuance; no saved report grants it.
   attestations_ci_gate CI-authorization
   node "$contract" results "$state_dir" "$repository" "$commit" "$state_dir/results-predicate.json"
-  cosign attest "${sign_args[@]}" --bundle "$state_dir/results.bundle.json" --type "$results_type" --predicate "$state_dir/results-predicate.json" "$image"
+  attestations_sign_bundle results.bundle.json attest "${sign_args[@]}" --type "$results_type" --predicate "$state_dir/results-predicate.json"
   attestations_verify_bundle results.bundle.json "$results_type" verified-results-bundle.txt verified-results.json
   node scripts/download-bundle-inventory.mjs "$mode" "$image" "$state_dir/registry-inventory-authorized.json" > "$state_dir/bundle-inventory-authorized.json"
   node scripts/check-bundle-profile.mjs "$state_dir/bundle-inventory-authorized.json" "$digest" authorized > "$state_dir/evidence-profile.json"

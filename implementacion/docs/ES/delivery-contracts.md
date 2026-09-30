@@ -151,3 +151,12 @@ L01 del mismo digest con admisión, rollout y HTTP. Véanse [oráculo](cases/F13
 y [comandos](cases/F13-F14/runbook.md). Barreras reales locales y negativos hosted:
 NOT_EXECUTED; las brechas F09/F10/L05 de PR #26 permanecen abiertas. Se conserva el
 predicado versionado del laboratorio sin afirmar conformidad VSA completa.
+
+La emisión hosted reintenta únicamente el fallo observado al decodificar la
+respuesta ambient-OIDC de GitHub antes de firmar: hasta tres intentos con esperas
+de dos/cuatro segundos. `<bundle>.signing-attempt-N.log` conserva cada intento y
+`<bundle>.signing.json` su estado final. Bundles existentes/parciales, señales de
+firma/publicación y otros errores impiden reintentar. El éxito de firma sigue
+exigiendo verificación criptográfica/de contenido y gate CI. Véase la
+[auditoría de PR #27](../../registros/pr27_hosted_oidc_failure_ES.md); la recuperación
+hosted real continúa pendiente.
