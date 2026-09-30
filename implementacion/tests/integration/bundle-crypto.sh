@@ -22,11 +22,23 @@ probe_dir="$(mktemp -d "$tmp_root/gp-bundle-crypto.XXXXXXXX")"
 cleanup() {
   local status=$?
   trap - EXIT
+  if [[ -n "${GP_BUNDLE_PROBE_EVIDENCE_DIR:-}" ]]; then
+    # Explicit opt-in evidence destination; never retain signing keys.
+    local file
+    for file in local.pub trusted-root.json results-predicate.json results.json p0-predicate.json p0.json replayed-p0.json p0-authentication.log p0-policy-rejection.log; do
+      [[ ! -f "$probe_dir/$file" ]] || cp -- "$probe_dir/$file" "$GP_BUNDLE_PROBE_EVIDENCE_DIR/$file" || status=1
+    done
+    [[ ! -f "$probe_dir/artifact.bin" ]] || cp -- "$probe_dir/artifact.bin" "$GP_BUNDLE_PROBE_EVIDENCE_DIR/artifact.txt" || status=1
+  fi
   if [[ -n "$probe_dir" && "$probe_dir" == "$tmp_root"/gp-bundle-crypto.* && -d "$probe_dir" && ! -L "$probe_dir" ]]; then
     rm -rf -- "$probe_dir"
   fi
   exit "$status"
 }
+if [[ -n "${GP_BUNDLE_PROBE_EVIDENCE_DIR:-}" ]]; then
+  [[ ! -e "$GP_BUNDLE_PROBE_EVIDENCE_DIR" && ! -L "$GP_BUNDLE_PROBE_EVIDENCE_DIR" ]] || { echo 'Probe evidence destination already exists' >&2; exit 2; }
+  mkdir -p -- "$GP_BUNDLE_PROBE_EVIDENCE_DIR"
+fi
 trap cleanup EXIT
 export COSIGN_PASSWORD=''
 
@@ -159,3 +171,25 @@ reject 'F10 authenticated repository authorization' PROVENANCE_REPOSITORY \
   node scripts/verified-bundle-statement.mjs "$probe_dir/f10.json" "sha256:$digest" "$provenance_type" https://github.com/example/bundle-probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 reject 'F10 fixture for another digest is not F10' 'provided artifact digest does not match any digest in statement' \
   cosign verify-blob-attestation --key "$probe_dir/local.pub" --insecure-ignore-tlog --digest "$wrong_digest" --digestAlg sha256 --type "$provenance_type" --bundle "$probe_dir/f10.json"
+
+# F14: laboratory P0 has the same successful fields as P1. Replay preserves
+# its signed bytes; the production content consumer still requires P1.
+run 'accept authenticated P1 results' node scripts/verified-bundle-statement.mjs "$probe_dir/results.json" "sha256:$digest" "$results_type" https://github.com/example/bundle-probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+node --input-type=module - "$probe_dir/results-predicate.json" "$probe_dir/p0-predicate.json" <<'NODE'
+import fs from 'node:fs';
+import {fixturePredicate} from './tests/scenarios/results-evidence.mjs';
+fs.writeFileSync(process.argv[3],JSON.stringify(fixturePredicate(JSON.parse(fs.readFileSync(process.argv[2])))));
+NODE
+run 'laboratory producer signs successful P0 without registry publication' cosign attest-blob "${sign_args[@]}" --type "$results_type" \
+  --predicate "$probe_dir/p0-predicate.json" --bundle "$probe_dir/p0.json" "$probe_dir/artifact.bin"
+cp "$probe_dir/p0.json" "$probe_dir/replayed-p0.json"
+run 'unchanged signed P0 replay bytes' cmp "$probe_dir/p0.json" "$probe_dir/replayed-p0.json"
+run 'authenticate exact replayed P0 bundle' cosign verify-blob-attestation "${verify_args[@]}" --type "$results_type" --bundle "$probe_dir/replayed-p0.json"
+cp "$probe_dir/command.log" "$probe_dir/p0-authentication.log"
+reject 'F14 authentic P0 rejected solely by policy version' RESULTS_POLICY_VERSION \
+  node scripts/verified-bundle-statement.mjs "$probe_dir/replayed-p0.json" "sha256:$digest" "$results_type" https://github.com/example/bundle-probe aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+cp "$probe_dir/command.log" "$probe_dir/p0-policy-rejection.log"
+reject 'P0 wrong signer is not a policy-version detection' 'accepted signatures do not match threshold' \
+  cosign verify-blob-attestation --key "$probe_dir/other.pub" --insecure-ignore-tlog --digest "$digest" --digestAlg sha256 --type "$results_type" --bundle "$probe_dir/replayed-p0.json"
+reject 'P0 wrong digest is not a policy-version detection' 'provided artifact digest does not match any digest in statement' \
+  cosign verify-blob-attestation --key "$probe_dir/local.pub" --insecure-ignore-tlog --digest "$wrong_digest" --digestAlg sha256 --type "$results_type" --bundle "$probe_dir/replayed-p0.json"

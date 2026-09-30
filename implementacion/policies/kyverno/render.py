@@ -48,6 +48,8 @@ def policy(name, rules):
 
 
 def render(config):
+    if config.get("policy_version", "golden-path-v1") != "golden-path-v1":
+        raise ValueError("Results policy must match the trusted golden-path-v1 CI requirement")
     image_repository = config["image_repository"]
     if not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]*", image_repository) or ":" in image_repository.rsplit("/", 1)[-1]:
         raise ValueError("image-repository must be a reference without a tag, digest or wildcards")
@@ -167,7 +169,7 @@ def render(config):
                   else "https://tfm-goldenpath.dev/builders/local-development", "PROVENANCE_BUILDER"),
     ])
     results = attestation_policy("tfm-results", "require-results", RESULTS_TYPE, [
-        condition("policyVersion", config.get("policy_version", "golden-path-v1")),
+        condition("policyVersion", "golden-path-v1", "RESULTS_POLICY_VERSION"),
         condition("source.repository", config["repository"]), condition("source.commit", config["commit"]),
         condition("result", "PASS"), *[condition("checks." + check, "PASS") for check in CHECKS],
     ])

@@ -133,3 +133,24 @@ only the selected repository authorization property to fail. Other failures rema
 integration errors. See the [oracle and procedure](cases/F09-F10-L05/runbook.md).
 L05 selects two actual immutable revisions and exports their real source contents;
 same-commit L01/L03 image evolution does not establish source-revision evolution.
+
+## Post-issuance F13 / F14 results authorization
+
+The existing preissuance F13/readiness observation is preserved as
+`F13Preissuance`. After normal replacement results issuance, isolated local trials
+remove only results (F13) or replay authentic successful laboratory P0 bytes with
+P1 unavailable (F14). P1 remains `golden-path-v1`; P0 is explicitly
+`laboratory-results-p0-fixture`, never a historical production policy.
+
+Fresh authorized CI distinguishes `MISSING_RESULTS` from
+`RESULTS_POLICY_VERSION_MISMATCH` only after complete retrieval and validation of
+all unrelated evidence. Authentication of the exact raw bundle precedes content
+checks. Additional invalid fields, duplicates and retrieval/verification errors
+remain integration failures. Kyverno requires the same P1 and emits
+`RESULTS_POLICY_VERSION` for its policy condition. A singleton results-rule denial
+and complete isolation evidence are mandatory. Exact restoration, fresh CI,
+same-digest L01 admission/rollout/HTTP complete each trial. See the
+[oracle](cases/F13-F14/record.md) and [commands](cases/F13-F14/runbook.md).
+Local live and hosted negative boundaries remain NOT_EXECUTED in this handoff.
+The F09/F10/L05 gaps recorded by PR #26 remain open. The versioned laboratory
+results predicate is retained; no full VSA conformance is claimed.

@@ -79,6 +79,12 @@ class RenderTests(unittest.TestCase):
                     else:
                         self.assertNotIn("imageRegistryCredentials", check)
 
+    def test_results_requirement_cannot_be_downgraded_to_fixture_policy(self):
+        config = self.config()
+        config['policy_version'] = 'laboratory-results-p0-fixture'
+        with self.assertRaises(ValueError):
+            renderer.render(config)
+
     def test_result_contract_checks_every_required_control(self):
         for mode in ("local", "github"):
             config = self.config(mode)
@@ -94,7 +100,7 @@ class RenderTests(unittest.TestCase):
                     "unitTests", "manifestPolicy", "workflowPolicy", "vulnerabilityPolicy", "signature", "sbom", "provenance",
                 )],
             ]
-            self.assertEqual(attestation["conditions"], [{"all": [renderer.condition(key, value) for key, value in expected]}])
+            self.assertEqual(attestation["conditions"], [{"all": [renderer.condition(key, value, "RESULTS_POLICY_VERSION" if key == "policyVersion" else None) for key, value in expected]}])
 
     def test_every_evidence_type_uses_bundle_and_explicit_predicate(self):
         expected = [

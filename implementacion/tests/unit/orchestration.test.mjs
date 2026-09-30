@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const bash = process.env.BASH_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash');
 const modules = ['context', 'lab', 'delivery', 'attestations', 'workload'];
-const scenarios = ['l01', 'f13', 'f07', 'f08', 'sbom', 'provenance', 'l05', 'f11'];
+const scenarios = ['l01', 'f13', 'f07', 'f08', 'sbom', 'provenance', 'results', 'l05', 'f11'];
 const repository = 'registry.invalid/quotes';
 const digest = `sha256:${'a'.repeat(64)}`;
 const image = `${repository}@${digest}`;
@@ -85,7 +85,7 @@ scenario_l01_update() {
   command jq -n --arg mode "$mode" '{status:(if $mode=="local" then "CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE" else "NOT_EXECUTED" end)}' > "$state_dir/F07-CI-completed.json"
   command jq -n '{status:"PASS"}' > "$state_dir/L01-image-update.json"
   command jq -n '{status:"SYNTHETIC"}' > "$state_dir/F08-completed.json"
-  for file in F05-completed F06-completed F09-completed F10-completed L03-result; do
+  for file in F05-completed F06-completed F09-completed F10-completed F13-completed F14-completed L03-result; do
     command jq -n '{status:"SYNTHETIC"}' > "$state_dir/$file.json"
   done
 }
@@ -539,7 +539,7 @@ test('reference runs only R and cleans up on exit', (t) => {
 
 // Keep both the coordinator and replacement function real; substitute only the
 // external stages. The actual gate, recovery and rollout have separate tests.
-for (const [mode, failure] of [['local',''],['github',''],...['update-issue','update-ci','update-ci-restore','update-f08-before-results','update-f08-authorized','update-authorize','update-apply','update-probe'].map(stage=>['local',stage])]) {
+for (const [mode, failure] of [['local',''],['github',''],...['update-issue','update-ci','update-ci-restore','update-f08-before-results','update-f08-authorized','update-F13-authorized','update-F14-authorized','update-authorize','update-apply','update-probe'].map(stage=>['local',stage])]) {
   test(`real coordinator and replacement preserve CI/L04 ordering (${mode}, ${failure || 'success'})`,t=>{
     const f=fixture(t);
     writeFileSync(join(f.state,'image-repo'),repository+'\n');
@@ -570,6 +570,7 @@ scenario_sbom_fault() {
   command jq -n '{status:"SYNTHETIC"}' > "$state_dir/$folder/result.json"
 }
 scenario_provenance_fault() { scenario_sbom_fault "$@"; }
+scenario_results_fault() { scenario_sbom_fault "$1" authorized; }
 scenario_f08() {
   step "update-f08-$1"
   local folder=F08-CI
@@ -603,7 +604,7 @@ node() {
     } else {
       assert.equal(result.status,0,result.stderr);
       const observed=order.filter(s=>s.startsWith('update-'));
-      assert.deepEqual(observed,['update-issue',...(mode==='local'?['update-ci','update-ci-restore','update-f08-before-results','update-F05-before-results','update-F06-before-results','update-F09-before-results','update-F10-before-results']:['update-gate']),'update-authorize',...(mode==='local'?['update-f08-authorized','update-F05-authorized','update-F06-authorized','update-F09-authorized','update-F10-authorized']:[]),'update-apply','update-probe','update-rollout']);
+      assert.deepEqual(observed,['update-issue',...(mode==='local'?['update-ci','update-ci-restore','update-f08-before-results','update-F05-before-results','update-F06-before-results','update-F09-before-results','update-F10-before-results']:['update-gate']),'update-authorize',...(mode==='local'?['update-F13-authorized','update-F14-authorized','update-f08-authorized','update-F05-authorized','update-F06-authorized','update-F09-authorized','update-F10-authorized']:[]),'update-apply','update-probe','update-rollout']);
       assert.equal(archived.report.L04.sharedExecution,'L01-image-update');
       assert.equal(archived.report.L04.image,repository+'-update@sha256:'+'b'.repeat(64));
       assert.equal(archived.report.F07CI.status,mode==='local'?'CI_REJECTION_AND_L04_ACCEPTANCE_COMPLETE':'NOT_EXECUTED');

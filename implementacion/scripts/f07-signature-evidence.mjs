@@ -144,6 +144,49 @@ export async function mutateSignature({state, run, image, backup, restore = fals
   if (restore && response.headers.get('docker-content-digest') !== selected.entry.digest) throw new Error('F07 restored manifest digest header mismatch.');
 }
 
+// Shared reversible OCI operations; callers supply their isolated fixture contract.
+export async function mutatePlannedEvidence({state,parent,run,before,plan,image,profile,restore=false,request=fetch,validatePlan,checkSnapshot}) {
+  authorizeReplacement(state,parent,run,image);
+  const decode=value=>Buffer.from(value,'base64');
+  const expected=validatePlan(before,image,profile,plan.raw ? decode(plan.raw.bundle) : undefined);
+  if(JSON.stringify(expected)!==JSON.stringify(plan)) throw new Error('Mutation plan differs from validated backup and isolated fixture');
+  const base='http://'+state.imageRepository.split('/')[0]+'/v2/'+state.imageRepository.split('/').slice(1).join('/');
+  const send=async (url,options={},statuses=[200])=>{
+    const r=await request(url,{...options,redirect:'manual',signal:AbortSignal.timeout(30000)});
+    if (!statuses.includes(r.status)) throw new Error('Evidence fixture registry HTTP '+r.status);
+    return r;
+  };
+  const put=async (entry,raw)=>{
+    const r=await send(base+'/manifests/'+entry.digest,{method:'PUT',headers:{'Content-Type':entry.mediaType},body:decode(raw)},[201]);
+    if (r.headers.get('docker-content-digest')!==entry.digest) throw new Error('Manifest publication digest mismatch');
+  };
+  if (restore) {
+    const errors=[];
+    if (plan.entry) try {await send(base+'/manifests/'+plan.entry.digest,{method:'DELETE'},[202,404]);} catch(e) {errors.push(e.message);}
+    try {
+      for (const [entry,encoded] of [[plan.selected.manifest.config,plan.selected.raw.config],[plan.selected.manifest.layers[0],plan.selected.raw.bundle]]) {
+        const bytes=await bytesOf(await send(base+'/blobs/'+entry.digest),entry.size);
+        if (!bytes.equals(decode(encoded))) throw new Error('Original recovery blob differs');
+      }
+      await put(plan.selected.entry,plan.selected.raw.manifest);
+    } catch(e) {errors.push(e.message);}
+    if (errors.length) throw new Error('Recovery failures: '+errors.join('; '));
+    return;
+  }
+  checkSnapshot(before,await downloadBundleInventory({mode:'local',image,request}),image,profile,plan,true);
+  if (plan.raw) {
+    const upload=await send(base+'/blobs/uploads/',{method:'POST'},[202]);
+    const location=upload.headers.get('location');
+    if (!location) throw new Error('Missing upload location');
+    const url=new URL(location,base),origin=new URL(base);
+    if(url.origin!==origin.origin || !url.pathname.startsWith(origin.pathname+'/blobs/uploads/') || url.username || url.password || url.hash) throw new Error('Upload escaped owned registry');
+    const bytes=decode(plan.raw.bundle);url.searchParams.set('digest',hash(bytes));
+    const r=await send(url.href,{method:'PUT',headers:{'Content-Type':'application/octet-stream'},body:bytes},[201]);
+    if (r.headers.get('docker-content-digest')!==hash(bytes)) throw new Error('Uploaded blob digest mismatch');
+    await put(plan.entry,plan.raw.manifest);
+  }
+  await send(base+'/manifests/'+plan.selected.entry.digest,{method:'DELETE'},[202]);
+}
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const [, , command, stateDir, image, phase, purpose = 'admission'] = process.argv;

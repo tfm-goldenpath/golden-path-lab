@@ -270,3 +270,20 @@ test('packaging twice preserves correct hashes and avoids duplicate members', t 
   assert.equal(fs.readFileSync(`${archive}.sha256`, 'utf8'), `${digest}  run-test.tar.gz\n`);
   assert.deepEqual(fs.readdirSync(output).sort(), ['run-test.tar.gz', 'run-test.tar.gz.sha256']);
 });
+
+test('postissuance F13/F14 retain failed recovery separately from preissuance observation', t => {
+  const {source,output}=fixture(t);
+  for(const scenario of ['F13','F14']) {
+    const folder=path.join(source,'L01-update',scenario+'-admission');fs.mkdirSync(folder,{recursive:true});
+    fs.writeFileSync(path.join(folder,'recovery.json'),JSON.stringify({originalStatus:143,restorationStatus:43}));
+    fs.writeFileSync(path.join(folder,'fixture.bundle.json'),'{"synthetic":true}');
+    fs.writeFileSync(path.join(folder,'policies-before.json'),'{}');
+  }
+  fs.writeFileSync(path.join(source,'F13-after-denial.json'),'{"synthetic":true}');
+  execFileSync(python,[script,source,output,'FAIL']);
+  const summary=JSON.parse(fs.readFileSync(path.join(source,'execution-summary.json')));
+  assert.equal(summary.scenarios.F13.status,'INCOMPLETE');
+  assert.equal(summary.scenarios.F14.status,'INCOMPLETE');
+  assert.equal(summary.scenarios.F13Preissuance.status,'EVIDENCE_RETAINED');
+  const audit=inspectArchive(path.join(output,'run-test.tar.gz'));assert.deepEqual(audit.mismatches,[]);
+});

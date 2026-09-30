@@ -64,6 +64,8 @@ scenario_l01_update() (
   fi
   attestations_authorize_results
   if [[ "$mode" == local ]]; then
+    scenario_results_fault F13
+    scenario_results_fault F14
     scenario_f08 authorized
     scenario_sbom_fault F05 authorized
     scenario_sbom_fault F06 authorized
@@ -86,6 +88,13 @@ scenario_l01_update() (
   else
     jq -n '{scenario:"F08",status:"NOT_EXECUTED",reason:"Hosted mutation is outside the supported local procedure"}' > "$parent_state/F08-completed.json"
   fi
+  for evidence_case in F13 F14; do
+    if [[ "$mode" == local ]]; then
+      cp "$state_dir/$evidence_case-admission/result.json" "$parent_state/$evidence_case-completed.json"
+    else
+      jq -n --arg scenario "$evidence_case" '{scenario:$scenario,status:"NOT_EXECUTED",reason:"Hosted results fault trials require unsupported registry mutation"}' > "$parent_state/$evidence_case-completed.json"
+    fi
+  done
   for evidence_case in F05 F06 F09 F10; do
     if [[ "$mode" == local ]]; then
       local completion=REJECTION_AND_L03_ACCEPTANCE_COMPLETE
