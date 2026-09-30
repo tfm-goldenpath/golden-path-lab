@@ -25,13 +25,15 @@ def cases():
     def pod(value):
         return value["spec"]["template"]["spec"]
 
+    add("F11-coordinated", "manifests", lambda value: pod(value)["containers"][0]["securityContext"].update(privileged=True, allowPrivilegeEscalation=True), ["ESCALATION", "PRIVILEGED"])
+    add("L06-annotation", "manifests", lambda value: value["spec"]["template"].setdefault("metadata", {}).update(annotations={"tfm.goldenpath/l06":"trial"}), None)
     add("manifest-namespace", "manifests", lambda value: value["metadata"].update(namespace="default"), "NAMESPACE")
     add("manifest-missing-spec", "manifests", lambda value: value.pop("spec"), "WORKLOAD_SHAPE")
     add("manifest-missing-template", "manifests", lambda value: value["spec"].pop("template"), "WORKLOAD_SHAPE")
     add("manifest-missing-pod-spec", "manifests", lambda value: value["spec"]["template"].pop("spec"), "WORKLOAD_SHAPE")
     for invalid in [None, [], "invalid"]:
         add("manifest-pod-spec-" + str(invalid), "manifests", lambda value, invalid=invalid: value["spec"]["template"].update(spec=invalid), "WORKLOAD_SHAPE")
-    add("manifest-tag", "manifests", lambda value: pod(value)["containers"][0].update(image="registry.example/quotes-node:latest"), "DIGEST")
+    add("manifest-tag", "manifests", lambda value: pod(value)["containers"][0].update(image="registry.example/quotes-node:latest"), ["DIGEST"])
     for field, unsafe, code in [("privileged", True, "PRIVILEGED"), ("allowPrivilegeEscalation", True, "ESCALATION"), ("runAsNonRoot", False, "NON_ROOT"), ("readOnlyRootFilesystem", False, "READ_ONLY")]:
         add("manifest-" + field, "manifests", lambda value, f=field, u=unsafe: pod(value)["containers"][0]["securityContext"].update({f: u}), code)
     add("manifest-capability-add", "manifests", lambda value: pod(value)["containers"][0]["securityContext"]["capabilities"].update(add=["SYS_ADMIN"]), "CAPABILITIES")
@@ -48,6 +50,12 @@ def cases():
     direct_pod = copy.deepcopy(base["manifests"])
     direct_pod.update(apiVersion="v1", kind="Pod", spec=direct_pod["spec"]["template"]["spec"])
     result.append(("pod-allow", "manifests", direct_pod, None))
+    coordinated = copy.deepcopy(direct_pod)
+    coordinated['spec']['containers'][0]['securityContext'].update(privileged=True, allowPrivilegeEscalation=True)
+    result.append(('F11-pod-coordinated', 'manifests', coordinated, ['ESCALATION', 'PRIVILEGED']))
+    tagged = copy.deepcopy(direct_pod)
+    tagged['spec']['containers'][0]['image'] = 'registry.example/quotes-node:run-trial'
+    result.append(('F12-pod-tag', 'manifests', tagged, ['DIGEST']))
     for invalid in [None, [], "invalid"]:
         malformed_pod = copy.deepcopy(direct_pod)
         malformed_pod["spec"] = invalid
@@ -102,8 +110,25 @@ def main():
             completed = subprocess.run([args.conftest, "test", str(path), "--policy", str(POLICIES), "--namespace", namespace, "--output", "json"], capture_output=True, text=True)
             if expected is None:
                 success = completed.returncode == 0
+            elif isinstance(expected, list):
+                rows = json.loads(completed.stdout)
+                messages = [f['msg'].split(':')[0] for row in rows for f in row.get('failures', [])]
+                success = completed.returncode == 1 and not completed.stderr and sorted(messages) == expected
             else:
                 success = completed.returncode == 1 and expected in completed.stdout
+            runtime_case = {'F11-coordinated':'F11', 'F11-pod-coordinated':'F11',
+                            'manifest-tag':'F12', 'F12-pod-tag':'F12', 'L06-annotation':'L06'}.get(name)
+            if runtime_case:
+                stdout = Path(directory) / (name + '-stdout.json')
+                stderr = Path(directory) / (name + '-stderr.log')
+                stdout.write_text(completed.stdout)
+                stderr.write_text(completed.stderr)
+                classified = subprocess.run(['node', str(HERE.parent / 'scenarios/runtime-evidence.mjs'),
+                    'early', str(completed.returncode), str(stdout), str(stderr), str(path), runtime_case],
+                    capture_output=True, text=True)
+                success = success and classified.returncode == 0
+                if classified.returncode:
+                    print(classified.stderr)
             print(("PASS " if success else "FAIL ") + name)
             if not success:
                 failures.append(name)

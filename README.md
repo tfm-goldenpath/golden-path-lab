@@ -6,6 +6,11 @@ A reproducible laboratory for early policy checks and verifiable software delive
 
 The synthetic `quotes-node` service makes delivery behavior observable without requiring a complex business application. The current demonstration exercises a legitimate delivery and replacement with a different verified image digest (**L01**), missing signed authorization (**F13**) and directed checks against a privileged workload (**F11**).
 
+
+The [F11/F12/L06 runtime extension](implementacion/docs/EN/cases/F11-F12-L06/runbook.md)
+adds Deployment CREATE/template UPDATE and isolated Pod checks. Implementation
+and offline tests are available; live local/hosted acceptance remains pending.
+
 ## Quick start in Codespaces or a devcontainer
 
 Select the **implementacion** devcontainer configuration. Once its setup completes, run these commands from the repository root:
@@ -17,7 +22,7 @@ make test
 make demo
 ```
 
-The expected successful demo prints `== PASS: L01 accepted; F13 and F11 rejected. Evidence: <run-directory> ==`, followed by cleanup and packaging output. It creates an ephemeral kind cluster and registry, verifies delivery evidence and removes the resources it created. Evidence packages remain locally under `implementacion/evidence/packages/`.
+The expected successful demo prints `== PASS: L01 accepted; F13 and F11 rejected; F07 status recorded for the selected lane. Evidence: <run-directory> ==`, followed by cleanup and packaging output. It creates an ephemeral kind cluster and registry, verifies delivery evidence and removes the resources it created. Evidence packages remain locally under `implementacion/evidence/packages/`.
 
 The [execution guide](implementacion/docs/EN/cases/L01-F13/runbook.md) explains prerequisites, expected responses and troubleshooting. A [Spanish guide](implementacion/docs/ES/cases/L01-F13/runbook.md) is also available. Tool versions and checksums are fixed in `implementacion/versions.env` and `implementacion/tools.lock.json`; the actual Codespaces quota depends on the account.
 

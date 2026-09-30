@@ -71,7 +71,7 @@ Prepare the scenario record and tests for each behavior first. Include acceptanc
 - [ ] Exercise compatible workflow portions with `act` and record their limits; local signing and `act` do not establish hosted OIDC behavior.
 - [x] Add Conftest workflow/manifest policies, legitimate inputs and independently mutated policy fixtures; exercise early and directed F11 rejection.
 - [x] Complete operational F01/F02 static records and inert injections; see the workflow family below.
-- [ ] Complete F11/F12 runtime records and remaining injections.
+- [x] Implement F11/F12 runtime records and manifest injections with shared L06 checks; live acceptance remains pending below.
 - [ ] Assess optional local hooks once the preceding commands work and have tests. Introduce them only for useful early feedback; mandatory controls remain in CI, and skipping a hook must not bypass them. Hooks are not a pilot prerequisite.
 - [x] Integrate Trivy with separate original CycloneDX JSON and real scan reports, tool/database identification, synthetic policy tests and observed image scans.
 - [x] Implement offline official CycloneDX 1.7 JSON Schema validation before signing and after authenticating the exact bundle; retain separate lab checks and reports. This does not establish inventory completeness.
@@ -215,3 +215,14 @@ User-provided context reports hosted run `36746422169` succeeded at `d66d223` af
 the OIDC correction. This increment does not independently audit that package.
 Hosted F13/F14 negatives were skipped; F09/F10/L05 and F13/F14 live gaps remain
 open. F11/F12/L06 runtime work is outside this increment.
+
+
+## F11 / F12 / L06 runtime family
+
+- [x] Define the [operation matrix and oracle](docs/EN/cases/F11-F12-L06/record.md) on main `d864654`; retain coordinated API-valid F11 fields and exact structured diagnostics.
+- [x] Persist the original build tag, resolve it read-only around F12 trials and preserve digest authentication, repository restriction and disabled automatic conversion.
+- [x] Add Deployment CREATE/legal template UPDATE and isolated Pod CREATE trials; prove NotFound or unchanged UID/generation/spec after rejection. Share L01 creation with L06 and require a real annotation update, rollout, Ready Pods and HTTP.
+- [x] Add function, state, tag, packaging and real policy regressions; wire both lanes through shared modules without new permissions. See [checks, evidence and commands](docs/EN/cases/F11-F12-L06/runbook.md).
+- [ ] Execute local runtime admission in the pinned environment: doctor still stops at kubectl v1.37.0 versus v1.35.8. Smoke/BuildKit/demo were not reached; the previous network blocker is not resolved by this work.
+- [ ] Execute and audit hosted F11/F12/L06 on the reviewed revision. User reports baseline hosted `36750845686` successful at `d864654`; no independent package audit or new workflow dispatch here.
+- [ ] Human review and final acceptance. Preserve F09/F10/L05 and F13/F14 live gaps; shared observations do not change the twenty-scenario denominator.

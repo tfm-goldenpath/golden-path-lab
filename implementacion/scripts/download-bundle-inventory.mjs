@@ -25,7 +25,7 @@ const canonical = value => JSON.stringify(value, function (_key, item) {
   return object(item) ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]])) : item;
 });
 
-function location(mode, image) {
+export function location(mode, image) {
   const match = /^([^/]+)\/([^@]+)@(sha256:[a-f0-9]{64})$/.exec(image || '');
   if (!match || !match[2].split('/').every(part => /^[a-z0-9]+(?:[._-]+[a-z0-9]+)*$/.test(part))) {
     throw new Error('Expected a canonical repository and SHA-256 image digest.');

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const bash = process.env.BASH_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash');
 const modules = ['context', 'lab', 'delivery', 'attestations', 'workload'];
-const scenarios = ['l01', 'f13', 'f07', 'f08', 'sbom', 'provenance', 'results', 'l05', 'f11'];
+const scenarios = ['l01', 'f13', 'f07', 'f08', 'sbom', 'provenance', 'results', 'l05', 'runtime', 'f11'];
 const repository = 'registry.invalid/quotes';
 const digest = `sha256:${'a'.repeat(64)}`;
 const image = `${repository}@${digest}`;
@@ -76,7 +76,14 @@ scenario_f07_pending() {
   command jq -n '{status:"NOT_EXECUTED",reason:"Hosted GHCR mutation compatibility pending"}' > "$state_dir/F07-completed.json"
 }
 scenario_l01_accept() { step l01; }
-scenario_f11_admission() { step f11-update; }
+scenario_runtime_prepare() { step runtime-prepare; }
+scenario_runtime_create() { step runtime-create; }
+scenario_l06() {
+  step f11-update
+  command jq -n '{status:"SYNTHETIC"}' > "$state_dir/F11-completed.json"
+  command jq -n '{status:"SYNTHETIC"}' > "$state_dir/F12-completed.json"
+  command jq -n '{status:"SYNTHETIC"}' > "$state_dir/L06-result.json"
+}
 scenario_l05_prepare() { :; }
 scenario_l05() { command jq -n '{status:"NOT_EXECUTED"}' > "$state_dir/L05-result.json"; }
 scenario_l01_update() {
@@ -488,7 +495,7 @@ test('finish restores the prepared image and preserves F13 → authorization →
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(stages(result), [
     'environment', 'load-state', 'load-image', 'verify', 'f13-prepare', 'admission',
-    'f13-deny', 'authorize', 'f07-pending', 'l01', 'f11-update', 'l01-update', 'report', 'cleanup',
+    'f13-deny', 'authorize', 'f07-pending', 'runtime-create', 'l01', 'f11-update', 'l01-update', 'report', 'cleanup',
   ]);
   for (const entry of result.events.slice(2)) assert.equal(entry.artifact, image, entry.stage);
   const report = JSON.parse(readFileSync(join(f.state, 'result.json'), 'utf8'));
@@ -514,14 +521,14 @@ test('reference runs only R and cleans up on exit', (t) => {
   const result = run(f, ['scripts/demo.sh', 'local']);
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(stages(result).slice(stages(result).indexOf('f13-deny')), [
-    'f13-deny', 'authorize', 'f07', 'f07-restore', 'l01', 'f07-complete',
+    'f13-deny', 'authorize', 'f07', 'f07-restore', 'runtime-create', 'l01', 'f07-complete',
     'f11-update', 'l01-update', 'report', 'cleanup']);
   assert.equal(JSON.parse(readFileSync(join(f.state, 'result.json'))).F07.sameDigestL01, 'accepted-and-healthy');
   assert.equal(auditPackage(f).report.F07.status, 'DIRECTED_ACCEPTANCE_COMPLETE');
-  for (const entry of result.events.filter(e => ['f07', 'f07-restore', 'l01', 'f07-complete'].includes(e.stage)))
+  for (const entry of result.events.filter(e => ['f07', 'f07-restore', 'runtime-create', 'l01', 'f07-complete'].includes(e.stage)))
     assert.equal(entry.artifact, image);
  });
- for (const stage of ['f07', 'f07-restore', 'l01', 'f07-complete', 'f11-update', 'l01-update']) {
+ for (const stage of ['f07', 'f07-restore', 'runtime-create', 'l01', 'f07-complete', 'f11-update', 'l01-update']) {
   test(`local coordinator stops on ${stage} failure without PASS`, t => {
     const f = fixture(t);
     const result = run(f, ['scripts/demo.sh', 'local'], {GP_FAIL_STAGE:stage});

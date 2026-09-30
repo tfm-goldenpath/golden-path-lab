@@ -220,3 +220,20 @@ owns acceptance. `make test-workflows` is the static entry point, included in
 `make test` and ordinary CI. It needs no delivery run context or cluster and does
 not belong in `demo.sh`. The existing real-workflow check remains mandatory.
 See the [runbook](cases/F01-F02/runbook.md).
+
+
+## Runtime family F11 / F12 / L06
+
+`tests/scenarios/runtime.sh` owns the shared operation matrix, bounded direct Pod
+trials, state observations and L06 update. `f11.sh` retains the API-valid fixture
+and strict field attribution; `runtime-evidence.mjs` implements scenario oracles
+and read-only tag lookup, without authorizing delivery. `delivery.sh` persists
+`buildTag`; finish reads it from the initial run state. The existing shared
+classifier defaults to `quotes-node`, with an explicit name only for isolated
+Pod trials. No production policy, actor privilege or trust profile changes.
+
+The coordinator runs negative CREATEs after results authorization and F07
+restoration, before L01 creation. L06 then owns negative legal template UPDATEs
+and a successful annotation update before the existing image replacement.
+Policy specs and namespace identity/protection remain constant across this
+comparison. See the [operation record](cases/F11-F12-L06/record.md).

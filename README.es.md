@@ -8,6 +8,11 @@ La base clásica **v0.1.0** está publicada en `9f1999e`. La [ejecución alojada
 
 La versión publicada **v0.2.0**, en `dd381d3`, incorpora la [migración a bundles de Cosign](implementacion/docs/ES/cosign-bundle-migration.md) de la PR #15. Todos los pasos de la [ejecución alojada 36332256483](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36332256483) terminaron satisfactoriamente sobre esa revisión y hay un artefacto de evidencias disponible; todavía no se ha auditado el contenido del archivo. Siguen pendientes la admisión negativa real de F07 y la repetición local de la revisión final publicada. Mantiene Cosign 3.1.3, Kyverno 1.19.1 y la confianza diferenciada de A/B. Los registros anteriores de [compatibilidad local](implementacion/registros/cosign_bundles_validation_ES.md) y [revisión alojada](implementacion/registros/pr15_review_ES.md) conservan sus revisiones y límites. El método de veinte escenarios no cambia: fija el perfil adoptado tras el piloto y no mezcles tiempos de desarrollo clásico con mediciones de campaña bundle.
 
+
+La [extensión F11/F12/L06](implementacion/docs/ES/cases/F11-F12-L06/runbook.md)
+añade CREATE/UPDATE de plantilla Deployment y Pods aislados. La implementación y
+pruebas offline están disponibles; la aceptación real local/hosted sigue pendiente.
+
 ## Por qué se utiliza inglés
 
 La implementación y su documentación técnica principal utilizan inglés para facilitar la contribución internacional, la reutilización y la coherencia con la terminología del ecosistema cloud-native. Se adopta como convención habitual de la industria, no como una norma técnica obligatoria. Un ejemplo es [Kubernetes, que mantiene documentación original en inglés y traducciones comunitarias](https://kubernetes.io/docs/contribute/localization/). La memoria y la justificación académica permanecen en español.
@@ -34,7 +39,7 @@ make demo
 La demostración satisfactoria imprime este resumen antes de la limpieza y el empaquetado:
 
 ```text
-== PASS: L01 accepted; F13 and F11 rejected. Evidence: <directorio-de-evidencias> ==
+== PASS: L01 accepted; F13 and F11 rejected; F07 status recorded for the selected lane. Evidence: <directorio-de-evidencias> ==
 ```
 
 El mensaje añade la ubicación de las evidencias. La demostración utiliza `quotes-node`, crea un laboratorio efímero, comprueba la entrega inicial y la sustitución por otro digest verificado en L01, ausencia de autorización firmada en F13 y una carga privilegiada en F11. Conserva los paquetes bajo `implementacion/evidence/packages/`. Es una prueba de integración funcional; no equivale a ejecutar la campaña completa de veinte escenarios.

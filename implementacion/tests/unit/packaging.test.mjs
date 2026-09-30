@@ -306,3 +306,19 @@ test('static workflow package preserves case scope and exact evidence', t => {
   assert.ok(names.includes('run-test/F01-diff.txt'));
   assert.deepEqual(mismatches,[]);
 });
+
+test('runtime package retains operation evidence and incomplete records without inventing completion',t=>{
+ const {source,output}=fixture(t);
+ for(const folder of ['runtime','runtime/F11','runtime/F11/Deployment-CREATE','runtime/F12/Pod-CREATE','runtime/L06']) {
+  fs.mkdirSync(path.join(source,folder),{recursive:true});
+  fs.writeFileSync(path.join(source,folder,'observation.json'),'{"synthetic":true}');
+ }
+ fs.writeFileSync(path.join(source,'F11-completed.json'),'{"status":"INCOMPLETE"}');
+ fs.writeFileSync(path.join(source,'L06-result.json'),'{"status":"NOT_EXECUTED"}');
+ fs.writeFileSync(path.join(source,'runtime/F12/Pod-CREATE/state.json'),'private state');
+ execFileSync(python,[script,source,output,'FAIL']);
+ const {summary,names,mismatches}=inspectArchive(path.join(output,'run-test.tar.gz'));
+ assert.equal(summary.scenarios.F11.status,'INCOMPLETE');assert.equal(summary.scenarios.F12.status,'INCOMPLETE');assert.equal(summary.scenarios.L06.status,'NOT_EXECUTED');
+ assert.ok(names.includes('run-test/runtime/F12/Pod-CREATE/observation.json'));
+ assert.ok(!names.includes('run-test/runtime/F12/Pod-CREATE/state.json'));assert.deepEqual(mismatches,[]);
+});

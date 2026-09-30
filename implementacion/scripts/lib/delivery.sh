@@ -30,6 +30,7 @@ delivery_build() {
   digest=$(jq -er '."containerimage.digest"' "$state_dir/build-metadata.json")
   [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]] || fail 'Buildx did not return a valid image digest.'
   put digest "$digest"
+  put buildTag "$image_repo:$id"
 }
 
 delivery_render_manifests() {

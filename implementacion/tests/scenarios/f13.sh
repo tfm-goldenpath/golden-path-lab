@@ -8,8 +8,10 @@
 # kubectl UPDATE errors include a patch and a "to:" preamble. Start reading
 # policies only at the complete Kyverno denial marker for the protected workload.
 scenario_admission_single_reason() {
-  awk -v expected_policy="$2" -v expected_rule="$3" '
-    /^resource (Deployment|Pod)\/tfm-golden\/quotes-node was blocked due to the following policies[[:space:]]*$/ {
+  local expected_name=${4:-quotes-node}
+  [[ "$expected_name" =~ ^[a-z0-9][a-z0-9-]*$ ]] || return 1
+  awk -v expected_name="$expected_name" -v expected_policy="$2" -v expected_rule="$3" '
+    $0 ~ "^resource (Deployment|Pod)/tfm-golden/" expected_name " was blocked due to the following policies[[:space:]]*$" {
       blocked++
       next
     }
