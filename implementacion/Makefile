@@ -39,3 +39,8 @@ test-workflows:
 .PHONY: vulnerabilities
 vulnerabilities: doctor
 	bash scripts/demo.sh local vulnerabilities
+
+.PHONY: lane-a-validation
+LANE_A_SUITE ?= demo
+lane-a-validation:
+	python3 scripts/lane-a-validation.py run --suite "$(LANE_A_SUITE)" $(if $(LANE_A_OUTPUT),--output "$(LANE_A_OUTPUT)")

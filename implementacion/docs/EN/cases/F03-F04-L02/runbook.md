@@ -81,3 +81,5 @@ Describe original-SBOM analysis, frozen data, isolated real package fixtures,
 strict target attribution and fresh positive authorization. State the real
 package-level observations separately from NOT_EXECUTED image/admission trials;
 include final tests and leave human review pending.
+
+For independent prerequisite checks, the existing suite and retained failure/database evidence, use [lane A validation](../../lane-a-validation.md). Its current local attempts stop at doctor; they do not close this case’s pending integration boundaries.

@@ -99,3 +99,7 @@ Al terminar se elimina el clúster temporal y la etiqueta de la imagen de sonda.
 | Vía A completa | act y zot; compatibilidad del workflow y conectividad del registro |
 
 Las versiones de estos componentes se fijan al incorporar cada integración. `act` sirve para el recorrido local; la identidad OIDC y los servicios de la vía B se comprueban en GitHub Actions.
+
+## Validación reproducible del carril A
+
+[Ejecute ambas suites independientes](lane-a-validation.md) en el devcontainer fijado, con parada por prerrequisitos, prueba acotada de BuildKit y artefactos separados de bases congeladas. Es integración funcional; aceptación humana pendiente.

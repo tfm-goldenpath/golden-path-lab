@@ -111,3 +111,5 @@ Barreras locales reales y negativos hosted: **NOT_EXECUTED**. La ruta hosted nor
 mantiene confianza y permisos; no se añaden mutaciones GHCR. Los ensayos dirigidos
 no aumentan el catálogo de veinte casos ni son mediciones de campaña. Consulte la
 [validación real](../../../../registros/f13_f14_results_authorization_ES.md).
+
+Para prerrequisitos independientes, la suite existente y conservación de fallos/bases de datos, use la [validación del carril A](../../lane-a-validation.md). Los intentos locales actuales se detienen en doctor; no cierran las barreras de integración pendientes de este caso.

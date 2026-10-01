@@ -1,0 +1,65 @@
+name: Lane A integration validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lane-a-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [demo, vulnerabilities]
+    steps:
+      - name: Check out the reviewed source and history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Record source and establish trusted local main
+        run: python3 implementacion/scripts/lane-a-validation.py prepare --suite ${{ matrix.suite }} --output implementacion/evidence/lane-a/${{ matrix.suite }} --refresh-main
+      - name: Install the locked launcher CLI
+        run: |
+          python3 implementacion/scripts/lane-a-validation.py launcher --suite ${{ matrix.suite }} --output implementacion/evidence/lane-a/${{ matrix.suite }}
+      - name: Run lane A in the pinned devcontainer
+        id: container
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3; review in lane-a-validation.md
+        with:
+          configFile: .devcontainer/implementacion/devcontainer.json
+          push: never
+          inheritEnv: false
+          env: |
+            CI=true
+          runCmd: make -C implementacion lane-a-validation LANE_A_SUITE=${{ matrix.suite }} LANE_A_OUTPUT=evidence/lane-a/${{ matrix.suite }}
+      - name: Retain launcher outcome even before scenario startup
+        if: always()
+        run: python3 implementacion/scripts/lane-a-validation.py finalize --suite ${{ matrix.suite }} --output implementacion/evidence/lane-a/${{ matrix.suite }} --launcher-outcome '${{ steps.container.outcome }}'
+      - name: Upload safe validation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lane-a-${{ matrix.suite }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            implementacion/evidence/lane-a/${{ matrix.suite }}/**
+            !implementacion/evidence/lane-a/${{ matrix.suite }}/databases/**
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: false
+      - name: Upload frozen scanner databases separately
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lane-a-databases-${{ matrix.suite }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: implementacion/evidence/lane-a/${{ matrix.suite }}/databases/*
+          if-no-files-found: warn
+          compression-level: 0
+          retention-days: 14
+          include-hidden-files: false

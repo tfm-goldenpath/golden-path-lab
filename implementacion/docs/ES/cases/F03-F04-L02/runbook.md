@@ -66,3 +66,5 @@ Siguen pendientes F09/F10/L05 y F13/F14. Se mantienen veinte escenarios.
 Asistencia: Codex, GPT-6 según la sesión; identificador de despliegue no expuesto.
 Implementación, investigación, pruebas y documentación; revisión y decisión
 humanas pendientes.
+
+Para prerrequisitos independientes, la suite existente y conservación de fallos/bases de datos, use la [validación del carril A](../../lane-a-validation.md). Los intentos locales actuales se detienen en doctor; no cierran las barreras de integración pendientes de este caso.

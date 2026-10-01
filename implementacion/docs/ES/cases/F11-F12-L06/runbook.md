@@ -79,3 +79,5 @@ Logs finales: `14-final-suite.log`, `15-final-targeted.log`; versiones:
 `16-tool-versions.json`. Lista de archivos y hashes: `changed-files.txt` y
 `source-hashes.txt`, bajo `evidence/raw/runtime-development/`.
 Cambios sin commit sobre `d86465410d74e39ef8e77a9979995bcb268abf9a`.
+
+Para prerrequisitos independientes, la suite existente y conservación de fallos/bases de datos, use la [validación del carril A](../../lane-a-validation.md). Los intentos locales actuales se detienen en doctor; no cierran las barreras de integración pendientes de este caso.
