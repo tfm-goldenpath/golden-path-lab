@@ -303,3 +303,5 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [x] Verify 20 outer and 42 internal package hashes plus the frozen database archive and identity. Evidence is stored locally outside Git.
 - [x] Reproduce the empty warmup archive from the implementation cwd; export from repository root without changing the immutable source or cache recipe. Actual-command regression fails before correction; all 51 measurement tests pass afterward.
 - [ ] Review/merge and authorize a fresh development smoke on the corrected source. No dispatch or successful measured delivery claimed. This implementation defect is not an external-failure retry. OpenAI Codex / GPT-6 assistance; human acceptance pending.
+
+- [x] Fix PR #38 CI test setup after run `36926144447`: use isolated synthetic Git history for the export regression. Reproduce failure in a depth-1 clone; all 51 measurement tests pass after correction, and the original production bug still fails the regression. No checkout-depth or production-source changes. Logs stored locally; Codex / GPT-6 assistance, human review pending.

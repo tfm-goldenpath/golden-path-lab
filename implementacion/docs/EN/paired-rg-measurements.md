@@ -288,3 +288,12 @@ and merge, use a fresh development smoke at the new source; this code defect doe
 not qualify for an external-failure retry. GitHub Copilot supplied the preceding
 PR review; OpenAI Codex / GPT-6 diagnosed and corrected this execution defect.
 Human acceptance remains pending.
+
+
+PR #38 CI run `36926144447` exposed a test setup error: the regression required
+a historical project commit absent from CI's depth-1 checkout. It now creates
+labelled synthetic Git history and exercises the same production export commands.
+All 51 measurement tests pass in a depth-1 clone; restoring the original faulty
+export command still fails the regression. CI history requirements and the real
+measurement warmup revision remain unchanged. Logs are stored locally outside Git.
+OpenAI Codex / GPT-6 corrected the test; human review and live smoke remain pending.

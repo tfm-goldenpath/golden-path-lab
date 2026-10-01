@@ -223,3 +223,12 @@ de base congelada, sus checksums e identidad. Evidencia y logs se conservan
 localmente fuera de Git. Tras revisión y merge, corresponde una nueva prueba de
 desarrollo con la nueva fuente; este defecto no permite reintento por fallo externo.
 OpenAI Codex / GPT-6 realizó diagnóstico y corrección. Aceptación humana pendiente.
+
+
+El CI del PR #38, run `36926144447`, detectó un error de preparación de la prueba:
+requería un commit histórico ausente en el checkout de profundidad 1. Ahora crea
+historia Git sintética identificada y ejecuta los mismos comandos de producción.
+Las 51 pruebas pasan en un clon de profundidad 1; restaurar el comando defectuoso
+original sigue haciendo fallar la regresión. Se conservan la profundidad del CI y
+la revisión real de calentamiento. Logs guardados localmente fuera de Git.
+OpenAI Codex / GPT-6 corrigió la prueba; revisión humana y smoke real pendientes.

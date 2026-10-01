@@ -309,19 +309,31 @@ class PreparedSbomContract(unittest.TestCase):
 
 class WarmupSourceExport(unittest.TestCase):
  def test_actual_warmup_export_from_implementation_directory(self):
+  # Synthetic Git history reproduces cwd scoping without requiring network or
+  # historical project objects in CI's shallow checkout.
   script=(ROOT/'scripts/paired-delivery.sh').read_text()
   preparation=script[script.index('  mkdir "$private/warmup"'):script.index('  shared_private=')]
-  warmup=read(ROOT/'measurements/protocol-v1.json')['warmupSource']
   with tempfile.TemporaryDirectory() as temp:
-   result=subprocess.run(['bash','-euo','pipefail','-c',preparation],cwd=ROOT,
-    env=dict(os.environ,root=str(ROOT),private=temp,warmup=warmup),capture_output=True,text=True)
+   repo=Path(temp)/'repo';implementation=repo/'implementacion';service=implementation/'services/quotes-node'
+   (service/'src').mkdir(parents=True);private=Path(temp)/'private';private.mkdir()
+   inputs={'package.json':b'{"name":"synthetic-warmup"}\n','package-lock.json':b'{"lockfileVersion":3}\n',
+           'src/server.js':b'// synthetic historical application\n','.dockerignore':b'node_modules\n','Dockerfile':b'# historical Dockerfile\n'}
+   for name,data in inputs.items():(service/name).write_bytes(data)
+   def git_fixture(*args):
+    return subprocess.check_output(['git','-C',str(repo),'-c','user.name=Fixture','-c','user.email=fixture@example.invalid','-c','commit.gpgsign=false',*args],stderr=subprocess.PIPE)
+   git_fixture('init','-q');git_fixture('add','.');git_fixture('commit','-qm','Synthetic warmup')
+   warmup=git_fixture('rev-parse','HEAD').decode().strip()
+   current_dockerfile=(ROOT/'services/quotes-node/Dockerfile').read_bytes()
+   (service/'Dockerfile').write_bytes(current_dockerfile)
+   (service/'src/server.js').write_bytes(b'// synthetic measured application\n')
+   git_fixture('add','.');git_fixture('commit','-qm','Synthetic measured source')
+   result=subprocess.run(['bash','-euo','pipefail','-c',preparation],cwd=implementation,
+    env=dict(os.environ,root=str(implementation),private=str(private),warmup=warmup),capture_output=True,text=True)
    self.assertEqual(result.returncode,0,result.stderr)
-   context=Path(temp)/'warmup'
-   for name in ['package.json','package-lock.json','src/server.js','.dockerignore']:
+   context=private/'warmup'
+   for name,expected in inputs.items():
     exported=context/name
     self.assertTrue(exported.is_file(),f'Missing warmup input: {name}')
-    expected=subprocess.check_output(['git','-C',str(ROOT.parent),'show',f'{warmup}:implementacion/services/quotes-node/{name}'])
-    self.assertEqual(exported.read_bytes(),expected)
-   self.assertEqual((context/'Dockerfile').read_bytes(),(ROOT/'services/quotes-node/Dockerfile').read_bytes())
+    self.assertEqual(exported.read_bytes(),current_dockerfile if name=='Dockerfile' else expected)
 
 if __name__=='__main__':unittest.main()
