@@ -255,3 +255,13 @@ or failed responses. All 30 focused audit tests pass; the 11 new cases failed
 before the fix. Logs: `copilot-red.log` and `copilot-green.log` in the evidence
 directory above. These are synthetic unit checks, not live scenario execution.
 Human review and final acceptance remain pending.
+
+The additional Copilot warning supplied by the contributor concerns recovery
+CREATE evidence. The audit now requires an `apps/v1` Deployment in `tfm-golden`,
+the expected name and a nonempty string UID, the request's ownership label,
+zero replicas, isolated selector and Pod labels, and the expected image.
+OpenAI Codex / GPT-6 added 15 synthetic regression cases: 11 reproduced missing
+checks and four confirmed existing rejection checks before the fix.
+Logs: `copilot-recovery-red.log` and `copilot-recovery-green.log` in the same
+ignored evidence directory. Human review and live validation remain pending.
+All 45 focused audit tests pass after this follow-up.

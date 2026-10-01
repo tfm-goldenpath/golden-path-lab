@@ -233,3 +233,14 @@ incorrectas o fallidas. Pasan las 30 pruebas de auditoría; los 11 casos nuevos
 fallaban antes de la corrección. Registros: `copilot-red.log` y
 `copilot-green.log` en el directorio de evidencia anterior. Son pruebas unitarias
 sintéticas, no ejecuciones reales. Revisión humana y aceptación final pendientes.
+
+La advertencia adicional de Copilot facilitada por el contribuidor afecta a la
+evidencia del CREATE de recuperación. La auditoría exige un Deployment
+`apps/v1` en `tfm-golden`, el nombre esperado y un UID de texto no vacío, la
+etiqueta de propiedad de la petición, cero réplicas, selector y etiquetas de
+Pods aislados, y la imagen esperada. OpenAI Codex / GPT-6 añadió 15 casos
+sintéticos: 11 reprodujeron comprobaciones ausentes y cuatro confirmaron
+rechazos existentes antes del cambio. Registros: `copilot-recovery-red.log` y
+`copilot-recovery-green.log` en el mismo directorio ignorado de evidencia.
+Revisión humana y validación real pendientes.
+Pasan las 45 pruebas de auditoría tras esta corrección.

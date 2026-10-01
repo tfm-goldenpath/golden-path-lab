@@ -72,7 +72,15 @@ export function audit(suite,directory,staticDirectory,main) {
       status(folder+'negative-cleanup.json');status(folder+'recovery-cleanup.json');
       check(status(folder+'recovery-after-cleanup-absence.json').observation==='NotFound','Missing recovery cleanup absence');
       const created=json(folder+'recovery-create.json');
-      check(created.metadata?.name===name&&created.metadata?.uid&&created.spec?.replicas===0&&created.spec.template.spec.containers[0].image===negative.image,'Missing actual recovery CREATE');
+      const owner=request.metadata?.labels?.['tfm.goldenpath/trial'];
+      check(created.apiVersion==='apps/v1'&&created.kind==='Deployment'&&
+        created.metadata?.name===name&&created.metadata?.namespace==='tfm-golden'&&
+        typeof created.metadata?.uid==='string'&&created.metadata.uid.length>0&&
+        typeof owner==='string'&&owner.length>0&&created.metadata?.labels?.['tfm.goldenpath/trial']===owner&&
+        created.spec?.replicas===0&&created.spec?.selector?.matchLabels?.app===name&&
+        created.spec?.template?.metadata?.labels?.app===name&&
+        created.spec?.template?.spec?.containers?.[0]?.image===negative.image,
+        'Missing actual recovery CREATE with expected Deployment identity, ownership and isolation');
       const parsed=admission(folder+'admission.log',rule.policy,ruleName,name);
       check(parsed===rule.rule+'\t'+rule.reason,'Raw admission differs from structured attribution');
       if(['F09','F10','F13','F14'].includes(id)) {
