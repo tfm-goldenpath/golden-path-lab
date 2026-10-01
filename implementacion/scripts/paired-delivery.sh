@@ -53,7 +53,9 @@ if [[ "$phase" == bootstrap ]]; then
   git diff "$warmup" "$commit" -- services/quotes-node/src > "$state_dir/application-change.txt"
   git rev-parse "$warmup:implementacion/services/quotes-node/src" "$commit:implementacion/services/quotes-node/src" > "$state_dir/application-trees.txt"
   mkdir "$private/warmup"
-  git archive "$warmup:implementacion/services/quotes-node" | tar -x -C "$private/warmup"
+  # Export from the repository root: a subdirectory cwd scopes archive paths
+  # and otherwise yields an empty archive for this service-tree object.
+  git -C "$root/.." archive "$warmup:implementacion/services/quotes-node" | tar -x -C "$private/warmup"
   # Use the measured Dockerfile and pinned base for both cache preparations;
   # application/package bytes come from the immutable warmup revision.
   cp services/quotes-node/Dockerfile "$private/warmup/Dockerfile"

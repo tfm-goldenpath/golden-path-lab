@@ -4,8 +4,9 @@
 
 ## Status and unit of observation
 
-Instrumentation is implemented; the development smoke pair, four pilot pairs and
-campaign are **NOT_EXECUTED**. Human review is pending. The contributor reports
+Instrumentation is implemented. The first development smoke attempt stopped in
+cache preparation; both measured deliveries, four pilot pairs and campaign remain
+**NOT_EXECUTED**. Human review is pending. The contributor reports
 successful lane A functional suites in run `36885654089`, source
 `5ae6f84a01407789933bd36bcdb05250a6d6c4f5`; this increment does not independently
 reaudit that package. Existing lane A reviews and unsuccessful attempts remain
@@ -261,3 +262,38 @@ production CycloneDX 1.7 contract. Two regressions reproduced the incompatible
 Historical lane A attribution is restored from main. GitHub Copilot reviewed
 (model not disclosed); Github Copilot / GPT-6 implemented the fixes. Validation evidence is stored locally outside Git.
 Human review and live smoke remain pending.
+
+
+## First development attempt: 36924958484
+
+[Run 36924958484](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36924958484),
+commit `6fc297929254ba4472d6b3b9f95ebaca667dd508`, passed dependencies, shared
+regressions and prepared admission readiness. The first cache warmup failed:
+BuildKit could not find `src/` and `package-lock.json`. The historical service
+archive was empty because `git archive` ran from the implementation subdirectory.
+This is a preparation defect, not a policy rejection or external outage.
+Neither arm started its delivery timer or reached native provenance/admission.
+Cleanup succeeded; finalization correctly kept the pair incomplete/indeterminate.
+
+The correction exports the unchanged immutable tree from the repository root.
+A regression executes the actual preparation commands from `implementacion/`
+and checks source/lockfile bytes against that commit plus the current Dockerfile.
+It failed before the fix; all 51 measurement tests pass afterward. No live retry
+was dispatched, and a successful cache build remains pending.
+
+The downloaded artifact's 20 outer hashes, 42 internal package hashes, and the
+allowlisted frozen database archive/checksums/identity were independently verified.
+Failure evidence and regression logs are stored locally outside Git. After review
+and merge, use a fresh development smoke at the new source; this code defect does
+not qualify for an external-failure retry. GitHub Copilot supplied the preceding
+PR review; OpenAI Codex / GPT-6 diagnosed and corrected this execution defect.
+Human acceptance remains pending.
+
+
+PR #38 CI run `36926144447` exposed a test setup error: the regression required
+a historical project commit absent from CI's depth-1 checkout. It now creates
+labelled synthetic Git history and exercises the same production export commands.
+All 51 measurement tests pass in a depth-1 clone; restoring the original faulty
+export command still fails the regression. CI history requirements and the real
+measurement warmup revision remain unchanged. Logs are stored locally outside Git.
+OpenAI Codex / GPT-6 corrected the test; human review and live smoke remain pending.

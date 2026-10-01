@@ -295,3 +295,13 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [x] Address PR #37 review: preserve the normalized retry diagnostic reference and require a successful development artifact for database reuse. Reproduce both defects before correction; add three initialization regressions. Focused validation evidence is stored locally; human acceptance and live smoke remain pending.
 
 - [x] Address the second PR #37 Copilot review: align paired bootstrap and post-analysis guards with the production CycloneDX 1.7 contract; reproduce both version failures before fixing them. Restore historical lane A attribution from main. GitHub Copilot review (model not disclosed), OpenAI Codex / GPT-6 corrections; human review and live smoke pending. Validation evidence is stored locally.
+
+
+### Paired development run 36924958484: preparation failure
+
+- [x] Inspect run `36924958484`, source `6fc297929254ba4472d6b3b9f95ebaca667dd508`: dependencies/shared tests/readiness pass; first cache warmup fails with missing source/lockfile. Both deliveries remain NOT_EXECUTED; cleanup succeeds and final status preserves failure.
+- [x] Verify 20 outer and 42 internal package hashes plus the frozen database archive and identity. Evidence is stored locally outside Git.
+- [x] Reproduce the empty warmup archive from the implementation cwd; export from repository root without changing the immutable source or cache recipe. Actual-command regression fails before correction; all 51 measurement tests pass afterward.
+- [ ] Review/merge and authorize a fresh development smoke on the corrected source. No dispatch or successful measured delivery claimed. This implementation defect is not an external-failure retry. OpenAI Codex / GPT-6 assistance; human acceptance pending.
+
+- [x] Fix PR #38 CI test setup after run `36926144447`: use isolated synthetic Git history for the export regression. Reproduce failure in a depth-1 clone; all 51 measurement tests pass after correction, and the original production bug still fails the regression. No checkout-depth or production-source changes. Logs stored locally; Codex / GPT-6 assistance, human review pending.
