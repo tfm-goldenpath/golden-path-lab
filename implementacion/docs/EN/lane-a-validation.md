@@ -265,3 +265,36 @@ checks and four confirmed existing rejection checks before the fix.
 Logs: `copilot-recovery-red.log` and `copilot-recovery-green.log` in the same
 ignored evidence directory. Human review and live validation remain pending.
 All 45 focused audit tests pass after this follow-up.
+
+### Run 36877044496: L05 webhook timeout
+
+[Run 36877044496](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36877044496)
+at `7548dcb119e3394718946ea59313ac1f830f7bf0` passed demo prerequisites and
+reached L05-from. Its legitimate readiness dry-run failed with a 30-second
+`validate.kyverno.svc-fail` webhook timeout. This remains an integration failure;
+L05 did not complete either delivery. GitHub reports the independent vulnerability
+job succeeded; that job's package was not independently audited in this follow-up.
+
+The demo package records a ready new controller alongside `terminatingReplicas: 1`
+and a terminating old Pod. The readiness checker previously ignored that Pod.
+It now waits for zero reported terminating replicas and removal of Pods owned by
+older controller ReplicaSets, within the existing bounded convergence loop.
+This closes an observed readiness gap. Stale connections during controller
+replacement are a possible timeout cause, not a proven diagnosis. Webhook errors
+still stop execution without retries, and a corrected live rerun remains required.
+
+Downloaded evidence: `evidence/raw/lane-a-run-36877044496/` (ignored). Verified
+74 outer hashes, 1,814 internal package hashes and the separate database archive's
+allowlist and three internal hashes. The offline audit accepts the directed
+postissuance fault boundaries, but cannot establish overall completion: final
+aggregate/L05 records are absent, and relocated runtime Conftest filenames fail
+its path checks. Original evidence was not rewritten. Bundle signatures were not
+independently reauthenticated in this inspection.
+
+Five new regression failures reproduced the readiness gap; all 33 focused
+controller/refresh tests pass after the change. The saved live snapshot now
+returns PENDING. Local doctor still fails kubectl v1.37.0 versus v1.35.8, so no
+local cluster retry was attempted. Assistance: OpenAI Codex / GPT-6; human review
+and final acceptance pending. No workflow was dispatched.
+Shared suite passes: 873 service/unit tests, 43 Python policy tests, Conftest,
+Kyverno, offline Cosign and static F01/F02. See `shared-tests.log`.
