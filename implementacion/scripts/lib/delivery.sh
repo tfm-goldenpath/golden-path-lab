@@ -2,22 +2,45 @@
 # Build, early policies, analysis and delivery documents.
 # Sourced by demo.sh; definitions only. See docs/EN/architecture.md.
 
-delivery_preflight() {
-  local workflow; local -a workflows=()
-  record 'Tests and preflight checks'
-  node --test services/quotes-node/test/*.test.js tests/unit/*.test.mjs > "$state_dir/unit-tests.log" 2>&1
+delivery_service_tests() {
+  node --test services/quotes-node/test/*.test.js > "$state_dir/unit-tests.log" 2>&1
+}
+
+delivery_lab_tests() {
+  node --test tests/unit/*.test.mjs > "$state_dir/laboratory-unit-tests.log" 2>&1
   python3 -m unittest discover -s tests/policies -p 'test_*.py' > "$state_dir/policy-contracts.log" 2>&1
   python3 tests/policies/run_rego.py > "$state_dir/policy-tests.log" 2>&1
+}
+
+delivery_workflow_policy() {
+  local workflow; local -a workflows=()
   for workflow in "$root"/../.github/workflows/*.yml "$root"/../.github/workflows/*.yaml; do
     [[ ! -f "$workflow" ]] || workflows+=("$workflow")
   done
   [[ ${#workflows[@]} -gt 0 ]] || fail 'No workflows found in the root .github/workflows directory; preserve the repository structure.'
   conftest test --policy policies/conftest --namespace workflow --output json "${workflows[@]}" > "$state_dir/workflow-policy.json"
+}
+
+delivery_versions() {
   cp versions.env "$state_dir/versions.txt"; cp tools.lock.json "$state_dir/tools-lock.json"
   { node --version; docker version; docker buildx version; kind version; kubectl version --client; conftest --version; cosign version; helm version --short; } > "$state_dir/tool-versions.txt" 2>&1
 }
 
+delivery_preflight() {
+  record 'Tests and preflight checks'
+  delivery_service_tests
+  delivery_lab_tests
+  cat "$state_dir/laboratory-unit-tests.log" >> "$state_dir/unit-tests.log"
+  delivery_workflow_policy
+  delivery_versions
+}
+
 delivery_build() {
+  local -a cache_args=()
+  if [[ -n "${DELIVERY_CACHE_FROM:-}" ]]; then
+    [[ -d "$DELIVERY_CACHE_FROM" && -f "$DELIVERY_CACHE_FROM/index.json" ]] || fail 'Prepared cache is missing.'
+    cache_args+=(--cache-from "type=local,src=$DELIVERY_CACHE_FROM" --progress=plain)
+  fi
   local node_image context=${1:-services/quotes-node} base=${2:-}
   node_image=${GP_NODE_IMAGE:-$SERVICE_NODE_IMAGE}
   [[ "$node_image" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'The base image must be pinned by digest.'
@@ -26,7 +49,7 @@ delivery_build() {
   record "Build image $id"
   docker buildx build --builder "$builder" --platform linux/amd64 --provenance=false --sbom=false --push \
     --build-arg "BASE_IMAGE=$base" --build-arg "NODE_IMAGE=$node_image" --build-arg "BUILD_COMMIT=$commit" --label "tfm.lab.run=$id" \
-    --tag "$image_repo:$id" --metadata-file "$state_dir/build-metadata.json" "$context"
+    --tag "$image_repo:$id" --metadata-file "$state_dir/build-metadata.json" "${cache_args[@]}" "$context"
   digest=$(jq -er '."containerimage.digest"' "$state_dir/build-metadata.json")
   [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]] || fail 'Buildx did not return a valid image digest.'
   put digest "$digest"

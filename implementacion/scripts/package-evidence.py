@@ -111,8 +111,16 @@ def package(source, output, status):
         static_workflow = isinstance(value, dict) and value.get('kind') == 'workflow-static'
     except (ValueError, UnicodeError):
         static_workflow = False
+    measurement = source / 'measurement.json'
+    measured = measurement in files
+    preparation = source / 'measurement-preparation.json' in files
+    try:
+        measurement_status = json.loads(measurement.read_text()).get('classification', 'indeterminate') if measured else None
+    except (ValueError, AttributeError):
+        measurement_status = 'INVALID_RECORD'
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13 and runtime F11/F12/L06; optional local F03/F04/L02 and F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
+        'scope': 'One legitimate paired R/G measurement arm; inspect measurement.json; no fault trials or campaign acceptance' if measured else 'Shared paired R/G preparation; outside primary delivery intervals' if preparation else 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13 and runtime F11/F12/L06; optional local F03/F04/L02 and F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
+        'measurementClassification': measurement_status,
         'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
         'scenarios': scenario_summary(source, files),
         'secretsIncluded': False}, indent=2) + '\n')

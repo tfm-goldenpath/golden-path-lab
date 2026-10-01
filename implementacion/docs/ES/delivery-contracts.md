@@ -196,3 +196,18 @@ hashes de base/metadatos antes y después; conservar sus bytes fuera de Git para
 reproducir el ensayo. [F03/F04/L02](cases/F03-F04-L02/runbook.md) reutilizan este
 camino; los negativos no reciben resultados exitosos ni despliegue protegido.
 Kyverno no incorpora un escáner ni cambia la confianza o los contratos firmados.
+
+## Límite de medición de una entrega
+
+El [runner R/G pareado](paired-rg-measurements.md) coordina módulos compartidos
+mediante fases prepare/procedencia nativa/finish/cleanup, con una construcción
+y entrega legítima independiente por brazo. No ejecuta el demo ni escenarios.
+Pruebas del servicio y controles G se miden; regresiones completas, infraestructura,
+cachés y readiness sin candidato se registran aparte. El demo conserva preflight
+y readiness de resultados ausentes.
+
+La identidad exacta de `paired-rg.yml` en main usa emisor GitHub, builder nativo
+y controles de fuente existentes. R no produce evidencias G. El formato
+`paired-rg-observation/v1` conserva tiempos monotónicos/UTC y observaciones
+incompletas; los paquetes distinguen mediciones individuales de escenarios.
+Instrumentación implementada; smoke/piloto y aceptación humana pendientes.

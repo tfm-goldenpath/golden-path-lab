@@ -127,12 +127,12 @@ lab_install_admission() {
     '{global:{image:{registry:"ghcr.io"}}, admissionController:{replicas:1,container:{image:{tag:($tag+"@"+$admission)},extraArgs:{imageVerifyCacheEnabled:"false",allowInsecureRegistry:$insecure}},initContainer:{image:{tag:($tag+"@"+$init)}}},backgroundController:{enabled:false},cleanupController:{enabled:false},reportsController:{enabled:false},webhooksCleanup:{enabled:false},crds:{migration:{enabled:false}}}' > "$state_dir/kyverno-values.json"
   helm --kubeconfig "$private/kubeconfig" --kube-context "kind-$cluster" upgrade --install kyverno "$private/kyverno.tgz" --namespace kyverno \
     --values "$state_dir/kyverno-values.json" --wait --timeout 5m
-  lab_apply_admission_policies initial
+  lab_apply_admission_policies "${1:-initial}"
 }
 
 lab_apply_admission_policies() {
   local lifecycle=${1:-update} pod rejection reason
-  [[ "$lifecycle" == initial || "$lifecycle" == update ]] || fail "Invalid admission lifecycle."
+  [[ "$lifecycle" == initial || "$lifecycle" == update || "$lifecycle" == prepared ]] || fail "Invalid admission lifecycle."
   local -a renderer_args
   renderer_args=(--mode "$mode" --repository "$repository" --commit "$commit" --image-repository "$image_repo" --sbom-version "$(get sbomVersion)" --output "$state_dir/admission-policies.json")
   if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
@@ -163,6 +163,18 @@ lab_apply_admission_policies() {
       any(.status.conditions[]?; .type == "Ready" and .status == "True")))
   ' > "$state_dir/admission-policy-loaded-check.json"
   [[ "$(actor tfm-golden auth can-i update clusterpolicies.kyverno.io 2>/dev/null || true)" == no ]] || fail 'The delivery actor has permission to change the enforcement barriers.'
+  if [[ "$lifecycle" == prepared ]]; then
+    # No candidate image exists yet. An out-of-repository digest cannot match
+    # verifyImages. Require the runtime repository denial through the real API.
+    node "$contract" manifest "$SERVICE_NODE_IMAGE" tfm-golden "$state_dir/readiness.json" github
+    jq '.metadata.name="measurement-readiness" | .spec.replicas=0' "$state_dir/readiness.json" > "$state_dir/readiness-request.json"
+    if actor tfm-golden create --dry-run=server -f "$state_dir/readiness-request.json" > "$state_dir/admission-readiness-probe.log" 2>&1; then
+      fail 'Prepared admission unexpectedly accepted an unauthorized repository.'
+    fi
+    rejection=$(scenario_admission_single_reason "$state_dir/admission-readiness-probe.log" tfm-runtime authorized-image-repository measurement-readiness) || fail 'Prepared readiness has no attributable runtime denial.'
+    [[ "${rejection#*$'\t'}" == 'validation failure: IMAGE_REPOSITORY: all images must belong to the authorized repository and use a digest' ]] || fail 'Unexpected prepared readiness diagnostic.'
+    return
+  fi
   # Exercise the actual API-server -> webhook path without persisting a workload.
   # At initial install results are deliberately absent. Reuse the strict shared
   # classifier loaded from f13.sh; this preflight does not count as an F13 trial.

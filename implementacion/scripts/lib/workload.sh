@@ -3,8 +3,12 @@
 # Sourced by demo.sh; definitions only. See docs/EN/architecture.md.
 
 probe() {
+  k -n "$1" rollout status deployment/quotes-node --timeout=300s
+  workload_http "$1"
+}
+
+workload_http() {
   local ns=$1 attempt
-  k -n "$ns" rollout status deployment/quotes-node --timeout=300s
   : > "$state_dir/$ns-port.log"
   kubectl --kubeconfig "$private/kubeconfig" --context "kind-$cluster" -n "$ns" \
     port-forward deployment/quotes-node :3000 > "$state_dir/$ns-port.log" 2>&1 & port_pid=$!

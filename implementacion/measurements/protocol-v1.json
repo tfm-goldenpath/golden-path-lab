@@ -1,0 +1,57 @@
+{
+  "protocol": "paired-rg/v1",
+  "lane": "B",
+  "unit": "one independently built legitimate delivery per arm",
+  "platform": "linux/amd64",
+  "workflow": "tfm-goldenpath/golden-path-lab/.github/workflows/paired-rg.yml@refs/heads/main",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "warmupSource": "7243334fe4ee7073801a86b25c90986b7d3c5ece",
+  "targetSource": "exact workflow SHA; clean checkout; application tree must differ from warmup",
+  "common": [
+    "service tests",
+    "independent build and GHCR publication",
+    "digest manifest",
+    "restricted actor",
+    "fresh Kubernetes CREATE",
+    "rollout",
+    "HTTP"
+  ],
+  "goldenOnly": [
+    "workflow and manifest policies",
+    "original SBOM",
+    "frozen database analysis",
+    "keyless image and SBOM signing",
+    "native GitHub provenance",
+    "results authorization",
+    "fresh verification",
+    "protected admission"
+  ],
+  "primaryStart": "before service tests",
+  "primaryStop": "return of fresh CREATE command; raw response retained",
+  "excluded": [
+    "dependencies",
+    "laboratory regressions",
+    "infrastructure",
+    "cache warming/restoration",
+    "database acquisition",
+    "readiness",
+    "rollout",
+    "HTTP",
+    "packaging",
+    "cleanup"
+  ],
+  "buildCaches": "independent local exports from same warmup source; recreate builders and import before each arm",
+  "verificationCache": "Kyverno image cache disabled; no candidate verification in readiness",
+  "retry": "at most one full pair, manual evidenced external-failure review, same order/source/database/cache recipe; no GitHub job reruns",
+  "pilot": {
+    "pairs": 4,
+    "RG": 2,
+    "GR": 2,
+    "humanReview": "pending"
+  },
+  "campaign": {
+    "pairsProvisional": 10,
+    "enabled": false
+  },
+  "vulnerabilityDatabase": "first development snapshot preserved; reuse via database_run for subsequent smoke/pilot pairs; reject pooled database drift"
+}

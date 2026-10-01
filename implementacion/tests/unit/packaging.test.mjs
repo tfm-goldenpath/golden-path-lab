@@ -322,3 +322,18 @@ test('runtime package retains operation evidence and incomplete records without 
  assert.ok(names.includes('run-test/runtime/F12/Pod-CREATE/observation.json'));
  assert.ok(!names.includes('run-test/runtime/F12/Pod-CREATE/state.json'));assert.deepEqual(mismatches,[]);
 });
+
+for (const [label,record] of [['incomplete','{"schema":"paired-rg-observation/v1","classification":"indeterminate","primarySeconds":null}'],['malformed','{']]) {
+  test(`paired ${label} measurement preserves raw evidence without scenario completion`, t => {
+    const {source,output}=fixture(t);
+    fs.writeFileSync(path.join(source,'measurement.json'),record);
+    execFileSync(python,[script,source,output,'RECORDED']);
+    const {summary,names,mismatches}=inspectArchive(path.join(output,'run-test.tar.gz'));
+    assert.match(summary.scope,/One legitimate paired R\/G measurement arm/);
+    assert.equal(summary.measurementClassification,label==='malformed'?'INVALID_RECORD':'indeterminate');
+    assert.equal(summary.scenarios.L01.status,'NOT_RECORDED');
+    assert.ok(names.includes('run-test/measurement.json'));
+    assert.ok(!names.includes('run-test/state.json'));
+    assert.deepEqual(mismatches,[]);
+  });
+}

@@ -14,6 +14,7 @@ set -Eeuo pipefail
 source "$GP_LIB"
 source "$GP_SCENARIO"
 state_dir="$GP_DIR"; private="$GP_DIR"; mode=local; repository=synthetic; commit=new; image_repo=synthetic; root="$GP_ROOT"
+contract="$root/scripts/lab-contracts.mjs"; SERVICE_NODE_IMAGE="docker.io/library/node@sha256:$(printf 'a%.0s' {1..64})"
 get() { echo 1.6; }
 python3() { :; }
 actor() {
@@ -21,6 +22,12 @@ actor() {
   echo "probe:$*" >> "$GP_DIR/events"
   if [[ "$GP_FAULT" == probe-timeout ]]; then echo 'context deadline exceeded'; return 1; fi
   if [[ "$GP_FAULT" == unexpected-acceptance ]]; then return 0; fi
+  if [[ "$GP_LIFECYCLE" == prepared ]]; then
+    echo 'resource Deployment/tfm-golden/measurement-readiness was blocked due to the following policies'
+    echo 'tfm-runtime:'
+    echo '  autogen-authorized-image-repository: validation failure: IMAGE_REPOSITORY: all images must belong to the authorized repository and use a digest'
+    return 1
+  fi
   if [[ "$GP_LIFECYCLE" == initial ]]; then
     echo 'resource Deployment/tfm-golden/quotes-node was blocked due to the following policies'
     echo 'tfm-results:'
@@ -78,4 +85,13 @@ for(const lifecycle of ['initial','update']) test(`webhook timeout stops ${lifec
 
 for(const fault of ['unexpected-acceptance','multiple-policy']) test(`initial readiness rejects ${fault}`,t=>{
  const r=run(t,fault,'initial');assert.notEqual(r.status,0);assert.doesNotMatch(r.events,/workload/);
+});
+
+test('prepared admission checks actual CREATE denial without a measured image',t=>{
+ const r=run(t,'','prepared');assert.equal(r.status,0,r.stderr);
+ assert.doesNotMatch(r.events,/rollout restart/);
+ assert.match(r.events,/probe:tfm-golden create --dry-run=server/);
+});
+for(const fault of ['probe-timeout','unexpected-acceptance']) test(`prepared readiness fails closed on ${fault}`,t=>{
+ const r=run(t,fault,'prepared');assert.notEqual(r.status,0);assert.doesNotMatch(r.events,/workload/);
 });

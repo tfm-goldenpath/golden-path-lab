@@ -1,0 +1,27 @@
+{
+  "schema": "paired-rg-plan/v1",
+  "protocol": "paired-rg/v1",
+  "dataset": "pilot",
+  "seed": "paired-rg-pilot-v1-2026-10-01",
+  "randomization": "sort four labelled balanced slots by SHA256(seed:slot), ascending",
+  "pairs": [
+    {
+      "pair": 1,
+      "order": "GR"
+    },
+    {
+      "pair": 2,
+      "order": "GR"
+    },
+    {
+      "pair": 3,
+      "order": "RG"
+    },
+    {
+      "pair": 4,
+      "order": "RG"
+    }
+  ],
+  "execution": "NOT_EXECUTED",
+  "humanReview": "pending"
+}

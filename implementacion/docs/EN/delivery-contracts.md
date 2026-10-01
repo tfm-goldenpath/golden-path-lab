@@ -206,3 +206,20 @@ scanner evidence, not universal vulnerability absence or SBOM completeness.
 [F03/F04/L02](cases/F03-F04-L02/record.md) use this shared path; negatives never
 receive successful results or enter the protected namespace. Kyverno's evidence
 contracts and trust remain unchanged; it does not run a vulnerability scanner.
+
+## Single-delivery measurement boundary
+
+The [paired R/G runner](paired-rg-measurements.md) is a separate coordinator over
+shared delivery modules. It measures one independently built legitimate delivery
+per arm, with explicit prepare/native-provenance/finish/cleanup phases. It does
+not run the demonstration or scenario sequence. Service tests and G workflow
+controls are measured; full laboratory regressions, infrastructure, cache
+restoration and candidate-independent readiness are separate. Existing demo
+preflight and missing-results readiness behavior remain available.
+
+The new main-only `paired-rg.yml` identity is authorized exactly by its own
+configuration, with the existing GitHub issuer, native builder and source checks.
+R creates no G evidence. Schema `paired-rg-observation/v1` records monotonic/UTC
+endpoints and incomplete observations; safe packaging distinguishes individual
+measurement arms from scenario completion. Instrumentation is implemented;
+smoke/pilot execution and human acceptance remain pending.
