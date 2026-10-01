@@ -239,8 +239,7 @@ Focused checks pass: 45 Python measurement tests, 47 Node measurement/readiness/
 packaging tests, and nine production workflow policy assertions. The shared suite
 passed 877 service/unit tests plus environment, 43 Python policy tests,
 Conftest/Kyverno, offline Cosign and static workflow checks. Later packaging and
-measurement changes were covered by the focused rerun. Logs: ignored
-`evidence/raw/paired-development/{shared-final,focused-final,python-focused,workflow-policy,doctor}.log`.
+measurement changes were covered by the focused rerun. Validation logs are stored locally outside Git.
 
 AI assistance: **GitHub Copilot / GPT-6** implemented orchestration, records,
 regressions and documentation. Human review and final acceptance: **pending**.
@@ -252,6 +251,13 @@ Both code findings were reproduced before correction: retry records omitted the
 reviewed diagnostic path, and database reuse accepted pilot artifacts. The runner
 now retains the normalized path and requires a successful development source.
 Three initialization regressions cover both fixes and permitted development reuse.
-The focused suite passes; evidence is in `evidence/raw/pr37-review/` (outside Git).
-GitHub Copilot supplied the review (model not disclosed);
+The focused suite passes; validation evidence is stored locally outside Git.
+GitHub Copilot supplied the review (model not disclosed); Github Copilot / GPT-6
 implemented the corrections. Human review and real smoke execution remain pending.
+
+Second PR #37 review: bootstrap and the post-analysis guard now require the
+production CycloneDX 1.7 contract. Two regressions reproduced the incompatible
+1.6 selection and guard before correction; one invokes the actual renderer.
+Historical lane A attribution is restored from main. GitHub Copilot reviewed
+(model not disclosed); Github Copilot / GPT-6 implemented the fixes. Validation evidence is stored locally outside Git.
+Human review and live smoke remain pending.

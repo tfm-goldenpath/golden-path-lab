@@ -41,7 +41,7 @@ if [[ "$phase" == bootstrap ]]; then
   lab_create
   lab_prepare_namespaces
   repository=$(get sourceRepository); commit=$(get sourceCommit)
-  put sbomVersion 1.6
+  put sbomVersion 1.7
   lab_install_admission prepared
   delivery_database_prepare
   python3 scripts/paired-rg.py freeze-db "$state_dir/database-identity.json"
@@ -109,7 +109,7 @@ if [[ "$phase" == prepare ]]; then
   if [[ "$arm" == G ]]; then
     step manifest-policy delivery_check_manifest
     step analysis delivery_analyze
-    [[ "$(get sbomVersion)" == 1.6 ]] || fail 'Prepared SBOM contract differs from generated version.'
+    [[ "$(get sbomVersion)" == 1.7 ]] || fail 'Prepared SBOM contract differs from generated version.'
     clock native-provenance start
   fi
   printf 'image=%s\ndigest=%s\n' "$image_repo" "$digest" >> "$GITHUB_OUTPUT"

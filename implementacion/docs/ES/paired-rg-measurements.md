@@ -176,8 +176,7 @@ ejecutado mediciones, escaneos ni admisiones del nuevo workflow. Doctor vuelve a
 de medición, 47 Node enfocadas y nueve comprobaciones de política del workflow.
 La suite compartida pasó 877 pruebas de servicio/unidad, entorno, 43 Python de
 políticas, Conftest/Kyverno, Cosign offline y workflows estáticos. Cambios posteriores
-de medición/empaquetado se comprobaron en la repetición enfocada. Logs ignorados
-en `evidence/raw/paired-development/`.
+de medición/empaquetado se comprobaron en la repetición enfocada. Los registros de validación se conservan localmente fuera de Git.
 
 Asistencia: **OpenAI Codex / GPT-6**, implementación, pruebas y documentación.
 Revisión humana y decisión final: **pendientes**.
@@ -189,6 +188,13 @@ Se reprodujeron ambos fallos antes de corregirlos: faltaba la ruta del diagnóst
 revisado y se aceptaban bases de artefactos piloto. Ahora se conserva la ruta
 normalizada y se exige un origen de desarrollo exitoso. Tres regresiones de
 inicialización cubren ambos cambios y la reutilización válida de desarrollo.
-La suite enfocada pasa; evidencia fuera de Git en `evidence/raw/pr37-review/`.
-GitHub Copilot aportó la revisión (modelo no divulgado);
+La suite enfocada pasa; la evidencia de validación se conserva localmente fuera de Git.
+GitHub Copilot aportó la revisión (modelo no divulgado); Github Copilot
 implementó las correcciones. Revisión humana y smoke real siguen pendientes.
+
+Segunda revisión del PR #37: bootstrap y la comprobación posterior al análisis
+exigen el contrato de producción CycloneDX 1.7. Dos regresiones reprodujeron
+la selección y comprobación incompatibles de 1.6; una invoca el renderer real.
+Se restaura desde main la atribución histórica de A. GitHub Copilot revisó
+(modelo no divulgado); Github Copilot / GPT-6 corrigió. La evidencia de validación se conserva localmente fuera de Git.
+Revisión humana y smoke real pendientes.

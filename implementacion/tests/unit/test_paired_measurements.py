@@ -288,4 +288,23 @@ class ReviewInitialization(unittest.TestCase):
    with self.assertRaisesRegex(ValueError,'development'):runner.initial(args)
    restore.assert_not_called();self.assertFalse((p/'new/pair.json').exists())
 
+class PreparedSbomContract(unittest.TestCase):
+ def test_bootstrap_version_accepted_by_production_renderer(self):
+  script=(ROOT/'scripts/paired-delivery.sh').read_text()
+  selected=re.search(r'^  put sbomVersion .+$',script,re.M).group(0)
+  version=subprocess.check_output(['bash','-c','put() { printf "%s" "$2"; }; '+selected],text=True)
+  with tempfile.TemporaryDirectory() as temp:
+   result=subprocess.run([sys.executable,str(ROOT/'policies/kyverno/render.py'),
+    '--mode','github','--repository','https://github.com/tfm-goldenpath/golden-path-lab',
+    '--commit','a'*40,'--image-repository','ghcr.io/tfm-goldenpath/quotes-measurements',
+    '--identity','https://github.com/'+WORKFLOW,'--registry-secret','gp-ghcr',
+    '--sbom-version',version,'--output',str(Path(temp)/'policies.json')],capture_output=True,text=True)
+   self.assertEqual(result.returncode,0,result.stderr)
+ def test_actual_post_analysis_version_guard(self):
+  script=(ROOT/'scripts/paired-delivery.sh').read_text()
+  guard=next(line for line in script.splitlines() if 'Prepared SBOM contract differs' in line)
+  for version,code in [('1.7',0),('1.6',1)]:
+   result=subprocess.run(['bash','-c','get() { printf "%s" "$VERSION"; }; fail() { exit 1; }; '+guard],env=dict(os.environ,VERSION=version),capture_output=True,text=True)
+   self.assertEqual(result.returncode,code,result.stderr)
+
 if __name__=='__main__':unittest.main()

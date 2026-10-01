@@ -15,7 +15,7 @@ source "$GP_LIB"
 source "$GP_SCENARIO"
 state_dir="$GP_DIR"; private="$GP_DIR"; mode=local; repository=synthetic; commit=new; image_repo=synthetic; root="$GP_ROOT"
 contract="$root/scripts/lab-contracts.mjs"; SERVICE_NODE_IMAGE="docker.io/library/node@sha256:$(printf 'a%.0s' {1..64})"
-get() { echo 1.6; }
+get() { echo 1.7; }
 python3() { :; }
 actor() {
   if [[ "$*" == *'auth can-i'* ]]; then echo no; return; fi
