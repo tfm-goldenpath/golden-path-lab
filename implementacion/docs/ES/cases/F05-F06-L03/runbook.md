@@ -84,3 +84,5 @@ correcta o aprobación equivalente. Se conservan los intentos fallidos. Las prue
 negativas alojadas siguen NOT_EXECUTED y la revisión humana permanece pendiente.
 
 [Explicación del firewall, recuperación y propuesta a largo plazo](../../kind-network-firewall.md).
+
+La admisión dirigida usa ahora CREATE de un Deployment nuevo con cero réplicas y nombre/selector aislados, CREATE positivo tras restauración y limpieza propia. Las pruebas del workload del mismo digest siguen separadas. Véase la [matriz y ejecución 36830599263](../../lane-a-validation.md); apply sin cambios o UPDATE previamente verificado no demuestra verificación nueva. Falta repetir la demo corregida.

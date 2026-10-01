@@ -145,3 +145,5 @@ imagen BuildKit y red que la entrega local; smoke-env no demuestra esa ruta.
 ```
 
 Para prerrequisitos independientes, la suite existente y conservación de fallos/bases de datos, use la [validación del carril A](../../lane-a-validation.md). Los intentos locales actuales se detienen en doctor; no cierran las barreras de integración pendientes de este caso.
+
+La admisión dirigida usa ahora CREATE de un Deployment nuevo con cero réplicas y nombre/selector aislados, CREATE positivo tras restauración y limpieza propia. Las pruebas del workload del mismo digest siguen separadas. Véase la [matriz y ejecución 36830599263](../../lane-a-validation.md); apply sin cambios o UPDATE previamente verificado no demuestra verificación nueva. Falta repetir la demo corregida.

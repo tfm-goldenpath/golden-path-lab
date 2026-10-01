@@ -119,3 +119,5 @@ no new GHCR mutation permissions. Directed checks do not enlarge the twenty-case
 catalogue or count as campaign measurements. See [actual verification](../../../../registros/f13_f14_results_authorization_EN.md).
 
 For independent prerequisite checks, the existing suite and retained failure/database evidence, use [lane A validation](../../lane-a-validation.md). Its current local attempts stop at doctor; they do not close this case’s pending integration boundaries.
+
+Directed admission now uses a fresh zero-replica Deployment CREATE with an isolated name/selector, positive CREATE after restoration, and owned cleanup. The normal same-digest workload probes remain separate. See [run 36830599263 and the operation matrix](../../lane-a-validation.md#run-36830599263-f14-unchanged-request); unchanged apply or previously verified UPDATE cannot establish fresh evidence verification. The corrected live demo remains pending.

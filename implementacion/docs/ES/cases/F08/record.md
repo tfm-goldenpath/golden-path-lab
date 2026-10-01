@@ -72,3 +72,5 @@ Tras la validación local, el contribuidor autorizó el commit y la apertura del
 e identificó **GitHub Copilot (GPT-6)** como herramienta principal de desarrollo
 asistido. Esta atribución procede del contribuidor; se conserva la contribución
 de la sesión Codex (GPT-6) descrita arriba. La revisión humana sigue pendiente.
+
+La admisión dirigida usa CREATE compartido de Deployment aislado con cero réplicas y CREATE positivo tras restaurar evidencia. El rollout L04 sigue separado; apply sin cambios no cuenta. Véase la [corrección del carril A](../../lane-a-validation.md). Validación corregida pendiente.

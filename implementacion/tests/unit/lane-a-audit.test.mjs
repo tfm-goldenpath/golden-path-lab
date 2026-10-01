@@ -40,7 +40,10 @@ function fixture(t,suite) {
    put('L01-update/'+prefix+'-negative.result.json',{status,image:image('b'),phase:phase==='CI'?'before-results':'authorized',inventoryComplete:true,predicate:'https://sigstore.dev/cosign/sign/v1'});put('L01-update/'+prefix+'-restored.result.json',{status:'VERIFIED',image:image('b')});
    if(phase==='admission') {
     const control={F05:'sbom',F06:'sbom',F08:'signature',F09:'provenance',F10:'provenance',F13:'results',F14:'results'}[id],rule=control==='signature'?'require-image-signature':'require-'+control,reason=id==='F10'?'PROVENANCE_REPOSITORY':id==='F14'?'RESULTS_POLICY_VERSION':'synthetic denial';
-    put(p+'admission.json',{exitStatus:1});put(p+'admission-attribution.json',{policy:'tfm-'+control,rule,reason});denial(p+'admission.log','tfm-'+control,rule,'quotes-node',reason);
+    put(p+'admission.json',{exitStatus:1});put(p+'admission-attribution.json',{policy:'tfm-'+control,rule,reason});denial(p+'admission.log','tfm-'+control,rule,'admission-'+id.toLowerCase(),reason);
+    const name='admission-'+id.toLowerCase(),request=deployment(image('b'));request.metadata.name=name;request.spec.replicas=0;request.spec.selector={matchLabels:{app:name}};request.spec.template.metadata.labels={app:name};
+    put(p+'rejected-observation.log',`Error from server (NotFound): deployments.apps "${name}" not found\n`);put(p+'admission-operation.json',{operation:'CREATE',kind:'Deployment',namespace:'tfm-golden',name,image:image('b')});put(p+'admission-request.json',request);put(p+'recovery-create.json',request);
+    for(const record of ['before-absence','rejected-absence','negative-cleanup','recovery-cleanup','recovery-after-cleanup-absence']) put(p+record+'.json',{status:'PASS',observation:'NotFound'});
     recordRollout(p+'recovery-',image('b'));put(p+'recovery-admission.log','accepted');http(p+'recovery-');
    }
   }
@@ -68,3 +71,6 @@ test('successful aggregate alone cannot complete either suite',t=>{for(const sui
 test('negative image successful authorization is an unfavorable observation',t=>{const f=fixture(t,'vulnerabilities');f.put('F04/results.bundle.json',{});assert.equal(f.run().status,'FAIL');});
 test('positive Pod cleanup requires an actual NotFound response',t=>{const f=fixture(t,'demo');f.put('runtime/L06/pod-cleaned.log','connection refused');assert.equal(f.run().status,'FAIL');});
 test('runtime attribution rejects a controlled-rule evaluation error',t=>{const f=fixture(t,'demo'),p='runtime/F11/Deployment-CREATE/';const a=f.json(p+'response.log.attribution.json');a.diagnostic='validation failure: internal evaluation error';f.put(p+'response.log.attribution.json',a);f.put(p+'response.log',`resource Deployment/tfm-golden/quotes-node was blocked due to the following policies\ntfm-runtime:\n  ${a.rule}: ${a.diagnostic}\n`);assert.equal(f.run().status,'FAIL');});
+
+test('directed recovery cannot be an unchanged apply',t=>{const f=fixture(t,'demo');f.put('L01-update/F14-admission/recovery-create.json','deployment.apps/quotes-node unchanged');assert.equal(f.run().status,'FAIL');});
+test('directed request must stay outside the workload selector',t=>{const f=fixture(t,'demo'),p='L01-update/F14-admission/admission-request.json',v=f.json(p);v.spec.selector.matchLabels.app='quotes-node';f.put(p,v);assert.equal(f.run().status,'FAIL');});

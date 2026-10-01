@@ -59,7 +59,18 @@ export function audit(suite,directory,staticDirectory,main) {
       check(rule.policy==='tfm-'+expectedRule&&[ruleName,'autogen-'+ruleName].includes(rule.rule),'Wrong admission rule');
       if(id==='F10') check(rule.reason.includes('PROVENANCE_REPOSITORY'),'Missing repository condition');
       if(id==='F14') check(rule.reason.includes('RESULTS_POLICY_VERSION'),'Missing policy version condition');
-      const parsed=admission(folder+'admission.log',rule.policy,ruleName);
+      const operation=json(folder+'admission-operation.json'),request=json(folder+'admission-request.json');
+      const name='admission-'+id.toLowerCase();
+      check(operation.operation==='CREATE'&&operation.kind==='Deployment'&&operation.namespace==='tfm-golden'&&operation.name===name&&operation.image===negative.image,'Not the required fresh admission operation');
+      check(request.metadata.name===name&&request.metadata.namespace==='tfm-golden'&&request.spec.replicas===0&&request.spec.selector.matchLabels.app===name&&request.spec.template.metadata.labels.app===name&&request.spec.template.spec.containers[0].image===negative.image,'Directed request is not isolated on the expected image');
+      check(status(folder+'before-absence.json').observation==='NotFound','Missing initial absence');
+      check(status(folder+'rejected-absence.json').observation==='NotFound','Rejected CREATE did not prove absence');
+      absent(1,readFileSync(join(directory,folder+'rejected-observation.log'),'utf8'),'Deployment',name);
+      status(folder+'negative-cleanup.json');status(folder+'recovery-cleanup.json');
+      check(status(folder+'recovery-after-cleanup-absence.json').observation==='NotFound','Missing recovery cleanup absence');
+      const created=json(folder+'recovery-create.json');
+      check(created.metadata?.name===name&&created.metadata?.uid&&created.spec?.replicas===0&&created.spec.template.spec.containers[0].image===negative.image,'Missing actual recovery CREATE');
+      const parsed=admission(folder+'admission.log',rule.policy,ruleName,name);
       check(parsed===rule.rule+'\t'+rule.reason,'Raw admission differs from structured attribution');
       if(['F09','F10','F13','F14'].includes(id)) {
         check(json(folder+'result.json').legitimateRecovery==='accepted-and-healthy','Recovery acceptance missing');
