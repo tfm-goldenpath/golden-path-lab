@@ -188,9 +188,10 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual({p.name for p in (self.out / 'smoke').iterdir()}, {'run.log','result.json'})
 
     def test_workflow_has_independent_restricted_jobs_and_locked_launcher(self):
-        import yaml
-        workflow = yaml.safe_load((SCRIPTS.parents[1] / '.github/workflows/lane-a-validation.yml').read_text())
-        self.assertEqual(workflow.get('on', workflow.get(True)), {'workflow_dispatch': None})
+        # Reuse the lab's pinned parser; the devcontainer has no PyYAML.
+        parsed = subprocess.run(['conftest', 'parse', str(SCRIPTS.parents[1] / '.github/workflows/lane-a-validation.yml')], capture_output=True, text=True, check=True)
+        workflow = json.loads(parsed.stdout)
+        self.assertEqual(workflow.get('on', workflow.get('true')), {'workflow_dispatch': None})
         self.assertEqual(workflow['permissions'], {'contents': 'read'})
         job = workflow['jobs']['validation']
         self.assertFalse(job['strategy']['fail-fast'])

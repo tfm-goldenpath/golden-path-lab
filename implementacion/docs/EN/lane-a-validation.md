@@ -159,3 +159,34 @@ Assistance: Github Copilot, GPT-6 (session-provided model identity), implementat
 regression tests, automated source review and documentation. Human review and
 final acceptance: **pending**. Tests were added as regressions; no retrospective
 TDD sequence is claimed.
+
+### First ephemeral-runner attempt: 36829165325
+
+[Run 36829165325](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36829165325)
+at merge `6b9e303aebbc2b531a06b2e56625cbab7c1305ed` built the devcontainer
+and passed `doctor` in both jobs. Both then failed the shared unit tests with
+`ModuleNotFoundError: No module named 'yaml'`: the new workflow regression test
+imported PyYAML, which is absent from the pinned environment. Local site packages
+had concealed that undeclared dependency. The finalizer's failure reflects this
+original failure; it is not a second integration fault.
+
+The correction uses the already-pinned Conftest YAML parser and runs the Python
+regressions with `-S` to exclude ambient site packages. It preserves every workflow
+assertion and changes no tool pins, environment installation, permissions or
+scenario expectations. Reproduction without site packages failed before the fix;
+the focused regression passes after it. Human review and a remote rerun remain
+pending; no workflow was dispatched by the assistant.
+
+Both downloaded artifacts verified all 28 manifest hashes each (including the
+separate database index). They record `failedStage: shared-tests`, original status
+2, retention status 0, `scenarioExecution: NOT_EXECUTED` and database
+`NOT_CREATED`. Smoke, BuildKit, image scans, admission and L05 delivery were not
+reached. Evidence and local check logs are retained under
+`evidence/raw/lane-a-run-36829165325/`, ignored by Git. This independently inspected
+attempt confirms the pinned environment starts on the runner; historical local
+version/network failures remain separate observations.
+
+Local correction validation: the full shared suite passes (825 service/unit tests,
+43 Python policy tests, 62 Conftest decisions, Kyverno, offline Cosign and static
+F01/F02). See `shared-tests-fix.log` in the evidence directory above. This does
+not establish that the remaining integration prerequisites or scenarios pass.

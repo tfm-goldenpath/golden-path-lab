@@ -143,3 +143,32 @@ fallos históricos y huecos pendientes. No se afirma aceptación completa ni OID
 Asistencia: Github Copilot, GPT-6 (identidad facilitada por la sesión), implementación,
 regresiones, revisión automatizada del lanzador y documentación. Revisión humana
 y decisión final pendientes. No se reconstruye una historia TDD retrospectiva.
+
+### Primer intento en runner efímero: 36829165325
+
+La [ejecución 36829165325](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36829165325),
+en `6b9e303aebbc2b531a06b2e56625cbab7c1305ed`, construyó el devcontainer y
+pasó `doctor` en ambos jobs. Ambos fallaron después en las pruebas compartidas:
+`ModuleNotFoundError: No module named 'yaml'`. La nueva prueba del workflow
+importaba PyYAML, ausente del entorno fijado; los paquetes locales habían ocultado
+esa dependencia no declarada. El fallo del finalizador refleja el original.
+
+La corrección reutiliza el parser YAML de Conftest ya fijado y ejecuta las
+regresiones Python con `-S`, excluyendo paquetes externos del entorno local.
+Conserva las aserciones, versiones, instalación, permisos y expectativas. La
+reproducción sin esos paquetes falló antes del cambio; la prueba enfocada pasa
+tras corregirlo. Revisión humana y repetición remota pendientes; el asistente no
+ha despachado workflows.
+
+Se verificaron los 28 hashes de cada artefacto descargado, incluido el índice de
+base separado. Ambos registran `failedStage: shared-tests`, estado original 2,
+conservación 0, escenarios `NOT_EXECUTED` y base `NOT_CREATED`. No se alcanzaron
+smoke, BuildKit, escaneos de imágenes, admisión ni entregas L05. Evidencia y logs
+locales: `evidence/raw/lane-a-run-36829165325/`, ignorados por Git. La inspección
+confirma que el entorno fijado arranca en el runner; no elimina los fallos
+históricos locales de versiones o red.
+
+Validación local de la corrección: pasa la suite compartida completa (825 pruebas
+de servicio/unidad, 43 de políticas Python, 62 decisiones Conftest, Kyverno, Cosign
+offline y F01/F02 estáticos). Véase `shared-tests-fix.log` en el directorio anterior.
+No demuestra que pasen los prerrequisitos restantes ni los escenarios de integración.
