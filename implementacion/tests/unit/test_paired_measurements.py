@@ -248,4 +248,44 @@ class FinalFailureRecords(unittest.TestCase):
    self.assertEqual(result.returncode,1);failures=list(dest.glob('failure-*.json'));self.assertEqual(len(failures),1)
    record=read(failures[0]);self.assertEqual(record['classification'],'indeterminate');self.assertNotIn('environment',record)
 
+class ReviewInitialization(unittest.TestCase):
+ def initialize_fixture(self, directory, *, retry=False, dataset='development'):
+  from contextlib import ExitStack
+  from types import SimpleNamespace
+  p=Path(directory);previous=p/'previous';previous.mkdir()
+  protocol=read(ROOT/'measurements/protocol-v1.json')
+  prior=pair();prior.update(dataset=dataset,warmupSource=protocol['warmupSource'],
+   status='INCOMPLETE_OR_UNFAVORABLE' if retry else 'PASS',
+   planIdentity=identity({'source':'a'*40,'plan':{'protocol':protocol,'dataset':'development'}}))
+  write(previous/'pair.json',prior);(previous/'logs').mkdir();(previous/'logs/outage.log').write_text('synthetic HTTP 503')
+  runner.hash_export(previous)
+  args=SimpleNamespace(dataset='development',pair=1,order='RG',expected_source='a'*40,
+   retry_from=str(previous) if retry else None,database_from=None if retry else str(previous),
+   cause='registry-outage',evidence='logs/../logs/outage.log')
+  stack=ExitStack();self.addCleanup(stack.close)
+  stack.enter_context(patch.object(runner,'git',return_value='a'*40))
+  stack.enter_context(patch.object(runner,'validate_source'))
+  stack.enter_context(patch.object(runner.subprocess,'run'))
+  stack.enter_context(patch.object(runner,'pair_path',return_value=p/'new'))
+  stack.enter_context(patch.object(runner,'output'))
+  stack.enter_context(patch.dict(os.environ,{'GITHUB_RUN_ID':'2','GITHUB_ACTOR':'operator'}))
+  restore=stack.enter_context(patch.object(runner,'restore_database',return_value={'trivy.db':'synthetic'}))
+  return args,p,restore
+ def test_retry_retains_normalized_reviewed_evidence_path(self):
+  with tempfile.TemporaryDirectory() as temp:
+   args,p,_=self.initialize_fixture(temp,retry=True);runner.initial(args)
+   review=read(p/'new/pair.json')['externalFailureReview']
+   self.assertEqual(review['evidencePath'],'logs/outage.log')
+   copied=p/'new/prior-attempt'/review['evidencePath']
+   self.assertEqual(hashlib.sha256(copied.read_bytes()).hexdigest(),review['evidenceSha256'])
+ def test_database_from_development_accepted(self):
+  with tempfile.TemporaryDirectory() as temp:
+   args,p,restore=self.initialize_fixture(temp);runner.initial(args)
+   restore.assert_called_once();self.assertEqual(read(p/'new/pair.json')['databaseSourceRun'],'1')
+ def test_database_from_pilot_rejected_before_restore(self):
+  with tempfile.TemporaryDirectory() as temp:
+   args,p,restore=self.initialize_fixture(temp,dataset='pilot')
+   with self.assertRaisesRegex(ValueError,'development'):runner.initial(args)
+   restore.assert_not_called();self.assertFalse((p/'new/pair.json').exists())
+
 if __name__=='__main__':unittest.main()

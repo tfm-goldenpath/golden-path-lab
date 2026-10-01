@@ -106,7 +106,7 @@ does not scan. G performs image → original SBOM → real report → production
 policy. Database acquisition is separate from measured analysis. A full-pair
 retry must restore those same database bytes. Verification caches are distinct
 from build caches and scanner data. Subsequent development and pilot pairs restore it using `database_run`. Pilot
-requires a preserved successful pair at the same source. Analysis refuses to pool
+requires a preserved successful **development** pair at the same source. Analysis refuses to pool
 different database hashes. Do not silently replace a finding or relax the
 HIGH/CRITICAL threshold.
 
@@ -131,7 +131,9 @@ Classifications are:
 
 There is no automatic pair retry. An operator may request one full-pair retry for
 an evidenced registry outage, network outage or runner loss. Provide the original
-run and a retained diagnostic path; the requesting actor is recorded as the
+run and a retained diagnostic path; the normalized path is saved as
+`externalFailureReview.evidencePath`, relative to `prior-attempt/`, alongside its
+content hash; the requesting actor is recorded as the
 reviewer of that cause, not as final human acceptance. The operator must actually
 review the diagnostic; selecting a category alone does not establish causality.
 Order, source, plan, pair and database must match; builders/caches are recreated
@@ -240,5 +242,16 @@ Conftest/Kyverno, offline Cosign and static workflow checks. Later packaging and
 measurement changes were covered by the focused rerun. Logs: ignored
 `evidence/raw/paired-development/{shared-final,focused-final,python-focused,workflow-policy,doctor}.log`.
 
-AI assistance: **Github Copilot / GPT-6** implemented orchestration, records,
+AI assistance: **OpenAI Codex / GPT-6** implemented orchestration, records,
 regressions and documentation. Human review and final acceptance: **pending**.
+
+
+### PR #37 review follow-up
+
+Both code findings were reproduced before correction: retry records omitted the
+reviewed diagnostic path, and database reuse accepted pilot artifacts. The runner
+now retains the normalized path and requires a successful development source.
+Three initialization regressions cover both fixes and permitted development reuse.
+The focused suite passes; evidence is in `evidence/raw/pr37-review/` (outside Git).
+GitHub Copilot supplied the review (model not disclosed);
+implemented the corrections. Human review and real smoke execution remain pending.

@@ -246,7 +246,7 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [x] Run shared checks with the existing `.tools/bin` on PATH: environment tests, 823 service/unit tests, 43 Python policy tests, real Conftest/Kyverno checks, offline Cosign checks and F01/F02 static trials pass. Initial shared attempt without that PATH failed five evaluator tests; both logs are preserved in `evidence/raw/lane-a-development/`. Final focused runner/audit regressions also pass.
 - [x] Complete both functional suites in the pinned environment: independently reviewed lane A run `36881119588` passes smoke, BuildKit, real image scans, admission and both L05 deliveries. The original increment was prerequisite-blocked; preserve its historical local failures. Human acceptance remains separate below.
 - [x] Validate the merged manual workflow on ephemeral runners in `36881119588`: demo and vulnerabilities both PASS at `b8eb603`. The assistant reviewed this user-supplied run without dispatching another. Lane A does not establish hosted OIDC/GHCR mutation coverage.
-- [ ] Human launcher/source review and final acceptance. Assistance: OpenAI Codex, Github Copilot / GPT-6; see the linked runbook. No campaign measurements or change to the twenty-scenario denominator.
+- [ ] Human launcher/source review and final acceptance. Assistance: GitHub Copilot / GPT-6; see the linked runbook. No campaign measurements or change to the twenty-scenario denominator.
 
 ### Lane A first runner attempt and parser regression
 
@@ -291,3 +291,5 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [ ] Authorize and execute development RG and GR smoke pairs on merged main; audit native provenance, independent images, cache reuse/rebuild, actual fresh CREATE, rollout/HTTP, preserved DB and post-run consumption. No paired delivery has run in this increment.
 - [ ] Review smoke evidence and freeze source/data conditions before four pilot pairs. Ten campaign pairs remain provisional; no campaign runner, manual-task calibration, releases or thesis changes.
 - [ ] Human review and acceptance. AI assistance: OpenAI Codex / GPT-6. Supplied lane A success `36885654089` at `5ae6f84a01407789933bd36bcdb05250a6d6c4f5` supports the requested next implementation; its package was not independently reaudited here. Historical lane A records and local blockers remain unchanged.
+
+- [x] Address PR #37 review: preserve the normalized retry diagnostic reference and require a successful development artifact for database reuse. Reproduce both defects before correction; add three initialization regressions.Focused evidence: `evidence/raw/pr37-review/`; human acceptance and live smoke remain pending.

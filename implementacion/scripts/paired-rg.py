@@ -112,6 +112,7 @@ def initial(args):
         evidence=(prev/args.evidence).resolve()
         if not evidence.is_relative_to(prev) or not evidence.is_file():raise ValueError('Prior evidence missing')
         ticket=retry_ticket(prior,args.cause,evidence.read_text(),os.environ['GITHUB_ACTOR'])
+        ticket['evidencePath']=evidence.relative_to(prev).as_posix()
         if any(value[k]!=ticket[k] for k in ('order','source','planIdentity')):raise ValueError('Retry changed order/source/plan')
         if value['warmupSource']!=prior['warmupSource'] or value['pair']!=prior['pair']:raise ValueError('Retry changed pair/cache source')
         value.update(attempt=2,retryOf=prior['runId'],externalFailureReview=ticket)
@@ -121,7 +122,7 @@ def initial(args):
         value['retryDatabase']=str(db)
     elif args.database_from:
         previous=Path(args.database_from).resolve();verify_export(previous);prior=read(previous/'pair.json')
-        if prior['source']!=head or prior['status']!='PASS':raise ValueError('Database source must be a successful pair at this revision')
+        if prior.get('dataset')!='development' or prior['source']!=head or prior['status']!='PASS':raise ValueError('Database source must be a successful development pair at this revision')
         value['frozenDatabase']=restore_database(previous,p/'retry-db')
         value['retryDatabase']=str(p/'retry-db');value['databaseSourceRun']=prior['runId']
     write(p/'pair.json',value);write(p/'protocol.json',protocol);write(p/'plan.json',plan)

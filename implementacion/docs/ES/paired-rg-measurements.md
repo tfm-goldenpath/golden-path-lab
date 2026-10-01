@@ -74,7 +74,7 @@ Una base Trivy congelada en el primer par de desarrollo se verifica antes/despu�
 conserva en archivo limitado a DB/metadata/identidad/hashes. R registra identidad
 sin escanear. G ejecuta imagen → SBOM original → informe real → política. Un
 reintento reutiliza exactamente la misma base. Los pares siguientes restauran esa base con `database_run`; piloto requiere
-un par exitoso conservado de la misma fuente. El análisis rechaza bases
+un par exitoso de **desarrollo**, conservado de la misma fuente. El análisis rechaza bases
 diferentes; no sustituya hallazgos ni relaje HIGH/CRITICAL. Caché de build, datos de vulnerabilidades y verificación son
 condiciones distintas.
 
@@ -96,7 +96,8 @@ en `paired_measurements.py`. No se trasladan políticas a YAML.
 
 No hay reintento automático. Como máximo uno de par completo por fallo externo
 revisado: registro, red o pérdida de runner. Deben proporcionarse run original y
-ruta del diagnóstico retenido. Se registra al solicitante como revisor de la
+ruta del diagnóstico retenido. Se conserva la ruta normalizada en
+`externalFailureReview.evidencePath`, relativa a `prior-attempt/`, junto al hash. Se registra al solicitante como revisor de la
 causa, no como aceptación humana final; debe revisar realmente su contenido.
 Mismos orden/fuente/plan/par/base y receta de cachés. No reintentar por lentitud,
 resultado desfavorable ni con “Re-run jobs”. Sin base original conservada no es
@@ -180,3 +181,14 @@ en `evidence/raw/paired-development/`.
 
 Asistencia: **OpenAI Codex / GPT-6**, implementación, pruebas y documentación.
 Revisión humana y decisión final: **pendientes**.
+
+
+### Seguimiento de revisión del PR #37
+
+Se reprodujeron ambos fallos antes de corregirlos: faltaba la ruta del diagnóstico
+revisado y se aceptaban bases de artefactos piloto. Ahora se conserva la ruta
+normalizada y se exige un origen de desarrollo exitoso. Tres regresiones de
+inicialización cubren ambos cambios y la reutilización válida de desarrollo.
+La suite enfocada pasa; evidencia fuera de Git en `evidence/raw/pr37-review/`.
+GitHub Copilot aportó la revisión (modelo no divulgado);
+implementó las correcciones. Revisión humana y smoke real siguen pendientes.
