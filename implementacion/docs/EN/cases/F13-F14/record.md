@@ -35,3 +35,5 @@ additional catalogue scenarios or campaign measurements. Full VSA conformance is
 outside scope. Local registry/admission/recovery and hosted negatives initially
 remain **NOT_EXECUTED**. PR #26 preserved blocked F09/F10/L05 prerequisites; it did
 not establish their successful execution.
+
+After run 36830599263, the directed admission operation is explicitly a fresh isolated Deployment CREATE, retaining the same image, protected namespace, restricted actor and policy/trust. Zero replicas prevent execution on unexpected acceptance; NotFound and owned cleanup are required. The [operation matrix](../../lane-a-validation.md#run-36830599263-f14-unchanged-request) separates this from the normal rollout/HTTP counterpart. Historical F14 unchanged-apply failure remains unfavorable; corrected live validation and human acceptance are pending.

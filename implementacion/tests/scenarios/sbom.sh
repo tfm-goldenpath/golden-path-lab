@@ -6,13 +6,17 @@ scenario_sbom_fault() (
   local scenario=$1 profile=${2:-before-results} folder prefix recovery_required=0
   [[ "$scenario" == F05 || "$scenario" == F06 ]] || fail 'Invalid SBOM scenario.'
   folder=$scenario-CI; prefix=CI-$folder
-  local gate_status=0 admission_status=0 registry_ip registry_owner rejection reason rule
+  local gate_status=0 admission_status=0 registry_ip registry_owner rejection reason rule admission_name
   [[ "$profile" == before-results || "$profile" == authorized ]] || fail 'Invalid SBOM scenario profile.'
   if [[ "$profile" == authorized ]]; then folder=$scenario-admission; prefix=CI-$folder; fi
+  admission_name="admission-${scenario,,}"
   mkdir "$state_dir/$folder"
   scenario_sbom_recover() {
-    local original=$? restoration=0
+    local original=$? restoration=0 cleanup=0
     trap - EXIT INT TERM
+    if [[ "$recovery_required" == 1 && "$profile" == authorized ]]; then
+      workload_admission_cleanup "$state_dir/$folder" negative || cleanup=$?
+    fi
     if [[ "$recovery_required" == 1 ]]; then
       node scripts/sbom-scenario-evidence.mjs restore "$state_dir" "$image" "$scenario" "$profile" > "$state_dir/$folder/restore.log" 2>&1 || restoration=$?
       if [[ "$restoration" == 0 ]]; then
@@ -21,6 +25,13 @@ scenario_sbom_fault() (
       if [[ "$restoration" == 0 ]]; then
         node scripts/ci-verification-gate.mjs "$state_dir" "$prefix-restored" "$profile" >> "$state_dir/$folder/restore.log" 2>&1 || restoration=$?
       fi
+    fi
+    [[ "$restoration" != 0 ]] || restoration=$cleanup
+    if [[ "$recovery_required" == 1 && "$restoration" == 0 && "$profile" == authorized ]]; then
+      workload_admission_recovery "$state_dir/$folder" || restoration=$?
+    fi
+    if [[ "$recovery_required" == 1 && "$profile" == authorized ]]; then
+      workload_admission_cleanup "$state_dir/$folder" recovery || { cleanup=$?; [[ "$restoration" != 0 ]] || restoration=$cleanup; }
     fi
     jq -n --argjson original "$original" --argjson restoration "$restoration" --argjson attempted "$recovery_required" \
       '{originalStatus:$original,restorationStatus:$restoration,restorationAttempted:($attempted==1)}' > "$state_dir/$folder/recovery.json" || { [[ "$original" != 0 ]] || original=1; }
@@ -44,7 +55,8 @@ scenario_sbom_fault() (
   if [[ "$profile" == authorized ]]; then
     k -n kyverno get deployments -o json > "$state_dir/$folder/controller.json"
     jq -e '[.items[] | select(.metadata.name == "kyverno-admission-controller") | .spec.template.spec.containers[] | select(.name == "kyverno") | .args | index("--imageVerifyCacheEnabled=false")] | length == 1 and .[0] != null' "$state_dir/$folder/controller.json" >/dev/null
-    actor tfm-golden apply --dry-run=server -f "$state_dir/tfm-golden.json" > "$state_dir/$folder/positive-before.log" 2>&1
+    workload_admission_prepare "$state_dir/$folder" "$scenario"
+    actor tfm-golden create --dry-run=server -f "$state_dir/$folder/admission-request.json" > "$state_dir/$folder/positive-before.log" 2>&1
   fi
   recovery_required=1
   node scripts/sbom-scenario-evidence.mjs alter "$state_dir" "$image" "$scenario" "$profile" > "$state_dir/$folder/alter.log" 2>&1
@@ -56,8 +68,9 @@ scenario_sbom_fault() (
   fi
   jq -n --argjson status "$gate_status" --arg profile "$profile" '{exitStatus:$status,observation:(if $status==0 then "UNEXPECTED_ACCEPTANCE" else "REJECTION_REQUIRES_ATTRIBUTION" end),phase:$profile}' > "$state_dir/$folder/attempt.json"
   if [[ "$profile" == authorized ]]; then
-    if actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/$folder/admission.log" 2>&1; then admission_status=0; else admission_status=$?; fi
+    if actor tfm-golden create -f "$state_dir/$folder/admission-request.json" -o json > "$state_dir/$folder/admission.log" 2>&1; then admission_status=0; else admission_status=$?; fi
     jq -n --argjson status "$admission_status" '{exitStatus:$status,observation:(if $status==0 then "UNEXPECTED_ADMISSION" else "REJECTION_REQUIRES_ATTRIBUTION" end)}' > "$state_dir/$folder/admission.json"
+    if [[ "$admission_status" != 0 ]]; then workload_admission_absent "$state_dir/$folder" rejected; fi
   fi
   node scripts/sbom-scenario-evidence.mjs snapshot "$state_dir" "$image" "$scenario" "$profile" after-denial
   [[ ( "$scenario" == F05 && "$gate_status" == 42 ) || ( "$scenario" == F06 && "$gate_status" == 1 ) ]] || fail 'SBOM scenario did not observe the expected verifier rejection.'
@@ -68,7 +81,7 @@ scenario_sbom_fault() (
     [[ ! -e "$state_dir/results.bundle.json" && ! -e "$state_dir/results-predicate.json" && ! -e "$state_dir/L01-update.log" ]] || fail 'SBOM scenario reached authorization/deployment before recovery.'
   else
     [[ "$admission_status" != 0 ]] || fail 'SBOM scenario unexpectedly admitted the SBOM fault.'
-    rejection=$(scenario_admission_single_reason "$state_dir/$folder/admission.log" tfm-sbom require-sbom) || fail 'SBOM scenario has unrelated or additional admission rejection.'
+    rejection=$(scenario_admission_single_reason "$state_dir/$folder/admission.log" tfm-sbom require-sbom "$admission_name") || fail 'SBOM scenario has unrelated or additional admission rejection.'
     rule="${rejection%%$'\t'*}"; reason="${rejection#*$'\t'}"
     [[ "$reason" == 'image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: sigstore bundle verification failed: no matching signatures found' ]] || fail 'SBOM scenario admission diagnostic is unclassified; barrier remains pending.'
     jq -n --arg rule "$rule" --arg reason "$reason" '{policy:"tfm-sbom",rule:$rule,reason:$reason,support:"attribution.json and positive-before.log; L04 pending"}' > "$state_dir/$folder/admission-attribution.json"

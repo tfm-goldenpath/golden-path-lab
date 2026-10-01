@@ -152,3 +152,5 @@ After local validation, the contributor authorized committing and opening the PR
 and identified **GitHub Copilot (GPT-6)** as the main AI development tool. This is
 contributor-reported attribution; the Codex (GPT-6) session contribution above is
 retained. Human review and final acceptance remain pending.
+
+Directed admission now uses the shared isolated zero-replica Deployment CREATE and a fresh positive CREATE after evidence restoration. The normal L04 rollout remains separate; unchanged applies do not count. See the [lane A correction](../../lane-a-validation.md#run-36830599263-f14-unchanged-request). Corrected live validation remains pending.

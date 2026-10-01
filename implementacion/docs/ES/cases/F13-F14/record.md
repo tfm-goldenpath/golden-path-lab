@@ -31,3 +31,5 @@ separados como F13Preissuance. No hay nuevos escenarios académicos ni medicione
 No se afirma conformidad VSA. Integración local real y negativos hosted:
 **NOT_EXECUTED**. PR #26 registró prerrequisitos bloqueados de F09/F10/L05, no su
 aceptación. Véase el [procedimiento](runbook.md).
+
+Tras la ejecución 36830599263, la admisión dirigida se define como CREATE de Deployment nuevo y aislado, conservando imagen, namespace protegido, actor y política/confianza. Cero réplicas evitan ejecución si hay aceptación inesperada; se exige NotFound y limpieza propia. La [matriz](../../lane-a-validation.md) lo separa del rollout/HTTP legítimo. El fallo histórico F14 sin cambios sigue desfavorable; validación corregida y aceptación humana pendientes.

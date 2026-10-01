@@ -30,13 +30,18 @@ k() {
     echo '{"items":[{"metadata":{"name":"kyverno-admission-controller"},"spec":{"template":{"spec":{"containers":[{"name":"kyverno","args":["--imageVerifyCacheEnabled=false"]}]}}}}]}'
   else echo '{"items":[]}'; fi
 }
+workload_admission_absent() { event rejected-absence; [[ "$GP_FAIL" != rejected-absence ]]; }
+workload_admission_prepare() { event create-prepared; [[ "$GP_FAIL" != create-prepare ]]; }
+workload_admission_cleanup() { event "create-cleanup-$2"; [[ "$GP_FAIL" != create-cleanup ]]; }
+workload_admission_recovery() { event create-recovery; [[ "$GP_FAIL" != create-recovery ]]; }
 actor() {
   if [[ "$*" == *dry-run* ]]; then event positive; [[ "$GP_FAIL" != positive ]]; return; fi
+  if [[ "$2" != create ]]; then echo "deployment.apps/quotes-node unchanged"; return 0; fi
   event admission
   if [[ "$GP_FAIL" == admitted ]]; then return 0; fi
   if [[ "$GP_FAIL" == transport ]]; then echo 'registry connection refused'; return 1; fi
   echo 'Error from server: admission webhook "validate.kyverno.svc-fail" denied the request:'
-  echo 'resource Deployment/tfm-golden/quotes-node was blocked due to the following policies'
+  echo "resource Deployment/tfm-golden/$admission_name was blocked due to the following policies"
   echo 'tfm-sbom:'
   echo '  autogen-require-sbom: image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: sigstore bundle verification failed: no matching signatures found'
   if [[ "$GP_FAIL" == additional-policy ]]; then echo 'tfm-other:'; echo '  other-rule: forbidden'; fi

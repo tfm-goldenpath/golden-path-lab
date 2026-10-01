@@ -31,14 +31,19 @@ k() {
     echo '{"items":[{"metadata":{"name":"kyverno-admission-controller"},"spec":{"template":{"spec":{"containers":[{"name":"kyverno","args":["--imageVerifyCacheEnabled=false"]}]}}}}]}'
   else echo '{"items":[]}'; fi
 }
+workload_admission_absent() { event rejected-absence; [[ "$GP_FAIL" != rejected-absence ]]; }
+workload_admission_prepare() { event create-prepared; [[ "$GP_FAIL" != create-prepare ]]; }
+workload_admission_cleanup() { event "create-cleanup-$2"; [[ "$GP_FAIL" != create-cleanup ]]; }
+workload_admission_recovery() { event create-recovery; [[ "$GP_FAIL" != create-recovery ]]; }
 actor() {
   if [[ "$*" == *dry-run* ]]; then event positive; [[ "$GP_FAIL" != positive ]]; return; fi
   if [[ -f "$state_dir/$folder/restored.json" ]]; then event recovery-admission; [[ "$GP_FAIL" != recovery-admission ]]; return; fi
+  if [[ "$2" != create ]]; then echo "deployment.apps/quotes-node unchanged"; return 0; fi
   event admission
   if [[ "$GP_FAIL" == admitted ]]; then return 0; fi
   if [[ "$GP_FAIL" == transport ]]; then echo 'registry connection refused'; return 1; fi
   echo 'Error from server: admission webhook "validate.kyverno.svc-fail" denied the request:'
-  echo 'resource Deployment/tfm-golden/quotes-node was blocked due to the following policies'
+  echo "resource Deployment/tfm-golden/$admission_name was blocked due to the following policies"
   echo 'tfm-provenance:'
   if [[ "$GP_CASE" == F10 && "$GP_FAIL" != wrong-reason ]]; then
     echo "  autogen-require-provenance: image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: .attestations[0].attestors[0].entries[0].keys: attestation checks failed for $image and predicate https://slsa.dev/provenance/v1: PROVENANCE_REPOSITORY"

@@ -4,13 +4,17 @@
 scenario_f08() (
   set -Eeuo pipefail
   local profile=${1:-before-results} folder=F08-CI prefix=CI-F08 recovery_required=0
-  local gate_status=0 admission_status=0 registry_ip registry_owner rejection reason rule
+  local gate_status=0 admission_status=0 registry_ip registry_owner rejection reason rule admission_name
   [[ "$profile" == before-results || "$profile" == authorized ]] || fail 'Invalid F08 profile.'
   if [[ "$profile" == authorized ]]; then folder=F08-admission; prefix=CI-F08-admission; fi
+  admission_name=admission-f08
   mkdir "$state_dir/$folder"
   scenario_f08_recover() {
-    local original=$? restoration=0
+    local original=$? restoration=0 cleanup=0
     trap - EXIT INT TERM
+    if [[ "$recovery_required" == 1 && "$profile" == authorized ]]; then
+      workload_admission_cleanup "$state_dir/$folder" negative || cleanup=$?
+    fi
     if [[ "$recovery_required" == 1 ]]; then
       node scripts/f08-signature-evidence.mjs restore "$state_dir" "$image" - "$profile" > "$state_dir/$folder/restore.log" 2>&1 || restoration=$?
       if [[ "$restoration" == 0 ]]; then
@@ -19,6 +23,13 @@ scenario_f08() (
       if [[ "$restoration" == 0 ]]; then
         node scripts/ci-verification-gate.mjs "$state_dir" "$prefix-restored" "$profile" >> "$state_dir/$folder/restore.log" 2>&1 || restoration=$?
       fi
+    fi
+    [[ "$restoration" != 0 ]] || restoration=$cleanup
+    if [[ "$recovery_required" == 1 && "$restoration" == 0 && "$profile" == authorized ]]; then
+      workload_admission_recovery "$state_dir/$folder" || restoration=$?
+    fi
+    if [[ "$recovery_required" == 1 && "$profile" == authorized ]]; then
+      workload_admission_cleanup "$state_dir/$folder" recovery || { cleanup=$?; [[ "$restoration" != 0 ]] || restoration=$cleanup; }
     fi
     jq -n --argjson original "$original" --argjson restoration "$restoration" --argjson attempted "$recovery_required" \
       '{originalStatus:$original,restorationStatus:$restoration,restorationAttempted:($attempted==1)}' > "$state_dir/$folder/recovery.json" || { [[ "$original" != 0 ]] || original=1; }
@@ -42,7 +53,8 @@ scenario_f08() (
   if [[ "$profile" == authorized ]]; then
     k -n kyverno get deployments -o json > "$state_dir/$folder/controller.json"
     jq -e '[.items[] | select(.metadata.name == "kyverno-admission-controller") | .spec.template.spec.containers[] | select(.name == "kyverno") | .args | index("--imageVerifyCacheEnabled=false")] | length == 1 and .[0] != null' "$state_dir/$folder/controller.json" >/dev/null
-    actor tfm-golden apply --dry-run=server -f "$state_dir/tfm-golden.json" > "$state_dir/$folder/positive-before.log" 2>&1
+    workload_admission_prepare "$state_dir/$folder" F08
+    actor tfm-golden create --dry-run=server -f "$state_dir/$folder/admission-request.json" > "$state_dir/$folder/positive-before.log" 2>&1
   fi
   recovery_required=1
   node scripts/f08-signature-evidence.mjs alter "$state_dir" "$image" - "$profile" > "$state_dir/$folder/alter.log" 2>&1
@@ -54,8 +66,9 @@ scenario_f08() (
   fi
   jq -n --argjson status "$gate_status" --arg profile "$profile" '{exitStatus:$status,observation:(if $status==0 then "UNEXPECTED_ACCEPTANCE" else "REJECTION_REQUIRES_ATTRIBUTION" end),phase:$profile}' > "$state_dir/$folder/attempt.json"
   if [[ "$profile" == authorized ]]; then
-    if actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/$folder/admission.log" 2>&1; then admission_status=0; else admission_status=$?; fi
+    if actor tfm-golden create -f "$state_dir/$folder/admission-request.json" -o json > "$state_dir/$folder/admission.log" 2>&1; then admission_status=0; else admission_status=$?; fi
     jq -n --argjson status "$admission_status" '{exitStatus:$status,observation:(if $status==0 then "UNEXPECTED_ADMISSION" else "REJECTION_REQUIRES_ATTRIBUTION" end)}' > "$state_dir/$folder/admission.json"
+    if [[ "$admission_status" != 0 ]]; then workload_admission_absent "$state_dir/$folder" rejected; fi
   fi
   node scripts/f08-signature-evidence.mjs snapshot "$state_dir" "$image" after-denial "$profile"
   [[ "$gate_status" == 1 ]] || fail 'F08 did not observe the expected verifier rejection.'
@@ -66,7 +79,7 @@ scenario_f08() (
     [[ ! -e "$state_dir/results.bundle.json" && ! -e "$state_dir/results-predicate.json" && ! -e "$state_dir/L01-update.log" ]] || fail 'F08 reached authorization/deployment before recovery.'
   else
     [[ "$admission_status" != 0 ]] || fail 'F08 unexpectedly admitted the altered signature.'
-    rejection=$(scenario_admission_single_reason "$state_dir/$folder/admission.log" tfm-signature require-image-signature) || fail 'F08 has unrelated or additional admission rejection.'
+    rejection=$(scenario_admission_single_reason "$state_dir/$folder/admission.log" tfm-signature require-image-signature "$admission_name") || fail 'F08 has unrelated or additional admission rejection.'
     rule="${rejection%%$'\t'*}"; reason="${rejection#*$'\t'}"
     [[ "$reason" == 'image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: sigstore bundle verification failed: no matching signatures found' ]] || fail 'F08 admission diagnostic is unclassified; barrier remains pending.'
     jq -n --arg rule "$rule" --arg reason "$reason" '{policy:"tfm-signature",rule:$rule,reason:$reason,support:"attribution.json and positive-before.log; L04 pending"}' > "$state_dir/$folder/admission-attribution.json"

@@ -190,3 +190,78 @@ Local correction validation: the full shared suite passes (825 service/unit test
 43 Python policy tests, 62 Conftest decisions, Kyverno, offline Cosign and static
 F01/F02). See `shared-tests-fix.log` in the evidence directory above. This does
 not establish that the remaining integration prerequisites or scenarios pass.
+
+### Run 36830599263: F14 unchanged request
+
+[Run 36830599263](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36830599263)
+at `5255c7fbf43d5d158071396e9f5dd9e5c46e23fc` passed doctor, shared tests,
+smoke and the delivery-configured BuildKit probe in both suites. The vulnerability
+suite completed its required-results audit, including real F03/F04/L02 image
+analysis, F03 remediation/functionality, the MEDIUM boundary and repaired/L02
+admission, rollout and HTTP. This is lane A, not hosted OIDC evidence.
+
+The demo stopped at postissuance F14: the fresh CI gate attributed
+`RESULTS_POLICY_VERSION_MISMATCH`, but `admission.log` contained
+`deployment.apps/quotes-node unchanged` with exit 0. Postissuance F13 had already
+rejected and restored successfully. F14 remains an unfavorable observation; its
+successful restoration does not turn it into PASS. Later directed F05/F06/F08/
+F09/F10 and L05 were not reached. Initial F07 and runtime F11/F12/L06 completion
+records and early F05–F10 records are present; the overall demo did not pass.
+
+A no-op apply does not establish a fresh server admission. Moreover,
+[Kyverno 1.19.1's verifier](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go)
+can skip unchanged images previously verified on the old resource, separately
+from its registry cache. A metadata-only UPDATE would not fix this test boundary.
+
+The correction uses shared `workload_admission_*` operations for directed
+F05/F06/F08/F09/F10/F13/F14 trials:
+
+| Step | Operation and required evidence |
+| --- | --- |
+| Prepare | Clone the candidate into `admission-fxx`, in `tfm-golden`, with zero replicas and an isolated selector; retain the image and container configuration. Require actual NotFound before use. |
+| Positive before | Restricted-actor server dry-run CREATE with legitimate evidence. |
+| Negative | Restricted-actor actual CREATE of the identical request after evidence mutation; require the existing exact policy/rule diagnostic and actual NotFound after rejection. |
+| Recovery | Restore original registry evidence and verify it; perform an actual CREATE of the same isolated request, retain the API object, then delete only the run-owned object and prove absence. Existing same-digest workload rollout/HTTP checks remain separate observations. |
+
+The zero-replica object cannot start Pods even if unexpectedly accepted and cannot
+enter the quotes-node selector. Capture that unfavorable object before owned
+cleanup and retain failure. Cleanup errors stop completion. Policy/trust/cache
+settings and actor privileges do not change. The audit requires CREATE evidence,
+including a returned UID and cleanup, rather than an `unchanged` response. These
+checks do not claim UPDATE revalidation of changed registry evidence, add catalogue
+IDs or replace L06's actual template UPDATE.
+
+Artifact inspection verified 74 outer hashes and 1,081 internal package hashes for
+the demo; 75 outer and 348 internal hashes for vulnerabilities. Each suite's
+separate database archive passed its outer and internal checksums and exact file
+allowlist. Raw records were inspected; this inspection did not independently
+reauthenticate every retained signed bundle. Evidence, regression logs and the PR
+description are in `evidence/raw/lane-a-run-36830599263/`, ignored by Git.
+
+The correction still needs a remote demo rerun. Local doctor again stops at
+kubectl v1.37.0 versus v1.35.8; no local live retry or assistant workflow dispatch
+was performed. Historical blockers remain observations of their original hosts.
+Assistance: OpenAI Codex / GPT-6. Human review and final acceptance remain pending.
+
+Final correction checks pass: 842 service/unit tests, 43 Python policy tests,
+62 Conftest decisions, Kyverno, offline Cosign and static F01/F02. The earlier
+full run exposed a stale F06 harness, now corrected; preserve both logs.
+`shared-tests-final.log` records the passing shared suite, not a live rerun.
+
+PR #34 review follow-up: GitHub Copilot (model not disclosed) identified missing
+raw initial-absence and positive server dry-run checks in the evidence audit.
+OpenAI Codex / GPT-6 added both checks and 11 regressions for missing, incorrect
+or failed responses. All 30 focused audit tests pass; the 11 new cases failed
+before the fix. Logs: `copilot-red.log` and `copilot-green.log` in the evidence
+directory above. These are synthetic unit checks, not live scenario execution.
+Human review and final acceptance remain pending.
+
+The additional Copilot warning supplied by the contributor concerns recovery
+CREATE evidence. The audit now requires an `apps/v1` Deployment in `tfm-golden`,
+the expected name and a nonempty string UID, the request's ownership label,
+zero replicas, isolated selector and Pod labels, and the expected image.
+OpenAI Codex / GPT-6 added 15 synthetic regression cases: 11 reproduced missing
+checks and four confirmed existing rejection checks before the fix.
+Logs: `copilot-recovery-red.log` and `copilot-recovery-green.log` in the same
+ignored evidence directory. Human review and live validation remain pending.
+All 45 focused audit tests pass after this follow-up.

@@ -172,3 +172,75 @@ Validación local de la corrección: pasa la suite compartida completa (825 prue
 de servicio/unidad, 43 de políticas Python, 62 decisiones Conftest, Kyverno, Cosign
 offline y F01/F02 estáticos). Véase `shared-tests-fix.log` en el directorio anterior.
 No demuestra que pasen los prerrequisitos restantes ni los escenarios de integración.
+
+### Ejecución 36830599263: petición F14 sin cambios
+
+La [ejecución 36830599263](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36830599263),
+en `5255c7fbf43d5d158071396e9f5dd9e5c46e23fc`, pasó doctor, pruebas compartidas,
+smoke y la prueba BuildKit en ambas suites. La suite de vulnerabilidades completó
+su auditoría: imágenes reales F03/F04/L02, corrección y compatibilidad F03, límite
+MEDIUM y admisión, rollout y HTTP de F03 reparada/L02. Es carril A, no evidencia OIDC.
+
+La demo se detuvo en F14 después de emitir evidencia. CI atribuyó
+`RESULTS_POLICY_VERSION_MISMATCH`, pero admisión devolvió
+`deployment.apps/quotes-node unchanged` con código 0. F13 posterior a emisión ya
+había rechazado y recuperado correctamente. F14 sigue siendo desfavorable; restaurar
+correctamente no lo convierte en PASS. No se alcanzaron la admisión dirigida
+posterior F05/F06/F08/F09/F10 ni L05. Hay registros de finalización F07 inicial,
+runtime F11/F12/L06 y controles tempranos F05–F10; la demo completa no pasó.
+
+Un apply sin cambios no demuestra una petición nueva al servidor. Además, el
+[verificador Kyverno 1.19.1](https://github.com/kyverno/kyverno/blob/v1.19.1/pkg/engine/internal/imageverifier.go)
+puede omitir imágenes sin cambios ya verificadas en el recurso anterior, incluso
+sin caché de registro. Un UPDATE solo de metadatos no corrige esa barrera.
+
+La corrección reutiliza `workload_admission_*` en F05/F06/F08/F09/F10/F13/F14:
+
+| Paso | Operación y evidencia requerida |
+| --- | --- |
+| Preparación | Clonar el candidato como `admission-fxx` en `tfm-golden`, cero réplicas y selector aislado; misma imagen y configuración de contenedores. Exigir NotFound real inicial. |
+| Control positivo | CREATE con dry-run de servidor mediante actor restringido y evidencia legítima. |
+| Negativo | CREATE real de la misma petición tras alterar evidencia; diagnóstico exacto existente y NotFound real después del rechazo. |
+| Recuperación | Restaurar y verificar evidencia original; CREATE real idéntico, conservar objeto devuelto, eliminar solo el objeto propio y demostrar ausencia. Se mantienen las comprobaciones separadas de rollout/HTTP del mismo digest. |
+
+El objeto con cero réplicas no inicia Pods si se acepta inesperadamente y no entra
+en el selector de quotes-node. Se conserva ese objeto desfavorable antes de la
+limpieza; los fallos de limpieza impiden completar. No cambian política, confianza,
+caché ni privilegios. La auditoría exige objeto CREATE con UID y limpieza, no una
+respuesta `unchanged`. No se afirma reevaluación de evidencia modificada en UPDATE,
+no se añaden IDs y se conserva el UPDATE real de plantilla de L06.
+
+Inspección de artefactos: 74 hashes exteriores y 1.081 internos de la demo; 75 y
+348 respectivamente para vulnerabilidades. Ambas bases separadas verificaron
+hashes exteriores/interiores y lista exacta de archivos. Se inspeccionaron registros
+originales, sin reautenticar independientemente todos los bundles firmados.
+Evidencia, pruebas y descripción PR: `evidence/raw/lane-a-run-36830599263/`, ignorado
+por Git. Falta repetir la demo remota con la corrección. Doctor local continúa
+rechazando kubectl v1.37.0 frente a v1.35.8; no se lanzó integración local ni un
+workflow por el asistente. Se conservan los fallos históricos de sus entornos.
+Asistencia: OpenAI Codex / GPT-6; revisión humana y aceptación final pendientes.
+
+Pruebas finales: pasan 842 pruebas de servicio/unidad, 43 de políticas Python,
+62 decisiones Conftest, Kyverno, Cosign offline y F01/F02 estáticos. Se conserva
+el fallo intermedio del harness F06, ya corregido. `shared-tests-final.log`
+registra la suite compartida aprobada, no una repetición de integración real.
+
+Seguimiento de la revisión del PR #34: GitHub Copilot (modelo no indicado)
+detectó que la auditoría no comprobaba las respuestas originales de ausencia
+inicial y del CREATE positivo con simulación en servidor. OpenAI Codex / GPT-6
+añadió ambas comprobaciones y 11 regresiones para respuestas ausentes,
+incorrectas o fallidas. Pasan las 30 pruebas de auditoría; los 11 casos nuevos
+fallaban antes de la corrección. Registros: `copilot-red.log` y
+`copilot-green.log` en el directorio de evidencia anterior. Son pruebas unitarias
+sintéticas, no ejecuciones reales. Revisión humana y aceptación final pendientes.
+
+La advertencia adicional de Copilot facilitada por el contribuidor afecta a la
+evidencia del CREATE de recuperación. La auditoría exige un Deployment
+`apps/v1` en `tfm-golden`, el nombre esperado y un UID de texto no vacío, la
+etiqueta de propiedad de la petición, cero réplicas, selector y etiquetas de
+Pods aislados, y la imagen esperada. OpenAI Codex / GPT-6 añadió 15 casos
+sintéticos: 11 reprodujeron comprobaciones ausentes y cuatro confirmaron
+rechazos existentes antes del cambio. Registros: `copilot-recovery-red.log` y
+`copilot-recovery-green.log` en el mismo directorio ignorado de evidencia.
+Revisión humana y validación real pendientes.
+Pasan las 45 pruebas de auditoría tras esta corrección.

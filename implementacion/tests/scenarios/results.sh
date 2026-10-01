@@ -10,13 +10,17 @@ scenario_results_fault() (
   set -Eeuo pipefail
   local scenario=$1 profile=authorized folder prefix recovery_required=0
   [[ "$scenario" == F13 || "$scenario" == F14 ]] || fail 'Invalid results scenario.'
-  local gate_status=0 admission_status=0 registry_ip registry_owner rejection reason rule
+  local gate_status=0 admission_status=0 registry_ip registry_owner rejection reason rule admission_name
   [[ "${2:-authorized}" == authorized ]] || fail 'Results trials require the authorized phase.'
   folder=$scenario-admission; prefix=CI-$folder
+  admission_name="admission-${scenario,,}"
   mkdir "$state_dir/$folder"
   scenario_results_recover() {
-    local original=$? restoration=0 response
+    local original=$? restoration=0 cleanup=0 response
     trap - EXIT INT TERM
+    if [[ "$recovery_required" == 1 && "$profile" == authorized ]]; then
+      workload_admission_cleanup "$state_dir/$folder" negative || cleanup=$?
+    fi
     if [[ "$recovery_required" == 1 ]]; then
       node tests/scenarios/results-evidence.mjs restore "$state_dir" "$image" "$scenario" "$profile" > "$state_dir/$folder/restore.log" 2>&1 || restoration=$?
       if [[ "$restoration" == 0 ]]; then
@@ -26,11 +30,13 @@ scenario_results_fault() (
         node scripts/ci-verification-gate.mjs "$state_dir" "$prefix-restored" "$profile" >> "$state_dir/$folder/restore.log" 2>&1 || restoration=$?
       fi
     fi
+    [[ "$restoration" != 0 ]] || restoration=$cleanup
     if [[ "$recovery_required" == 1 && "$restoration" == 0 ]]; then
       set +e
       (
         set -Eeuo pipefail
         trap 'code=$?; if [[ -n "${port_pid:-}" ]]; then kill "$port_pid" 2>/dev/null || true; wait "$port_pid" 2>/dev/null || true; fi; exit "$code"' EXIT
+        workload_admission_recovery "$state_dir/$folder"
         actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/$folder/recovery-admission.log" 2>&1
         probe tfm-golden
         for response in health version quote; do
@@ -46,6 +52,9 @@ scenario_results_fault() (
     if [[ "$recovery_required" == 1 && "$restoration" == 0 ]]; then
       k get clusterpolicies -o json | jq '[.items[] | {name:.metadata.name,spec:.spec}] | sort_by(.name)' > "$state_dir/$folder/policies-restored.json" || restoration=$?
       cmp "$state_dir/$folder/policies-before.json" "$state_dir/$folder/policies-restored.json" || restoration=$?
+    fi
+    if [[ "$recovery_required" == 1 && "$profile" == authorized ]]; then
+      workload_admission_cleanup "$state_dir/$folder" recovery || { cleanup=$?; [[ "$restoration" != 0 ]] || restoration=$cleanup; }
     fi
     jq -n --argjson original "$original" --argjson restoration "$restoration" --argjson attempted "$recovery_required" \
       '{originalStatus:$original,restorationStatus:$restoration,restorationAttempted:($attempted==1)}' > "$state_dir/$folder/recovery.json" || { [[ "$original" != 0 ]] || original=1; }
@@ -73,7 +82,8 @@ scenario_results_fault() (
   k get clusterpolicies -o json | jq '[.items[] | {name:.metadata.name,spec:.spec}] | sort_by(.name)' > "$state_dir/$folder/policies-before.json"
   k -n kyverno get deployments -o json > "$state_dir/$folder/controller.json"
   jq -e '[.items[] | select(.metadata.name == "kyverno-admission-controller") | .spec.template.spec.containers[] | select(.name == "kyverno") | .args | index("--imageVerifyCacheEnabled=false")] | length == 1 and .[0] != null' "$state_dir/$folder/controller.json" >/dev/null
-  actor tfm-golden apply --dry-run=server -f "$state_dir/tfm-golden.json" > "$state_dir/$folder/positive-before.log" 2>&1
+  workload_admission_prepare "$state_dir/$folder" "$scenario"
+  actor tfm-golden create --dry-run=server -f "$state_dir/$folder/admission-request.json" > "$state_dir/$folder/positive-before.log" 2>&1
   recovery_required=1
   node tests/scenarios/results-evidence.mjs alter "$state_dir" "$image" "$scenario" "$profile" > "$state_dir/$folder/alter.log" 2>&1
   node tests/scenarios/results-evidence.mjs snapshot "$state_dir" "$image" "$scenario" "$profile" negative
@@ -83,15 +93,16 @@ scenario_results_fault() (
     gate_status=$?
   fi
   jq -n --argjson status "$gate_status" --arg profile "$profile" '{exitStatus:$status,observation:(if $status==0 then "UNEXPECTED_ACCEPTANCE" else "REJECTION_REQUIRES_ATTRIBUTION" end),phase:$profile}' > "$state_dir/$folder/attempt.json"
-  if actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "$state_dir/$folder/admission.log" 2>&1; then admission_status=0; else admission_status=$?; fi
+  if actor tfm-golden create -f "$state_dir/$folder/admission-request.json" -o json > "$state_dir/$folder/admission.log" 2>&1; then admission_status=0; else admission_status=$?; fi
   jq -n --argjson status "$admission_status" '{exitStatus:$status,observation:(if $status==0 then "UNEXPECTED_ADMISSION" else "REJECTION_REQUIRES_ATTRIBUTION" end)}' > "$state_dir/$folder/admission.json"
+  if [[ "$admission_status" != 0 ]]; then workload_admission_absent "$state_dir/$folder" rejected; fi
   node tests/scenarios/results-evidence.mjs snapshot "$state_dir" "$image" "$scenario" "$profile" after-denial
   [[ "$gate_status" == 42 ]] || fail 'results scenario did not observe the expected verifier rejection.'
   node tests/scenarios/results-evidence.mjs attribute "$state_dir" "$image" "$scenario" "$profile"
   k get clusterpolicies -o json | jq '[.items[] | {name:.metadata.name,spec:.spec}] | sort_by(.name)' > "$state_dir/$folder/policies-after.json"
   cmp "$state_dir/$folder/policies-before.json" "$state_dir/$folder/policies-after.json"
   [[ "$admission_status" != 0 ]] || fail 'results scenario unexpectedly admitted the results fault.'
-  rejection=$(scenario_admission_single_reason "$state_dir/$folder/admission.log" tfm-results require-results) || fail 'results scenario has unrelated or additional admission rejection.'
+  rejection=$(scenario_admission_single_reason "$state_dir/$folder/admission.log" tfm-results require-results "$admission_name") || fail 'results scenario has unrelated or additional admission rejection.'
   rule="${rejection%%$'\t'*}"; reason="${rejection#*$'\t'}"
   if [[ "$scenario" == F13 ]]; then
     [[ "$reason" == 'image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: sigstore bundle verification failed: no matching signatures found' ]] || fail 'F13 admission diagnostic is unclassified; barrier remains pending.'
