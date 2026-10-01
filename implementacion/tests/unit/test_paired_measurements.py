@@ -307,4 +307,21 @@ class PreparedSbomContract(unittest.TestCase):
    result=subprocess.run(['bash','-c','get() { printf "%s" "$VERSION"; }; fail() { exit 1; }; '+guard],env=dict(os.environ,VERSION=version),capture_output=True,text=True)
    self.assertEqual(result.returncode,code,result.stderr)
 
+class WarmupSourceExport(unittest.TestCase):
+ def test_actual_warmup_export_from_implementation_directory(self):
+  script=(ROOT/'scripts/paired-delivery.sh').read_text()
+  preparation=script[script.index('  mkdir "$private/warmup"'):script.index('  shared_private=')]
+  warmup=read(ROOT/'measurements/protocol-v1.json')['warmupSource']
+  with tempfile.TemporaryDirectory() as temp:
+   result=subprocess.run(['bash','-euo','pipefail','-c',preparation],cwd=ROOT,
+    env=dict(os.environ,root=str(ROOT),private=temp,warmup=warmup),capture_output=True,text=True)
+   self.assertEqual(result.returncode,0,result.stderr)
+   context=Path(temp)/'warmup'
+   for name in ['package.json','package-lock.json','src/server.js','.dockerignore']:
+    exported=context/name
+    self.assertTrue(exported.is_file(),f'Missing warmup input: {name}')
+    expected=subprocess.check_output(['git','-C',str(ROOT.parent),'show',f'{warmup}:implementacion/services/quotes-node/{name}'])
+    self.assertEqual(exported.read_bytes(),expected)
+   self.assertEqual((context/'Dockerfile').read_bytes(),(ROOT/'services/quotes-node/Dockerfile').read_bytes())
+
 if __name__=='__main__':unittest.main()

@@ -4,7 +4,8 @@
 
 ## Estado y alcance
 
-Instrumentación implementada; prueba de desarrollo, cuatro pares piloto y campaña
+Instrumentación implementada. El primer intento de desarrollo se detuvo al
+preparar cachés; ambas entregas medidas, cuatro pares piloto y campaña siguen
 **NOT_EXECUTED**. Revisión humana pendiente. El contribuyente informa que ambas
 suites A pasaron en `36885654089`, revisión
 `5ae6f84a01407789933bd36bcdb05250a6d6c4f5`; este incremento no reaudita ese paquete.
@@ -198,3 +199,27 @@ la selección y comprobación incompatibles de 1.6; una invoca el renderer real.
 Se restaura desde main la atribución histórica de A. GitHub Copilot revisó
 (modelo no divulgado); Github Copilot / GPT-6 corrigió. La evidencia de validación se conserva localmente fuera de Git.
 Revisión humana y smoke real pendientes.
+
+
+## Primer intento de desarrollo: 36924958484
+
+[Run 36924958484](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36924958484),
+commit `6fc297929254ba4472d6b3b9f95ebaca667dd508`, pasó dependencias, regresiones
+y readiness de admisión. Falló el primer calentamiento de caché: BuildKit no
+halló `src/` ni `package-lock.json`. El archivo histórico estaba vacío porque
+`git archive` se ejecutaba desde el subdirectorio de implementación. Es un defecto
+de preparación, no rechazo de política ni fallo externo. Ninguna entrega inició
+su cronómetro ni llegó a procedencia nativa/admisión. La limpieza pasó; el par
+se conservó incompleto/indeterminado.
+
+La corrección exporta el mismo árbol inmutable desde la raíz del repositorio.
+Una regresión ejecuta los comandos reales desde `implementacion/` y compara
+fuente/lockfile con el commit y Dockerfile actual. Falló antes de corregir; las
+51 pruebas de medición pasan después. No se lanzó otro run y queda pendiente
+completar una construcción de caché real.
+
+Se verificaron 20 hashes externos, 42 internos de paquetes y el archivo permitido
+de base congelada, sus checksums e identidad. Evidencia y logs se conservan
+localmente fuera de Git. Tras revisión y merge, corresponde una nueva prueba de
+desarrollo con la nueva fuente; este defecto no permite reintento por fallo externo.
+OpenAI Codex / GPT-6 realizó diagnóstico y corrección. Aceptación humana pendiente.
