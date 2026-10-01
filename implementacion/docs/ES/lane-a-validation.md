@@ -72,14 +72,15 @@ los escenarios y usa un archivo temporal propio para capturar la identidad de la
 ejecución. No transfiere tokens ni variables `GP_*` arbitrarias; permite
 `GP_VULNERABILITY_DB` explícita para repetición local.
 
-Solo después de autorización separada y publicación de la rama revisada:
+Tras autorización separada, ejecutar el workflow ya integrado en `main`:
 
 ```bash
-gh workflow run lane-a-validation.yml --repo tfm-goldenpath/golden-path-lab --ref test/lane-a-integration-validation
+gh workflow run lane-a-validation.yml --repo tfm-goldenpath/golden-path-lab --ref main
 ```
 
-No se ha despachado este workflow. Debe estar disponible en GitHub para invocarlo;
-la implementación no demuestra su ejecución en un runner efímero.
+El workflow integrado se ejecutó correctamente en `36881119588`, revisado abajo.
+No se lanzó otra ejecución durante esa revisión; las siguientes requieren
+autorización separada.
 
 ## Descargar y conservar
 
@@ -272,3 +273,65 @@ v1.37.0 frente a v1.35.8; falta repetición real. Asistencia: OpenAI Codex / GPT
 revisión humana y aceptación pendientes. No se lanzó ningún workflow.
 Pasa la suite compartida: 873 pruebas de servicio/unidad, 43 de políticas Python,
 Conftest, Kyverno, Cosign offline y F01/F02 estáticos; registro `shared-tests.log`.
+
+### Primera ejecución completa aprobada del carril A: 36881119588
+
+Se revisaron [demo](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36881119588/job/110432829867)
+y [vulnerabilidades](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36881119588/job/110432830289):
+`.github/workflows/lane-a-validation.yml`, intento 1, `workflow_dispatch` sobre
+`main`, commit **`b8eb603e7965e4d58cc9f58ec78f74971944a547`**. Es la ejecución
+exitosa posterior al PR #35, no el primer intento ni el workflow del carril B.
+Ambas suites tienen PASS y salidas originales/de conservación 0. Pasan las
+27 etapas de demo y 26 de vulnerabilidades: doctor, pruebas compartidas, smoke,
+BuildKit con configuración de entrega, escenarios, auditoría y limpieza. Cada
+trabajo registra 873 pruebas de servicio/unidad, 43 Python, Conftest/Kyverno,
+Cosign offline y F01/F02 estáticos; la evidencia de escenarios es independiente.
+
+| Límite | Observación verificada |
+| --- | --- |
+| Demo `run-TxAlzChs` | Pasan las 27 filas de auditoría. F01/F02 son estáticos. F05/F06 (SBOM), F07/F08 (firma), F09/F10 (procedencia) rechazan por las causas previstas en sus límites CI/admisión, con restauración legítima. |
+| F13/F14 | F13 previo a emisión permanece separado de F13 posterior a emisión y F14 con P0 auténtico. Rechazos atribuibles, restauración exacta, CREATE de recuperación, limpieza, rollout y HTTP correctos. |
+| Runtime y entregas legítimas | F11/F12 rechazan CREATE de Deployment, UPDATE legal de plantilla y CREATE de Pod aislado; se comprueban NotFound real o estado deseado intacto. La etiqueta F12 resuelve al mismo digest. Pasan L01/L03/L04 y L06: CREATE compartido, generación 1 → 2, rollout/HTTP y limpieza del Pod positivo. |
+| L05 | Se entregan las revisiones reales autorizadas `7243334fe4ee7073801a86b25c90986b7d3c5ece` → `fc58e220e2d3f38d13216b23e61ffc31271f112f`, con árboles de aplicación distintos, 10/11 hashes de archivos comprobados, evidencia nueva por digest, admisión, Pods listos y HTTP. |
+| Vulnerabilidades `run-SeGfzbLB` | Pasan las 12 filas: cuatro imágenes construidas, SBOM CycloneDX originales y análisis Trivy reales con asociación de imagen/componente y política de producción. Las imágenes negativas no reciben resultados exitosos ni despliegue protegido. |
+
+F03: `minimist@1.2.5`, CVE-2021-44906 CRITICAL, correcciones indicadas
+`1.2.6, 0.2.4`; `1.2.8` elimina el hallazgo y deja el informe sin vulnerabilidades.
+Coinciden comportamiento inocuo y HTTP antes/después; la imagen corregida completa
+la entrega protegida. F04: `ip@2.0.1`, CVE-2024-29415 HIGH, sin versión npm
+corregida según la instantánea y el [aviso revisado](https://github.com/advisories/GHSA-2p57-rm9w-gvfp),
+sin afirmación universal. L02: `lodash.unset@4.5.2`, CVE-2026-2950 MEDIUM y
+CVE-2025-13465 MEDIUM, sin HIGH/CRITICAL; firma, SBOM, procedencia, resultados,
+admisión, rollout y HTTP correctos. No se observó desviación de las fixtures.
+
+Evidencia ignorada por Git: `evidence/raw/lane-a-run-36881119588/`, incluidos
+los logs Actions y ambos archivos separados de base de datos. Se verificaron
+76/75 hashes exteriores y 1.960/348 interiores para demo/vulnerabilidades,
+respectivamente; cada archivo DB cumple checksum exterior, lista exacta de
+cuatro archivos y tres hashes internos. Coinciden cuatro registros DB de imagen
+en demo y cinco de ejecución/imágenes en vulnerabilidades. Ninguna DB falta ni
+está NOT_CREATED. El contenido `trivy.db` es idéntico en ambas suites:
+`c39ee6b7f92119e7fadd7bc626d15ca8de69a56522529eeab027f6c9c433a27a`, esquema 2,
+actualizado `2026-10-01T13:01:27.395440834Z`. Solo difiere la hora de descarga
+en los metadatos; la identidad completa es constante dentro de cada suite.
+
+La revisión repitió validadores sobre originales sin modificar, con alias
+temporales para rutas absolutas eliminados después; reconstruyó ocho recibos
+de análisis. Cuatro nuevos análisis offline de los SBOM originales reproducen
+todos los resultados tras comparar en memoria la ruta reubicada. Se conservan
+las salidas originales y la DB sigue intacta. No son nuevas construcciones ni
+admisiones. Se reautenticaron 28 bundles distintos: 27 válidos y la variante F08
+rechazada como corresponde; pasan 24 contratos positivos y los hashes de evidencia
+referenciados por resultados firmados. Se verificó aislamiento/restauración en
+14 límites, políticas y confianza pública constantes. El `state.json` privado
+se excluye del paquete: sus hashes registrados no se pudieron recalcular aquí.
+Los informes independientes se enumeran en la sección equivalente de la guía EN.
+
+La evidencia permite **comenzar el desarrollo del ejecutor de medición R/G
+emparejada**; no establece mediciones, repetibilidad estadística, calibración
+manual ni aceptación de campaña. Revisión humana del lanzador/fuentes y aceptación
+final pendientes. Se conservan fallos históricos y bloqueos locales de Codespaces;
+el éxito no prueba la causa exacta del timeout anterior. No aporta cobertura OIDC
+ni mutaciones GHCR del carril B. El denominador sigue siendo 20. No fue necesaria
+reparación ni nueva suite de regresión; no se hizo push, merge, dispatch ni
+infraestructura de medición. Asistencia: OpenAI Codex / GPT-6, auditoría y documentos.

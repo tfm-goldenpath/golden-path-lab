@@ -77,15 +77,15 @@ scenario environments and supplies only its own temporary output file for run
 identity. It does not forward tokens or arbitrary `GP_*` variables. Local replay
 may explicitly supply `GP_VULNERABILITY_DB` as described below.
 
-After separate authorization and publication of the reviewed branch, dispatch:
+After separate authorization, dispatch the merged workflow on `main`:
 
 ```bash
-gh workflow run lane-a-validation.yml --repo tfm-goldenpath/golden-path-lab --ref test/lane-a-integration-validation
+gh workflow run lane-a-validation.yml --repo tfm-goldenpath/golden-path-lab --ref main
 ```
 
-No remote dispatch was performed during this increment. The workflow must be
-available to GitHub for manual dispatch; source preparation alone does not prove
-that the devcontainer or either suite has run on an ephemeral runner.
+The merged workflow has executed successfully in reviewed run `36881119588`
+(see the evidence review below). No additional workflow was dispatched during
+that review; subsequent executions still require separate authorization.
 
 ## Preserve and replay evidence
 
@@ -133,7 +133,7 @@ analysis copies it into a new owned frozen snapshot and detects drift. Preserve
 source revision, lockfiles and original reports with the database; database bytes
 alone do not reproduce an image. Never commit downloaded artifacts or credentials.
 
-## Observations for this increment
+## Historical observations for the original increment
 
 Base: `f71bec5` (main after vulnerability PR #31), working branch
 `test/lane-a-integration-validation`. Local attempts first stopped at missing
@@ -298,3 +298,89 @@ local cluster retry was attempted. Assistance: OpenAI Codex / GPT-6; human revie
 and final acceptance pending. No workflow was dispatched.
 Shared suite passes: 873 service/unit tests, 43 Python policy tests, Conftest,
 Kyverno, offline Cosign and static F01/F02. See `shared-tests.log`.
+
+### First successful end-to-end lane A run: 36881119588
+
+Reviewed [demo job](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36881119588/job/110432829867)
+and [vulnerability job](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36881119588/job/110432830289)
+from `.github/workflows/lane-a-validation.yml`, attempt 1, `workflow_dispatch` on
+`main`, commit **`b8eb603e7965e4d58cc9f58ec78f74971944a547`**. This is the successful
+run after PR #35, not the first attempt and not the lane B `golden-path.yml`.
+Both suites report PASS, original/retention exit 0, and successful required-result
+audits. All recorded stages passed (27 demo, 26 vulnerabilities), including
+doctor, shared checks, smoke, the pinned BuildKit/kind/service-image probe,
+scenarios and cleanup. Their shared logs report 873 service/unit tests each,
+43 Python policy tests, Conftest/Kyverno, offline Cosign and static F01/F02.
+Those tests are supporting prerequisites; the scenario evidence below establishes
+actual execution.
+
+| Suite | Independently checked observations |
+| --- | --- |
+| Demo (`run-TxAlzChs`) | All 27 audit rows pass. F01/F02 remain static workflow checks. F05/F06 SBOM absence/foreign subject, F07 signature absence, F08 signature corruption, F09 provenance absence and F10 unauthorized origin reject at their implemented CI/admission boundaries with restored legitimate evidence. |
+| Results authorization | Initial F13 rejects before results issuance. Separate postissuance F13 removal and F14 authenticated P0 replay reject at their intended rules; exact restoration, fresh CREATE recovery, cleanup and normal rollout/HTTP pass. These are distinct observations of existing IDs. |
+| Runtime and legitimate delivery | F11/F12 reject Deployment CREATE, legal template UPDATE and isolated Pod CREATE with exact early/admission attribution, real NotFound or unchanged desired state. F12's tag resolves to the authorized digest on both sides. L01/L03/L04 pass; L06 shares L01 CREATE, changes template generation 1 → 2, completes rollout/HTTP and cleans up its positive direct Pod. |
+| L05 | Both actual source revisions `7243334fe4ee7073801a86b25c90986b7d3c5ece` → `fc58e220e2d3f38d13216b23e61ffc31271f112f` are authorized ancestors of recorded main. Independently checked 10/11 source-file hashes and distinct application trees. Both receive fresh digest-specific evidence, admission, ready-digest rollout and health/quote/version responses. |
+| Vulnerabilities (`run-SeGfzbLB`) | All 12 audit rows pass. Four built fixture images have original CycloneDX SBOMs and raw Trivy `cyclonedx` reports, verified digest/component association, scan exit 0 and attributable production-policy decisions. Negative images have no successful results or protected-deployment evidence. |
+
+F03 uses `minimist@1.2.5`: **CVE-2021-44906, CRITICAL**, with scanner corrections
+`1.2.6, 0.2.4`. Rebuilding with `1.2.8` removes the finding and leaves no
+vulnerabilities in the report. Harmless dependency behavior and reference HTTP
+match before/after; the repaired image completes protected delivery.
+F04 uses `ip@2.0.1`: **CVE-2024-29415, HIGH**; the fixed snapshot and
+[reviewed npm advisory](https://github.com/advisories/GHSA-2p57-rm9w-gvfp)
+report no patched version. This is bounded to that ecosystem/snapshot, not a
+universal absence-of-fix claim. L02 `lodash.unset@4.5.2` contains the expected
+**CVE-2026-2950, MEDIUM**, plus **CVE-2025-13465, MEDIUM**; neither HIGH nor
+CRITICAL is present. It completes independent signature/SBOM/provenance/results
+authorization, admission, rollout and HTTP. No fixture drift was observed.
+
+#### Preserved evidence and independent review
+
+All artifacts and Actions logs are retained outside Git under
+`evidence/raw/lane-a-run-36881119588/`. Both database artifacts exist and are
+required; neither is NOT_CREATED. Verified:
+
+| Suite | Outer manifest hashes | Internal package hashes | Separate database |
+| --- | ---: | ---: | --- |
+| Demo | 76 | 1,960 | Outer checksum, exact four-file allowlist, three internal hashes and four matching image database records |
+| Vulnerabilities | 75 | 348 | Outer checksum, same allowlist, three internal hashes and five matching run/image database records |
+
+Both `trivy.db` files hash to
+`c39ee6b7f92119e7fadd7bc626d15ca8de69a56522529eeab027f6c9c433a27a`, schema 2,
+updated `2026-10-01T13:01:27.395440834Z`. Metadata hashes differ because the jobs
+have different `DownloadedAt` values; each suite's complete identity is constant
+across its comparisons. Both original snapshots remain preserved for replay.
+
+Review reran the production coverage validators against unmodified evidence,
+using temporary aliases for the original absolute input paths, then removed the
+aliases. All eight image-analysis receipts were independently reconstructed.
+Four offline rescans of the original vulnerability SBOMs reproduce every Result
+field after comparing the relocated input filename in memory; raw outputs are
+retained unchanged and database hashes remain stable. This replay is an SBOM
+rescan, not a new image build or live admission run.
+
+All 28 distinct retained bundles were reverified with pinned Cosign and each
+run's retained local trust: 27 authenticate; the deliberate F08 variant fails.
+All 24 positive bundle content contracts and signed results' referenced evidence
+hashes pass. Independent inventory checks confirm 14 fault boundaries' isolated
+alterations and exact restoration, unchanged policy specs and retained public
+trust. Private run `state.json` is deliberately excluded from packages, so its
+recorded configuration hashes cannot be independently recomputed here; the run's
+checks of those hashes remain execution evidence.
+
+Review outputs include `verified-downloads.json`, `*-independent-coverage.json`,
+`independent-review.json`, `isolation-review.json`, `bundle-reverification.json`,
+`positive-content-review.json`, `l05-source-review.json` and `scan-replay.json`.
+No implementation repair or new regression suite was required. The initial replay
+comparison exposed only a relocated input path, not scanner/database drift.
+
+This evidence supports **starting development of the paired R/G measurement
+runner**. It does not establish paired measurements, repeatability statistics,
+manual-task calibration or campaign acceptance. Human launcher/source review and
+final acceptance remain pending. Historical failures remain valid observations;
+this successful run does not prove the earlier timeout's precise cause. Local
+Codespaces version/network blockers remain separate. Lane B OIDC/GHCR negative
+coverage is unchanged and remains outside this run. The denominator remains
+20 scenarios; shared/directed observations add no IDs. No code repair, push,
+merge, workflow dispatch or measurement infrastructure was performed in this
+review. AI assistance: OpenAI Codex / GPT-6, artifact audit and EN/ES documentation.
