@@ -1,0 +1,161 @@
+name: Paired R G legitimate delivery measurements
+on:
+  workflow_dispatch:
+    inputs:
+      dataset:
+        type: choice
+        options: [development, pilot]
+        default: development
+      pair:
+        description: Pair number (pilot 1-4 from the stored plan)
+        required: true
+        default: '1'
+      order:
+        type: choice
+        options: [RG, GR]
+        required: true
+      expected_source:
+        description: Exact merged main SHA approved for this plan; fail if main moved
+        required: true
+      retry_of:
+        description: Original failed run ID; empty for attempt one
+        default: ''
+      database_run:
+        description: Successful development run preserving this source's frozen DB; required for pilot
+        default: ''
+      external_cause:
+        type: choice
+        options: ['', registry-outage, runner-loss, network-outage]
+        description: Operator-reviewed external cause, never an unfavorable control or slow timing
+      evidence:
+        description: Relative original artifact log proving the reviewed external failure
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: paired-rg-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  pair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      actions: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: implementacion
+    env:
+      PAIR_DIR: ${{ github.workspace }}/implementacion/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Retrieve original attempt only for a reviewed full-pair retry
+        if: inputs.retry_of != ''
+        env:
+          PRIOR_RUN: ${{ inputs.retry_of }}
+        run: |
+          [[ "$PRIOR_RUN" =~ ^[0-9]+$ ]]
+          gh run download "$PRIOR_RUN" --repo tfm-goldenpath/golden-path-lab --name "paired-rg-$PRIOR_RUN" --dir .tmp/paired-prior
+      - name: Freeze pair identity and order before any delivery
+        id: plan
+        env:
+          DATASET: ${{ inputs.dataset }}
+          PAIR: ${{ inputs.pair }}
+          ORDER: ${{ inputs.order }}
+          SOURCE: ${{ inputs.expected_source }}
+          PRIOR_RUN: ${{ inputs.retry_of }}
+          DATABASE_RUN: ${{ inputs.database_run }}
+          CAUSE: ${{ inputs.external_cause }}
+          EVIDENCE: ${{ inputs.evidence }}
+        run: |
+          args=()
+          if [[ -n "$PRIOR_RUN" ]]; then args+=(--retry-from .tmp/paired-prior --cause "$CAUSE" --evidence "$EVIDENCE"); fi
+          if [[ -n "$DATABASE_RUN" ]]; then
+            [[ "$DATABASE_RUN" =~ ^[0-9]+$ ]]
+            gh run download "$DATABASE_RUN" --repo tfm-goldenpath/golden-path-lab --name "paired-rg-$DATABASE_RUN" --dir .tmp/paired-database
+            args+=(--database-from .tmp/paired-database)
+          fi
+          python3 scripts/paired-rg.py init --dataset "$DATASET" --pair "$PAIR" --order "$ORDER" --expected-source "$SOURCE" "${args[@]}"
+      - name: Read pinned Node version
+        id: versions
+        run: |
+          source versions.env
+          printf 'node=%s\n' "$NODE_VERSION" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ steps.versions.outputs.node }}
+      - name: Dependencies and pinned tools (outside primary timer)
+        run: python3 scripts/paired-rg.py dependencies
+      - name: Shared laboratory regressions (outside primary timer)
+        run: python3 scripts/paired-rg.py preflight
+      - name: Shared infrastructure and isolated prepared caches
+        id: infrastructure
+        run: python3 scripts/paired-rg.py phase bootstrap
+      - name: First arm prepare
+        id: first
+        if: ${{ always() && steps.infrastructure.outcome == 'success' }}
+        continue-on-error: true
+        run: python3 scripts/paired-rg.py phase prepare --slot 1
+      - name: Native provenance for first arm G
+        id: first_provenance
+        if: ${{ always() && steps.first.outcome == 'success' && steps.plan.outputs.first == 'G' }}
+        continue-on-error: true
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ steps.first.outputs.image }}
+          subject-digest: ${{ steps.first.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+      - name: First arm finish and owned workload cleanup
+        id: first_finish
+        if: ${{ always() && steps.infrastructure.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          NATIVE_OUTCOME: ${{ steps.first_provenance.outcome }}
+        run: python3 scripts/paired-rg.py phase finish --slot 1 --native "$NATIVE_OUTCOME"
+      - name: Second arm prepare
+        id: second
+        if: ${{ always() && steps.infrastructure.outcome == 'success' }}
+        continue-on-error: true
+        run: python3 scripts/paired-rg.py phase prepare --slot 2
+      - name: Native provenance for second arm G
+        id: second_provenance
+        if: ${{ always() && steps.second.outcome == 'success' && steps.plan.outputs.second == 'G' }}
+        continue-on-error: true
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ steps.second.outputs.image }}
+          subject-digest: ${{ steps.second.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+      - name: Second arm finish and owned workload cleanup
+        if: ${{ always() && steps.infrastructure.outcome == 'success' }}
+        continue-on-error: true
+        env:
+          NATIVE_OUTCOME: ${{ steps.second_provenance.outcome }}
+        run: python3 scripts/paired-rg.py phase finish --slot 2 --native "$NATIVE_OUTCOME"
+      - name: Remove native attestation registry credentials
+        if: ${{ always() && steps.plan.outcome == 'success' }}
+        continue-on-error: true
+        run: python3 scripts/paired-rg.py registry-cleanup
+      - name: Finalize all attempts, package safely and clean infrastructure
+        if: ${{ always() && steps.plan.outcome == 'success' }}
+        run: python3 scripts/paired-rg.py finalize
+      - name: Preserve measurements and packages, including failures
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: paired-rg-${{ github.run_id }}
+          path: |
+            implementacion/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}/**
+            !implementacion/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}/retry-db/**
+          if-no-files-found: error
+          retention-days: 30

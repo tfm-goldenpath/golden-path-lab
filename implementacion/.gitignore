@@ -21,3 +21,6 @@ coverage/
 
 # Lane A validation and frozen scanner-data exports.
 /evidence/lane-a/
+
+# Paired development/pilot/campaign observations and safe exports.
+/evidence/measurements/

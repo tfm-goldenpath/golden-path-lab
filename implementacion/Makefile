@@ -44,3 +44,10 @@ vulnerabilities: doctor
 LANE_A_SUITE ?= demo
 lane-a-validation:
 	python3 scripts/lane-a-validation.py run --suite "$(LANE_A_SUITE)" $(if $(LANE_A_OUTPUT),--output "$(LANE_A_OUTPUT)")
+
+.PHONY: paired-plan paired-analyze
+paired-plan:
+	python3 scripts/paired-rg.py plan --seed paired-rg-pilot-v1-2026-10-01 --output evidence/measurements/pilot-plan-v1.json
+
+paired-analyze:
+	python3 scripts/paired-rg.py analyze $(PAIR_FILES) --output "$(ANALYSIS_OUTPUT)"

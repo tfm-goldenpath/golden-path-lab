@@ -27,3 +27,5 @@ El [README de implementación](../../README.md) contiene los comandos principale
 La [guía de contribución](../../../CONTRIBUTING.md) y la [plantilla de PR](../../../.github/pull_request_template.md), en inglés, se aplican tanto a contribuciones asistidas como sin IA.
 
 La carpeta `cases/L01-F13/` reúne la documentación del ensayo integrado, incluidas las comprobaciones dirigidas de F11. Sus pruebas se implementan una sola vez en [`tests/scenarios/`](../../tests/scenarios/); no se crean copias de código por idioma ni carpetas vacías para los veinte escenarios.
+
+- [Mediciones R/G pareadas — protocolo y prueba manual](paired-rg-measurements.md).

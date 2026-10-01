@@ -27,3 +27,5 @@ Start with the [implementation README](../../README.md) for commands and the [TO
 The root [contribution guide](../../../CONTRIBUTING.md) and [PR template](../../../.github/pull_request_template.md) apply to contributions with or without AI.
 
 The [external proposal review](../ES/context/external-proposal-review.md) is historical context available in Spanish only.
+
+- [Paired R/G measurements — protocol and manual smoke procedure](paired-rg-measurements.md).
