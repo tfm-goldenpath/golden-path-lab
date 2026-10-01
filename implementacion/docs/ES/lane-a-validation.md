@@ -274,7 +274,7 @@ revisión humana y aceptación pendientes. No se lanzó ningún workflow.
 Pasa la suite compartida: 873 pruebas de servicio/unidad, 43 de políticas Python,
 Conftest, Kyverno, Cosign offline y F01/F02 estáticos; registro `shared-tests.log`.
 
-### Primera ejecución completa aprobada del carril A: 36881119588
+### Primera ejecución completa exitosa del carril A: 36881119588
 
 Se revisaron [demo](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36881119588/job/110432829867)
 y [vulnerabilidades](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36881119588/job/110432830289):
