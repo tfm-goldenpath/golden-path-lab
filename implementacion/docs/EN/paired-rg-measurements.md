@@ -242,7 +242,7 @@ Conftest/Kyverno, offline Cosign and static workflow checks. Later packaging and
 measurement changes were covered by the focused rerun. Logs: ignored
 `evidence/raw/paired-development/{shared-final,focused-final,python-focused,workflow-policy,doctor}.log`.
 
-AI assistance: **OpenAI Codex / GPT-6** implemented orchestration, records,
+AI assistance: **GitHub Copilot / GPT-6** implemented orchestration, records,
 regressions and documentation. Human review and final acceptance: **pending**.
 
 
