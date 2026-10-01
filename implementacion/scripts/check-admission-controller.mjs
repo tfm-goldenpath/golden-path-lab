@@ -8,9 +8,16 @@ export function checkController({deployment,replicasets,pods,endpoints}) {
   const status=deployment.status || {}, revision=deployment.metadata.annotations?.['deployment.kubernetes.io/revision'];
   if(!Number.isInteger(count) || count<1 || !revision || status.observedGeneration!==deployment.metadata.generation ||
      [status.updatedReplicas,status.replicas,status.availableReplicas].some(n=>n!==count)) return pending;
+  if((status.terminatingReplicas ?? 0)!==0) return pending;
   const owned=(object,uid)=>object.metadata?.ownerReferences?.some(ref=>ref.controller===true && ref.uid===uid);
   const sets=replicasets.items.filter(rs=>!rs.metadata?.deletionTimestamp && owned(rs,deployment.metadata.uid) && rs.metadata.annotations?.['deployment.kubernetes.io/revision']===revision);
   if(sets.length!==1) return pending;
+  // Rollout success and ready endpoints can precede removal of the old Pods.
+  // Wait for all Pods owned by earlier revisions, including terminal Pods,
+  // before exercising the API-server -> webhook path after a restart.
+  const ownedSets=replicasets.items.filter(rs=>owned(rs,deployment.metadata.uid));
+  if(pods.items.some(p=>ownedSets.some(rs=>owned(p,rs.metadata.uid)) &&
+     (p.metadata?.deletionTimestamp || !owned(p,sets[0].metadata.uid)))) return pending;
   const current=pods.items.filter(p=>!p.metadata?.deletionTimestamp && owned(p,sets[0].metadata.uid));
   if(current.length!==count || current.some(p=>p.status?.phase!=='Running' || !p.status?.podIP ||
      !p.metadata?.uid || !/^[a-z0-9][a-z0-9.-]*$/.test(p.metadata.name) ||

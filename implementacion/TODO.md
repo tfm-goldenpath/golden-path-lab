@@ -264,3 +264,10 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [ ] Complete the corrected live demo after publication and separate dispatch authorization. Local doctor still rejects kubectl 1.37.0 versus 1.35.8. Human review/acceptance pending; no new scenario IDs or measurements. See [EN](docs/EN/lane-a-validation.md) / [ES](docs/ES/lane-a-validation.md).
 - [x] Address PR #34 Copilot review: require raw initial NotFound and successful server dry-run CREATE for the expected resource. All 30 focused audit tests pass, including 11 new regressions that failed before the fix. AI contribution: GitHub Copilot review (model not disclosed), OpenAI Codex / GPT-6 implementation; human review pending. This follow-up does not establish live execution.
 - [x] Address contributor-supplied Copilot recovery warning on PR #34: audit Deployment type/namespace, UID, request ownership, zero replicas, isolated selector/Pod labels and image. All 45 focused audit tests pass; 15 new cases include 11 reproduced gaps and four existing rejections. Codex / GPT-6 implementation; human review and live validation pending.
+
+### Lane A run 36877044496: controller termination convergence
+
+- [x] Inspect demo at `7548dcb`: prerequisites pass; L05-from readiness stops on validating-webhook timeout. Verify 74 outer/1,814 internal hashes and the frozen database archive. Preserve failure and uncompleted L05; vulnerability job success is GitHub-reported, without an independent package audit here.
+- [x] Reproduce premature readiness with terminating controller Pods/replicas; require their removal within the existing bounded wait. All 33 focused tests pass; original snapshot becomes PENDING. This fixes an observed readiness gap, not a proven timeout root cause.
+- [ ] Corrected live demo and human acceptance. Local doctor still rejects kubectl v1.37.0 vs v1.35.8. No workflow dispatch. AI assistance: OpenAI Codex / GPT-6; human review pending.
+- [x] Shared suite passes after the convergence change: 873 service/unit tests, 43 Python policy tests, Conftest/Kyverno, offline Cosign and static F01/F02. Log: `evidence/raw/lane-a-run-36877044496/shared-tests.log`.

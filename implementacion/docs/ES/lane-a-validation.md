@@ -244,3 +244,31 @@ rechazos existentes antes del cambio. Registros: `copilot-recovery-red.log` y
 `copilot-recovery-green.log` en el mismo directorio ignorado de evidencia.
 Revisión humana y validación real pendientes.
 Pasan las 45 pruebas de auditoría tras esta corrección.
+
+### Ejecución 36877044496: timeout del webhook en L05
+
+La [ejecución 36877044496](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36877044496)
+en `7548dcb119e3394718946ea59313ac1f830f7bf0` superó los prerrequisitos de demo
+y llegó a L05-from. La simulación legítima falló por timeout de 30 segundos del
+webhook `validate.kyverno.svc-fail`. Sigue siendo un fallo de integración; L05 no
+completó ninguna entrega. GitHub indica éxito del trabajo de vulnerabilidades;
+su paquete no se auditó independientemente en este seguimiento.
+
+La captura marcaba el controlador nuevo como listo con `terminatingReplicas: 1`
+y un Pod antiguo en eliminación. La comprobación ahora espera cero réplicas en
+terminación y la desaparición de Pods de ReplicaSets anteriores, dentro del bucle
+acotado existente. Corrige una carencia observada de preparación; las conexiones
+obsoletas durante el reemplazo son una posible causa, no un diagnóstico probado.
+Los errores del webhook siguen deteniendo la ejecución sin reintentos.
+
+Evidencia ignorada por Git: `evidence/raw/lane-a-run-36877044496/`. Se verificaron
+74 hashes exteriores, 1.814 interiores y la lista permitida y tres hashes del
+archivo de base de datos. La auditoría offline acepta los fallos dirigidos tras
+emisión, pero faltan registros finales/L05 y la reubicación invalida rutas de
+Conftest runtime. No se modificaron originales ni se reautenticaron firmas.
+Cinco regresiones reprodujeron la carencia; pasan las 33 pruebas enfocadas.
+La captura real ahora devuelve PENDING. Doctor local sigue bloqueado por kubectl
+v1.37.0 frente a v1.35.8; falta repetición real. Asistencia: OpenAI Codex / GPT-6;
+revisión humana y aceptación pendientes. No se lanzó ningún workflow.
+Pasa la suite compartida: 873 pruebas de servicio/unidad, 43 de políticas Python,
+Conftest, Kyverno, Cosign offline y F01/F02 estáticos; registro `shared-tests.log`.

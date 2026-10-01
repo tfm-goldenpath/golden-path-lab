@@ -10,9 +10,18 @@ function fixture() {
  endpoints:{items:[{ports:[{port:9443}],endpoints:[{addresses:['10.0.0.2'],conditions:{ready:true},targetRef:{kind:'Pod',name:'new-pod',uid:'new'}}]}]}
  };
 }
-test('selects current ready Pods and ignores an old terminating Pod',()=>{
- const f=fixture();f.pods.items.unshift({metadata:{name:'old-pod',uid:'old',deletionTimestamp:'now',ownerReferences:[{uid:'old-rs',controller:true}]}});
- assert.deepEqual(checkController(f),{status:'READY',pods:['new-pod']});
+test('selects current ready Pods after the old revision is gone',()=>{
+ assert.deepEqual(checkController(fixture()),{status:'READY',pods:['new-pod']});
+});
+for(const phase of ['Running','Succeeded']) test(`waits for old owned ${phase} Pod deletion`,()=>{
+ const f=fixture();
+ f.replicasets.items.push({metadata:{uid:'old-rs',ownerReferences:[{uid:'deployment',controller:true}]}});
+ f.pods.items.unshift({metadata:{name:'old-pod',uid:'old',deletionTimestamp:'now',ownerReferences:[{uid:'old-rs',controller:true}]},status:{phase}});
+ assert.equal(checkController(f).status,'PENDING');
+});
+test('waits for reported terminating replicas even if the Pod list has advanced',()=>{
+ const f=fixture();f.deployment.status.terminatingReplicas=1;
+ assert.equal(checkController(f).status,'PENDING');
 });
 for(const fault of ['old-endpoint','not-ready','terminating','old-generation','old-replicaset','wrong-address','missing-endpoint','unknown-ready']) test(`controller blocks ${fault}`,()=>{
  const f=fixture();
@@ -34,7 +43,7 @@ import {mkdtempSync,writeFileSync,readFileSync,existsSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
-for(const fault of ['none','converges','stale','transport','malformed']) test(`real wait helper: ${fault}`,t=>{
+for(const fault of ['none','converges','draining','never-drains','stale','transport','malformed']) test(`real wait helper: ${fault}`,t=>{
  const dir=mkdtempSync(join(tmpdir(),'controller-wait-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
  for(const [name,data] of Object.entries(fixture())) writeFileSync(join(dir,name+'.json'),JSON.stringify(data));
  const r=spawnSync('bash',['-c',String.raw`
@@ -46,7 +55,10 @@ sleep() { :; }
 k() {
  if [[ "$GP_FAULT" == transport ]]; then return 1; fi
  case "$*" in
-  *'get deployment '*) cat "$GP_DIR/deployment.json";;
+  *'get deployment '*)
+   if [[ "$GP_FAULT" == never-drains || ( "$GP_FAULT" == draining && ! -f "$GP_DIR/drained" ) ]]; then
+    touch "$GP_DIR/drained"; jq '.status.terminatingReplicas=1' "$GP_DIR/deployment.json"
+   else cat "$GP_DIR/deployment.json"; fi;;
   *'get replicasets '*) cat "$GP_DIR/replicasets.json";;
   *'get pods '*) cat "$GP_DIR/pods.json";;
   *'get endpointslices '*)
@@ -58,10 +70,10 @@ k() {
 }
 lab_wait_admission_controller
 `],{encoding:'utf8',env:{...process.env,BASH_ENV:'',GP_ROOT:resolve(import.meta.dirname,'../..'),GP_DIR:dir,GP_FAULT:fault}});
- const success=['none','converges'].includes(fault);
+ const success=['none','converges','draining'].includes(fault);
  assert.equal(r.status===0,success,r.stderr);
  assert.equal(existsSync(join(dir,'admission-controller-ready.json')),success);
  if(success) assert.deepEqual(JSON.parse(readFileSync(join(dir,'admission-controller-ready.json'))).pods,['new-pod']);
- if(fault==='converges') assert.ok(existsSync(join(dir,'admission-controller-2-check.json')));
- if(fault==='stale') assert.ok(existsSync(join(dir,'admission-controller-30-check.json')));
+ if(['converges','draining'].includes(fault)) assert.ok(existsSync(join(dir,'admission-controller-2-check.json')));
+ if(['stale','never-drains'].includes(fault)) assert.ok(existsSync(join(dir,'admission-controller-30-check.json')));
 });
