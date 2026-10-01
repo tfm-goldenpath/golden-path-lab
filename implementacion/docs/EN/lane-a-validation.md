@@ -247,3 +247,11 @@ Final correction checks pass: 842 service/unit tests, 43 Python policy tests,
 62 Conftest decisions, Kyverno, offline Cosign and static F01/F02. The earlier
 full run exposed a stale F06 harness, now corrected; preserve both logs.
 `shared-tests-final.log` records the passing shared suite, not a live rerun.
+
+PR #34 review follow-up: GitHub Copilot (model not disclosed) identified missing
+raw initial-absence and positive server dry-run checks in the evidence audit.
+OpenAI Codex / GPT-6 added both checks and 11 regressions for missing, incorrect
+or failed responses. All 30 focused audit tests pass; the 11 new cases failed
+before the fix. Logs: `copilot-red.log` and `copilot-green.log` in the evidence
+directory above. These are synthetic unit checks, not live scenario execution.
+Human review and final acceptance remain pending.

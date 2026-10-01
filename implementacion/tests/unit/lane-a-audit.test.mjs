@@ -42,7 +42,7 @@ function fixture(t,suite) {
     const control={F05:'sbom',F06:'sbom',F08:'signature',F09:'provenance',F10:'provenance',F13:'results',F14:'results'}[id],rule=control==='signature'?'require-image-signature':'require-'+control,reason=id==='F10'?'PROVENANCE_REPOSITORY':id==='F14'?'RESULTS_POLICY_VERSION':'synthetic denial';
     put(p+'admission.json',{exitStatus:1});put(p+'admission-attribution.json',{policy:'tfm-'+control,rule,reason});denial(p+'admission.log','tfm-'+control,rule,'admission-'+id.toLowerCase(),reason);
     const name='admission-'+id.toLowerCase(),request=deployment(image('b'));request.metadata.name=name;request.spec.replicas=0;request.spec.selector={matchLabels:{app:name}};request.spec.template.metadata.labels={app:name};
-    put(p+'rejected-observation.log',`Error from server (NotFound): deployments.apps "${name}" not found\n`);put(p+'admission-operation.json',{operation:'CREATE',kind:'Deployment',namespace:'tfm-golden',name,image:image('b')});put(p+'admission-request.json',request);put(p+'recovery-create.json',request);
+    put(p+'before-observation.log',`Error from server (NotFound): deployments.apps "${name}" not found\n`);put(p+'positive-before.log',`deployment.apps/${name} created (server dry run)\n`);put(p+'rejected-observation.log',`Error from server (NotFound): deployments.apps "${name}" not found\n`);put(p+'admission-operation.json',{operation:'CREATE',kind:'Deployment',namespace:'tfm-golden',name,image:image('b')});put(p+'admission-request.json',request);put(p+'recovery-create.json',request);
     for(const record of ['before-absence','rejected-absence','negative-cleanup','recovery-cleanup','recovery-after-cleanup-absence']) put(p+record+'.json',{status:'PASS',observation:'NotFound'});
     recordRollout(p+'recovery-',image('b'));put(p+'recovery-admission.log','accepted');http(p+'recovery-');
    }
@@ -74,3 +74,23 @@ test('runtime attribution rejects a controlled-rule evaluation error',t=>{const 
 
 test('directed recovery cannot be an unchanged apply',t=>{const f=fixture(t,'demo');f.put('L01-update/F14-admission/recovery-create.json','deployment.apps/quotes-node unchanged');assert.equal(f.run().status,'FAIL');});
 test('directed request must stay outside the workload selector',t=>{const f=fixture(t,'demo'),p='L01-update/F14-admission/admission-request.json',v=f.json(p);v.spec.selector.matchLabels.app='quotes-node';f.put(p,v);assert.equal(f.run().status,'FAIL');});
+
+for(const [file,label,content] of [
+ ['before-observation.log','missing',null],
+ ['before-observation.log','empty',''],
+ ['before-observation.log','transport failure','Error: connection refused\n'],
+ ['before-observation.log','wrong resource','Error from server (NotFound): deployments.apps "quotes-node" not found\n'],
+ ['positive-before.log','missing',null],
+ ['positive-before.log','empty',''],
+ ['positive-before.log','unchanged','deployment.apps/admission-f14 unchanged\n'],
+ ['positive-before.log','client dry run','deployment.apps/admission-f14 created (dry run)\n'],
+ ['positive-before.log','persisted create','deployment.apps/admission-f14 created\n'],
+ ['positive-before.log','wrong resource','deployment.apps/quotes-node created (server dry run)\n'],
+ ['positive-before.log','additional error','deployment.apps/admission-f14 created (server dry run)\nError: connection refused\n'],
+]) test(`directed initial control requires raw ${file}: ${label}`,t=>{
+ const f=fixture(t,'demo'),path='L01-update/F14-admission/'+file;
+ if(content===null) rmSync(join(f.root,path));else f.put(path,content);
+ const result=f.run();
+ assert.equal(result.boundaries.find(b=>b.scenario==='F14').status,'FAIL');
+ assert.equal(result.status,'FAIL');
+});

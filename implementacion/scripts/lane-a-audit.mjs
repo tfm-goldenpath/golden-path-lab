@@ -64,6 +64,9 @@ export function audit(suite,directory,staticDirectory,main) {
       check(operation.operation==='CREATE'&&operation.kind==='Deployment'&&operation.namespace==='tfm-golden'&&operation.name===name&&operation.image===negative.image,'Not the required fresh admission operation');
       check(request.metadata.name===name&&request.metadata.namespace==='tfm-golden'&&request.spec.replicas===0&&request.spec.selector.matchLabels.app===name&&request.spec.template.metadata.labels.app===name&&request.spec.template.spec.containers[0].image===negative.image,'Directed request is not isolated on the expected image');
       check(status(folder+'before-absence.json').observation==='NotFound','Missing initial absence');
+      absent(1,readFileSync(join(directory,folder+'before-observation.log'),'utf8'),'Deployment',name);
+      const positiveBefore=readFileSync(join(directory,folder+'positive-before.log'),'utf8').trim();
+      check(positiveBefore===`deployment.apps/${name} created (server dry run)`,'Missing successful server dry-run CREATE for the expected resource');
       check(status(folder+'rejected-absence.json').observation==='NotFound','Rejected CREATE did not prove absence');
       absent(1,readFileSync(join(directory,folder+'rejected-observation.log'),'utf8'),'Deployment',name);
       status(folder+'negative-cleanup.json');status(folder+'recovery-cleanup.json');

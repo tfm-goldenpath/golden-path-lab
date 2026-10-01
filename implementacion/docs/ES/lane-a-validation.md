@@ -224,3 +224,12 @@ Pruebas finales: pasan 842 pruebas de servicio/unidad, 43 de políticas Python,
 62 decisiones Conftest, Kyverno, Cosign offline y F01/F02 estáticos. Se conserva
 el fallo intermedio del harness F06, ya corregido. `shared-tests-final.log`
 registra la suite compartida aprobada, no una repetición de integración real.
+
+Seguimiento de la revisión del PR #34: GitHub Copilot (modelo no indicado)
+detectó que la auditoría no comprobaba las respuestas originales de ausencia
+inicial y del CREATE positivo con simulación en servidor. OpenAI Codex / GPT-6
+añadió ambas comprobaciones y 11 regresiones para respuestas ausentes,
+incorrectas o fallidas. Pasan las 30 pruebas de auditoría; los 11 casos nuevos
+fallaban antes de la corrección. Registros: `copilot-red.log` y
+`copilot-green.log` en el directorio de evidencia anterior. Son pruebas unitarias
+sintéticas, no ejecuciones reales. Revisión humana y aceptación final pendientes.
