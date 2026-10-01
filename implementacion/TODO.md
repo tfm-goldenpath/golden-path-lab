@@ -247,3 +247,10 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [ ] Complete a real acceptance run of both suites in the pinned environment. Smoke, BuildKit, image scans, admission and L05 deliveries remain NOT_EXECUTED in this increment. Preserve all earlier local gaps and historical BuildKit failures.
 - [ ] Validate the manual workflow on ephemeral runners after separate publication/dispatch authorization; no push or dispatch performed. Lane A does not establish hosted OIDC/GHCR mutation coverage.
 - [ ] Human launcher/source review and final acceptance. Assistance: OpenAI Codex / GPT-6; see the linked runbook. No campaign measurements or change to the twenty-scenario denominator.
+
+### Lane A first runner attempt and parser regression
+
+- [x] Independently inspect run [36829165325](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36829165325) at `6b9e303`: both devcontainers and doctor pass; shared tests fail on undeclared PyYAML in the new workflow test. Verify 28 artifact hashes per suite; scenarios NOT_EXECUTED and databases NOT_CREATED.
+- [x] Reproduce with Python site packages disabled; replace the test's PyYAML import with the existing pinned Conftest parser and enforce `python3 -S` in its Node wrapper. Focused regression passes without changing environment/tool pins or acceptance assertions.
+- [x] Full shared suite passes after the fix: 825 service/unit tests, 43 Python policy tests, 62 Conftest decisions, Kyverno, offline Cosign and static F01/F02. Log: `evidence/raw/lane-a-run-36829165325/shared-tests-fix.log`.
+- [ ] Rerun remotely after review/publication authorization and complete actual scenario acceptance. No assistant dispatch; historical local blockers remain. See the EN/ES validation guide for retained evidence. AI assistance: OpenAI Codex / GPT-6; human review pending.
