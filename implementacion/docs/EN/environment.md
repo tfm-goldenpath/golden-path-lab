@@ -82,3 +82,7 @@ Cleanup removes the temporary cluster and probe tag while retaining base images/
 - **ARM platform:** the base requires AMD64; ARM is optional future work.
 
 The integrated base now contains the service, Conftest, Trivy, Cosign, Kyverno, act and zot configuration. The [initial plan](implementation-plan.md) explains their incremental introduction; file availability does not prove their integration passed. Use the [complete execution guide](cases/L01-F13/runbook.md) to exercise lane A and actual GitHub lane B. `act` does not establish hosted OIDC behavior.
+
+## Reproducible lane A validation
+
+[Run both independent suites](lane-a-validation.md) through the pinned devcontainer, with prerequisite stopping, the bounded BuildKit probe and separate frozen-database artifacts. This remains functional integration, with human acceptance pending.

@@ -177,3 +177,5 @@ and network as local delivery; smoke-env alone does not establish that path.
   make -C implementacion demo
 )
 ```
+
+For independent prerequisite checks, the existing suite and retained failure/database evidence, use [lane A validation](../../lane-a-validation.md). Its current local attempts stop at doctor; they do not close this case’s pending integration boundaries.

@@ -117,3 +117,5 @@ Local live boundaries and hosted negative trials remain **NOT_EXECUTED** in this
 implementation handoff. Hosted normal delivery retains its trust checks and has
 no new GHCR mutation permissions. Directed checks do not enlarge the twenty-case
 catalogue or count as campaign measurements. See [actual verification](../../../../registros/f13_f14_results_authorization_EN.md).
+
+For independent prerequisite checks, the existing suite and retained failure/database evidence, use [lane A validation](../../lane-a-validation.md). Its current local attempts stop at doctor; they do not close this case’s pending integration boundaries.

@@ -235,3 +235,15 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [ ] Complete real fixture image scans, F03 reference HTTP comparison and positive admission/rollout/HTTP in the pinned environment. Doctor currently rejects kubectl 1.37.0 versus 1.35.8; preserve previous local blockers.
 - [ ] Run normal hosted regression for the changed analysis sequence after separate publication/dispatch authorization. Additional hosted F03/F04/L02 execution is unsupported and NOT_EXECUTED.
 - [ ] Human review and final acceptance. No campaign measurements or change to the twenty-scenario denominator.
+
+## Reproducible lane A integration validation
+
+- [x] Add independent demo + opt-in L05 and vulnerability suites through shared Make/Python orchestration and a manual devcontainer workflow. Retain read-only permissions, full-SHA actions, unpersisted checkout credentials and disabled remote image publication. See [EN](docs/EN/lane-a-validation.md) / [ES](docs/ES/lane-a-validation.md).
+- [x] Record a fetched local `main` in disposable Actions checkouts and retain the fixed L05 source pair; preserve existing ancestry/source checks.
+- [x] Add prerequisite stopping, effective versions, shared checks, smoke and the bounded delivery-configured BuildKit probe, with original failure status and owned-builder cleanup.
+- [x] Add required-result audits and safe evidence retention, including separate allowlisted archives of each frozen Trivy database and explicit drift failures. Regression fixtures are synthetic, not integration evidence.
+- [x] Attempt both local entrypoints. Initial PATH lacked kind; retries using the existing `.tools/bin` stop at doctor: kubectl v1.37.0 versus v1.35.8. Both retain original Make status 2 and retention status 0 in `evidence/lane-a/local-{demo,vulnerabilities}-tools`. No tool pins, networking or trust were changed.
+- [x] Run shared checks with the existing `.tools/bin` on PATH: environment tests, 823 service/unit tests, 43 Python policy tests, real Conftest/Kyverno checks, offline Cosign checks and F01/F02 static trials pass. Initial shared attempt without that PATH failed five evaluator tests; both logs are preserved in `evidence/raw/lane-a-development/`. Final focused runner/audit regressions also pass.
+- [ ] Complete a real acceptance run of both suites in the pinned environment. Smoke, BuildKit, image scans, admission and L05 deliveries remain NOT_EXECUTED in this increment. Preserve all earlier local gaps and historical BuildKit failures.
+- [ ] Validate the manual workflow on ephemeral runners after separate publication/dispatch authorization; no push or dispatch performed. Lane A does not establish hosted OIDC/GHCR mutation coverage.
+- [ ] Human launcher/source review and final acceptance. Assistance: OpenAI Codex / GPT-6; see the linked runbook. No campaign measurements or change to the twenty-scenario denominator.

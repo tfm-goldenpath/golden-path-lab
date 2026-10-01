@@ -18,3 +18,6 @@ coverage/
 
 # Raw test-first observations; reviewed summaries live in registros.
 /evidence/tdd/
+
+# Lane A validation and frozen scanner-data exports.
+/evidence/lane-a/

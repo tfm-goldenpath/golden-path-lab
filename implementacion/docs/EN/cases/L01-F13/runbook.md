@@ -302,3 +302,5 @@ L01, then legal template UPDATE negatives and a meaningful L06 annotation update
 Isolated direct Pod CREATEs use separate names/labels. See the
 [runtime runbook](../F11-F12-L06/runbook.md) for exact oracles, evidence and pending
 local/hosted boundaries. Earlier run records retain their original scope.
+
+For independent prerequisite checks, the existing suite and retained failure/database evidence, use [lane A validation](../../lane-a-validation.md). Its current local attempts stop at doctor; they do not close this case’s pending integration boundaries.

@@ -303,3 +303,5 @@ negativos de plantilla y un UPDATE real de anotación L06. Los CREATE de Pod
 usan nombres/etiquetas aislados. Véase la [guía de ejecución](../F11-F12-L06/runbook.md)
 para oráculos, evidencia y límites local/hosted pendientes. Los registros previos
 conservan su alcance original.
+
+Para prerrequisitos independientes, la suite existente y conservación de fallos/bases de datos, use la [validación del carril A](../../lane-a-validation.md). Los intentos locales actuales se detienen en doctor; no cierran las barreras de integración pendientes de este caso.

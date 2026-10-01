@@ -128,3 +128,5 @@ AI contribution: Codex (GPT-6; exact serving snapshot unavailable) implemented
 code, tests and documentation. Human review: **pending**. Final human decision:
 **pending**. No thesis, host networking, versions, settings, releases or campaign
 measurements changed. No push or PR publication performed.
+
+For independent prerequisite checks, the existing suite and retained failure/database evidence, use [lane A validation](../../lane-a-validation.md). Its current local attempts stop at doctor; they do not close this case’s pending integration boundaries.

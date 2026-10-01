@@ -143,3 +143,5 @@ imagen BuildKit y red que la entrega local; smoke-env no demuestra esa ruta.
   make -C implementacion demo
 )
 ```
+
+Para prerrequisitos independientes, la suite existente y conservación de fallos/bases de datos, use la [validación del carril A](../../lane-a-validation.md). Los intentos locales actuales se detienen en doctor; no cierran las barreras de integración pendientes de este caso.
