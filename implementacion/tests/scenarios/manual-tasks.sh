@@ -69,19 +69,27 @@ import json,pathlib,sys
 sys.path.insert(0,'scripts')
 from manual_tasks import clock,sha256,write_json
 folder,scenario,control,evidence=sys.argv[1:]
+at=clock()
+proof=pathlib.Path(folder)/'detection-evidence.json'
+with proof.open('xb') as stream: stream.write(pathlib.Path(evidence).read_bytes())
 write_json(pathlib.Path(folder)/'detection.json', {'status':'ATTRIBUTED_DETECTION','scenario':scenario,
- 'control':control,'at':clock(),'evidence':{'path':evidence,'sha256':sha256(evidence)}})
+ 'control':control,'at':at,'evidence':{'path':proof.name,'sha256':sha256(proof)}})
 PY
 }
 
 manual_task_check_result() {
   python3 - "$manual_operation" "$manual_scenario" "$1" "$2" "${3:-}" <<'PY'
-import os,pathlib,sys
+import pathlib,sys
 sys.path.insert(0,'scripts')
 from manual_tasks import sha256,write_json
 folder,scenario,status,phase,evidence=sys.argv[1:]
 value={'schema':'manual-task-check/v1','scenario':scenario,'status':status,'phase':phase}
-if evidence: value['evidence']={'path':os.path.relpath(evidence,folder),'sha256':sha256(evidence)}
+if evidence:
+ proof=pathlib.Path(evidence)
+ if proof.parent != pathlib.Path(folder):
+  proof=pathlib.Path(folder)/'check-evidence.json'
+  with proof.open('xb') as stream: stream.write(pathlib.Path(evidence).read_bytes())
+ value['evidence']={'path':proof.name,'sha256':sha256(proof)}
 write_json(pathlib.Path(folder)/'check-result.json',value)
 PY
 }

@@ -324,7 +324,8 @@ class ManualCommandTests(unittest.TestCase):
             r = new_record('F03', 'R', 'calibration', {}, synthetic=True)
             r.update(status='COMPLETED', cleanup='completed'); write_json(task / 'record.json', r)
             plan = {'limitsReview': None}
-            args = argparse.Namespace(plan=str(root / 'plan.json'), calibration=[str(task)])
+            args = argparse.Namespace(plan=str(root / 'plan.json'), calibration=[str(task)],
+                                      reviewer='Synthetic test reviewer', rationale='Synthetic test only')
             with patch.object(cli, 'STORE', root), patch.object(cli, 'load_plan', return_value=(root / 'plan.json', plan)):
                 with self.assertRaisesRegex(ValueError, 'real human calibration'): cli.freeze_command(args)
 
@@ -338,6 +339,35 @@ class ManualCommandTests(unittest.TestCase):
             value = json.loads((root / 'record.json').read_text())
             self.assertEqual(value['status'], 'INCOMPLETE')
             self.assertIsNone(summarize(value, clock())['totalSeconds'])
+
+    def test_recovery_requires_a_recorded_operation_and_keeps_healthy_records_unchanged(self):
+        for state in ['READY', 'REVIEW', 'COMPLETED']:
+            with self.subTest(state=state), tempfile.TemporaryDirectory(prefix='synthetic-recover-healthy-') as directory:
+                root, r = self.operation_fixture(directory)
+                r['status'] = state
+                write_json(root / 'record.json', r)
+                original = (root / 'record.json').read_bytes()
+                with patch.object(cli, 'STORE', root.parent), patch.object(cli.os, 'killpg') as kill:
+                    with self.assertRaises(ValueError):
+                        cli.run_command(argparse.Namespace(command='recover', task=str(root)))
+                    kill.assert_not_called()
+                self.assertEqual((root / 'record.json').read_bytes(), original)
+
+    def test_freeze_rejects_blank_review_fields_without_writing_a_decision(self):
+        for field in ['reviewer', 'rationale']:
+            for blank in ['', ' \t\n']:
+                with self.subTest(field=field, blank=blank), tempfile.TemporaryDirectory(prefix='synthetic-review-') as directory:
+                    root = Path(directory); path = root / 'plan.json'
+                    plan = {'limitsReview': None, 'limitsSeconds': dict.fromkeys(SCENARIOS)}
+                    write_json(path, plan); original = path.read_bytes()
+                    args = argparse.Namespace(plan=str(path), reviewer='Synthetic reviewer', rationale='Synthetic test only',
+                                              calibration=[], limit=['F03=1', 'F10=1', 'F11=1'])
+                    setattr(args, field, blank)
+                    with patch.object(cli, 'load_plan', return_value=(path, plan)):
+                        with self.assertRaisesRegex(ValueError, 'reviewer|rationale'):
+                            cli.freeze_command(args)
+                    self.assertEqual(path.read_bytes(), original)
+                    self.assertFalse((root / 'frozen-plan.json').exists())
 
     def test_plan_rejects_source_database_and_frozen_limit_changes(self):
         with tempfile.TemporaryDirectory(prefix='synthetic-manual-plan-') as directory:

@@ -292,5 +292,10 @@ con wrappers intactos y lock de dependencia fijado. F10 consume un artefacto
 autorizado existente sin firmar ni reescribir procedencia. F11 cambia solo los
 campos de privilegios declarados. Cada verificación conserva evidencia separada,
 incluidas correcciones fallidas; el empaquetador excluye material privado.
+Incluye `manual-operations/` del laboratorio y `operations/` y preparación del
+controlador propietario. Comprueba propiedad y hashes de eventos; la evidencia
+se copia intacta junto al recibo para conservar sus enlaces al exportarla.
+El directorio final de la tarea conserva los eventos de limpieza registrados
+después de la captura del paquete del laboratorio.
 No cambia el protocolo temporal B ni demuestra cobertura negativa hosted o
 resultados humanos.

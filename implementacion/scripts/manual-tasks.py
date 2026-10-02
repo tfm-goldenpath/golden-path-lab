@@ -296,7 +296,8 @@ def run_command(args):
         if args.command == 'recover':
             op = record.get('runningOperation')
             if record['status'] in TERMINAL: raise ValueError('Attempt is already closed')
-            if op and op['bootId'] == clock()['bootId'] and op.get('processStart') is not None and process_identity(op['pid']) == op['processStart']:
+            if not op: raise ValueError('No recorded interrupted operation; task unchanged')
+            if op['bootId'] == clock()['bootId'] and op.get('processStart') is not None and process_identity(op['pid']) == op['processStart']:
                 # The task lock is free: its Python owner has gone away. Stop only
                 # the exact recorded process group, never a reused PID.
                 if os.getpgid(op['pid']) != op['pid']: raise ValueError('Unexpected operation process group')
@@ -306,8 +307,7 @@ def run_command(args):
                     time.sleep(0.1)
                 if process_identity(op['pid']) == op['processStart']: os.killpg(op['pid'], signal.SIGKILL)
             record.pop('runningOperation', None)
-            if op:
-                detection_from(Path(op['directory']), task, record, 'automatic' if op['name'] == 'start' else 'manual')
+            detection_from(Path(op['directory']), task, record, 'automatic' if op['name'] == 'start' else 'manual')
             # Unknown termination time is not reconstructed as observed active time.
             record['interruption'] = {'observedAt': clock(), 'lastKnownEvent': record['events'][-1] if record['events'] else None,
                                       'timing': 'unknown after last event; incomplete attempt'}
@@ -381,6 +381,8 @@ def run_command(args):
 
 
 def freeze_command(args):
+    reviewer, rationale = args.reviewer.strip(), args.rationale.strip()
+    if not reviewer or not rationale: raise ValueError('Supply a nonblank reviewer and calibration rationale')
     path, plan = load_plan(args.plan)
     with locked(path.parent):
         if plan['limitsReview'] or list((path.parent / 'measurement').glob('task-*')):
@@ -414,7 +416,7 @@ def freeze_command(args):
             limits[scenario] = value
         if set(limits) != set(SCENARIOS): raise ValueError('Supply F03, F10 and F11 limits')
         plan['limitsSeconds'] = limits
-        plan['limitsReview'] = {'reviewer': args.reviewer, 'rationale': args.rationale, 'at': clock(), 'calibrations': sources}
+        plan['limitsReview'] = {'reviewer': reviewer, 'rationale': rationale, 'at': clock(), 'calibrations': sources}
         frozen = path.with_name('frozen-plan.json')
         if frozen.exists(): raise ValueError('Frozen plan already exists')
         write_json(frozen, plan)

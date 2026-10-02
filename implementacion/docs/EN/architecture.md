@@ -286,5 +286,9 @@ runtime wrappers and a pinned dependency lock. F10 completion consumes an
 existing authorized artifact without signing or rewriting its provenance. F11
 changes only the declared privilege fields. Each verification attempt retains
 separate evidence, including unsuccessful corrections. The safe packager includes
-these operation directories and excludes private state. This procedure neither
+both laboratory `manual-operations/` and the owned controller's `operations/`
+and preparation record. It checks the task's owner and event hashes; receipt
+evidence is copied unchanged beside its receipt so links survive export. It
+excludes private state. The final task directory retains cleanup events written
+after the run archive snapshot. This procedure neither
 changes lane B timing nor establishes hosted negative coverage or human results.

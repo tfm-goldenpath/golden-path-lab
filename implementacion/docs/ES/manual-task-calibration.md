@@ -76,8 +76,11 @@ de corrección. Salida esperada: `PLAN_CREATED <ruta>`, secuencia de seis tareas
 `LIMITS_UNSET`. Conservar `plan.json` e `initial-plan.json`.
 Para la semilla del ejemplo, la secuencia medida futura conservada es
 `F11/G F11/R F03/G F03/R F10/R F10/G`. La calibración se registra por separado.
-El doctor de Codespaces actual rechaza kubectl 1.37.0 frente a 1.35.8; usar el
-entorno fijado antes de la sesión humana. No saltarse la comprobación.
+El desarrollo inicial en `1b06e01` registró el desajuste kubectl 1.37.0/1.35.8.
+Tras alinear las herramientas de Codespaces con las versiones ya fijadas, `doctor`
+pasó durante la revisión de `8df21bf`. Conservar aquel fallo como evidencia histórica
+y ejecutar `doctor` antes de cada sesión. La validación real del procedimiento y
+la calibración humana siguen pendientes; comprobar el entorno no las demuestra.
 
 ```bash
 read -r -p 'Identificador del participante: ' MANUAL_PARTICIPANT
@@ -159,7 +162,9 @@ workspace corregido como entrada inicial del otro brazo. Ctrl-C durante un coman
 detiene su grupo de procesos y conserva el intento incompleto. Tras terminar
 abruptamente el controlador o reiniciar el sistema, usar `recover <tarea>` y
 `cleanup`. Se comprueba la identidad de un proceso huérfano antes de detenerlo;
-no se inventa cuándo terminó. Los huecos desconocidos conservan estado incompleto
+no se inventa cuándo terminó. Se exige una `runningOperation` registrada; si falta,
+devuelve `ERROR: No recorded interrupted operation; task unchanged` y conserva
+intacta la tarea sana en READY o REVIEW. Los huecos desconocidos conservan estado incompleto
 y un límite inferior observado. No reiniciar la ruta interrumpida en el mismo intento.
 
 ## Tiempos y límites
@@ -197,6 +202,8 @@ python3 implementacion/scripts/manual-tasks.py freeze-limits --plan "$MANUAL_PLA
   --reviewer "$MANUAL_REVIEWER" --rationale "$MANUAL_RATIONALE"
 ```
 
+El revisor y la justificación deben contener texto; se rechazan valores vacíos o
+compuestos solo por espacios antes de registrar una decisión.
 Salida: `LIMITS_FROZEN`. Registros sintéticos, incompletos o de otra configuración
 no permiten congelar límites. `frozen-plan.json` conserva la decisión del revisor
 declarado; no es aceptación generada por el asistente.
@@ -225,6 +232,20 @@ kubeconfig y estado raw; incluyen entradas de build y diagnósticos por operaci�
 No copiar `.tmp/private-*`. El sistema de archivos del mismo usuario no ofrece
 custodia independiente ni aislamiento del participante.
 
+El archivo del laboratorio incluye `operator/prepared.json` y `operations/` del
+controlador propietario, junto a `manual-operations/` del laboratorio. Los enlaces
+de eventos en `manual-task.json` se resuelven desde la raíz del archivo; los recibos
+de detección y comprobación enlazan copias intactas de su evidencia en el mismo
+directorio de operación. Se conservan los hashes. Si falta evidencia de un evento,
+es insegura o ha cambiado, se detiene el empaquetado; los originales y cualquier
+archivo anterior quedan disponibles para diagnóstico.
+
+El archivo captura el estado durante la limpieza, antes de que el controlador
+registre su salida. Conservar también el directorio final de la tarea: contiene
+ese evento posterior y el log completo de limpieza. Un archivo anterior de
+preparación fallida permanece intacto; el registro final conserva la recuperación
+y limpieza posteriores.
+
 La limpieza satisfactoria escribe `SHA256SUMS.txt` del directorio final de la tarea.
 Verificar la copia con `(cd "$MANUAL_TASK" && sha256sum -c SHA256SUMS.txt)` antes
 de revisarla; comprobar por separado las sumas del paquete seguro vinculado.
@@ -248,5 +269,12 @@ Base de desarrollo: main `fa4ed35d793a7257c13a335ad6b5ae208e79f60f`.
 `make -C implementacion test` pasó: 896 casos de servicio/unidad, incluido el wrapper
 de 29 casos Python sintéticos de tareas manuales, además de entorno, políticas,
 Cosign offline y workflows. Se comprobaron sintaxis y enlaces locales.
-Logs conservados en `evidence/raw/manual-task-development/`. El fallo de doctor
-indicado arriba impide afirmar validación real del nuevo procedimiento.
+Logs conservados en `evidence/raw/manual-task-development/`. Aquella validación
+inicial registró el desajuste de entorno descrito arriba; el `doctor` posterior
+satisfactorio no sustituye la validación real del procedimiento.
+
+La [segunda revisión de Copilot en la PR #40](https://github.com/tfm-goldenpath/golden-path-lab/pull/40#pullrequestreview-5396408905)
+identificó problemas de recuperación, exportación, texto de entorno obsoleto y
+campos de revisión vacíos. Codex implementó correcciones y pruebas sintéticas;
+el modelo de Copilot no fue indicado. Logs: `evidence/raw/manual-task-copilot-followup/`.
+Revisión y aceptación humanas pendientes.

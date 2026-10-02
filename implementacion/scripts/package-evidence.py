@@ -71,11 +71,50 @@ def scenario_summary(source, files):
         summaries[case] = entry
     return summaries
 
-def package(source, output, status):
-    source, output = Path(source).resolve(), Path(output).resolve()
+def manual_task_files(source):
+    """Map the owned controller's evidence into the run archive, without edits."""
+    record = source / 'manual-task.json'
+    if not record.is_file() or record.is_symlink(): return {}
+    value = json.loads(record.read_text())
+    if value.get('schema') != 'manual-task/v1' or 'taskDirectory' not in value: return {}
+    task = Path(value['taskDirectory'])
+    task_root = source.parent.parent / 'manual-tasks'
+    if not task.is_absolute() or task.resolve() != task or not task.is_relative_to(task_root):
+        raise ValueError('Refusing an unowned manual task directory')
+    operator, operations = task / 'operator', task / 'operations'
+    for directory in (operator, operations):
+        if directory.resolve() != directory or not directory.is_dir():
+            raise ValueError('Refusing unsafe manual task evidence directory')
+    owner = operator / 'state-path.txt'
+    if owner.is_symlink() or owner.read_text().strip() != str(source):
+        raise ValueError('Manual task laboratory owner differs')
+    paths = [operator / 'prepared.json']
+    for directory in sorted(operations.iterdir()):
+        if directory.is_symlink() or not directory.is_dir() or not re.fullmatch(r'[0-9]{4,}-(prepare|start|tool|check|cleanup)', directory.name):
+            raise ValueError('Unexpected manual controller operation directory')
+        paths.extend(directory.iterdir())
+    selected = {p.relative_to(task).as_posix(): p for p in paths}
+    for event in value.get('events', []):
+        evidence = event.get('evidence')
+        if not evidence: continue
+        file = selected.get(evidence['path'])
+        if file is None or not shareable(file) or hashlib.sha256(file.read_bytes()).hexdigest() != evidence['sha256']:
+            raise ValueError('Manual event evidence is missing, unsafe or changed')
+    return selected
+
+def shareable(file):
     allowed = {'.json', '.log', '.txt', '.yaml'}
     excluded = {'state.json', 'config.json', 'kubeconfig', 'cosign.key', 'SHA256SUMS.txt'}
-    files = []
+    if not file.is_file() or file.is_symlink() or file.name in excluded:
+        return False
+    if file.suffix not in allowed and file.name != 'development-public-key.pem':
+        return False
+    content = file.read_bytes()
+    if re.search(rb'-----BEGIN [^\r\n]*PRIVATE KEY-----', content): return False
+    return file.name != 'development-public-key.pem' or is_public_key_pem(content)
+
+def package(source, output, status):
+    source, output = Path(source).resolve(), Path(output).resolve()
     candidates = list(source.iterdir())
     runtime_directories = ['runtime'] + ['runtime/' + case for case in ('F11', 'F12', 'L06')] + [
         'runtime/' + case + '/' + operation for case in ('F11', 'F12')
@@ -97,14 +136,11 @@ def package(source, output, status):
             inputs = directory / 'input-source'
             if inputs.is_symlink(): raise ValueError('Refusing symlinked manual input')
             if inputs.is_dir(): candidates.extend(inputs.iterdir())
-    for file in sorted(candidates):
-        if file.is_file() and not file.is_symlink() and (file.suffix in allowed or file.name == 'development-public-key.pem') and file.name not in excluded:
-            content = file.read_bytes()
-            if re.search(rb'-----BEGIN [^\r\n]*PRIVATE KEY-----', content):
-                continue
-            if file.name == 'development-public-key.pem' and not is_public_key_pem(content):
-                continue
-            files.append(file)
+    names = {p: p.relative_to(source).as_posix() for p in sorted(candidates) if shareable(p)}
+    for name, file in manual_task_files(source).items():
+        if name in names.values(): raise ValueError('Conflicting manual evidence archive path')
+        if shareable(file): names[file] = name
+    files = list(names)
     output.mkdir(parents=True, exist_ok=True)
     target = output / (source.name + '.tar.gz')
     checksum = output / (target.name + '.sha256')
@@ -137,13 +173,14 @@ def package(source, output, status):
         'scenarios': scenario_summary(source, files),
         'secretsIncluded': False}, indent=2) + '\n')
     files = [p for p in files if p != summary] + [summary]
-    write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.relative_to(source).as_posix() + '\n' for p in files))
+    names[summary] = summary.name
+    write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + names[p] + '\n' for p in files))
     descriptor, temporary = tempfile.mkstemp(dir=output)
     try:
         with os.fdopen(descriptor, 'w+b') as stream:
             with tarfile.open(fileobj=stream, mode='w:gz') as archive:
                 for file in files + [sums]:
-                    archive.add(file, arcname=source.name + '/' + file.relative_to(source).as_posix(), recursive=False)
+                    archive.add(file, arcname=source.name + '/' + (sums.name if file == sums else names[file]), recursive=False)
             stream.seek(0)
             digest = hashlib.sha256()
             for chunk in iter(lambda: stream.read(1024 * 1024), b''):

@@ -75,8 +75,11 @@ correction. Expected plan output: `PLAN_CREATED <path>`, the six-task sequence,
 then `LIMITS_UNSET`. Keep both `plan.json` and `initial-plan.json`.
 For the example seed, the retained future measured sequence is
 `F11/G F11/R F03/G F03/R F10/R F10/G`. Calibration is stored separately.
-The current Codespaces doctor rejects kubectl 1.37.0 against required 1.35.8;
-use the pinned environment before a human session. Do not bypass that check.
+Initial development at `1b06e01` recorded a kubectl 1.37.0/1.35.8 mismatch.
+After the Codespace tools were aligned with the existing pins, `doctor` passed
+during the `8df21bf` follow-up. Keep that failure as historical evidence and run
+`doctor` before each session. Live harness validation and human calibration remain
+pending; a passing environment check does not establish either.
 
 ```bash
 read -r -p 'Participant identifier: ' MANUAL_PARTICIPANT
@@ -157,7 +160,9 @@ combinations; do not reuse a modified workspace as another arm's initial input.
 Ctrl-C during a command stops its process group and retains an incomplete attempt.
 After a killed controller or reboot, use `recover <task>` and then `cleanup`.
 Recovery checks the recorded process identity before stopping an orphan; it does
-not invent an end time. Unknown gaps remain incomplete with an observed lower
+not invent an end time. It requires a recorded `runningOperation`; otherwise it
+returns `ERROR: No recorded interrupted operation; task unchanged`, preserving a
+healthy READY or REVIEW task. Unknown gaps remain incomplete with an observed lower
 bound. Do not restart an interrupted automated path inside the same attempt.
 
 ## Timing and limits
@@ -195,7 +200,9 @@ python3 implementacion/scripts/manual-tasks.py freeze-limits --plan "$MANUAL_PLA
 ```
 
 Expected: `LIMITS_FROZEN`. Synthetic, incomplete or different-configuration records
-cannot support this command. The immutable `frozen-plan.json` records the decision;
+cannot support this command. Blank or whitespace-only reviewer and rationale
+values are rejected before recording a decision. The immutable `frozen-plan.json`
+records the decision;
 this is the operator's declared review, not assistant-created acceptance.
 
 For a separately authorized later measurement session, use `prepare --dataset
@@ -222,6 +229,18 @@ state; build input bytes and per-operation diagnostics are retained. Do not copy
 private `.tmp/private-*` directories. The same-user filesystem is not an
 independent custody or participant-isolation boundary.
 
+The run archive includes the owned controller's `operator/prepared.json` and
+`operations/` alongside the laboratory's `manual-operations/`. Event links in
+`manual-task.json` resolve from the archive root; detection/check receipts link
+unchanged copies of their evidence in the same operation directory. File hashes
+are retained. Missing, unsafe or changed event evidence stops packaging; originals
+and any earlier archive remain available for diagnosis.
+
+The archive is a snapshot taken during cleanup, before the controller records
+cleanup's exit. Keep the final task directory too: it contains that later event
+and the complete cleanup log. An earlier failed-preparation archive remains
+unchanged; the final task record preserves subsequent recovery and cleanup.
+
 Successful cleanup writes `SHA256SUMS.txt` for the final task directory. Verify
 that copy with `(cd "$MANUAL_TASK" && sha256sum -c SHA256SUMS.txt)` before review;
 verify the linked safe archive's checksum sidecars separately. Keep the original
@@ -245,5 +264,12 @@ Development base: main `fa4ed35d793a7257c13a335ad6b5ae208e79f60f`.
 `make -C implementacion test` passed: 896 service/unit cases, including the wrapper
 for 29 synthetic Python manual-task cases, plus environment, policy, offline
 Cosign and workflow checks. Syntax and local documentation links were checked.
-Logs are retained under `evidence/raw/manual-task-development/`. The environment
-doctor failure above prevents claiming live validation of this new harness.
+Logs are retained under `evidence/raw/manual-task-development/`. That initial
+validation recorded the environment mismatch described above; the later passing
+`doctor` check does not replace live harness validation.
+
+GitHub Copilot's [second PR #40 review](https://github.com/tfm-goldenpath/golden-path-lab/pull/40#pullrequestreview-5396408905)
+identified recovery, export, stale environment wording and blank review-field
+issues. Codex implemented the corrections and synthetic regressions; Copilot's
+model was not disclosed. Follow-up logs: `evidence/raw/manual-task-copilot-followup/`.
+Human review and acceptance remain pending.

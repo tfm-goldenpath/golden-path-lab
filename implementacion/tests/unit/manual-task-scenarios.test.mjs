@@ -1,7 +1,7 @@
 // Synthetic orchestration and contract inputs. No live or human execution claim.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, cpSync, lstatSync} from 'node:fs';
+import {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, cpSync, lstatSync, symlinkSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {join, resolve} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -149,6 +149,96 @@ with tarfile.open(p) as a:
   assert hashlib.sha256(a.extractfile('run-synthetic/'+name).read()).hexdigest()==digest
 `,archive],{encoding:'utf8'});
   assert.equal(audit.status,0,audit.stderr);
+});
+test('manual archive retains resolvable event and receipt evidence from the owned controller task', t => {
+  const r=shell(t,String.raw`
+manual_owner=$FIXTURE/evidence/raw/run-synthetic
+manual_task=$FIXTURE/evidence/manual-tasks/session/calibration/task-synthetic
+manual_scenario=F03
+mkdir -p "$manual_owner" "$manual_task/operator"
+echo "$manual_owner" > "$manual_task/operator/state-path.txt"
+echo '{"synthetic":true}' > "$manual_task/operator/prepared.json"
+for item in 0001-prepare 0002-tool 0003-check 0004-check; do
+  manual_operation=$manual_task/operations/$item
+  mkdir -p "$manual_operation"
+  echo '{"synthetic":true}' > "$manual_operation/request.json"
+  echo '{"synthetic":true,"exitCode":0}' > "$manual_operation/exit.json"
+  echo 'synthetic operation' > "$manual_operation/command.log"
+  echo 'excluded state' > "$manual_operation/state.json"
+  printf '%s\n' '-----BEGIN PRIVATE KEY-----' 'SYNTHETIC' > "$manual_operation/secret.log"
+  if [[ "$item" == 0001-prepare ]]; then continue; fi
+  state_dir=$manual_owner/manual-operations/$item
+  mkdir -p "$state_dir"
+  echo '{"synthetic":true,"status":"BLOCKED"}' > "$state_dir/analysis.json"
+  if [[ "$item" == 0002-tool ]]; then
+    manual_task_detection scan "$state_dir/analysis.json"
+  elif [[ "$item" == 0003-check ]]; then
+    manual_task_check_result CORRECTION_REJECTED vulnerability-policy "$state_dir/analysis.json"
+  else
+    echo '{"synthetic":true,"status":"VALIDATED_COMPLETION","scenario":"F03"}' > "$manual_operation/completion.json"
+    manual_task_check_result VALIDATED_COMPLETION complete "$manual_operation/completion.json"
+  fi
+done
+python3 - "$manual_owner" "$manual_task" <<'PY'
+import hashlib,json,pathlib,sys
+owner,task=map(pathlib.Path,sys.argv[1:])
+paths=['operator/prepared.json','operations/0001-prepare/exit.json','operations/0002-tool/detection.json',
+       'operations/0002-tool/exit.json','operations/0003-check/check-result.json','operations/0004-check/check-result.json']
+value={'schema':'manual-task/v1','synthetic':True,'taskDirectory':str(task),'status':'COMPLETED','humanAcceptance':'pending',
+       'events':[{'evidence':{'path':p,'sha256':hashlib.sha256((task/p).read_bytes()).hexdigest()}} for p in paths]}
+for p in [owner/'manual-task.json',task/'record.json']: p.write_text(json.dumps(value))
+PY
+python3 scripts/package-evidence.py "$manual_owner" "$FIXTURE/packages" PASS
+`);
+  assert.equal(r.status,0,r.stderr);
+  const audit=spawnSync('python3',['-c',String.raw`
+import hashlib,json,posixpath,sys,tarfile,pathlib
+root=pathlib.Path(sys.argv[1]);p=root/'packages/run-synthetic.tar.gz'
+assert hashlib.sha256(p.read_bytes()).hexdigest()==pathlib.Path(str(p)+'.sha256').read_text().split()[0]
+with tarfile.open(p) as archive:
+ names=archive.getnames();prefix='run-synthetic/'
+ record=json.load(archive.extractfile(prefix+'manual-task.json'))
+ def linked(base,link):
+  assert not link['path'].startswith('/'),link
+  name=posixpath.normpath(posixpath.join(base,link['path']))
+  assert name.startswith(prefix) and name in names,name
+  data=archive.extractfile(name).read()
+  assert hashlib.sha256(data).hexdigest()==link['sha256'],name
+  return name,json.loads(data)
+ for event in record['events']:
+  name,value=linked(prefix,event['evidence'])
+  if 'evidence' in value: linked(posixpath.dirname(name),value['evidence'])
+ for n in ['0001-prepare','0002-tool','0003-check','0004-check']:
+  for f in ['request.json','exit.json','command.log']: assert prefix+'operations/'+n+'/'+f in names
+ assert not any(n.endswith(('/state.json','/secret.log')) for n in names)
+ for line in archive.extractfile(prefix+'SHA256SUMS.txt').read().decode().splitlines():
+  digest,name=line.split('  ',1)
+  assert hashlib.sha256(archive.extractfile(prefix+name).read()).hexdigest()==digest
+ assert archive.extractfile(prefix+'manual-task.json').read()==(root/'evidence/raw/run-synthetic/manual-task.json').read_bytes()
+`,r.dir],{encoding:'utf8'});
+  assert.equal(audit.status,0,audit.stderr);
+});
+test('manual packaging rejects foreign owners, symlinks and broken event links while retaining prior archives', t => {
+  for (const fault of ['owner','directory-link','file-link','missing','changed','escape']) {
+    const dir=directory(t), owner=join(dir,'evidence/raw/run-synthetic');
+    const task=join(dir,'evidence/manual-tasks/session/calibration/task-synthetic');
+    const operation=join(task,'operations/0001-check'), operator=join(task,'operator'), output=join(dir,'packages');
+    mkdirSync(owner,{recursive:true});mkdirSync(operation,{recursive:true});mkdirSync(operator);mkdirSync(output);
+    const evidence=join(operation,'exit.json');writeFileSync(evidence,'{"synthetic":true}');
+    writeFileSync(join(operator,'state-path.txt'),fault==='owner'?dir:owner);
+    const link={path:'operations/0001-check/exit.json',sha256:createHash('sha256').update(readFileSync(evidence)).digest('hex')};
+    if (fault==='changed') link.sha256='0'.repeat(64);
+    if (fault==='escape') link.path='../../outside.json';
+    writeFileSync(join(owner,'manual-task.json'),JSON.stringify({schema:'manual-task/v1',synthetic:true,taskDirectory:task,status:'INCOMPLETE',events:[{evidence:link}]}));
+    if (fault==='directory-link') { rmSync(operation,{recursive:true}); symlinkSync(owner,operation); }
+    if (fault==='file-link') { rmSync(evidence); symlinkSync(join(owner,'manual-task.json'),evidence); }
+    if (fault==='missing') rmSync(evidence);
+    const archive=join(output,'run-synthetic.tar.gz');writeFileSync(archive,'previous synthetic archive');
+    const r=spawnSync('python3',[join(root,'scripts/package-evidence.py'),owner,output,'FAIL'],{encoding:'utf8'});
+    assert.notEqual(r.status,0,fault);
+    assert.equal(readFileSync(archive,'utf8'),'previous synthetic archive');
+    assert.equal(JSON.parse(readFileSync(join(owner,'manual-task.json'))).status,'INCOMPLETE');
+  }
 });
 test('F10 completion obtains the authorized digest and never calls signing or restoration', t => {
   const r = shell(t, String.raw`
