@@ -8,6 +8,8 @@ import {earlyDecision} from './runtime-evidence.mjs';
 import {target, compatibility} from './vulnerability-evidence.mjs';
 import {authorize, read} from '../../scripts/vulnerability-evidence.mjs';
 const check = (ok, message) => { if (!ok) throw new Error(message); };
+class CorrectionRejected extends Error {}
+const correction = (ok, message) => { if (!ok) throw new CorrectionRejected(message); };
 
 export function manifestInput(original, submitted) {
   const expected = structuredClone(original);
@@ -39,18 +41,19 @@ export function correctedDependency(before, after) {
   target(before, 'F03-vulnerable');
   const a = read(join(before, 'analysis.json')), b = read(join(after, 'analysis.json'));
   authorize(after, b.image);
-  check(a.image !== b.image && equal(a.database, b.database), 'Correction requires a new image and identical database');
+  check(equal(a.database, b.database), 'Correction database differs from preparation');
+  correction(a.image !== b.image, 'Correction requires a new image');
   const components = read(join(after, 'sbom.cdx.json')).components;
-  check(components.some(c => c.name === 'minimist' && c.version !== '1.2.5' && c.purl === `pkg:npm/minimist@${c.version}`), 'Corrected production dependency missing');
+  correction(components.some(c => c.name === 'minimist' && c.version !== '1.2.5' && c.purl === `pkg:npm/minimist@${c.version}`), 'Corrected production dependency missing');
   const findings = read(join(after, 'vulnerabilities.json')).Results.flatMap(r => r.Vulnerabilities || []);
-  check(!findings.some(v => v.PkgName === 'minimist' && v.VulnerabilityID === 'CVE-2021-44906'), 'Expected vulnerability remains');
-  check(equal(compatibility(before), compatibility(after)), 'Dependency behavior changed');
+  correction(!findings.some(v => v.PkgName === 'minimist' && v.VulnerabilityID === 'CVE-2021-44906'), 'Expected vulnerability remains');
+  correction(equal(compatibility(before), compatibility(after)), 'Dependency behavior changed');
   return {status:'PASS', targetRemoved:true, newImage:b.image, originalImage:a.image, globalThreshold:'PASS'};
 }
 
 export function functional(before, after, namespace) {
   for (const suffix of ['health','version','quote']) {
-    check(equal(read(join(before, `tfm-reference-${suffix}.json`)), read(join(after, `${namespace}-${suffix}.json`))), 'Functional compatibility failed: ' + suffix);
+    correction(equal(read(join(before, `tfm-reference-${suffix}.json`)), read(join(after, `${namespace}-${suffix}.json`))), 'Functional compatibility failed: ' + suffix);
   }
   return {status:'PASS', functionality:'health/version/quote'};
 }
@@ -58,16 +61,21 @@ export function functional(before, after, namespace) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [command, a, b, c, d] = process.argv.slice(2);
   let result;
-  if (command === 'manifest-input') result = manifestInput(read(a), read(b));
-  else if (command === 'manifest-decision') result = manifestDecision(Number(a), read(b), readFileSync(c, 'utf8'), d);
-  else if (command === 'authorize-build') {
-    result = {schema:'manual-f03-build/v1',scenario:'F03',directory:a,commit:b,base:c,
-      files:['Dockerfile','exercise.cjs','package.json','package-lock.json'].map(path => ({path,
-        mode:(0o100000 | (lstatSync(join(a,path)).mode & 0o7777)).toString(8),
-        sha256:createHash('sha256').update(readFileSync(join(a,path))).digest('hex')}))};
+  try {
+    if (command === 'manifest-input') result = manifestInput(read(a), read(b));
+    else if (command === 'manifest-decision') result = manifestDecision(Number(a), read(b), readFileSync(c, 'utf8'), d);
+    else if (command === 'authorize-build') {
+      result = {schema:'manual-f03-build/v1',scenario:'F03',directory:a,commit:b,base:c,
+        files:['Dockerfile','exercise.cjs','package.json','package-lock.json'].map(path => ({path,
+          mode:(0o100000 | (lstatSync(join(a,path)).mode & 0o7777)).toString(8),
+          sha256:createHash('sha256').update(readFileSync(join(a,path))).digest('hex')}))};
+    }
+    else if (command === 'corrected-dependency') result = correctedDependency(a, b);
+    else if (command === 'functional') result = functional(a, b, c);
+    else throw new Error('Unknown manual-task oracle');
+  } catch (error) {
+    result = {status:error instanceof CorrectionRejected ? 'CORRECTION_REJECTED' : 'INTEGRATION_ERROR', reason:error.message};
+    process.exitCode = error instanceof CorrectionRejected ? 43 : 1;
   }
-  else if (command === 'corrected-dependency') result = correctedDependency(a, b);
-  else if (command === 'functional') result = functional(a, b, c);
-  else throw new Error('Unknown manual-task oracle');
   console.log(JSON.stringify(result, null, 2));
 }

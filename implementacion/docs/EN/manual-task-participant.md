@@ -30,6 +30,8 @@ knowledge, earlier attempts and exposure to the other arm; this is not blinded.
    `wait` and `pause` with real notes; mark active work again when resuming.
 4. Make your correction with conventional tools, then invoke `check "$MANUAL_TASK"`.
    This validates your input without repairing it. Failed attempts remain recorded.
+   `REVIEW` permits continued correction within the same timer; `INCOMPLETE`
+   requires cleanup and operator review before a new attempt.
 5. Invoke `status "$MANUAL_TASK"`, then `cleanup "$MANUAL_TASK"` when finished.
    Preserve the result even if you do not detect or resolve the problem.
 

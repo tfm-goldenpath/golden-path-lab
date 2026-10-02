@@ -161,7 +161,7 @@ manual_task_delete() { echo delete >> "$FIXTURE/events"; }
 actor() { echo create >> "$FIXTURE/events"; }
 manual_task_probe() { echo probe >> "$FIXTURE/events"; }
 manual_task_profile_check() { echo profile >> "$FIXTURE/events"; }
-node() { echo '{"synthetic":true}'; }
+node() { echo '{"status":"PASS","synthetic":true}'; }
 attestations_verify_delivery() { echo UNEXPECTED_SIGN; return 17; }
 attestations_authorize_results() { echo UNEXPECTED_SIGN; return 17; }
 manual_task_check
@@ -171,13 +171,65 @@ manual_task_check
 });
 test('F10 wrong selected artifact is unresolved and is never repaired automatically', t => {
   const r = shell(t, String.raw`
-mkdir -p "$FIXTURE/operator"
+mkdir -p "$FIXTURE/operator" "$FIXTURE/operation"
 echo '{"candidate":"synthetic-initial","authorizedArtifact":"authorized"}' > "$FIXTURE/operator/prepared.json"
-manual_task=$FIXTURE; manual_scenario=F10; image=unauthorized
+manual_task=$FIXTURE; manual_operation=$FIXTURE/operation; state_dir=$FIXTURE; manual_scenario=F10; image=unauthorized
 manual_task_control() { echo unexpected; }
 manual_task_check
 `);
   assert.equal(r.status, 43, r.stderr); assert.doesNotMatch(r.stdout, /unexpected/);
+  assert.equal(JSON.parse(readFileSync(join(r.dir,'operation/check-result.json'))).status, 'CORRECTION_REJECTED');
+});
+test('F03 distinguishes a retained vulnerability rejection from build, scanner and evaluator failures', t => {
+  for (const stage of ['build','scan','evaluation','blocked']) {
+    const r = shell(t, String.raw`
+mkdir -p "$FIXTURE/operator" "$FIXTURE/operation" "$FIXTURE/participant"
+manual_task_copy_source "$FIXTURE/participant/source"
+echo '{"candidate":"synthetic-initial","base":"synthetic-base"}' > "$FIXTURE/operator/prepared.json"
+manual_task=$FIXTURE; manual_operation=$FIXTURE/operation; manual_owner=$FIXTURE; state_dir=$FIXTURE
+manual_scenario=F03; manual_arm=R; commit=synthetic
+delivery_build() { if [[ "$FAIL_STAGE" == build ]]; then false; fi; echo '{}' > "$state_dir/build-inputs.json"; }
+put() { :; }
+load_delivery_context() { :; }
+delivery_render_manifests() { :; }
+delivery_check_manifest() { :; }
+delivery_scan() { if [[ "$FAIL_STAGE" == scan ]]; then false; fi; echo scanned; }
+delivery_evaluate_vulnerabilities() {
+  if [[ "$FAIL_STAGE" == evaluation ]]; then false; fi
+  echo '{"status":"BLOCKED","synthetic":true}' > "$state_dir/analysis.json"
+}
+manual_task_check
+echo unexpected-completion
+`, {FAIL_STAGE:stage});
+    assert.equal(r.status, stage==='blocked'?43:1, r.stderr);
+    assert.doesNotMatch(r.stdout, /unexpected-completion/);
+    const result=JSON.parse(readFileSync(join(r.dir,'operation/check-result.json')));
+    assert.equal(result.status, stage==='blocked'?'CORRECTION_REJECTED':'INTEGRATION_ERROR');
+    if (stage==='blocked') assert.equal(result.evidence.sha256, createHash('sha256').update(readFileSync(join(r.dir,'analysis.json'))).digest('hex'));
+  }
+});
+test('F11 correction rejection requires the attributed privilege decision, not evaluator errors', t => {
+  for (const stage of ['privileges','evaluation','unrelated-denial']) {
+    const r=shell(t,String.raw`
+mkdir -p "$FIXTURE/operator" "$FIXTURE/operation"
+echo '{"candidate":"synthetic-initial"}' > "$FIXTURE/operator/prepared.json"
+manual_task=$FIXTURE; manual_operation=$FIXTURE/operation; state_dir=$FIXTURE; manual_scenario=F11
+conftest() {
+  if [[ "$FAIL_STAGE" == evaluation ]]; then echo 'synthetic evaluator failure' >&2; return 2; fi
+  local msg='PRIVILEGED: quotes-node must declare privileged=false'
+  if [[ "$FAIL_STAGE" == unrelated-denial ]]; then msg='HOST_ACCESS: hostPID is not allowed'; fi
+  jq -n --arg file "$state_dir/tfm-golden.json" --arg msg "$msg" '[{filename:$file,namespace:"manifests",successes:10,failures:[{msg:$msg}]}]'
+  return 1
+}
+manual_task_check
+echo unexpected-completion
+`,{FAIL_STAGE:stage});
+    assert.equal(r.status, stage==='privileges'?42:1, r.stderr);
+    assert.doesNotMatch(r.stdout,/unexpected-completion/);
+    const result=JSON.parse(readFileSync(join(r.dir,'operation/check-result.json')));
+    assert.equal(result.status,stage==='privileges'?'CORRECTION_REJECTED':'INTEGRATION_ERROR');
+    if (stage==='privileges') assert.equal(result.evidence.sha256,createHash('sha256').update(readFileSync(join(r.dir,'manifest-decision.json'))).digest('hex'));
+  }
 });
 test('F03 requires a new corrected image, same database, target removal and actual dependency behavior evidence', t => {
   const dir = directory(t), before = join(dir,'before'), after = join(dir,'after'); mkdirSync(before); mkdirSync(after);
@@ -200,6 +252,49 @@ test('all scenarios preserve identical health, source version and quote behavior
   writeFileSync(join(b,'tfm-golden-quote.json'),'{"synthetic":true,"premiumCents":2}');
   assert.throws(() => functional(a,b,'tfm-golden'), /quote/);
 });
+test('functional oracle distinguishes observed incompatibility from missing or malformed evidence', t => {
+  const dir=directory(t), a=join(dir,'before'), b=join(dir,'after'); mkdirSync(a);mkdirSync(b);
+  for (const suffix of ['health','version','quote']) {
+    writeFileSync(join(a,`tfm-reference-${suffix}.json`),'{"synthetic":true}');
+    writeFileSync(join(b,`tfm-golden-${suffix}.json`),'{"synthetic":true}');
+  }
+  const run=()=>spawnSync('node',['tests/scenarios/manual-task-evidence.mjs','functional',a,b,'tfm-golden'],{cwd:root,encoding:'utf8'});
+  assert.equal(run().status,0);
+  const output=join(b,'tfm-golden-quote.json');
+  writeFileSync(output,'{"synthetic":true,"changed":true}');
+  const rejected=run();assert.equal(rejected.status,43,rejected.stderr);
+  assert.equal(JSON.parse(rejected.stdout).status,'CORRECTION_REJECTED');
+  for (const corrupt of [()=>writeFileSync(output,'{'),()=>rmSync(output)]) {
+    corrupt(); const failed=run();assert.equal(failed.status,1);
+    assert.equal(JSON.parse(failed.stdout).status,'INTEGRATION_ERROR');
+  }
+});
+for (const stage of ['registry','admission','rollout-http','profile','functional-error','functional-rejection']) {
+  test(`completion classifies ${stage} without suppressing nested failures`, t => {
+    const r=shell(t,String.raw`
+mkdir -p "$FIXTURE/operator" "$FIXTURE/operation"
+echo '{"candidate":"synthetic-initial","authorizedArtifact":"authorized"}' > "$FIXTURE/operator/prepared.json"
+manual_task=$FIXTURE; manual_operation=$FIXTURE/operation; manual_owner=$FIXTURE; state_dir=$FIXTURE
+manual_scenario=F10; manual_arm=G; manual_namespace=tfm-golden; image=authorized
+manual_task_control() { if [[ "$FAIL_STAGE" == registry ]]; then false; fi; echo unexpected-after-error >> "$FIXTURE/events"; }
+manual_task_delete() { :; }
+actor() { if [[ "$FAIL_STAGE" == admission ]]; then return 1; fi; }
+manual_task_probe() { if [[ "$FAIL_STAGE" == rollout-http ]]; then false; fi; }
+manual_task_profile_check() { if [[ "$FAIL_STAGE" == profile ]]; then false; fi; }
+node() {
+  if [[ "$FAIL_STAGE" == functional-error ]]; then echo '{"status":"INTEGRATION_ERROR","synthetic":true}'; return 1; fi
+  if [[ "$FAIL_STAGE" == functional-rejection ]]; then echo '{"status":"CORRECTION_REJECTED","reason":"synthetic mismatch","synthetic":true}'; return 43; fi
+  echo '{"status":"PASS","synthetic":true}'
+}
+manual_task_check
+echo completed
+`,{FAIL_STAGE:stage});
+    assert.notEqual(r.status,0);assert.doesNotMatch(r.stdout,/completed/);
+    const result=JSON.parse(readFileSync(join(r.dir,'operation/check-result.json')));
+    assert.equal(result.status,stage==='functional-rejection'?'CORRECTION_REJECTED':'INTEGRATION_ERROR');
+    if (stage==='registry') assert.equal(r.status,1);
+  });
+}
 test('manual F03 corrected context is explicit, immutable and still uses the fixed runtime wrapper', t => {
   mkdirSync(join(root,'evidence/raw'),{recursive:true});
   const owner=mkdtempSync(join(root,'evidence/raw/run-'));

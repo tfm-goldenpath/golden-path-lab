@@ -265,6 +265,28 @@ def detection_from(folder, task, record, mechanism):
     save(task, record)
 
 
+def completion_outcome(folder, record, code):
+    """Only an explicit, intact correction decision permits continued review."""
+    try:
+        receipt = folder / 'check-result.json'
+        if receipt.is_symlink(): return 'error'
+        value = read(receipt)
+        if (value.get('schema') != 'manual-task-check/v1' or value.get('scenario') != record['scenario']
+                or not isinstance(value.get('phase'), str) or not value['phase']): return 'error'
+        if value.get('status') == 'INTEGRATION_ERROR': return 'error'
+        proof = value['evidence']; path = folder / proof['path']
+        if path.is_symlink() or not path.is_file() or sha256(path) != proof['sha256']: return 'error'
+        if value['status'] == 'CORRECTION_REJECTED' and code in (42, 43): return 'unresolved'
+        completion = folder / 'completion.json'
+        if code == 0 and value['status'] == 'VALIDATED_COMPLETION' and path.resolve() == completion.resolve():
+            result = read(completion)
+            if result.get('status') == 'VALIDATED_COMPLETION' and result.get('scenario') == record['scenario']:
+                return 'completed'
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        pass
+    return 'error'
+
+
 def run_command(args):
     task = managed(args.task)
     with locked(task):
@@ -347,11 +369,11 @@ def run_command(args):
                 raise
             code, folder = operation(task, record, 'check')
             if record['status'] not in TERMINAL:
-                completion = folder / 'completion.json'
-                valid = code == 0 and completion.is_file() and read(completion).get('status') == 'VALIDATED_COMPLETION'
+                outcome = completion_outcome(folder, record, code)
+                receipt = folder / 'check-result.json'
+                evidence = receipt if receipt.is_file() and not receipt.is_symlink() else folder / 'exit.json'
                 record_event(record, 'verification-finished', read(folder / 'exit.json')['finished'],
-                             outcome='completed' if valid else 'unresolved' if code != 0 else 'error',
-                             exitCode=code, evidence=evidence_link(completion if valid else folder / 'exit.json', task))
+                             outcome=outcome, exitCode=code, evidence=evidence_link(evidence, task))
                 save(task, record)
             print('VALIDATED_COMPLETION' if record['status'] == 'COMPLETED' else record['status'])
         print(json.dumps(summarize(record, clock()), indent=2))

@@ -130,13 +130,24 @@ Use `wait` only for an actual wait; use `pause` for a break or unobserved interv
 Tool execution and completion verification automatically count as waiting.
 Mark active work again when resuming. `check` verifies the participant's input;
 it supplies no repair. F03 rebuilds and scans the edited dependency, F10 consumes
-the selected existing artifact, and F11 checks the edited manifest. Output is
-`VALIDATED_COMPLETION`, `REVIEW` after unsuccessful verification, or `INCOMPLETE`
-for a configuration/protocol failure. Failed checks retain distinct operation
-directories and exit codes. Review those diagnostics; if an instrumentation or
-external failure prevents interpretation, record `event "$MANUAL_TASK" abandon
---note '<observed reason>'` and clean up. A failed correction alone does not
-invalidate the task.
+the selected existing artifact, and F11 checks the edited manifest. Output is:
+
+- `VALIDATED_COMPLETION`: every required completion check passed.
+- `REVIEW`: an explicit, evidenced `CORRECTION_REJECTED` decision shows that the
+  submitted correction is insufficient, including an observed functional mismatch.
+  Continue within the same timer and remaining window.
+- `INCOMPLETE`: a build, registry, transport, profile or evaluator failure prevents
+  validation. Missing, malformed or inconsistent completion evidence also closes
+  the attempt; a nonzero exit code alone cannot establish a rejected correction.
+
+Each check retains its own operation directory, diagnostics and exit code.
+`check-result.json` records the scenario, phase and classified result; a rejection
+or completion links its evidence by path and SHA-256. Review the diagnostics and
+run `cleanup` after `INCOMPLETE`; do not retry that attempt. Retain it before
+reviewing the cause and preparing any new attempt. If another operation leaves
+an uninterpretable attempt open, record `event "$MANUAL_TASK" abandon --note
+'<observed reason>'` and clean up. A failed correction alone does not invalidate
+the task.
 `cleanup` prints `CLEANUP_COMPLETE` only after packaging and observing that owned
 cluster/registry/builder/private state are absent. A repeated cleanup preserves
 the first evidence package. Keep the task path, then prepare the next calibration

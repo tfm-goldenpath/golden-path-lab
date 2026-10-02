@@ -29,6 +29,8 @@ Declarar conocimientos, intentos previos y exposición al otro brazo: no es cieg
    `wait` y `pause` con notas reales; marcar actividad de nuevo al retomarla.
 4. Corregir con herramientas convencionales e invocar `check "$MANUAL_TASK"`.
    Valida la entrada sin repararla; los intentos fallidos permanecen registrados.
+   `REVIEW` permite continuar la corrección con el mismo reloj; `INCOMPLETE`
+   exige limpiar y revisar la causa con el operador antes de otro intento.
 5. Invocar `status "$MANUAL_TASK"` y `cleanup "$MANUAL_TASK"` al terminar.
    Conservar el resultado aunque no se detecte o resuelva el problema.
 

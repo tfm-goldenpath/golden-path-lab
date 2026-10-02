@@ -214,21 +214,55 @@ class ManualCommandTests(unittest.TestCase):
         record_event(r, 'prepared', clock()); record_event(r, 'start', clock())
         return root, r
 
-    def test_unsuccessful_verification_remains_open_with_retained_exit_code(self):
-        with tempfile.TemporaryDirectory(prefix='synthetic-manual-correction-') as directory:
-            root, r = self.operation_fixture(directory)
-            record_event(r, 'automatic-finished', clock(), outcome='completed')
-            receipt = root / 'detection.json'; write_json(receipt, {'synthetic': True})
-            record_event(r, 'detected', clock(), mechanism='manual:scan', evidence=cli.evidence_link(receipt, root))
-            write_json(root / 'record.json', r)
-            (root / 'scripts/demo.sh').write_text('echo synthetic-build-error\nexit 1\n')
-            with patch.object(cli, 'ROOT', root), patch.object(cli, 'STORE', root.parent), patch.object(cli, 'guard_task'):
-                self.assertEqual(cli.run_command(argparse.Namespace(command='check', task=str(root))), 0)
-            actual = read_json(root / 'record.json')
-            self.assertEqual(actual['status'], 'REVIEW')
-            self.assertEqual(actual['events'][-1]['exitCode'], 1)
-            self.assertEqual(actual['events'][-1]['outcome'], 'unresolved')
-            self.assertIn('synthetic-build-error', next((root / 'operations').glob('*/command.log')).read_text())
+    def test_verification_requires_an_explicit_evidenced_correction_rejection(self):
+        for case, code, status, outcome in [
+            ('unclassified-build-error', 1, 'INCOMPLETE', 'error'),
+            ('unclassified-reserved-exit', 43, 'INCOMPLETE', 'error'),
+            ('unclassified-success', 0, 'INCOMPLETE', 'error'),
+            ('integration-error', 1, 'INCOMPLETE', 'error'),
+            ('correction-rejected', 43, 'REVIEW', 'unresolved'),
+            ('manifest-rejected', 42, 'REVIEW', 'unresolved'),
+            ('wrong-exit', 1, 'INCOMPLETE', 'error'),
+            ('wrong-scenario', 43, 'INCOMPLETE', 'error'),
+            ('changed-evidence', 43, 'INCOMPLETE', 'error'),
+            ('missing-evidence', 43, 'INCOMPLETE', 'error'),
+            ('malformed-result', 43, 'INCOMPLETE', 'error'),
+            ('false-success-exit', 0, 'INCOMPLETE', 'error'),
+            ('completion', 0, 'COMPLETED', 'completed'),
+            ('completion-wrong-scenario', 0, 'INCOMPLETE', 'error'),
+        ]:
+            with self.subTest(case=case), tempfile.TemporaryDirectory(prefix='synthetic-manual-correction-') as directory:
+                root, r = self.operation_fixture(directory)
+                record_event(r, 'automatic-finished', clock(), outcome='completed')
+                receipt = root / 'detection.json'; write_json(receipt, {'synthetic': True})
+                record_event(r, 'detected', clock(), mechanism='manual:scan', evidence=cli.evidence_link(receipt, root))
+                write_json(root / 'record.json', r)
+                oracle = root / 'synthetic-oracle.json'; write_json(oracle, {'synthetic': True, 'status': 'CORRECTION_REJECTED'})
+                result = {'schema': 'manual-task-check/v1', 'scenario': 'F03',
+                          'status': 'INTEGRATION_ERROR' if case == 'integration-error' else 'CORRECTION_REJECTED',
+                          'phase': 'synthetic-check', 'evidence': {'path': 'oracle.json', 'sha256': cli.sha256(oracle)}}
+                if case == 'wrong-scenario': result['scenario'] = 'F11'
+                if case == 'changed-evidence': result['evidence']['sha256'] = '0' * 64
+                if case == 'missing-evidence': result['evidence']['path'] = 'missing.json'
+                proof_name = 'oracle.json'
+                if case.startswith('completion'):
+                    proof_name = 'completion.json'
+                    write_json(oracle, {'synthetic': True, 'status': 'VALIDATED_COMPLETION',
+                                       'scenario': 'F11' if case == 'completion-wrong-scenario' else 'F03'})
+                    result.update(status='VALIDATED_COMPLETION', evidence={'path': proof_name, 'sha256': cli.sha256(oracle)})
+                write_json(root / 'synthetic-result.json', result)
+                if case == 'malformed-result': (root / 'synthetic-result.json').write_text('{')
+                script = f'echo synthetic-check-diagnostic\ncp synthetic-oracle.json "$5/{proof_name}"\n'
+                if not case.startswith('unclassified'):
+                    script += 'cp synthetic-result.json "$5/check-result.json"\n'
+                (root / 'scripts/demo.sh').write_text(script + f'exit {code}\n')
+                with patch.object(cli, 'ROOT', root), patch.object(cli, 'STORE', root.parent), patch.object(cli, 'guard_task'):
+                    self.assertEqual(cli.run_command(argparse.Namespace(command='check', task=str(root))), 0 if status in ('REVIEW', 'COMPLETED') else 2)
+                actual = read_json(root / 'record.json')
+                self.assertEqual(actual['status'], status)
+                self.assertEqual(actual['events'][-1]['exitCode'], code)
+                self.assertEqual(actual['events'][-1]['outcome'], outcome)
+                self.assertIn('synthetic-check-diagnostic', next((root / 'operations').glob('*/command.log')).read_text())
 
     def test_interrupted_tool_closes_attempt_but_cleanup_keeps_original_endpoint(self):
         for name in ['tool', 'cleanup']:

@@ -132,12 +132,24 @@ Usar `wait` solo ante una espera real y `pause` para descansos o intervalos sin
 observación. Herramientas y verificación final cuentan automáticamente como espera;
 registrar de nuevo la actividad al retomarla. `check` valida la entrada humana
 sin repararla: F03 reconstruye y escanea, F10 consume el artefacto seleccionado y
-F11 comprueba el manifiesto editado. Imprime `VALIDATED_COMPLETION`, `REVIEW` si
-la verificación falla o `INCOMPLETE` ante un fallo de configuración/protocolo.
-Cada comprobación conserva su directorio y código de salida. Revisar diagnósticos;
-si un fallo de instrumentación o externo impide interpretar el intento, registrar
-`event "$MANUAL_TASK" abandon --note '<motivo observado>'` y limpiar. Una
-corrección fallida por sí sola no invalida la tarea. `cleanup` imprime `CLEANUP_COMPLETE`
+F11 comprueba el manifiesto editado. Imprime:
+
+- `VALIDATED_COMPLETION`: todas las comprobaciones requeridas pasan.
+- `REVIEW`: una decisión explícita `CORRECTION_REJECTED`, respaldada por evidencia,
+  muestra que la corrección es insuficiente, incluida una incompatibilidad funcional
+  observada. Continuar con el mismo reloj y dentro de la ventana restante.
+- `INCOMPLETE`: un fallo de build, registro, transporte, perfil o evaluador impide
+  validar. La evidencia ausente, malformada o inconsistente también cierra el
+  intento; un código distinto de cero no basta para atribuir un rechazo.
+
+Cada comprobación conserva su directorio, diagnósticos y código de salida.
+`check-result.json` registra escenario, fase y resultado; un rechazo o finalización
+enlaza su evidencia mediante ruta y SHA-256. Revisar diagnósticos y ejecutar
+`cleanup` tras `INCOMPLETE`; no reintentar esa tarea. Conservarla antes de revisar
+la causa y preparar otro intento. Si otra operación deja abierto un intento
+ininterpretable, registrar `event "$MANUAL_TASK" abandon --note '<motivo observado>'`
+y limpiar. Una corrección fallida por sí sola no invalida la tarea.
+`cleanup` imprime `CLEANUP_COMPLETE`
 tras empaquetar y observar ausentes cluster, registro, builder y material privado
 propios. Repetir limpieza conserva el primer paquete.
 

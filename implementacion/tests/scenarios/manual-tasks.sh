@@ -74,6 +74,37 @@ write_json(pathlib.Path(folder)/'detection.json', {'status':'ATTRIBUTED_DETECTIO
 PY
 }
 
+manual_task_check_result() {
+  python3 - "$manual_operation" "$manual_scenario" "$1" "$2" "${3:-}" <<'PY'
+import os,pathlib,sys
+sys.path.insert(0,'scripts')
+from manual_tasks import sha256,write_json
+folder,scenario,status,phase,evidence=sys.argv[1:]
+value={'schema':'manual-task-check/v1','scenario':scenario,'status':status,'phase':phase}
+if evidence: value['evidence']={'path':os.path.relpath(evidence,folder),'sha256':sha256(evidence)}
+write_json(pathlib.Path(folder)/'check-result.json',value)
+PY
+}
+
+manual_task_oracle() {
+  local oracle=$1 output=$2 code=0
+  shift 2
+  manual_task_check_result INTEGRATION_ERROR "$oracle"
+  # Capture only this external validator. Calling a whole stage conditionally
+  # would suppress errexit inside the shared delivery functions.
+  node tests/scenarios/manual-task-evidence.mjs "$oracle" "$@" > "$output" || code=$?
+  if [[ "$code" == 43 ]]; then
+    jq -e '.status=="CORRECTION_REJECTED" and (.reason | type=="string" and length>0)' "$output" >/dev/null
+    manual_task_check_result CORRECTION_REJECTED "$oracle" "$output"
+    return 43
+  fi
+  if [[ "$code" != 0 ]]; then
+    manual_task_check_result INTEGRATION_ERROR "$oracle" "$output"
+    return "$code"
+  fi
+  jq -e '.status=="PASS"' "$output" >/dev/null
+}
+
 manual_task_prepare() {
   bash scripts/check-environment.sh
   lab_check_environment
@@ -243,6 +274,9 @@ manual_task_control() {
       if [[ "$(jq -r .detected "$state_dir/manifest-decision.json")" == true ]]; then
         [[ "$manual_scenario" == F11 ]] || return 43
         manual_task_detection manifest "$state_dir/manifest-decision.json"
+        if [[ "${manual_check_active:-0}" == 1 ]]; then
+          manual_task_check_result CORRECTION_REJECTED manifest "$state_dir/manifest-decision.json"
+        fi
         return 42
       fi
       ;;
@@ -264,7 +298,8 @@ manual_task_start() {
 }
 
 manual_task_check() {
-  local before base file
+  local before base file analysis_status manual_check_active=1
+  manual_task_check_result INTEGRATION_ERROR correction-input
   before=$(jq -er .candidate "$manual_task/operator/prepared.json")
   if [[ "$manual_scenario" == F03 ]]; then
     # The participant edits dependency manifests; execution wrappers stay fixed.
@@ -277,6 +312,7 @@ manual_task_check() {
     base=$(jq -er .base "$manual_task/operator/prepared.json")
     id="$(basename "$manual_owner" | tr '[:upper:]' '[:lower:]')-$(basename "$manual_operation")"
     node tests/scenarios/manual-task-evidence.mjs authorize-build "$state_dir/input-source" "$commit" "$base" > "$state_dir/input-authorization.json"
+    manual_task_check_result INTEGRATION_ERROR build
     delivery_build "$state_dir/input-source" "$base" "$state_dir/input-authorization.json" manual-correction
     # The immutable harness revision and the participant's actual build inputs
     # are separate identities. Bind newly issued F03 evidence to those inputs.
@@ -284,36 +320,56 @@ manual_task_check() {
     load_delivery_context
     delivery_render_manifests
     delivery_check_manifest
+    manual_task_check_result INTEGRATION_ERROR scan
     delivery_scan
     delivery_evaluate_vulnerabilities
-    [[ "$(jq -er .status "$state_dir/analysis.json")" == PASS ]] || return 43
+    analysis_status=$(jq -er .status "$state_dir/analysis.json")
+    if [[ "$analysis_status" == BLOCKED ]]; then
+      manual_task_check_result CORRECTION_REJECTED vulnerability-policy "$state_dir/analysis.json"
+      return 43
+    fi
+    [[ "$analysis_status" == PASS ]] || fail 'Unexpected vulnerability decision.'
     node scripts/vulnerability-evidence.mjs authorize "$state_dir" "$image" > "$state_dir/analysis-authorization.json"
     if [[ "$manual_arm" == G ]]; then
+      manual_task_check_result INTEGRATION_ERROR authorization
       attestations_verify_delivery
       attestations_authorize_results
     fi
   elif [[ "$manual_scenario" == F10 ]]; then
     # Correction selects an existing authorized artifact. No signing or claim rewriting.
-    [[ "$image" == "$(jq -er .authorizedArtifact "$manual_task/operator/prepared.json")" ]] || return 43
+    local authorized
+    authorized=$(jq -er .authorizedArtifact "$manual_task/operator/prepared.json")
+    if [[ "$image" != "$authorized" ]]; then
+      jq -n --arg selected "$image" --arg authorized "$authorized" \
+        '{status:"CORRECTION_REJECTED",selected:$selected,authorized:$authorized}' > "$state_dir/artifact-selection.json"
+      manual_task_check_result CORRECTION_REJECTED artifact-selection "$state_dir/artifact-selection.json"
+      return 43
+    fi
+    manual_task_check_result INTEGRATION_ERROR provenance
     manual_task_control provenance
   else
+    manual_task_check_result INTEGRATION_ERROR manifest
     manual_task_control manifest
     [[ "$manual_arm" != G ]] || attestations_ci_gate CI-completion authorized
   fi
+  manual_task_check_result INTEGRATION_ERROR admission
   manual_task_delete "$manual_namespace" "$state_dir/completion-before"
   actor "$manual_namespace" create -f "$state_dir/$manual_namespace.json" -o json > "$state_dir/admission.json" 2> "$state_dir/admission.log"
+  manual_task_check_result INTEGRATION_ERROR rollout-http
   manual_task_probe "$manual_namespace"
   if [[ "$manual_scenario" == F03 ]]; then
     k -n "$manual_namespace" logs deployment/quotes-node > "$state_dir/dependency-behavior.log"
-    node tests/scenarios/manual-task-evidence.mjs corrected-dependency "$before" "$state_dir" > "$state_dir/correction.json"
+    manual_task_oracle corrected-dependency "$state_dir/correction.json" "$before" "$state_dir"
   else
     before=$manual_owner
   fi
-  node tests/scenarios/manual-task-evidence.mjs functional "$before" "$state_dir" "$manual_namespace" > "$state_dir/functional-comparison.json"
+  manual_task_oracle functional "$state_dir/functional-comparison.json" "$before" "$state_dir" "$manual_namespace"
   # Recheck unchanged enforcement after the final observed workload.
+  manual_task_check_result INTEGRATION_ERROR profile
   manual_task_profile_check after
   jq -n --arg scenario "$manual_scenario" --arg image "$image" --arg evidence "$state_dir" \
     '{status:"VALIDATED_COMPLETION",scenario:$scenario,image:$image,evidence:$evidence,humanAcceptance:"pending"}' > "$manual_operation/completion.json"
+  manual_task_check_result VALIDATED_COMPLETION complete "$manual_operation/completion.json"
 }
 
 manual_task_dispatch() {
@@ -326,6 +382,7 @@ manual_task_dispatch() {
   manual_namespace=tfm-reference; [[ "$manual_arm" != G ]] || manual_namespace=tfm-golden
   if [[ "$command" == prepare ]]; then manual_task_prepare; return; fi
   preserve=1
+  if [[ "$command" == check ]]; then manual_task_check_result INTEGRATION_ERROR initialization; fi
   if [[ ! -f "$manual_task/operator/state-path.txt" && "$command" == cleanup ]]; then return; fi
   export GP_STATE_DIR
   GP_STATE_DIR=$(cat "$manual_task/operator/state-path.txt")
