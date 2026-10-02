@@ -1,5 +1,11 @@
 # F11 / F12 / L06 runtime operations
 
+The [manual task procedure](../../manual-task-calibration.md) reuses the coordinated
+F11 privilege alteration in independent lane A R/G tasks. Completion retains the
+existing explicit-false manifest contract, unchanged image and functional checks.
+Its synthetic instrumentation tests add no human calibration or live acceptance;
+the historical runtime observations below remain separate.
+
 ## Current hosted status (supplied review, 2026-09-30)
 
 The user reports successful [hosted run 36768108684](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36768108684)

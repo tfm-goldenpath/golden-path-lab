@@ -1,5 +1,9 @@
 # F03 / F04 / L02: análisis posterior a la construcción
 
+El [procedimiento manual F03 en A](../../manual-task-calibration.md) reutiliza
+este oráculo para preparación independiente y corrección humana en R/G.
+La validación real del nuevo procedimiento y la calibración siguen pendientes.
+
 La [ficha principal](../../../EN/cases/F03-F04-L02/record.md) y la
 [matriz compartida](../../../EN/cases/F03-F04-L02/oracles.json) definen el oráculo.
 Base: `eed5aad2828a7156e4c49bf2e2f3d9c2b0476137`. Revisión humana pendiente.

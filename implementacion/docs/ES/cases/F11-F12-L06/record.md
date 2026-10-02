@@ -1,5 +1,9 @@
 # F11 / F12 / L06: operaciones de ejecución
 
+El [procedimiento manual F11 en A](../../manual-task-calibration.md) conserva
+este oráculo y comprueba la corrección humana con los mismos controles.
+La validación real del nuevo procedimiento y la calibración siguen pendientes.
+
 La [matriz compartida](../../../EN/cases/F11-F12-L06/operations.json) se definió
 antes de implementar sobre `d86465410d74e39ef8e77a9979995bcb268abf9a`, según los
 requisitos del usuario. Se conservan los identificadores académicos. No se revisó

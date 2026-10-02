@@ -1,5 +1,9 @@
 # Oráculo operativo F09 / F10 / L05
 
+El [procedimiento manual F10 en A](../../manual-task-calibration.md) conserva
+este fallo autenticado de origen y exige obtener el artefacto autorizado.
+La validación real del nuevo procedimiento y la calibración siguen pendientes.
+
 Definido sobre `38631e1` antes de implementar. Hito: cobertura de escenarios y
 piloto. Los identificadores y expectativas proceden de la solicitud del usuario;
 no se ha verificado independientemente la revisión documental de la tesis.

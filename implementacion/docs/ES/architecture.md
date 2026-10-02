@@ -272,4 +272,25 @@ La identidad exacta de `paired-rg.yml` en main usa emisor GitHub, builder nativo
 y controles de fuente existentes. R no produce evidencias G. El formato
 `paired-rg-observation/v1` conserva tiempos monotónicos/UTC y observaciones
 incompletas; los paquetes distinguen mediciones individuales de escenarios.
-Instrumentación implementada; smoke/piloto y aceptación humana pendientes.
+Instrumentación implementada; desarrollo y cuatro pares del piloto temporal
+completados en la [revisión incorporada](paired-rg-pilot-review.md). Aceptación
+humana pendiente.
+
+## Procedimiento de tareas manuales
+
+La [calibración en carril A](manual-task-calibration.md) usa
+`scripts/manual-tasks.py` para órdenes de una tarea, planes conservados y límites
+de procesos. `manual_tasks.py` mantiene los eventos versionados y sus cálculos.
+`demo.sh local manual` conserva la propiedad de la infraestructura; las funciones
+de `tests/scenarios/manual-tasks.sh` componen los módulos compartidos. Los
+oráculos de `manual-task-evidence.mjs` reutilizan los validadores existentes.
+
+La preparación comprueba el fallo y la entrada legítima fuera del cronómetro.
+Cada intento tiene laboratorio y entradas independientes, conservados hasta la
+limpieza explícita. F03 construye los cuatro archivos capturados de la corrección,
+con wrappers intactos y lock de dependencia fijado. F10 consume un artefacto
+autorizado existente sin firmar ni reescribir procedencia. F11 cambia solo los
+campos de privilegios declarados. Cada verificación conserva evidencia separada,
+incluidas correcciones fallidas; el empaquetador excluye material privado.
+No cambia el protocolo temporal B ni demuestra cobertura negativa hosted o
+resultados humanos.

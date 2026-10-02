@@ -5,7 +5,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$root"
 mode=${1:-local}; phase=${2:-run}
 [[ "$mode" == local || "$mode" == github ]] || { echo 'Mode: local or github' >&2; exit 2; }
-case "$phase" in run|prepare|finish|reference|cleanup|vulnerabilities) ;; *) echo 'Invalid phase' >&2; exit 2 ;; esac
+case "$phase" in run|prepare|finish|reference|cleanup|vulnerabilities|manual) ;; *) echo 'Invalid phase' >&2; exit 2 ;; esac
 source versions.env
 for module in context lab delivery attestations workload; do
   source "$root/scripts/lib/$module.sh"
@@ -19,12 +19,27 @@ context_init
 on_exit() {
   local code=$?
   trap - EXIT
+  if [[ "$phase" == manual && -n "${manual_owner:-}" ]]; then state_dir=$manual_owner; fi
   if [[ "$preserve" != 1 ]]; then
     if ! cleanup; then [[ "$code" != 0 ]] || code=1; fi
+    if [[ "$phase" == manual && -n "${manual_owner:-}" ]]; then
+      if ! manual_task_cleanup_check; then [[ "$code" != 0 ]] || code=1; fi
+    fi
+  elif [[ "$phase" == manual && -n "$port_pid" ]]; then
+    kill "$port_pid" 2>/dev/null || true
+    wait "$port_pid" 2>/dev/null || true
   fi
   if [[ "$code" != 0 ]]; then printf '\nDelivery stopped. Evidence: %s\n' "$state_dir" >&2; fi
   exit "$code"
 }
+
+if [[ "$phase" == manual ]]; then
+  [[ "$mode" == local ]] || fail 'Manual tasks require lane A.'
+  source "$root/tests/scenarios/manual-tasks.sh"
+  trap on_exit EXIT
+  manual_task_dispatch "${@:3}"
+  exit 0
+fi
 
 if [[ "$phase" == cleanup ]]; then load_state; cleanup; exit 0; fi
 lab_check_environment

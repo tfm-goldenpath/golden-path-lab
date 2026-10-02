@@ -86,6 +86,17 @@ def package(source, output, status):
             raise ValueError('Refusing symlinked scenario evidence directory')
         if directory.is_dir():
             candidates.extend(directory.iterdir())
+    manual_operations = source / 'manual-operations'
+    if manual_operations.is_symlink():
+        raise ValueError('Refusing symlinked manual operations')
+    if manual_operations.is_dir() and (source / 'manual-task.json').is_file():
+        for directory in sorted(manual_operations.iterdir()):
+            if directory.is_symlink() or not directory.is_dir() or not re.fullmatch(r'[0-9]{4,}-(start|tool|check)', directory.name):
+                raise ValueError('Unexpected manual operation directory')
+            candidates.extend(directory.iterdir())
+            inputs = directory / 'input-source'
+            if inputs.is_symlink(): raise ValueError('Refusing symlinked manual input')
+            if inputs.is_dir(): candidates.extend(inputs.iterdir())
     for file in sorted(candidates):
         if file.is_file() and not file.is_symlink() and (file.suffix in allowed or file.name == 'development-public-key.pem') and file.name not in excluded:
             content = file.read_bytes()
@@ -113,13 +124,14 @@ def package(source, output, status):
         static_workflow = False
     measurement = source / 'measurement.json'
     measured = measurement in files
+    manual = source / 'manual-task.json' in files
     preparation = source / 'measurement-preparation.json' in files
     try:
         measurement_status = json.loads(measurement.read_text()).get('classification', 'indeterminate') if measured else None
     except (ValueError, AttributeError):
         measurement_status = 'INVALID_RECORD'
     write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'One legitimate paired R/G measurement arm; inspect measurement.json; no fault trials or campaign acceptance' if measured else 'Shared paired R/G preparation; outside primary delivery intervals' if preparation else 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13 and runtime F11/F12/L06; optional local F03/F04/L02 and F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
+        'scope': 'One human-operated lane A manual task; inspect manual-task.json and the separate task event record; human acceptance pending' if manual else 'One legitimate paired R/G measurement arm; inspect measurement.json; no fault trials or campaign acceptance' if measured else 'Shared paired R/G preparation; outside primary delivery intervals' if preparation else 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13 and runtime F11/F12/L06; optional local F03/F04/L02 and F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
         'measurementClassification': measurement_status,
         'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
         'scenarios': scenario_summary(source, files),

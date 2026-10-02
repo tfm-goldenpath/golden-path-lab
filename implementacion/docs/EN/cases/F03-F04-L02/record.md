@@ -88,6 +88,13 @@ of this family. Existing F09/F10/L05 and F13/F14 integration gaps remain open.
 
 See [commands and actual checks](runbook.md) and [completion status](completion.json).
 
+The [manual task procedure](../../manual-task-calibration.md) prepares independent
+lane A F03/R and F03/G workspaces for human correction. It reuses this real target,
+the shared scanner/policy and harmless compatibility check. A participant-selected
+patched minimist version must be pinned in the lock, rebuilt, scanned and pass the
+whole threshold and functionality requirements. This supporting procedure adds
+no human calibration observations or new live scenario acceptance.
+
 AI assistance: Codex, identified by the session as GPT-6; a more specific deployed
 model identifier was not exposed. Contribution: implementation, fixture research,
 regressions and documentation. Human review and final decision: **pending**.

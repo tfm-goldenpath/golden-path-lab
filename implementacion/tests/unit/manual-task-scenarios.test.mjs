@@ -1,0 +1,229 @@
+// Synthetic orchestration and contract inputs. No live or human execution claim.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, cpSync, lstatSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {join, resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {spawnSync} from 'node:child_process';
+import {manifestInput, manifestDecision, correctedDependency, functional} from '../scenarios/manual-task-evidence.mjs';
+import {syntheticAnalysis} from './support/vulnerability-fixture.mjs';
+const root = resolve(import.meta.dirname, '../..');
+const base = JSON.parse(readFileSync(join(root, 'tests/policies/fixtures/base.json'))).manifests;
+function directory(t) {
+  const value = mkdtempSync(join(tmpdir(), 'synthetic-manual-'));
+  t.after(() => rmSync(value, {recursive:true, force:true})); return value;
+}
+function shell(t, code, env = {}) {
+  const dir = directory(t);
+  const result = spawnSync('bash', ['--noprofile', '--norc', '-c', `set -Eeuo pipefail\nsource "$SOURCE/tests/scenarios/manual-tasks.sh"\n${code}`],
+    {cwd:root, env:{...process.env, BASH_ENV:'', SOURCE:root, FIXTURE:dir, ...env}, encoding:'utf8', timeout:10000});
+  assert.ifError(result.error); return {...result, dir};
+}
+test('manual scenario import defines functions without infrastructure', t => {
+  const result = shell(t, 'declare -F manual_task_prepare manual_task_check');
+  assert.equal(result.status, 0, result.stderr);
+});
+test('F11 keeps every field except the two agreed privilege settings', () => {
+  const bad = structuredClone(base);
+  bad.spec.template.spec.containers[0].securityContext.privileged = true;
+  bad.spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation = true;
+  assert.equal(manifestInput(base, bad).status, 'PASS');
+  const omitted = structuredClone(bad);
+  delete omitted.spec.template.spec.containers[0].securityContext.privileged;
+  // This is an admissible human edit, not policy acceptance. Conftest still
+  // requires explicit false and the attributable decision stays unresolved.
+  assert.equal(manifestInput(base, omitted).status, 'PASS');
+  const malformed = structuredClone(bad);
+  malformed.spec.template.spec.containers[0].securityContext.privileged = 'false';
+  assert.throws(() => manifestInput(base, malformed));
+  for (const alter of [x => {x.metadata.namespace='tfm-reference';}, x => {x.spec.template.spec.hostPID=true;}, x => {x.spec.template.spec.containers[0].image='other';}]) {
+    const changed = structuredClone(bad); alter(changed);
+    assert.throws(() => manifestInput(base, changed));
+  }
+});
+test('manifest detection is attributed; transport and additional policy errors are not detection', () => {
+  const data = [{filename:'synthetic.json',namespace:'manifests',successes:10,failures:[{msg:'PRIVILEGED: quotes-node must declare privileged=false'}]}];
+  assert.equal(manifestDecision(1, data, '', 'synthetic.json').detected, true);
+  assert.throws(() => manifestDecision(2, data, '', 'synthetic.json'));
+  assert.throws(() => manifestDecision(1, data, 'connection failed', 'synthetic.json'));
+  data[0].failures.push({msg:'HOST_ACCESS: hostPID is not allowed'});
+  assert.throws(() => manifestDecision(1, data, '', 'synthetic.json'));
+});
+for (const scenario of ['F03', 'F10', 'F11']) {
+  test(`${scenario} G stops at a rejected control before deployment; R can complete its reference path`, t => {
+    const code = String.raw`
+manual_scenario=$SCENARIO; manual_arm=$ARM; manual_namespace=tfm-reference; state_dir=$FIXTURE
+k() { echo 'Error from server (NotFound): deployments.apps "quotes-node" not found' >&2; return 1; }
+fail() { echo "$*" >&2; exit 1; }
+manual_task_control() { echo "control:$1"; return 42; }
+attestations_ci_gate() { echo gate; }
+actor() { echo actor >> "$FIXTURE/events"; }
+manual_task_probe() { echo probe >> "$FIXTURE/events"; }
+manual_task_start
+echo later
+`;
+    const g = shell(t, code, {SCENARIO:scenario, ARM:'G'});
+    assert.equal(g.status, 42, g.stderr); assert.doesNotMatch(g.stdout, /later/);
+    const r = shell(t, code, {SCENARIO:scenario, ARM:'R'});
+    assert.equal(r.status, 0, r.stderr); assert.doesNotMatch(r.stdout, /control:/);
+    assert.equal(readFileSync(join(r.dir,'events'),'utf8'), 'actor\nprobe\n');
+  });
+}
+test('nested command failure cannot be masked by orchestration', t => {
+  const result = shell(t, String.raw`
+manual_arm=G; manual_scenario=F03; manual_namespace=tfm-golden; state_dir=$FIXTURE
+k() { echo 'Error from server (NotFound): deployments.apps "quotes-node" not found' >&2; return 1; }
+fail() { echo "$*" >&2; exit 1; }
+manual_task_control() { echo synthetic-failure; false; echo masked; }
+actor() { echo unexpected; }
+manual_task_start
+`);
+  assert.equal(result.status, 1); assert.doesNotMatch(result.stdout, /masked|unexpected/);
+});
+test('each operation restores a separate state copy and preserves previous diagnostics', t => {
+  const r = shell(t, String.raw`
+mkdir "$FIXTURE/original"
+echo '{"synthetic":true,"digest":"old"}' > "$FIXTURE/original/state.json"
+echo 'synthetic immutable output' > "$FIXTURE/original/unit-tests.log"
+load_delivery_context() { :; }
+manual_task_child "$FIXTURE/first" "$FIXTURE/original"
+echo '{"synthetic":true,"digest":"changed"}' > "$state_dir/state.json"
+echo failure > "$state_dir/failure.log"
+manual_task_child "$FIXTURE/second" "$FIXTURE/original"
+cmp "$state_dir/state.json" "$FIXTURE/original/state.json"
+cat "$FIXTURE/first/failure.log"
+`);
+  assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /failure/);
+  assert.notEqual(readFileSync(join(r.dir,'first/state.json'),'utf8'), readFileSync(join(r.dir,'second/state.json'),'utf8'));
+});
+test('new participant workspaces restore the original dependency without touching earlier attempts', t => {
+  const r=shell(t,String.raw`
+manual_task_copy_source "$FIXTURE/first"
+echo '{"synthetic":"human edit"}' > "$FIXTURE/first/package.json"
+manual_task_copy_source "$FIXTURE/second"
+cmp "$FIXTURE/second/package.json" tests/fixtures/vulnerabilities/f03-vulnerable/package.json
+cat "$FIXTURE/first/package.json"
+`);
+  assert.equal(r.status,0,r.stderr);assert.match(r.stdout,/human edit/);
+});
+test('cleanup preserves previously packaged failed preparation bytes', t => {
+  const r = shell(t, String.raw`
+root=$FIXTURE; mode=local
+task="$root/evidence/manual-tasks/task-one"
+mkdir -p "$task/operator" "$root/owner" "$task/operations/0002-cleanup"
+jq -n --arg task "$task" '{scenario:"F11",arm:"G",taskDirectory:$task,status:"PREPARING",synthetic:true}' > "$root/owner/manual-task.json"
+cp "$root/owner/manual-task.json" "$root/original.json"
+jq '.status="INCOMPLETE"' "$root/original.json" > "$task/record.json"
+printf '%s\n' "$root/owner" > "$task/operator/state-path.txt"
+touch "$root/owner/.evidence-packaged"
+load_state() { state_dir=$GP_STATE_DIR; }
+fail() { echo "$*" >&2; exit 1; }
+manual_task_dispatch cleanup "$task" "$task/operations/0002-cleanup"
+cmp "$root/owner/manual-task.json" "$root/original.json"
+[[ "$preserve" == 0 && ! -e "$root/owner/result.json" ]]
+`);
+  assert.equal(r.status, 0, r.stderr);
+});
+test('safe packaging retains manual operations and input evidence but excludes private state', t => {
+  const dir=directory(t), owner=join(dir,'run-synthetic');
+  mkdirSync(join(owner,'manual-operations/0001-check/input-source'),{recursive:true});
+  writeFileSync(join(owner,'manual-task.json'),'{"synthetic":true,"schema":"manual-task/v1"}');
+  writeFileSync(join(owner,'manual-operations/0001-check/failure.log'),'synthetic failed check');
+  writeFileSync(join(owner,'manual-operations/0001-check/state.json'),'{"syntheticPrivate":"excluded"}');
+  writeFileSync(join(owner,'manual-operations/0001-check/input-source/package.json'),'{"synthetic":true}');
+  const r=spawnSync('python3',[join(root,'scripts/package-evidence.py'),owner,join(dir,'packages'),'FAIL'],{encoding:'utf8'});
+  assert.equal(r.status,0,r.stderr);
+  const archive=join(dir,'packages/run-synthetic.tar.gz');
+  const audit=spawnSync('python3',['-c',String.raw`
+import hashlib,json,pathlib,sys,tarfile
+p=pathlib.Path(sys.argv[1]);assert hashlib.sha256(p.read_bytes()).hexdigest()==pathlib.Path(str(p)+'.sha256').read_text().split()[0]
+with tarfile.open(p) as a:
+ names=a.getnames()
+ assert 'run-synthetic/manual-operations/0001-check/failure.log' in names
+ assert 'run-synthetic/manual-operations/0001-check/input-source/package.json' in names
+ assert not any(n.endswith('/state.json') for n in names)
+ assert 'manual task' in json.load(a.extractfile('run-synthetic/execution-summary.json'))['scope']
+ for line in a.extractfile('run-synthetic/SHA256SUMS.txt').read().decode().splitlines():
+  digest,name=line.split('  ',1)
+  assert hashlib.sha256(a.extractfile('run-synthetic/'+name).read()).hexdigest()==digest
+`,archive],{encoding:'utf8'});
+  assert.equal(audit.status,0,audit.stderr);
+});
+test('F10 completion obtains the authorized digest and never calls signing or restoration', t => {
+  const r = shell(t, String.raw`
+mkdir -p "$FIXTURE/operator" "$FIXTURE/operation"
+echo '{"candidate":"synthetic-initial","authorizedArtifact":"registry.invalid/authorized@sha256:aa"}' > "$FIXTURE/operator/prepared.json"
+manual_task=$FIXTURE; manual_operation=$FIXTURE/operation; manual_owner=$FIXTURE; state_dir=$FIXTURE
+manual_scenario=F10; manual_arm=G; manual_namespace=tfm-golden; image=registry.invalid/authorized@sha256:aa
+manual_task_control() { echo "$1" >> "$FIXTURE/events"; }
+manual_task_delete() { echo delete >> "$FIXTURE/events"; }
+actor() { echo create >> "$FIXTURE/events"; }
+manual_task_probe() { echo probe >> "$FIXTURE/events"; }
+manual_task_profile_check() { echo profile >> "$FIXTURE/events"; }
+node() { echo '{"synthetic":true}'; }
+attestations_verify_delivery() { echo UNEXPECTED_SIGN; return 17; }
+attestations_authorize_results() { echo UNEXPECTED_SIGN; return 17; }
+manual_task_check
+`);
+  assert.equal(r.status, 0, r.stderr); assert.doesNotMatch(r.stdout, /UNEXPECTED_SIGN/);
+  assert.equal(readFileSync(join(r.dir,'events'),'utf8'), 'provenance\ndelete\ncreate\nprobe\nprofile\n');
+});
+test('F10 wrong selected artifact is unresolved and is never repaired automatically', t => {
+  const r = shell(t, String.raw`
+mkdir -p "$FIXTURE/operator"
+echo '{"candidate":"synthetic-initial","authorizedArtifact":"authorized"}' > "$FIXTURE/operator/prepared.json"
+manual_task=$FIXTURE; manual_scenario=F10; image=unauthorized
+manual_task_control() { echo unexpected; }
+manual_task_check
+`);
+  assert.equal(r.status, 43, r.stderr); assert.doesNotMatch(r.stdout, /unexpected/);
+});
+test('F03 requires a new corrected image, same database, target removal and actual dependency behavior evidence', t => {
+  const dir = directory(t), before = join(dir,'before'), after = join(dir,'after'); mkdirSync(before); mkdirSync(after);
+  syntheticAnalysis(before, 'F03-vulnerable');
+  syntheticAnalysis(after, 'F03-repaired', {image:'registry.invalid/lab@sha256:'+'b'.repeat(64)});
+  for (const p of [before, after]) writeFileSync(join(p,'dependency-behavior.log'), JSON.stringify({status:'PASS',result:{coverage:'basic',amount:'100000'}})+'\n');
+  assert.equal(correctedDependency(before, after).targetRemoved, true);
+  writeFileSync(join(after,'dependency-behavior.log'), JSON.stringify({status:'PASS',result:{changed:true}}));
+  assert.throws(() => correctedDependency(before, after), /behavior changed/);
+  syntheticAnalysis(after, 'F03-vulnerable', {image:'registry.invalid/lab@sha256:'+'b'.repeat(64)});
+  assert.throws(() => correctedDependency(before, after));
+});
+test('all scenarios preserve identical health, source version and quote behavior', t => {
+  const dir=directory(t), a=join(dir,'a'), b=join(dir,'b'); mkdirSync(a);mkdirSync(b);
+  for (const suffix of ['health','version','quote']) {
+    writeFileSync(join(a,`tfm-reference-${suffix}.json`),'{"synthetic":true}');
+    writeFileSync(join(b,`tfm-golden-${suffix}.json`),'{"synthetic":true}');
+  }
+  assert.equal(functional(a,b,'tfm-golden').status,'PASS');
+  writeFileSync(join(b,'tfm-golden-quote.json'),'{"synthetic":true,"premiumCents":2}');
+  assert.throws(() => functional(a,b,'tfm-golden'), /quote/);
+});
+test('manual F03 corrected context is explicit, immutable and still uses the fixed runtime wrapper', t => {
+  mkdirSync(join(root,'evidence/raw'),{recursive:true});
+  const owner=mkdtempSync(join(root,'evidence/raw/run-'));
+  t.after(()=>rmSync(owner,{recursive:true,force:true}));
+  const context=join(owner,'manual-operations/0001-check/input-source');
+  mkdirSync(context,{recursive:true});
+  const reset=()=>{ for(const file of ['Dockerfile','exercise.cjs','package.json','package-lock.json']) cpSync(join(root,'tests/fixtures/vulnerabilities/f03-repaired',file),join(context,file)); };
+  reset();
+  const commit='a'.repeat(40), base='172.18.0.2:5000/quotes@sha256:'+'b'.repeat(64);
+  writeFileSync(join(owner,'state.json'),JSON.stringify({mode:'local',sourceCommit:commit,imageRepository:base.split('@')[0],digest:base.split('@')[1]}));
+  writeFileSync(join(owner,'manual-task.json'),JSON.stringify({synthetic:true,lane:'A',scenario:'F03'}));
+  const authorization=join(owner,'manual-operations/0001-check/input-authorization.json');
+  function saveAuthorization() {
+    const files=['Dockerfile','exercise.cjs','package.json','package-lock.json'].map(path=>({path,
+      mode:(0o100000|(lstatSync(join(context,path)).mode&0o7777)).toString(8),
+      sha256:createHash('sha256').update(readFileSync(join(context,path))).digest('hex')}));
+    writeFileSync(authorization,JSON.stringify({schema:'manual-f03-build/v1',scenario:'F03',directory:context,commit,base,files}));
+  }
+  saveAuthorization();
+  const run=()=>spawnSync('node',['scripts/capture-build-inputs.mjs',context,base,commit,authorization,'manual-correction'],{cwd:root,encoding:'utf8'});
+  const accepted=run(); assert.equal(accepted.status,0,accepted.stderr);
+  writeFileSync(join(context,'package.json'),'{"dependencies":{"minimist":"1.2.7"}}');
+  assert.notEqual(run().status,0);
+  reset();
+  writeFileSync(join(context,'Dockerfile'),'FROM scratch\n');saveAuthorization();
+  assert.notEqual(run().status,0,'cannot authorize a changed wrapper');
+});

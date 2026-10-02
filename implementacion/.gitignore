@@ -24,3 +24,6 @@ coverage/
 
 # Paired development/pilot/campaign observations and safe exports.
 /evidence/measurements/
+
+# Human calibration and later six-task sessions; separate from paired lane B.
+/evidence/manual-tasks/
