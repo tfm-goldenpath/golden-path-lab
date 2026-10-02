@@ -4,9 +4,14 @@
 
 ## Estado y alcance
 
-Instrumentación implementada. El primer intento de desarrollo se detuvo al
-preparar cachés; ambas entregas medidas, cuatro pares piloto y campaña siguen
-**NOT_EXECUTED**. Revisión humana pendiente. El contribuyente informa que ambas
+Instrumentación implementada. Desarrollo RG `36926824792` y GR `36927943550`
+superaron la revisión independiente de evidencias en `02674a57d290083648a9af44c48fd049808b2d70`;
+el fallo previo de preparación de caché se conserva más abajo. Los cuatro pares
+piloto autorizados GR/GR/RG/RG están completos y revisados independientemente: 4/4
+favorables, sin exclusiones ni reintentos. El [informe piloto](paired-rg-pilot-review.md)
+recoge tiempos, dispersión, consumo de jobs terminados y el fallo inicial de acceso
+ya resuelto. La campaña sigue **NOT_EXECUTED**. Calibración manual, revisión de
+preparación de escenarios y aceptación humana siguen pendientes. El contribuyente informa que ambas
 suites A pasaron en `36885654089`, revisión
 `5ae6f84a01407789933bd36bcdb05250a6d6c4f5`; este incremento no reaudita ese paquete.
 Las revisiones y fallos históricos permanecen en [la guía A](lane-a-validation.md).
@@ -170,6 +175,9 @@ pares 1–4 mediante orden SHA256 de cuatro posiciones balanceadas. Sólo regene
 el plan no ejecuta entregas. Piloto requiere `-f database_run=<run-smoke-revisado>`. Fije fuente tras revisión de desarrollo y autorice
 piloto por separado. Diez pares de campaña siguen provisionales; dispatch de
 campaña deshabilitado. Calibración manual, releases y tesis quedan fuera.
+
+Los siguientes registros describen la implementación inicial y sus correcciones.
+La [revisión actual](paired-rg-pilot-review.md) recoge por separado las ejecuciones posteriores.
 
 Regresiones enfocadas y suite compartida de entorno/unidad/políticas/criptografía
 offline pasan localmente. Fixtures sintéticos no prueban integración. No se han

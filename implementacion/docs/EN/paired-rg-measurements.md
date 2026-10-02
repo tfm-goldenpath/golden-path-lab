@@ -4,9 +4,14 @@
 
 ## Status and unit of observation
 
-Instrumentation is implemented. The first development smoke attempt stopped in
-cache preparation; both measured deliveries, four pilot pairs and campaign remain
-**NOT_EXECUTED**. Human review is pending. The contributor reports
+Instrumentation is implemented. Development RG `36926824792` and GR `36927943550`
+passed independent evidence review at `02674a57d290083648a9af44c48fd049808b2d70`;
+the earlier cache-preparation failure remains recorded below. The four authorized
+pilot pairs GR/GR/RG/RG are now complete and independently reviewed: 4/4 favorable,
+no exclusions or retries. The [pilot report](paired-rg-pilot-review.md) records
+timings, dispersion, completed-job consumption and the resolved initial dispatch
+access failure. Campaign remains **NOT_EXECUTED**. Manual-task calibration,
+scenario readiness review and human acceptance remain pending. The contributor reports
 successful lane A functional suites in run `36885654089`, source
 `5ae6f84a01407789933bd36bcdb05250a6d6c4f5`; this increment does not independently
 reaudit that package. Existing lane A reviews and unsuccessful attempts remain
@@ -228,6 +233,9 @@ provisional and campaign dispatch is disabled. Manual-task calibration, campaign
 execution and release automation are outside this implementation.
 
 ## Development verification and contribution
+
+The following records describe the initial implementation and its follow-ups.
+The [current review](paired-rg-pilot-review.md) records later executions separately.
 
 Focused regressions cover monotonic endpoints, actual record commands, both arm
 orders, failed prepare cleanup, cache drift/rebuilds, exact source identity,
