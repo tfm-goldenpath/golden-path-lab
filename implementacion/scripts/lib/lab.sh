@@ -74,6 +74,9 @@ lab_create() {
   fi
   kind create cluster --name "$cluster" --image "$KIND_NODE_IMAGE" --kubeconfig "$private/kubeconfig" --wait 180s "${kind_args[@]}"
   if [[ "$mode" == local ]]; then
+    if [[ "${CODESPACES:-}" == true ]]; then
+      python3 scripts/codespaces-network.py ensure --cluster "$cluster" --output "$state_dir/codespaces-network.json"
+    fi
     printf '{"distSpecVersion":"1.1.1","storage":{"rootDirectory":"/var/lib/registry"},"http":{"address":"0.0.0.0","port":"5000"},"log":{"level":"warn"}}\n' > "$private/zot.json"
     # docker cp also works when the daemon is reached through a socket from a devcontainer.
     docker create --name "$registry" --network kind --label tfm.lab="$cluster" \

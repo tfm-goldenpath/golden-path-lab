@@ -46,12 +46,62 @@ exactas mediante `-D`. Conserva por separado el fallo principal y el de limpieza
 SIGKILL o pérdida del host requieren inspección y recuperación manual. El wrapper
 supone la subred observada y no es un script portátil de arranque.
 
-**No añadir estas reglas incondicionalmente en cada ejecución.** Si hace falta
-un helper reutilizable, debe ser opcional, detectar este conflicto concreto,
-verificar el espacio de nombres y descubrir puente/subred, coordinar ejecuciones
-concurrentes y conservar evidencias y recuperación. No debe modificar un entorno
-sano. No se ha añadido ninguna modificación automática del firewall a `demo.sh`
-ni al arranque. No vaciar cadenas ni abrir globalmente FORWARD.
+### Recuperación automática y repetible
+
+Por petición del usuario, `lab_create` invoca ahora
+[`codespaces-network.py`](../../scripts/codespaces-network.py) si
+`CODESPACES=true`, después de crear kind y antes del registro y BuildKit.
+Se aplica a la entrega local y a la preparación manual R/G, fuera del reloj de
+la tarea. La línea B hosted no lo invoca. Fuera de Codespaces el helper se omite.
+
+La comprobación descubre el puente/subred actuales y verifica que el socket local
+y el único daemon visible comparten el espacio de nombres de red del terminal.
+Solo añade reglas si DNS falla en kind, funciona en la red Docker predeterminada,
+aumentan los descartes legacy y las cadenas coinciden con el conflicto registrado.
+Si encuentra otro fallo o reglas desconocidas, detiene la preparación sin añadir
+reglas. En kind solo puede haber nodos etiquetados con el clúster de este ensayo;
+la reparación independiente exige un puente sin contenedores.
+
+Las reglas llevan una etiqueta con el ID completo de la red y se comprueban con
+`-C` para no duplicarlas. Un bloqueo local serializa las operaciones del helper,
+pero otros comandos Docker no usan ese bloqueo: preparar ensayos secuencialmente
+y evitar cambios simultáneos del firewall. DNS y HTTPS con TLS verificado deben
+funcionar después; HTTP 401 de `/v2/` confirma acceso al registro autenticado.
+Un error o interrupción capturable retira solo las reglas recién añadidas y
+conserva los resultados principal y de recuperación. Una red sana no se modifica.
+
+Las reglas correctas **permanecen para las siguientes preparaciones** hasta su
+retirada explícita o pérdida tras reiniciar el entorno. Afectan a todo el puente
+kind, incluidos futuros contenedores. La limpieza del ensayo conserva este par
+compartido. No se vacían cadenas, cambia la política FORWARD ni modifica el
+arranque de Docker. Si reaparece el conflicto tras reiniciar, la siguiente
+preparación lo comprueba y repone el par. SIGKILL o pérdida del host pueden impedir
+la recuperación; los comandos exactos de retirada se guardan antes de insertar.
+
+Comandos opcionales desde la raíz del repositorio:
+
+```bash
+python3 implementacion/scripts/codespaces-network.py check
+python3 implementacion/scripts/codespaces-network.py ensure
+# Después de limpiar todas las tareas, sin contenedores conectados a kind:
+python3 implementacion/scripts/codespaces-network.py remove
+```
+
+Salida: `Codespaces network: HEALTHY`, `RESTORED`, `REMOVED_OR_ABSENT` o fallo,
+y ruta de evidencia. Las llamadas independientes guardan JSON bajo
+`evidence/environment/`; la llamada automática guarda `codespaces-network.json`
+en el ensayo y su paquete habitual. Incluye identidades, reglas, contadores,
+resultados de sondas y retirada. Las sondas usan la imagen kind fijada y ya
+almacenada, con `--pull=never`, y limpian sus contenedores. El helper requiere
+el puente y esa imagen, normalmente creados por `lab_create`; no crea un clúster.
+
+`run-E5wAPDEL` / `task-3f6b2c31609e` conserva su preparación fallida por DNS,
+`INCOMPLETE`, sin reloj iniciado y con limpieza terminada. Cambió la identidad de
+arranque y las reglas anteriores habían desaparecido. Las comprobaciones reales
+de red y BuildKit del helper se guardan en
+`evidence/environment/codespaces-network-development/`, separadas de la
+calibración humana. El cambio de código exige **otro nombre de sesión/plan**,
+conservando el intento previo. Véanse los [comandos reutilizables](manual-calibration-session.md).
 
 ## Propuesta a largo plazo
 
@@ -77,4 +127,7 @@ La solución permanente sigue propuesta, sin validar.
 verificó 776 hashes internos y 108 bundles auténticos; rechazó los dos bundles F08
 alterados esperados. Los negativos hosted siguen NOT_EXECUTED y la revisión humana
 está pendiente. Véase el [registro de validación](../../registros/f05_f06_l03_validation_EN.md).
-Esta actualización documental no volvió a aplicar reglas ni a ejecutar el demo.
+La actualización documental original no volvió a aplicar reglas ni a ejecutar
+el demo. La incorporación posterior del helper, asistida por Codex, conserva
+pruebas sintéticas de protección/orquestación y comprobaciones reales de red y
+BuildKit. La ejecución de escenarios y la aceptación humana siguen separadas.

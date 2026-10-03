@@ -210,4 +210,13 @@ La identidad exacta de `paired-rg.yml` en main usa emisor GitHub, builder nativo
 y controles de fuente existentes. R no produce evidencias G. El formato
 `paired-rg-observation/v1` conserva tiempos monotónicos/UTC y observaciones
 incompletas; los paquetes distinguen mediciones individuales de escenarios.
-Instrumentación implementada; smoke/piloto y aceptación humana pendientes.
+Instrumentación implementada; desarrollo y cuatro pares del piloto temporal
+completados en la [revisión incorporada](paired-rg-pilot-review.md). Aceptación
+humana pendiente.
+
+El [procedimiento manual A](manual-task-calibration.md) reutiliza los controles de
+producción. Oráculos de preparación, acciones humanas y tiempos quedan separados
+de la autorización. F03 exige análisis nuevo de la imagen corregida y compatibilidad
+funcional; F10 selecciona un artefacto autorizado existente y verifica de nuevo
+sus evidencias; F11 conserva las restricciones explícitas de privilegios. Ningún
+evento manual ni registro temporal autoriza una carga protegida.

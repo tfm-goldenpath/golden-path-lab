@@ -265,4 +265,30 @@ configuration, with the existing GitHub issuer, native builder and source checks
 R creates no G evidence. Schema `paired-rg-observation/v1` records monotonic/UTC
 endpoints and incomplete observations; safe packaging distinguishes individual
 measurement arms from scenario completion. Instrumentation is implemented;
-smoke/pilot execution and human acceptance remain pending.
+development and the four-pair timing pilot are recorded in the
+[merged review](paired-rg-pilot-review.md); human acceptance remains pending.
+
+## Human manual task procedure
+
+The [lane A calibration procedure](manual-task-calibration.md) uses
+`scripts/manual-tasks.py` for one-task commands, preserved plans and subprocess
+deadlines. `manual_tasks.py` owns the versioned event state machine and timing
+calculations. `demo.sh local manual` remains the infrastructure owner; the
+definitions in `tests/scenarios/manual-tasks.sh` compose the existing context,
+laboratory, delivery, attestation and workload functions. Scenario assertions
+remain in `manual-task-evidence.mjs` and reuse the existing evidence validators.
+
+Operator preparation confirms the selected fault and positive readiness outside
+the timer. Each attempt has an independent lab and participant workspace;
+successful preparation deliberately preserves that lab until explicit cleanup.
+F03's correction build uses a bounded, captured four-file context with unchanged
+runtime wrappers and a pinned dependency lock. F10 completion consumes an
+existing authorized artifact without signing or rewriting its provenance. F11
+changes only the declared privilege fields. Each verification attempt retains
+separate evidence, including unsuccessful corrections. The safe packager includes
+both laboratory `manual-operations/` and the owned controller's `operations/`
+and preparation record. It checks the task's owner and event hashes; receipt
+evidence is copied unchanged beside its receipt so links survive export. It
+excludes private state. The final task directory retains cleanup events written
+after the run archive snapshot. This procedure neither
+changes lane B timing nor establishes hosted negative coverage or human results.

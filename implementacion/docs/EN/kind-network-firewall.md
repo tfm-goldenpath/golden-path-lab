@@ -100,27 +100,69 @@ EXIT/INT/TERM cleanup cannot cover SIGKILL or host loss; inspect for leftover
 attempt comments before retrying. The original wrapper assumes this environment's
 subnet and default bridge naming, so do not install it as a general startup hook.
 
-## Should temporary rules be added on every run?
+## Repeatable recovery in Codespaces
 
-**Keep any compatibility workaround explicit and conditional.** Unconditional
-insertion in `demo.sh`, `postCreateCommand` or Docker startup would silently alter
-firewall policy on healthy environments and can accumulate rules or use obsolete
-bridge identifiers. It would also affect concurrent kind workloads.
+At the user's request, local `lab_create` now invokes
+[`codespaces-network.py`](../../scripts/codespaces-network.py) when
+`CODESPACES=true`, after kind creation and before registry/BuildKit creation.
+This covers local delivery and manual-task preparation in both R and G, outside
+the human task timer. Hosted lane B does not call the helper. The helper itself
+skips environments without that flag.
 
-If recurrence justifies a reusable opt-in wrapper, implement it as a separate
-infrastructure helper with these acceptance criteria:
+Each invocation checks the environment. It inserts the temporary pair only when:
 
-- Verify the daemon namespace, bridge option/name and IPv4 subnet dynamically;
-  establish this exact legacy/nft conflict and require permission to change it.
-- Leave a healthy environment unchanged. Serialize affected lab runs and account
-  for other users of the shared kind bridge before inserting rules.
-- Retain before/after state, unique ownership comments, catchable-signal cleanup,
-  primary/recovery failures and manual recovery instructions.
-- Run DNS and registry connectivity probes, the normal demo and cleanup checks.
-  A networking workaround must not turn failed delivery checks into success.
+- The Docker endpoint is the local socket and the one visible daemon shares the
+  caller's network namespace. The current kind network, bridge and IPv4 subnet
+  are discovered and checked; identifiers from past attempts are never reused.
+- DNS fails on kind, succeeds on the default Docker bridge, and the legacy DROP
+  counter rises during the probe. The legacy/nft forwarding, user and isolation
+  chains must match the recorded conflict, allowing only this helper's exact
+  existing rules. Unknown policies or unrelated connectivity failures stop
+  preparation without adding rules.
+- The kind bridge has no attached containers except nodes labelled for the
+  current lab cluster. Standalone repair requires an idle bridge. Mutations are
+  serialized by a local lock; unrelated Docker operations do not take this lock,
+  so prepare laboratories sequentially and avoid concurrent firewall changes.
 
-This document proposes that helper; no automatic firewall mutation has been added
-to the repository entry points.
+The pair has a stable comment containing the full current network ID. `-C`
+checks prevent duplicate insertion. DNS and TLS-verified registry HTTPS must pass
+after insertion; HTTP 401 from `/v2/` confirms connectivity to the authenticated
+endpoint. An error or catchable interruption rolls back only newly added rules
+and retains primary/rollback results. Healthy connectivity leaves rules unchanged.
+
+Successful rules remain active for subsequent preparations until explicitly
+removed or lost on environment restart. They affect the **whole kind bridge**,
+including future attached containers; this is an environment compatibility change.
+Normal lab cleanup retains this shared pair. It never flushes a chain, changes
+FORWARD policy or edits daemon startup. A fresh invocation diagnoses recurrence
+and can restore the pair after restart. SIGKILL/host loss cannot guarantee rollback;
+the JSON includes exact removal commands before insertion.
+
+From the repository root, optional standalone commands are:
+
+```bash
+python3 implementacion/scripts/codespaces-network.py check
+python3 implementacion/scripts/codespaces-network.py ensure
+# After all lab/task cleanup, with no containers attached to kind:
+python3 implementacion/scripts/codespaces-network.py remove
+```
+
+Each prints `Codespaces network: HEALTHY`, `RESTORED`, `REMOVED_OR_ABSENT` or a
+failure and an evidence path. Standalone files are under ignored
+`evidence/environment/`. The automatic hook writes `codespaces-network.json` in
+the run directory; normal packaging includes this report. It retains identity,
+before/after rules, counters, probe command outputs and removal commands. Probes
+use the existing pinned kind image with `--pull=never` and remove their own
+containers. The helper requires the kind bridge and cached image, normally
+created by `lab_create`; it does not create a cluster itself.
+
+The latest preparation `run-E5wAPDEL` / `task-3f6b2c31609e` remains `INCOMPLETE`
+after another Docker DNS timeout; its task timer never started and cleanup
+completed. The boot identity changed and the previous temporary pair was absent.
+The helper's real network and bounded BuildKit observations are retained under
+`evidence/environment/codespaces-network-development/`, separately from human
+calibration. Source changes require a **new session/plan name**, keeping the old
+attempt. See [reusable calibration commands](manual-calibration-session.md).
 
 ## Proposed long-term fix
 
@@ -161,5 +203,7 @@ See the [validation record](../../registros/f05_f06_l03_validation_EN.md) for ex
 source/digest/archive identities, previous failures and acceptance limits.
 Network logs, the actual wrapper, before/after snapshots and audit outputs remain
 under `evidence/raw/f05-f06-l03-network-review/` relative to `implementacion/`.
-This documentation follow-up used Codex with GPT-6, read-only environment checks
-and documentation checks; it did not reapply the workaround or rerun integration.
+The original documentation follow-up used Codex with GPT-6 and read-only checks;
+it did not reapply the workaround. The later automatic helper is a separate
+Codex-assisted implementation with synthetic guard/orchestration tests and real
+connectivity/BuildKit checks. Full scenario and human acceptance remain separate.

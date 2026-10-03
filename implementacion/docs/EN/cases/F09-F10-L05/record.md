@@ -1,5 +1,12 @@
 # F09 / F10 / L05 operational oracle
 
+The [manual task procedure](../../manual-task-calibration.md) reuses F10's labelled,
+authenticated local repository-origin fault in independent R/G preparations.
+The human correction selects an existing authorized artifact; the completion
+check never re-signs or rewrites the faulty provenance. Human calibration and
+new live harness validation remain pending. Historical integration observations
+below retain their original scope.
+
 Defined before implementation on base `38631e1`. Scope: Scenario coverage and
 pilot, functional integration only. Academic identifiers follow the user-supplied
 scenario definitions; documentary thesis revision has not been independently

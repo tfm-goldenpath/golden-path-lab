@@ -222,4 +222,13 @@ configuration, with the existing GitHub issuer, native builder and source checks
 R creates no G evidence. Schema `paired-rg-observation/v1` records monotonic/UTC
 endpoints and incomplete observations; safe packaging distinguishes individual
 measurement arms from scenario completion. Instrumentation is implemented;
-smoke/pilot execution and human acceptance remain pending.
+development and the four-pair timing pilot are recorded in the
+[merged review](paired-rg-pilot-review.md); human acceptance remains pending.
+
+The [manual lane A procedure](manual-task-calibration.md) reuses these same
+production controls. Its preparatory oracles, participant actions and timing
+records are separate from delivery authorization. F03 completion requires fresh
+analysis of the actual corrected image and functional compatibility; F10 selects
+an existing authorized artifact and freshly verifies its evidence; F11 retains
+the explicit privilege restrictions. No manual event or elapsed-time record can
+authorize a protected workload.

@@ -1,5 +1,74 @@
 # F11 / F12 / L06: operaciones de ejecución
 
+El [procedimiento manual F11 en A](../../manual-task-calibration.md) conserva
+este oráculo y comprueba la corrección humana con los mismos controles.
+El ensayo guiado de F11/G se registra abajo; la calibración elegible de las seis
+tareas y la validación de los demás escenarios siguen pendientes.
+
+## Ensayo funcional guiado revisado el 2026-10-03
+
+Francisco aceptó `task-b069656237fc`, sesión `calibracion-54b7fa8-01`, como
+**ensayo funcional guiado** a las `2026-10-03T12:28:23Z`. Su nota anterior de las
+`12:27:20Z` excluye expresamente la selección de límites por la influencia de
+asistencia IA y notas de ejemplo. Se conservan las tres notas originales. La
+aceptación corresponde al ensayo; la revisión final de la PR #40, la preparación
+de escenarios y la aceptación del piloto completo siguen separadas.
+
+- Código: `54b7fa8864291aa86ddd32aaf15b5f2da71b5856`; línea A, F11/G;
+  ejecución `run-2g86oSnT`.
+- Imagen: `sha256:98a5ab3ca3f75baeecd2c044f63dc650082d53c348d077bdfe03703c717a9c76`.
+- `0003-check` rechazó correctamente los privilegios que permanecían.
+  `0004-check` aceptó los dos cambios permitidos y validó evidencia firmada,
+  admisión, Pods listos con el mismo digest y salud/versión/cotización.
+  `0005-cleanup` terminó; el registro sellado conserva `COMPLETED`.
+- La auditoría posterior verificó 52 hashes de tarea, seis enlaces de eventos,
+  archivo original y 263 hashes internos, cuatro bundles con el perfil de clave
+  pública de A, identidad de código/base, rollout/HTTP y capturas de políticas y
+  namespaces sin cambios. No se repitió una tarea real para esta auditoría.
+
+Tiempos registrados: detección 11.917898082 s; total 552.442976361 s; resolución
+desde detección 540.525078279 s; sin observar 450.854366486 s. Se conservan,
+**excluidos de selección de límites y análisis de tareas medidas**. Se rechazó
+un evento de investigación anterior a `start`; después se etiquetó una descripción
+de diagnóstico como corrección y se usaron notas de ejemplo en espera/pausa.
+Cero diagnóstico activo registrado no demuestra ausencia de diagnóstico real.
+Denominador aquí: un ensayo funcional, cero calibraciones elegibles y cero tareas
+medidas.
+
+La tarea y el snapshot de finalización conservan `humanAcceptance: pending`.
+La decisión humana posterior está en una nota separada. TODO incluye una futura
+acción explícita de revisión vinculada a la evidencia que actualizará el estado
+mostrado automáticamente, preservando los originales sellados. No se ha
+implementado ese comportamiento en este cierre documental.
+
+Copias y auditoría: `evidence/measurements/manual-review-task-b069656237fc/`.
+Descargar todos los archivos de `evidence/packages/manual-review-task-b069656237fc/`,
+incluida la base de calibración conservada, y verificar `SHA256SUMS.txt` fuera de
+Codespaces. SHA-256 del paquete original:
+`4d6963b8cb3d90c89f91a1c44841e348443a242aa940d0022dc8befbadac5472`.
+La copia externa queda pendiente de descarga. El paquete excluye claves privadas
+y kubeconfig; los registros completos permanecen fuera de Git.
+
+Asistencia: OpenAI Codex auditó evidencia conservada y documentó la decisión
+aportada por el usuario. La guía durante el ensayo queda declarada; esta auditoría
+no generó decisiones ni mediciones humanas.
+
+## Observación manual del 2026-10-03
+
+F11/G, `task-a400cfbcaa31` de `calibracion-red-01`, usó el commit `29f099f` con
+la identidad del árbol local conservada en el intento. `0004-check` rechazó el
+manifiesto con los diagnósticos esperados ESCALATION y PRIVILEGED; siguió en
+`REVIEW` hasta que la limpieza explícita lo cerró como `INCOMPLETE`. La limpieza
+terminó correctamente. Las notas humanas contienen literalmente los ejemplos;
+no demuestran investigación o corrección real ni una calibración satisfactoria.
+
+El ajuste posterior muestra explícitamente `CORRECTION_REJECTED`, el estado
+`REVIEW` y la ruta del recibo. Las guías separan edición humana, comprobación y
+limpieza. Se conservan controles y evidencia original; no se repitió una tarea
+real para este cambio de mensajes. Aceptación humana pendiente.
+
+## Oráculo y operaciones
+
 La [matriz compartida](../../../EN/cases/F11-F12-L06/operations.json) se definió
 antes de implementar sobre `d86465410d74e39ef8e77a9979995bcb268abf9a`, según los
 requisitos del usuario. Se conservan los identificadores académicos. No se revisó

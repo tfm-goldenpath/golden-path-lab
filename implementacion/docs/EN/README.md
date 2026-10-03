@@ -29,3 +29,4 @@ The root [contribution guide](../../../CONTRIBUTING.md) and [PR template](../../
 The [external proposal review](../ES/context/external-proposal-review.md) is historical context available in Spanish only.
 
 - [Paired R/G measurements — protocol and manual smoke procedure](paired-rg-measurements.md).
+- [Manual F03/F10/F11 calibration — lane A operator procedure](manual-task-calibration.md) and [participant instructions](manual-task-participant.md).
