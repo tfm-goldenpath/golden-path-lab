@@ -6,6 +6,53 @@ Technical completion, human acceptance and eligibility for calibration limits
 are separate. A person records a review after an attempt is closed and cleanup
 succeeds. This command does not run a task or generate activity events.
 
+## Correction after merged PR #41
+
+Main `c59afcda3c7dab76e5a5b43948145c0fae328747` merged the original `21be955`
+controller. The archive-association fix (`28ce727`), measurement purpose
+(`81fc08a`) and subsequent human-result documentation (`b31c92c`) existed only
+on the local branch. `fix/manual-review-archive-binding` reuses those commits
+with their provenance; it does not rely on the ignored validation helper.
+Targeted synthetic regressions reproduced acceptance of a foreign archive and
+the missing CLI purpose against that main revision before reusing the fixes.
+
+Remaining Codespaces validation, run by the person from this correction branch:
+
+```bash
+cd /workspaces/golden-path-lab
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+git status --short --branch
+git rev-parse HEAD
+make -C implementacion doctor
+node --test implementacion/tests/unit/manual-task-reviews.test.mjs \
+  implementacion/tests/unit/manual-tasks.test.mjs \
+  implementacion/tests/unit/manual-calibration-session.test.mjs
+make -C implementacion test
+
+for task in \
+  "$PWD/implementacion/evidence/manual-tasks/calibracion-54b7fa8-01/calibration/task-b069656237fc" \
+  "$PWD/implementacion/evidence/manual-tasks/calibracion-pr41-01/calibration/task-c861ec432f94"
+do
+  python3 implementacion/scripts/manual-tasks.py status "$task" || break
+done
+```
+
+The test commands use synthetic fixtures or local cryptographic probes, not
+human tasks. For the retained historical records, `status` checks their existing
+review history, task/archive hashes and ownership. Expected: completed, accepted
+rehearsal, calibration eligibility false, original acceptance pending. The actual
+sidecars declare `assistance: none`; the discrepancy documented in the case record
+remains for the person to clarify. No declaration is inferred or rewritten.
+
+Valid existing sidecars and frozen selections retain their byte format and
+hashes. Invalid archive associations now fail when read again. The current-source
+guard still blocks use of an old frozen plan after a source change. After this
+correction is merged, begin the [six-task procedure](manual-task-calibration.md)
+with a clean checkout pinned to the merged commit and a new session/plan. Record
+the seed, declared tools and prior exposure; perform the six tasks without AI,
+then review each attempt and select three total-duration limits shared by R/G.
+This handoff does not start that session or select any limit.
+
 ## Review one retained attempt
 
 Use the original task directory under `implementacion/evidence/manual-tasks/`.

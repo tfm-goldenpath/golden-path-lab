@@ -7,6 +7,53 @@ límites son decisiones separadas. Una persona registra su revisión tras cerrar
 el intento y terminar la limpieza. El comando no ejecuta tareas ni crea eventos
 de actividad humana.
 
+## Corrección tras integrar la PR #41
+
+Main `c59afcda3c7dab76e5a5b43948145c0fae328747` integró el controlador original
+`21be955`. La asociación de paquetes (`28ce727`), el propósito de medición
+(`81fc08a`) y la documentación humana posterior (`b31c92c`) estaban solo en la
+rama local. `fix/manual-review-archive-binding` reutiliza esos commits con su
+procedencia; no depende del helper de validación ignorado por Git. Antes de
+reutilizarlos, regresiones sintéticas reprodujeron sobre ese main la aceptación
+de un paquete ajeno y la ausencia del propósito en la CLI.
+
+Validación restante en Codespaces, ejecutada por la persona desde esta rama:
+
+```bash
+cd /workspaces/golden-path-lab
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+git status --short --branch
+git rev-parse HEAD
+make -C implementacion doctor
+node --test implementacion/tests/unit/manual-task-reviews.test.mjs \
+  implementacion/tests/unit/manual-tasks.test.mjs \
+  implementacion/tests/unit/manual-calibration-session.test.mjs
+make -C implementacion test
+
+for task in \
+  "$PWD/implementacion/evidence/manual-tasks/calibracion-54b7fa8-01/calibration/task-b069656237fc" \
+  "$PWD/implementacion/evidence/manual-tasks/calibracion-pr41-01/calibration/task-c861ec432f94"
+do
+  python3 implementacion/scripts/manual-tasks.py status "$task" || break
+done
+```
+
+Las pruebas usan fixtures sintéticos o comprobaciones criptográficas locales, no
+tareas humanas. Para los registros históricos conservados, `status` verifica su
+historial de revisión, hashes y asociación de tarea/paquete. Se espera: completado,
+ensayo aceptado, elegibilidad falsa y aceptación original pendiente. Las revisiones
+declaran `assistance: none`; la discrepancia documentada en el caso sigue pendiente
+de aclaración humana. No se deduce ni modifica ninguna declaración.
+
+Las revisiones y selecciones congeladas válidas conservan formato y hashes. Las
+asociaciones inválidas fallan al volver a leerlas. El control de fuente vigente
+sigue bloqueando planes antiguos tras cambios de código. Después de integrar esta
+corrección, iniciar el [procedimiento de seis tareas](manual-task-calibration.md)
+desde un checkout limpio fijado al commit integrado y una sesión/plan nuevos.
+Conservar semilla, herramientas declaradas y exposición previa; realizar las seis
+tareas sin IA, revisar cada intento y elegir tres límites totales compartidos por
+R/G. Esta entrega no inicia la sesión ni elige límites.
+
 ## Revisar un intento conservado
 
 Usar la tarea original bajo `implementacion/evidence/manual-tasks/`. Conservar

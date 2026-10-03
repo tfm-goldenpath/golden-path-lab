@@ -161,19 +161,28 @@ class ReviewTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'identity'): self.review(task)
 
     def test_missing_ambiguous_or_unsafe_archived_task_record_is_rejected(self):
+        cases = [[], ['nested/manual-task.json'],
+                 ['manual-task.json', 'nested/manual-task.json'],
+                 ['manual-task.json', 'manual-task.json'],
+                 ['./manual-task.json'], ['../manual-task.json'],
+                 ['manual-task.json', 'nested//synthetic.txt']]
+        for index, names in enumerate(cases):
+            task = self.task(suffix='unsafe' + str(index))
+            # Keep ownership valid so identity mismatch cannot mask a path defect.
+            data = json.dumps(cli.read(task / 'record.json')).encode()
+            members = [(name, data) for name in names]
+            self.archive(task, members=members)
+            with self.subTest(names=names), self.assertRaises(ValueError): self.review(task)
+
+    def test_ambiguous_json_keys_cannot_hide_behind_other_identity_errors(self):
         task = self.task()
         data = json.dumps(cli.read(task / 'record.json')).encode()
-        cases = [[], [('nested/manual-task.json', data)],
-                        [('manual-task.json', data), ('nested/manual-task.json', data)],
-                        [('manual-task.json', data), ('manual-task.json', data)],
-                        [('./manual-task.json', data)], [('../manual-task.json', data)],
-                        [('manual-task.json', data), ('nested//synthetic.txt', b'SYNTHETIC')],
-                        [('manual-task.json', b'{"scenario":"F03","scenario":"F11"}')],
-                        [('manual-task.json', b'[]')]]
-        for index, members in enumerate(cases):
-            task = self.task(suffix='unsafe' + str(index))
-            self.archive(task, members=members)
-            with self.subTest(names=[n for n, _ in members]), self.assertRaises(ValueError): self.review(task)
+        # A permissive JSON parser would accept the final, matching scenario.
+        ambiguous = b'{"scenario":"F03",' + data[1:]
+        self.archive(task, members=[('manual-task.json', ambiguous)])
+        with self.assertRaisesRegex(ValueError, 'Duplicate key'): self.review(task)
+        self.archive(task, members=[('manual-task.json', b'[]')])
+        with self.assertRaisesRegex(ValueError, 'identity'): self.review(task)
 
     def test_internal_checksum_corruption_and_linked_record_are_rejected(self):
         task = self.task()
@@ -190,6 +199,8 @@ class ReviewTests(unittest.TestCase):
 
     def test_failed_preparation_without_archive_remains_reviewable_and_ineligible(self):
         task = self.task(status='INCOMPLETE')
+        package = next((self.root / 'evidence/packages').glob('*.tar.gz'))
+        package.unlink(); Path(str(package) + '.sha256').unlink()
         (task / 'operator/state-path.txt').unlink()
         (task / 'SHA256SUMS.txt').unlink(); cli.task_checksums(task)
         self.review(task, purpose='rehearsal')
@@ -206,16 +217,33 @@ class ReviewTests(unittest.TestCase):
             for task in tasks: self.review(task)
             self.freeze(tasks)
         with self.assertRaisesRegex(ValueError, 'archive.*root'): self.status(tasks[0])
+        with self.assertRaisesRegex(ValueError, 'archive.*root'):
+            cli.calibration_selection(tasks[0], self.plan_path, self.plan)
         with self.assertRaisesRegex(ValueError, 'archive.*root'): cli.load_plan(self.plan_path)
 
-    def test_legacy_foreign_task_identity_is_rejected_by_effective_review(self):
+    def test_legacy_foreign_task_identity_is_rejected_by_review_and_frozen_selection(self):
         import manual_task_reviews as reviews
-        task = self.task()
-        foreign = self.task('F03', 'R')
-        self.archive(task, snapshot=cli.read(foreign / 'record.json'))
+        tasks = self.six(reviewed=False)
+        self.archive(tasks[0], snapshot=cli.read(tasks[1] / 'record.json'))
         with patch.object(reviews, 'validate_archive_task'):
-            self.review(task)
-        with self.assertRaisesRegex(ValueError, 'identity'): self.status(task)
+            for task in tasks: self.review(task)
+            self.freeze(tasks)
+        with self.assertRaisesRegex(ValueError, 'identity'): self.status(tasks[0])
+        with self.assertRaisesRegex(ValueError, 'identity'):
+            cli.calibration_selection(tasks[0], self.plan_path, self.plan)
+        with self.assertRaisesRegex(ValueError, 'identity'): cli.load_plan(self.plan_path)
+
+    def test_valid_legacy_reviews_and_frozen_bindings_keep_their_bytes(self):
+        import manual_task_reviews as reviews
+        tasks = self.six(reviewed=False)
+        # Simulate the old validator with valid archives and the existing format.
+        with patch.object(reviews, 'validate_archive_task'):
+            for task in tasks: self.review(task)
+            self.freeze(tasks)
+        originals = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        for task in tasks: self.assertTrue(self.status(task)['review']['eligibleForCalibration'])
+        cli.load_plan(self.plan_path)
+        for path, data in originals.items(): self.assertEqual(path.read_bytes(), data, str(path))
 
     def test_explicit_accepted_eligible_calibration_without_mutating_originals(self):
         task = self.task()
