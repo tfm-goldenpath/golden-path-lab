@@ -16,7 +16,7 @@ from lane_a_evidence import regular, verify_package
 from manual_tasks import SCENARIOS, TERMINAL, sha256
 
 DECISIONS = ('accepted', 'rejected')
-PURPOSES = ('rehearsal', 'calibration')
+PURPOSES = ('rehearsal', 'calibration', 'measurement')
 ASSISTANCE = ('none', 'ai', 'human', 'ai-and-human', 'unknown')
 REVIEW_NAME = re.compile(r'review-(\d{4})-([a-f0-9]{64})\.json')
 
@@ -35,6 +35,47 @@ def check_reference(proof, base):
     if (not path.resolve().is_relative_to(base) or regular(path) != path.resolve()
             or sha256(path) != proof['sha256']):
         raise ValueError('Task evidence reference changed or escaped its directory')
+
+
+def unique_object(pairs):
+    """Reject ambiguous keys, including inside the archived source identity."""
+    value = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError('Duplicate key in archived manual-task.json: ' + key)
+        value[key] = item
+    return value
+
+
+def validate_archive_task(package, run_name, record):
+    """Associate a checksum-verified run package with its sealed controller task.
+
+    The package captures cleanup in progress. Only stable identity is compared;
+    final cleanup receipts, operation state and later events may legitimately differ.
+    Inspect members without extracting any archived path.
+    """
+    with tarfile.open(package) as archive:
+        names = [member.name for member in archive.getmembers()]
+        for name in names:
+            parts = name.split('/')
+            if (len(parts) < 2 or parts[0] != run_name
+                    or any(part in ('', '.', '..') for part in parts) or '\\' in name):
+                raise ValueError('Task archive has an unexpected root or unsafe member path')
+        records = [name for name in names if name.rsplit('/', 1)[-1] == 'manual-task.json']
+        if records != [run_name + '/manual-task.json']:
+            raise ValueError('Task archive requires one unambiguous root manual-task.json')
+        snapshot = json.loads(archive.extractfile(records[0]).read(), object_pairs_hook=unique_object)
+    fields = ('schema', 'lane', 'synthetic', 'plan', 'taskDirectory', 'scenario', 'arm', 'dataset', 'identity')
+    if not isinstance(snapshot, dict) or any(
+            key not in snapshot or key not in record
+            or json.dumps(snapshot[key], sort_keys=True) != json.dumps(record[key], sort_keys=True)
+            for key in fields):
+        raise ValueError('Archived task identity is missing or differs from the sealed task')
+    identity = snapshot['identity']
+    if not isinstance(identity, dict) or any(
+            not isinstance(identity.get(group), dict) or not identity[group]
+            for group in ('source', 'database', 'tools', 'environment')):
+        raise ValueError('Archived task identity lacks source/configuration groups')
 
 
 def sealed_task(task, implementation):
@@ -82,6 +123,7 @@ def sealed_task(task, implementation):
         package = implementation / 'evidence/packages' / (run.name + '.tar.gz')
         try:
             verify_package(package)
+            validate_archive_task(package, run.name, record)
         except tarfile.TarError as error:
             raise ValueError('Invalid task archive: ' + str(error)) from error
         archives = [reference(package, task), reference(Path(str(package) + '.sha256'), task)]
@@ -111,11 +153,13 @@ def review_directory(task):
     return task.parent.parent / 'reviews' / task.name
 
 
-def review_fields(value):
+def review_fields(value, record):
     if any(not isinstance(value.get(k), str) or not value[k].strip() for k in ['reviewer', 'rationale']):
         raise ValueError('Supply a nonblank human reviewer and review rationale')
     if value.get('decision') not in DECISIONS or value.get('purpose') not in PURPOSES or value.get('assistance') not in ASSISTANCE:
         raise ValueError('Explicit decision, purpose and assistance declarations are required')
+    if value['purpose'] == 'measurement' and record['dataset'] != 'measurement':
+        raise ValueError('Measurement review purpose requires a measurement task')
 
 
 def history(task, implementation):
@@ -130,7 +174,7 @@ def history(task, implementation):
         match = REVIEW_NAME.fullmatch(path.name)
         if not match or int(match[1]) != sequence or sha256(regular(path)) != match[2]:
             raise ValueError('Review hash changed or review history is ambiguous')
-        value = read(path); review_fields(value)
+        value = read(path); review_fields(value, record)
         if (value.get('schema') != 'manual-task-review/v1' or value.get('sequence') != sequence
                 or value.get('task') != binding or value.get('supersedes') != previous
                 or value.get('synthetic') is not record['synthetic']):
@@ -160,8 +204,8 @@ def effective_review(task, implementation):
 def record_review(task, implementation, *, reviewer, rationale, decision, purpose, assistance, supersedes=None):
     declarations = {'reviewer': reviewer.strip(), 'rationale': rationale.strip(),
                     'decision': decision, 'purpose': purpose, 'assistance': assistance}
-    review_fields(declarations)
     record, binding = sealed_task(task, implementation)
+    review_fields(declarations, record)
     items = history(task, implementation)
     predecessor = items[-1][0] if items else None
     if (predecessor is None and supersedes is not None) or (predecessor is not None and supersedes != str(predecessor)):

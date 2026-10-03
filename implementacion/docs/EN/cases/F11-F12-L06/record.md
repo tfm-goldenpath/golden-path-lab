@@ -11,15 +11,92 @@ the historical runtime observations below remain separate.
 After PR #40 merged at `f5eb8dd528b1b26a49f31cf81915963e0bb166c8`, the
 [explicit review mechanism](../../manual-task-review.md) separates technical
 completion, human decision, assistance, purpose and calibration eligibility.
-The retained F11/G task, cleanup evidence, original archive and three text review
-notes pass a read-only integrity check and remain unchanged. No new human review
-was recorded on the person's behalf; legacy notes are not automatically imported.
-The guided attempt remains excluded from calibration-limit selection. Live use
-of the new review command and six eligible calibrations remain pending.
+At the initial handoff, the retained F11/G task, cleanup evidence, original archive
+and three text review notes passed a read-only integrity check. No new human review
+was recorded on the person's behalf; legacy notes were not automatically imported.
+The later explicit reviews below establish human use of the command. Both attempts
+remain excluded from calibration-limit selection; six eligible calibrations remain
+pending.
 
 The user reported downloading the handoff below. Its local download copy was
 removed on request; original task/run evidence and review notes remain available.
 External verification of the downloaded copy remains the user's responsibility.
+
+## Human validation of PR #41, 2026-10-03
+
+Francisco supplied the terminal results and explicitly confirmed human review.
+He recorded two separate `accepted` reviews with `purpose: rehearsal`; a read-only
+audit of the retained files confirms both effective decisions. This establishes
+live use of the review mechanism and the demonstrated F11/G functional rehearsal.
+It does not establish six eligible calibrations or overall pilot acceptance.
+
+| Task / session | Task source | Review time (UTC) | Effective decision / eligibility |
+|---|---|---|---|
+| `task-b069656237fc` / `calibracion-54b7fa8-01` | `54b7fa8864291aa86ddd32aaf15b5f2da71b5856` | `19:12:29.046453` | Accepted rehearsal; ineligible |
+| `task-c861ec432f94` / `calibracion-pr41-01` | `81fc08aa4d563e8796564c139361a84f17fd0947` | `19:36:42.016925` | Accepted rehearsal; ineligible |
+
+Both records have `technicalStatus: COMPLETED`, completed cleanup and effective
+`humanAcceptance: accepted`. Their original sealed acceptance remains `pending`.
+Review files remain under each session's `reviews/<task-id>/`; their SHA-256 values
+are, respectively:
+
+- `0af6ee2a94011a24d02ab38715cbd9f9f4d68f6c8c36bd4926bd4bd885625f53`.
+- `f6526132e42b2d1fabd3a0f948534fabc8978d93333103100c4068253b33f366`.
+
+**Declaration discrepancy retained:** both reviews declare `assistance: none`.
+The older task's preserved notes establish AI guidance; the newer review's own
+rationale mentions AI guidance and example notes. These declarations do not
+establish unaided work. No field was corrected on the reviewer's behalf. The
+effective exclusion reason is `purpose:rehearsal`; this live observation does not
+demonstrate exclusion through `assistance:ai`. The person must resolve the
+discrepancy through an explicit `review --supersedes` if revising the declaration,
+preserving the first review and explaining the correction.
+
+### New F11/G rehearsal
+
+`task-c861ec432f94` used lane A, run `run-qwxVqqLS`, on the source above, including
+the local PR #41 fixes. The remote PR still pointed to `21be955` when this
+confirmation was documented; the newer local source had not been pushed.
+
+- `0002-start` detected exactly ESCALATION and PRIVILEGED. A manual manifest tool
+  invocation and two correction-start events are retained.
+- `0004-check` records `VALIDATED_COMPLETION`; retained receipts report verified
+  image/SBOM/provenance/results evidence, rollout and functional health/version/
+  quote success. Before/after namespace and policy snapshots match.
+- `0005-cleanup` exited zero and records absence of the owned cluster, registry,
+  builder and private state. The user's later `wait` was rejected because the
+  attempt was closed; no wait event was appended and the completed timer stands.
+- The audit verified 50 final task hashes, event/receipt links, archive association,
+  outer checksum and 261 internal hashes. It inspected receipts without rerunning
+  a task or replaying cryptographic verification. Original archive SHA-256:
+  `9fc4e55f39911ad3d5c51d431e63d22088f6cbbd674f8e0d042300ba0f1aa9be`.
+
+| Recorded interval | Seconds |
+|---|---:|
+| Total | 414.302996476 |
+| Detection latency | 13.162436636 |
+| Resolution since detection | 401.140559840 |
+| Active diagnosis | 6.739745353 |
+| Active correction | 282.727155849 |
+| Waiting | 65.626408429 |
+| Automatic path | 13.172533006 |
+| Unobserved | 46.037153839 |
+| Verification (included in waiting) | 45.149897024 |
+
+These times remain excluded from calibration-limit selection and measured-task
+analysis. The user's coverage output shows zero eligible attempts for every
+F03/F10/F11 × R/G combination; `freeze` refused to proceed. The retained plan
+still has all three limits unset and `limitsReview: null`. No limit was selected.
+
+The supplied transcript reports successful preflight, 33 review regressions,
+36 controller regressions, six session-helper cases and 14 optional validation-kit
+tests. Those tests are synthetic and add zero human observations. This documentary
+update checks retained evidence and links; it does not rerun those suites.
+Audit: `evidence/measurements/pr41-human-review-confirmation-20261003/`.
+Retain/download the new review sidecars alongside both original tasks and archives.
+Any source change, including documentation, requires a new plan and new tasks for
+formal calibration; do not rewrite this session's source identity. Assistance:
+OpenAI Codex audited and documented Francisco's decisions; it issued no review.
 
 ## Guided functional rehearsal reviewed 2026-10-03
 
@@ -51,17 +128,18 @@ active diagnosis does not establish zero actual diagnosis. Denominator here:
 one functional rehearsal, zero eligible calibration results, zero measured tasks.
 
 The original task and completion snapshot still contain `humanAcceptance: pending`.
-The later human decision is a separate review record. TODO tracks an explicit,
-evidence-bound review action that will update the displayed acceptance automatically
-while preserving sealed originals; that improvement is not implemented here.
+The initial handoff used separate human text notes and left an explicit review
+action pending. PR #41 implements that action; Francisco's later review above
+updates displayed acceptance while preserving these sealed originals and notes.
 
 Evidence copies and audit: `evidence/measurements/manual-review-task-b069656237fc/`.
 Download all files under `evidence/packages/manual-review-task-b069656237fc/`,
 including the preserved calibration database, and verify `SHA256SUMS.txt` outside
 Codespaces. Original archive SHA-256:
 `4d6963b8cb3d90c89f91a1c44841e348443a242aa940d0022dc8befbadac5472`.
-External preservation awaits the user's download. Raw records and private material
-are not committed to Git; the handoff excludes private keys and kubeconfig.
+The user subsequently reported downloading this handoff; external verification
+has not been independently performed. Raw records and private material are not
+committed to Git; the handoff excludes private keys and kubeconfig.
 
 Assistance: OpenAI Codex audited retained evidence and documented the user's
 review. Guidance during the rehearsal remains declared; no human decision or

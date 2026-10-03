@@ -202,6 +202,8 @@ name, explicit decision, rationale, purpose and assistance declaration. Reviews
 live separately from sealed task files; `status` shows the effective decision,
 eligibility, reasons, path/hash and next allowed action. Successful completion or
 cleanup never supplies acceptance. Old archived fields can remain `pending`.
+Use `--purpose measurement` to review a measurement task; even an accepted
+measurement remains ineligible for calibration-limit selection.
 
 ## Timing and limits
 

@@ -204,6 +204,8 @@ decisión explícita, motivo, propósito y declaración de asistencia. Conserva 
 revisiones fuera de la tarea sellada; `status` muestra decisión efectiva,
 elegibilidad, motivos, ruta/hash y siguiente acción. Completar o limpiar no concede
 aceptación; los archivos históricos pueden conservar `pending`.
+Usar `--purpose measurement` al revisar una tarea de medición; incluso aceptada,
+una medición sigue siendo inelegible para seleccionar límites de calibración.
 
 ## Tiempos y límites
 

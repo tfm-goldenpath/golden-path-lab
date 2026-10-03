@@ -9,16 +9,93 @@ tareas y la validación de los demás escenarios siguen pendientes.
 
 Tras integrar PR #40 en `f5eb8dd528b1b26a49f31cf81915963e0bb166c8`, el
 [mecanismo explícito de revisión](../../manual-task-review.md) separa finalización
-técnica, decisión humana, asistencia, propósito y elegibilidad. La tarea F11/G,
-evidencia de limpieza, paquete original y tres notas de texto conservados superan
-una comprobación de integridad de solo lectura y permanecen intactos. No se
-registró una revisión nueva en nombre de la persona ni se importaron las notas.
-El ensayo guiado sigue excluido de selección de límites. Quedan pendientes el
-uso humano del nuevo comando y las seis calibraciones elegibles.
+técnica, decisión humana, asistencia, propósito y elegibilidad. En la entrega
+inicial, la tarea F11/G, limpieza, paquete original y tres notas de texto superaron
+una comprobación de integridad de solo lectura. No se registró una revisión en
+nombre de la persona ni se importaron las notas. Las revisiones posteriores
+documentadas abajo acreditan uso humano del comando. Ambos intentos siguen
+excluidos de selección de límites; las seis calibraciones elegibles quedan pendientes.
 
 El usuario comunicó haber descargado el paquete indicado abajo. Se retiró esa
 copia local a petición suya; se conservan evidencia original de tarea/ejecución
 y notas de revisión. La verificación de la descarga externa corresponde al usuario.
+
+## Validación humana de la PR #41, 2026-10-03
+
+Francisco aportó los resultados de terminal y confirmó expresamente la revisión
+humana. Registró dos revisiones `accepted` con `purpose: rehearsal`; una auditoría
+de solo lectura de los archivos confirma ambas decisiones efectivas. Esto acredita
+uso real del mecanismo de revisión y el ensayo funcional F11/G mostrado. No acredita
+las seis calibraciones elegibles ni la aceptación global del piloto.
+
+| Tarea / sesión | Código de la tarea | Hora de revisión (UTC) | Decisión efectiva / elegibilidad |
+|---|---|---|---|
+| `task-b069656237fc` / `calibracion-54b7fa8-01` | `54b7fa8864291aa86ddd32aaf15b5f2da71b5856` | `19:12:29.046453` | Ensayo aceptado; inelegible |
+| `task-c861ec432f94` / `calibracion-pr41-01` | `81fc08aa4d563e8796564c139361a84f17fd0947` | `19:36:42.016925` | Ensayo aceptado; inelegible |
+
+Ambos registros tienen `technicalStatus: COMPLETED`, limpieza terminada y
+`humanAcceptance: accepted` efectivo. La aceptación original sellada sigue en
+`pending`. Las revisiones están bajo `reviews/<task-id>/` en sus respectivas
+sesiones; sus SHA-256 son:
+
+- `0af6ee2a94011a24d02ab38715cbd9f9f4d68f6c8c36bd4926bd4bd885625f53`.
+- `f6526132e42b2d1fabd3a0f948534fabc8978d93333103100c4068253b33f366`.
+
+**Discrepancia conservada:** ambas revisiones declaran `assistance: none`.
+Las notas históricas acreditan guía de IA para la primera tarea; la justificación
+de la segunda revisión menciona guía de IA y notas de ejemplo. Estas declaraciones
+no acreditan trabajo sin ayuda. No se corrigió ningún campo en nombre del revisor.
+El motivo efectivo de exclusión es `purpose:rehearsal`; este uso real no demuestra
+la exclusión mediante `assistance:ai`. La persona debe resolver la discrepancia
+con una revisión explícita `review --supersedes` si corrige su declaración,
+conservando la revisión inicial y explicando el cambio.
+
+### Nuevo ensayo F11/G
+
+`task-c861ec432f94` usó la línea A, ejecución `run-qwxVqqLS` y el código indicado,
+con las correcciones locales de la PR #41. Al documentar esta confirmación, la
+PR remota seguía en `21be955`; el código local posterior no se había subido.
+
+- `0002-start` detectó exactamente ESCALATION y PRIVILEGED. Se conservan la
+  invocación manual de la herramienta de manifiesto y dos eventos de corrección.
+- `0004-check` registra `VALIDATED_COMPLETION`; los recibos conservados informan
+  verificación de imagen/SBOM/procedencia/resultados, rollout y funcionamiento de
+  salud/versión/cotización. Coinciden las capturas anteriores y posteriores de
+  namespaces y políticas.
+- `0005-cleanup` terminó con código cero y acredita ausencia de cluster, registro,
+  builder y estado privado propios. El `wait` posterior del usuario se rechazó
+  porque el intento estaba cerrado; no añadió un evento ni alteró el tiempo final.
+- La auditoría verificó 50 hashes finales de tarea, enlaces de eventos/recibos,
+  asociación del paquete, suma externa y 261 hashes internos. Inspeccionó recibos
+  sin repetir tareas ni la verificación criptográfica. SHA-256 del paquete original:
+  `9fc4e55f39911ad3d5c51d431e63d22088f6cbbd674f8e0d042300ba0f1aa9be`.
+
+| Intervalo registrado | Segundos |
+|---|---:|
+| Total | 414.302996476 |
+| Latencia de detección | 13.162436636 |
+| Resolución desde detección | 401.140559840 |
+| Diagnóstico activo | 6.739745353 |
+| Corrección activa | 282.727155849 |
+| Espera | 65.626408429 |
+| Ruta automática | 13.172533006 |
+| Sin observar | 46.037153839 |
+| Verificación (incluida en espera) | 45.149897024 |
+
+Estos tiempos quedan excluidos de selección de límites y análisis de tareas
+medidas. La cobertura aportada muestra cero intentos elegibles para cada combinación
+F03/F10/F11 × R/G; `freeze` se negó a continuar. El plan conservado mantiene los tres
+límites sin definir y `limitsReview: null`. No se seleccionó ningún límite.
+
+La transcripción aportada muestra preflight correcto, 33 regresiones de revisión,
+36 del controlador, seis del helper de sesión y 14 pruebas opcionales del kit de
+validación. Son pruebas sintéticas y no añaden observaciones humanas. Este cambio
+documental comprueba evidencia conservada y enlaces; no repite esas suites.
+Auditoría: `evidence/measurements/pr41-human-review-confirmation-20261003/`.
+Conservar/descargar las revisiones nuevas junto a ambas tareas y paquetes originales.
+Cualquier cambio de fuente, incluida documentación, exige plan y tareas nuevos para
+calibración formal; no modificar la identidad de esta sesión. Asistencia: OpenAI
+Codex auditó y documentó las decisiones de Francisco; no emitió una revisión.
 
 ## Ensayo funcional guiado revisado el 2026-10-03
 
@@ -51,18 +128,18 @@ Denominador aquí: un ensayo funcional, cero calibraciones elegibles y cero tare
 medidas.
 
 La tarea y el snapshot de finalización conservan `humanAcceptance: pending`.
-La decisión humana posterior está en una nota separada. TODO incluye una futura
-acción explícita de revisión vinculada a la evidencia que actualizará el estado
-mostrado automáticamente, preservando los originales sellados. No se ha
-implementado ese comportamiento en este cierre documental.
+La entrega inicial usó notas humanas separadas y dejó pendiente una acción explícita
+de revisión. La PR #41 la implementa; la revisión posterior de Francisco indicada
+arriba actualiza la aceptación mostrada y conserva originales sellados y notas.
 
 Copias y auditoría: `evidence/measurements/manual-review-task-b069656237fc/`.
 Descargar todos los archivos de `evidence/packages/manual-review-task-b069656237fc/`,
 incluida la base de calibración conservada, y verificar `SHA256SUMS.txt` fuera de
 Codespaces. SHA-256 del paquete original:
 `4d6963b8cb3d90c89f91a1c44841e348443a242aa940d0022dc8befbadac5472`.
-La copia externa queda pendiente de descarga. El paquete excluye claves privadas
-y kubeconfig; los registros completos permanecen fuera de Git.
+El usuario comunicó después la descarga; no se ha verificado externamente de forma
+independiente. El paquete excluye claves privadas y kubeconfig; los registros
+completos permanecen fuera de Git.
 
 Asistencia: OpenAI Codex auditó evidencia conservada y documentó la decisión
 aportada por el usuario. La guía durante el ensayo queda declarada; esta auditoría
