@@ -2,6 +2,11 @@
 
 [Español](../ES/manual-task-review.md) · [Task procedure](manual-task-calibration.md)
 
+Retained observations: [eight guided/failed attempts covering the six combinations](manual-task-rehearsal-review.md)
+in `calibration-final-01`, with seven accepted rehearsal reviews and zero eligible
+calibrations. The report preserves the failed preparation and an unresolved
+F03/G review-description discrepancy.
+
 Technical completion, human acceptance and eligibility for calibration limits
 are separate. A person records a review after an attempt is closed and cleanup
 succeeds. This command does not run a task or generate activity events.

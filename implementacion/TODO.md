@@ -46,6 +46,12 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 
 ### Human review and calibration eligibility
 
+#### Guided six-position session on the PR #42 source
+
+- [x] Retain and audit all eight `calibration-final-01` attempts at `b4d056c65f156867d3c41e0102330fe8e3282ca4`: seven completed attempts covering F03/F10/F11 in R/G, including a second F03/G, plus the F03/R disk-exhaustion preparation failure before timing. All eight cleanup receipts pass. Francisco's seven `accepted / rehearsal / ai` reviews and one `rejected / calibration / ai` review remain unchanged. See the [EN](docs/EN/manual-task-rehearsal-review.md) / [ES](docs/ES/manual-task-rehearsal-review.md) report. These are seven guided functional observations and zero eligible calibrations, not six-task calibration completion.
+- [x] Verify 373 final task-file hashes, eight original package checksums/ownership checks and 2,369 internal hashes, eight review histories and report/plan/source/configuration consistency. Preserve original bytes and modification times, separate audit and downloadable evidence under ignored `evidence/packages/calibration-final-01-review-20261003.tar.gz`. This retrospective check does not repeat signature verification, admission or live execution. The user subsequently reports downloading the evidence; the external copy has not been independently verified and the original export remains unchanged.
+- [ ] Francisco to clarify the F03/R/manual-scan rationale on sealed F03/G/automatic-scan `task-530013f5da12`; preserve the accepted rehearsal review and its calibration exclusion until any explicit superseding review. Human review of the summary/final correction, six eligible unaided calibrations, three shared R/G limits, scenario readiness and overall pilot acceptance remain pending. Source changes require a fresh plan; the completed lane B pilot and campaign NOT_EXECUTED status are unchanged. Assistance: OpenAI Codex evidence audit and documentation; existing human task decisions attributed to Francisco.
+
 #### Correction after PR #41 merged
 
 - [x] Confirm local/remote main `c59afcda3c7dab76e5a5b43948145c0fae328747` has the original `21be955` tree and both reported gaps. Reuse reviewed local commits `28ce727` (archive ownership), `81fc08a` (measurement purpose) and `b31c92c` (historical human-result documentation) on `fix/manual-review-archive-binding`, retaining cherry-pick provenance and the original branch. No duplicate controller or dependency on the ignored validation helper.

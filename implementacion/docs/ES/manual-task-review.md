@@ -2,6 +2,11 @@
 
 [English](../EN/manual-task-review.md) · [Procedimiento](manual-task-calibration.md)
 
+Observaciones conservadas: [ocho intentos guiados/fallidos que cubren las seis combinaciones](manual-task-rehearsal-review.md)
+en `calibration-final-01`, con siete revisiones de ensayo aceptadas y cero
+calibraciones elegibles. Se conservan la preparación fallida y una discrepancia
+pendiente en la descripción humana de F03/G.
+
 La finalización técnica, la aceptación humana y la elegibilidad para seleccionar
 límites son decisiones separadas. Una persona registra su revisión tras cerrar
 el intento y terminar la limpieza. El comando no ejecuta tareas ni crea eventos
