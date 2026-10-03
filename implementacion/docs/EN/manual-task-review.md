@@ -47,6 +47,9 @@ assistant execute the review command for you or assist during timed tasks.
 The retained `task-b069656237fc` is a guided F11/G rehearsal. Its original record,
 cleanup evidence, checksums, archive and three human notes remain available after
 disk cleanup. See the [historical review](cases/F11-F12-L06/record.md#guided-functional-rehearsal-reviewed-2026-10-03).
+Francisco has now recorded an explicit review; see the [confirmed results](cases/F11-F12-L06/record.md#human-validation-of-pr-41-2026-10-03).
+To revise that review, use `--supersedes` with its exact current path and explain
+the change. Repeating the first-review example unchanged will be refused.
 The following is a command for the person to run after inspecting that evidence;
 it has not been run on their behalf. It records a **new current review time** and
 does not import or backdate the old text notes.
@@ -184,5 +187,10 @@ detection relative to retained evidence, not independent custody or authenticati
 
 No timing definition, scenario oracle, delivery control, tool pin or lane B pilot
 protocol changes. Lane A does not establish hosted OIDC/GHCR negative coverage.
-Six-task calibration, live use of the new human review procedure, scenario
-readiness and overall pilot acceptance remain pending.
+Francisco confirmed live use of the review procedure on two accepted F11/G
+rehearsals. Both remain calibration-ineligible. Their `assistance: none`
+declarations conflict with retained guidance evidence or the review rationale;
+they remain unchanged pending an explicit human clarification/revision. The
+observed exclusion is by rehearsal purpose. See the [results and evidence](cases/F11-F12-L06/record.md#human-validation-of-pr-41-2026-10-03).
+Six-task calibration, scenario readiness and overall pilot acceptance remain
+pending; no measured-task execution or live measurement-purpose review is claimed.

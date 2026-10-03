@@ -51,6 +51,9 @@ tareas cronometradas.
 `task-b069656237fc` es un ensayo guiado F11/G. Sus registros originales, evidencia
 de limpieza, sumas, paquete y tres notas humanas siguen disponibles después de
 liberar disco. Véase la [revisión histórica](cases/F11-F12-L06/record.md#ensayo-funcional-guiado-revisado-el-2026-10-03).
+Francisco ya ha registrado una revisión explícita; véanse los [resultados confirmados](cases/F11-F12-L06/record.md#validación-humana-de-la-pr-41-2026-10-03).
+Para corregirla, usar `--supersedes` con la ruta exacta de la revisión vigente y
+explicar el cambio. Repetir sin cambios el ejemplo de primera revisión será rechazado.
 La persona puede ejecutar lo siguiente después de revisar la evidencia. No se ha
 ejecutado en su nombre. Se registra **la fecha actual de una nueva revisión**,
 sin importar automáticamente ni retrotraer las notas anteriores.
@@ -187,6 +190,12 @@ copia externa. Estos hashes locales sin firma detectan cambios respecto a las
 referencias conservadas; no aportan custodia independiente ni autenticación.
 
 No cambian tiempos, oráculos, controles, versiones ni el piloto B. La línea A
-no prueba cobertura negativa OIDC/GHCR. Siguen pendientes las seis calibraciones,
-el uso humano real del nuevo mecanismo, preparación de escenarios y aceptación
-global del piloto.
+no prueba cobertura negativa OIDC/GHCR. Francisco confirmó uso real del mecanismo
+en dos ensayos F11/G aceptados; ambos siguen excluidos de calibración. Sus
+declaraciones `assistance: none` contradicen evidencia de guía conservada o la
+justificación de revisión; permanecen intactas hasta una aclaración/revisión humana
+explícita. La exclusión observada es por propósito de ensayo. Véanse los
+[resultados y evidencia](cases/F11-F12-L06/record.md#validación-humana-de-la-pr-41-2026-10-03).
+Siguen pendientes las seis calibraciones, preparación de escenarios y aceptación
+global del piloto; no se acredita ejecución de tareas medidas ni revisión real con
+propósito `measurement`.
