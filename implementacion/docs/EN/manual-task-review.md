@@ -34,7 +34,7 @@ Required declarations:
 | `--reviewer` | Nonblank name/identifier of the person making the review. |
 | `--decision accepted\|rejected` | Explicit review decision; independent of technical completion. |
 | `--rationale` | Nonblank justification, including observations, exclusions and relevant assistance. |
-| `--purpose rehearsal\|calibration` | Whether this attempt was a rehearsal or intended as calibration. |
+| `--purpose rehearsal\|calibration\|measurement` | Declared purpose. `measurement` requires a measurement dataset and never qualifies for calibration limits. |
 | `--assistance none\|ai\|human\|ai-and-human\|unknown` | Assistance during the task. `none` means unaided use of declared conventional tools; `unknown` is ineligible. |
 
 Names and assistance are **human declarations**, not authenticated facts. A tool
@@ -53,15 +53,22 @@ does not import or backdate the old text notes.
 
 ```bash
 MANUAL_TASK="$PWD/implementacion/evidence/manual-tasks/calibracion-54b7fa8-01/calibration/task-b069656237fc"
+python3 implementacion/scripts/manual-tasks.py status "$MANUAL_TASK"
 read -r -p 'Your reviewer name: ' MANUAL_REVIEWER
+read -r -p 'Your decision (accepted/rejected): ' MANUAL_DECISION
+read -r -p 'Actual purpose (rehearsal/calibration/measurement): ' MANUAL_PURPOSE
+read -r -p 'Actual assistance (none/ai/human/ai-and-human/unknown): ' MANUAL_ASSISTANCE
+read -r -p 'Your evidence-based justification, including assistance and exclusions: ' MANUAL_REVIEW_REASON
 python3 implementacion/scripts/manual-tasks.py review "$MANUAL_TASK" \
-  --reviewer "$MANUAL_REVIEWER" --decision accepted \
-  --purpose rehearsal --assistance ai \
-  --rationale 'Accepted as a guided functional rehearsal. AI guidance and example activity notes exclude its times from calibration-limit selection.'
+  --reviewer "$MANUAL_REVIEWER" --decision "$MANUAL_DECISION" \
+  --purpose "$MANUAL_PURPOSE" --assistance "$MANUAL_ASSISTANCE" \
+  --rationale "$MANUAL_REVIEW_REASON"
 python3 implementacion/scripts/manual-tasks.py status "$MANUAL_TASK"
 ```
 
-Expected output: `REVIEW_RECORDED <path>`, then
+The person must choose and enter the declarations; none is inferred from these
+commands. If their decision is `accepted`, with `rehearsal` purpose and `ai`
+assistance, expected output is `REVIEW_RECORDED <path>`, then
 `CALIBRATION_INELIGIBLE purpose:rehearsal, assistance:ai`.
 Status shows `humanAcceptance: accepted`, `archivedHumanAcceptance: pending`,
 `review.purpose: rehearsal`, `review.eligibleForCalibration: false`, reasons and
@@ -89,6 +96,35 @@ completed, cleaned-up calibration with intact evidence. Status reports the
 accepted decision and `review.eligibleForCalibration: true`. It still does not
 choose or freeze limits. For a negative review, use `--decision rejected`; the
 attempt and justification remain preserved with `decision:rejected` as a reason.
+
+### Review a measurement attempt
+
+For a closed, cleaned-up task whose recorded dataset is `measurement`, use the
+explicit measurement purpose. No live measurement or acceptance is claimed here.
+After inspecting its evidence, the person supplies the decision and declarations:
+
+```bash
+read -r -p 'Closed, cleaned-up measurement TASK path: ' MANUAL_TASK
+read -r -p 'Your reviewer name: ' MANUAL_REVIEWER
+read -r -p 'Your decision (accepted/rejected): ' MANUAL_DECISION
+read -r -p 'Actual assistance (none/ai/human/ai-and-human/unknown): ' MANUAL_ASSISTANCE
+read -r -p 'Your evidence-based justification: ' MANUAL_REVIEW_REASON
+python3 implementacion/scripts/manual-tasks.py review "$MANUAL_TASK" \
+  --reviewer "$MANUAL_REVIEWER" --decision "$MANUAL_DECISION" \
+  --purpose measurement --assistance "$MANUAL_ASSISTANCE" \
+  --rationale "$MANUAL_REVIEW_REASON"
+python3 implementacion/scripts/manual-tasks.py status "$MANUAL_TASK"
+```
+
+Expected for `accepted` with `none`: `REVIEW_RECORDED <path>` and
+`CALIBRATION_INELIGIBLE purpose:measurement, dataset:measurement`. Status displays
+the declared decision and `review.purpose: measurement`, with calibration
+eligibility false. Using this purpose for a calibration dataset fails with
+`Measurement review purpose requires a measurement task`. The prohibition on AI
+assistance during measured tasks remains unchanged; a declaration does not waive it.
+
+Existing reviews keep their original purposes. They are never automatically
+relabeled; an explicit revision needs `--supersedes` as described below.
 
 The session helper also forwards `review` and its options to the saved task:
 `bash "$MANUAL_RUNNER" review ...`. A copied older helper must be refreshed to

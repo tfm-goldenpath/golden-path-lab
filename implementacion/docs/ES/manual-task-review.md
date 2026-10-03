@@ -37,7 +37,7 @@ Declaraciones obligatorias:
 | `--reviewer` | Nombre/identificador no vacío de la persona revisora. |
 | `--decision accepted\|rejected` | Decisión explícita, separada de la finalización técnica. |
 | `--rationale` | Justificación no vacía: observaciones, exclusiones y asistencia pertinente. |
-| `--purpose rehearsal\|calibration` | Si el intento era un ensayo o una calibración. |
+| `--purpose rehearsal\|calibration\|measurement` | Propósito declarado. `measurement` exige un conjunto de datos de medición y nunca permite seleccionar límites de calibración. |
 | `--assistance none\|ai\|human\|ai-and-human\|unknown` | Ayuda durante la tarea. `none` declara uso sin ayuda de las herramientas convencionales; `unknown` es inelegible. |
 
 La identidad y la asistencia son **declaraciones humanas**, no hechos autenticados.
@@ -57,15 +57,22 @@ sin importar automáticamente ni retrotraer las notas anteriores.
 
 ```bash
 MANUAL_TASK="$PWD/implementacion/evidence/manual-tasks/calibracion-54b7fa8-01/calibration/task-b069656237fc"
+python3 implementacion/scripts/manual-tasks.py status "$MANUAL_TASK"
 read -r -p 'Tu nombre como revisor: ' MANUAL_REVIEWER
+read -r -p 'Tu decisión (accepted/rejected): ' MANUAL_DECISION
+read -r -p 'Propósito real (rehearsal/calibration/measurement): ' MANUAL_PURPOSE
+read -r -p 'Ayuda real (none/ai/human/ai-and-human/unknown): ' MANUAL_ASSISTANCE
+read -r -p 'Tu justificación basada en evidencia, incluida ayuda y exclusiones: ' MANUAL_REVIEW_REASON
 python3 implementacion/scripts/manual-tasks.py review "$MANUAL_TASK" \
-  --reviewer "$MANUAL_REVIEWER" --decision accepted \
-  --purpose rehearsal --assistance ai \
-  --rationale 'Aceptado como ensayo funcional guiado. La ayuda IA y las notas de ejemplo excluyen sus tiempos de la selección de límites.'
+  --reviewer "$MANUAL_REVIEWER" --decision "$MANUAL_DECISION" \
+  --purpose "$MANUAL_PURPOSE" --assistance "$MANUAL_ASSISTANCE" \
+  --rationale "$MANUAL_REVIEW_REASON"
 python3 implementacion/scripts/manual-tasks.py status "$MANUAL_TASK"
 ```
 
-Salida esperada: `REVIEW_RECORDED <ruta>` y
+La persona debe elegir e introducir las declaraciones; los comandos no las
+deducen. Si declara `accepted`, propósito `rehearsal` y ayuda `ai`, la salida
+esperada es `REVIEW_RECORDED <ruta>` y
 `CALIBRATION_INELIGIBLE purpose:rehearsal, assistance:ai`.
 El estado muestra `humanAcceptance: accepted`, `archivedHumanAcceptance: pending`,
 `review.purpose: rehearsal`, `review.eligibleForCalibration: false`, motivos,
@@ -92,6 +99,35 @@ real, completada, limpia y con evidencia íntegra. El estado informa aceptación
 `review.eligibleForCalibration: true`. No elige ni congela límites. Para una
 revisión negativa usar `--decision rejected`; conserva el intento y justificación
 con el motivo `decision:rejected`.
+
+### Revisar un intento de medición
+
+Para una tarea cerrada y limpia cuyo conjunto de datos registrado sea
+`measurement`, usar el propósito explícito de medición. No se acredita aquí una
+medición real ni aceptación. Tras inspeccionar la evidencia, la persona declara:
+
+```bash
+read -r -p 'Ruta TASK de medición cerrada y limpia: ' MANUAL_TASK
+read -r -p 'Tu nombre como revisor: ' MANUAL_REVIEWER
+read -r -p 'Tu decisión (accepted/rejected): ' MANUAL_DECISION
+read -r -p 'Ayuda real (none/ai/human/ai-and-human/unknown): ' MANUAL_ASSISTANCE
+read -r -p 'Tu justificación basada en evidencia: ' MANUAL_REVIEW_REASON
+python3 implementacion/scripts/manual-tasks.py review "$MANUAL_TASK" \
+  --reviewer "$MANUAL_REVIEWER" --decision "$MANUAL_DECISION" \
+  --purpose measurement --assistance "$MANUAL_ASSISTANCE" \
+  --rationale "$MANUAL_REVIEW_REASON"
+python3 implementacion/scripts/manual-tasks.py status "$MANUAL_TASK"
+```
+
+Salida para `accepted` y `none`: `REVIEW_RECORDED <ruta>` y
+`CALIBRATION_INELIGIBLE purpose:measurement, dataset:measurement`. El estado muestra
+la decisión declarada y `review.purpose: measurement`, con elegibilidad falsa.
+Usar este propósito en un conjunto de calibración falla con
+`Measurement review purpose requires a measurement task`. La prohibición de IA
+en tareas medidas sigue vigente; declararla no autoriza su uso.
+
+Las revisiones existentes conservan su propósito original. No se cambian
+automáticamente; una revisión nueva exige `--supersedes` como se explica abajo.
 
 El helper reenvía `review` y sus opciones a la tarea guardada:
 `bash "$MANUAL_RUNNER" review ...`. Actualizar las copias antiguas del helper

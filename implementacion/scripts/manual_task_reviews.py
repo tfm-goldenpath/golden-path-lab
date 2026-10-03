@@ -16,7 +16,7 @@ from lane_a_evidence import regular, verify_package
 from manual_tasks import SCENARIOS, TERMINAL, sha256
 
 DECISIONS = ('accepted', 'rejected')
-PURPOSES = ('rehearsal', 'calibration')
+PURPOSES = ('rehearsal', 'calibration', 'measurement')
 ASSISTANCE = ('none', 'ai', 'human', 'ai-and-human', 'unknown')
 REVIEW_NAME = re.compile(r'review-(\d{4})-([a-f0-9]{64})\.json')
 
@@ -153,11 +153,13 @@ def review_directory(task):
     return task.parent.parent / 'reviews' / task.name
 
 
-def review_fields(value):
+def review_fields(value, record):
     if any(not isinstance(value.get(k), str) or not value[k].strip() for k in ['reviewer', 'rationale']):
         raise ValueError('Supply a nonblank human reviewer and review rationale')
     if value.get('decision') not in DECISIONS or value.get('purpose') not in PURPOSES or value.get('assistance') not in ASSISTANCE:
         raise ValueError('Explicit decision, purpose and assistance declarations are required')
+    if value['purpose'] == 'measurement' and record['dataset'] != 'measurement':
+        raise ValueError('Measurement review purpose requires a measurement task')
 
 
 def history(task, implementation):
@@ -172,7 +174,7 @@ def history(task, implementation):
         match = REVIEW_NAME.fullmatch(path.name)
         if not match or int(match[1]) != sequence or sha256(regular(path)) != match[2]:
             raise ValueError('Review hash changed or review history is ambiguous')
-        value = read(path); review_fields(value)
+        value = read(path); review_fields(value, record)
         if (value.get('schema') != 'manual-task-review/v1' or value.get('sequence') != sequence
                 or value.get('task') != binding or value.get('supersedes') != previous
                 or value.get('synthetic') is not record['synthetic']):
@@ -202,8 +204,8 @@ def effective_review(task, implementation):
 def record_review(task, implementation, *, reviewer, rationale, decision, purpose, assistance, supersedes=None):
     declarations = {'reviewer': reviewer.strip(), 'rationale': rationale.strip(),
                     'decision': decision, 'purpose': purpose, 'assistance': assistance}
-    review_fields(declarations)
     record, binding = sealed_task(task, implementation)
+    review_fields(declarations, record)
     items = history(task, implementation)
     predecessor = items[-1][0] if items else None
     if (predecessor is None and supersedes is not None) or (predecessor is not None and supersedes != str(predecessor)):

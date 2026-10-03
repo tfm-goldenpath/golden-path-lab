@@ -540,7 +540,8 @@ def main():
     p = sub.add_parser('review', help='Record a person\'s explicit declarations after closure and cleanup')
     p.add_argument('task'); p.add_argument('--reviewer', required=True); p.add_argument('--rationale', required=True)
     p.add_argument('--decision', choices=DECISIONS, required=True)
-    p.add_argument('--purpose', choices=PURPOSES, required=True)
+    p.add_argument('--purpose', choices=PURPOSES, required=True,
+                   help='Declared purpose; measurement requires a measurement task and is never calibration-eligible')
     p.add_argument('--assistance', choices=ASSISTANCE, required=True,
                    help='Declared assistance during the task; none means unaided use of conventional tools')
     p.add_argument('--supersedes', help='Exact current review path when explicitly revising a decision')

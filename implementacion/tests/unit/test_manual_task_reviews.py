@@ -259,6 +259,50 @@ class ReviewTests(unittest.TestCase):
             self.review(task)
             self.assertIn(reason, self.status(task)['review']['reasons'])
 
+    def test_explicit_measurement_review_is_accepted_but_never_calibration_eligible(self):
+        task = self.task(dataset='measurement', suffix='measurement')
+        originals = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        self.review(task, purpose='measurement')
+        value = self.status(task)
+        self.assertEqual(value['humanAcceptance'], 'accepted')
+        self.assertEqual(value['review']['purpose'], 'measurement')
+        self.assertFalse(value['review']['eligibleForCalibration'])
+        self.assertEqual(value['review']['reasons'], ['purpose:measurement', 'dataset:measurement'])
+        for p, content in originals.items(): self.assertEqual(p.read_bytes(), content, str(p))
+        tasks = self.six()
+        with self.assertRaisesRegex(ValueError, 'calibration'):
+            cli.calibration_selection(task, self.plan_path, self.plan)
+        with self.assertRaisesRegex(ValueError, 'immutable'): self.freeze(tasks[:-1] + [task])
+
+    def test_measurement_purpose_requires_measurement_dataset_in_creation_and_history(self):
+        import manual_task_reviews as reviews
+        task = self.task()
+        with self.assertRaisesRegex(ValueError, 'measurement task'): self.review(task, purpose='measurement')
+        self.assertFalse((self.session / 'reviews' / task.name).exists())
+        # Synthetic invalid sidecar with otherwise valid bindings and hash.
+        with patch.object(reviews, 'review_fields'):
+            self.review(task, purpose='measurement')
+        with self.assertRaisesRegex(ValueError, 'measurement task'): self.status(task)
+
+    def test_measurement_review_requires_declarations_and_intact_evidence(self):
+        task = self.task(dataset='measurement')
+        for fields in [{'reviewer': ' '}, {'rationale': '\t'}, {'decision': ''}, {'assistance': ''}]:
+            with self.subTest(fields=fields), self.assertRaises(ValueError):
+                self.review(task, purpose='measurement', **fields)
+        self.archive(task, root='run-FOREIGN')
+        with self.assertRaisesRegex(ValueError, 'archive.*root'): self.review(task, purpose='measurement')
+
+    def test_review_cli_accepts_measurement_purpose_with_all_declarations(self):
+        task = self.task(dataset='measurement')
+        args = ['manual-tasks.py', 'review', str(task), '--purpose', 'measurement', '--decision', 'rejected',
+                '--assistance', 'unknown', '--reviewer', 'Synthetic reviewer', '--rationale', 'SYNTHETIC ONLY']
+        output = io.StringIO()
+        with patch.object(sys, 'argv', args), redirect_stdout(output): cli.main()
+        self.assertIn('CALIBRATION_INELIGIBLE', output.getvalue())
+        value = self.status(task)['review']
+        self.assertEqual(value['decision'], 'rejected')
+        self.assertIn('assistance:unknown', value['reasons'])
+
     def test_reviews_are_immutable_and_revisions_require_explicit_predecessor(self):
         task = self.task()
         first = self.review(task); original = first.read_bytes()
