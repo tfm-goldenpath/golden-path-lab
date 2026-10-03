@@ -168,3 +168,16 @@ knowledge in the copy, then prepare again. Cover F03/R, F03/G, F10/R, F10/G, F11
 and F11/G. Calibration limits remain unset. The plan separately retains the order
 of the eventual six measured tasks. The file does not run the campaign or establish
 human acceptance.
+
+## Later human review
+
+A human review made after cleanup is a separate record. Preserve the original
+sealed task/package and every review note. `humanAcceptance: pending` in that
+snapshot does not automatically incorporate the later decision. A planned
+improvement in [TODO](../../TODO.md#guided-rehearsal-and-explicit-human-review)
+will record reviewer, time, decision, rationale, scope and evidence hashes, then
+update the displayed acceptance from that explicit review. It is not implemented
+yet; successful checking or cleanup never grants human acceptance by itself.
+
+Acceptance as a guided functional rehearsal does not make its times eligible for
+calibration limits or measured analysis. See the [reviewed F11/G rehearsal](cases/F11-F12-L06/record.md#guided-functional-rehearsal-reviewed-2026-10-03).

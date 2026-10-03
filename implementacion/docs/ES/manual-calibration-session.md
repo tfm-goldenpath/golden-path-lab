@@ -170,3 +170,16 @@ actualizar conocimientos en la copia; repetir `prepare`. Cubrir F03/R, F03/G,
 F10/R, F10/G, F11/R y F11/G. Los límites de calibración siguen sin fijar. El plan
 conserva por separado el orden de las seis tareas medidas futuras. El fichero
 no ejecuta la campaña ni establece aceptación humana.
+
+## Revisión humana posterior
+
+La revisión realizada después de limpiar se conserva como registro separado.
+Mantener la tarea/paquete sellados y todas las notas de revisión. El valor
+`humanAcceptance: pending` de ese snapshot no incorpora automáticamente la
+decisión posterior. La mejora pendiente en [TODO](../../TODO.md#guided-rehearsal-and-explicit-human-review)
+registrará revisor, fecha, decisión, motivo, alcance y hashes de evidencia;
+después actualizará el estado mostrado a partir de esa revisión explícita.
+Todavía no está implementada. Ni `check` ni `cleanup` conceden aceptación humana.
+
+Aceptar un ensayo funcional guiado no hace sus tiempos elegibles para seleccionar
+límites o analizar tareas medidas. Véase el [ensayo F11/G revisado](cases/F11-F12-L06/record.md#ensayo-funcional-guiado-revisado-el-2026-10-03).
