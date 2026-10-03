@@ -56,17 +56,33 @@ class ReviewTests(unittest.TestCase):
         write_json(task / 'summary.json', {'testFixture': 'SYNTHETIC ONLY', 'humanAcceptance': 'pending'})
         run = self.root / 'evidence/raw' / ('run-' + ''.join(c for c in task.name if c.isalnum()))
         (task / 'operator/state-path.txt').write_text(str(run) + '\n')
-        package = self.root / 'evidence/packages' / (run.name + '.tar.gz')
-        package.parent.mkdir(exist_ok=True)
-        data = b'SYNTHETIC UNIT TEST ARCHIVE; no live result\n'
-        sums = hashlib.sha256(data).hexdigest() + '  synthetic.txt\n'
-        with tarfile.open(package, 'w:gz') as archive:
-            for name, content in [('synthetic.txt', data), ('SHA256SUMS.txt', sums.encode())]:
-                item = tarfile.TarInfo(run.name + '/' + name); item.size = len(content)
-                archive.addfile(item, io.BytesIO(content))
-        Path(str(package) + '.sha256').write_text(sha256(package) + '  ' + package.name + '\n')
+        # Packaging happens inside cleanup, before its final receipt and events.
+        snapshot = copy.deepcopy(r)
+        snapshot['cleanup'] = None
+        snapshot['runningOperation'] = {'kind': 'cleanup', 'testFixture': 'SYNTHETIC ONLY'}
+        snapshot['events'] = [{'kind': 'synthetic-snapshot-only'}]
+        self.archive(task, snapshot=snapshot)
         cli.task_checksums(task)
         return task
+
+    def archive(self, task, *, snapshot=None, root=None, members=None, bad_internal=False):
+        """Build checksum-valid SYNTHETIC packages, including adversarial layouts."""
+        run = Path((task / 'operator/state-path.txt').read_text().strip())
+        package = self.root / 'evidence/packages' / (run.name + '.tar.gz')
+        package.parent.mkdir(exist_ok=True)
+        root = root or run.name
+        if members is None:
+            snapshot = snapshot if snapshot is not None else cli.read(task / 'record.json')
+            members = [('manual-task.json', json.dumps(snapshot).encode()),
+                       ('synthetic.txt', b'SYNTHETIC UNIT TEST ARCHIVE; no live result\n')]
+        sums = ''.join(('0'*64 if bad_internal else hashlib.sha256(content).hexdigest()) + '  ' + name + '\n'
+                       for name, content in members)
+        with tarfile.open(package, 'w:gz') as archive:
+            for name, content in members + [('SHA256SUMS.txt', sums.encode())]:
+                item = tarfile.TarInfo(root + '/' + name); item.size = len(content)
+                archive.addfile(item, io.BytesIO(content))
+        Path(str(package) + '.sha256').write_text(sha256(package) + '  ' + package.name + '\n')
+        return package
 
     def review(self, task, **fields):
         args = argparse.Namespace(task=str(task), reviewer='Synthetic declared reviewer', decision='accepted',
@@ -98,6 +114,108 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(value['humanAcceptance'], 'pending')
         self.assertFalse(value['review']['eligibleForCalibration'])
         self.assertEqual(value['nextAction'], 'review')
+
+    def test_cleanup_snapshot_can_differ_from_final_sealed_record(self):
+        task = self.task()
+        package = next((self.root / 'evidence/packages').glob('*.tar.gz'))
+        with tarfile.open(package) as archive:
+            snapshot = json.load(archive.extractfile(package.name[:-7] + '/manual-task.json'))
+        final = cli.read(task / 'record.json')
+        for key in ('runningOperation', 'cleanup', 'events'):
+            self.assertNotEqual(snapshot.get(key), final.get(key))
+        self.review(task)
+        self.assertTrue(self.status(task)['review']['eligibleForCalibration'])
+
+    def test_foreign_archive_root_cannot_review_expected_task(self):
+        task = self.task()
+        package = self.archive(task, root='run-FOREIGN')
+        # This substitution passes the general outer/internal package checks.
+        from lane_a_evidence import verify_package
+        verify_package(package)
+        with self.assertRaisesRegex(ValueError, 'archive.*root'): self.review(task)
+
+    def test_archive_stable_identity_must_be_present_and_match_in_full(self):
+        task = self.task()
+        final = cli.read(task / 'record.json')
+        for field in ('taskDirectory', 'scenario', 'arm', 'dataset', 'identity'):
+            for missing in (False, True):
+                snapshot = copy.deepcopy(final)
+                if missing: del snapshot[field]
+                else: snapshot[field] = 'SYNTHETIC FOREIGN IDENTITY'
+                self.archive(task, snapshot=snapshot)
+                with self.subTest(field=field, missing=missing), self.assertRaisesRegex(ValueError, 'identity'):
+                    self.review(task)
+        for group in ('source', 'database', 'tools', 'environment'):
+            for missing in (False, True):
+                snapshot = copy.deepcopy(final)
+                if missing: del snapshot['identity'][group]
+                else: snapshot['identity'][group]['extraSyntheticConfiguration'] = 'foreign'
+                self.archive(task, snapshot=snapshot)
+                with self.subTest(group=group, missing=missing), self.assertRaisesRegex(ValueError, 'identity'):
+                    self.review(task)
+
+    def test_expected_root_with_another_valid_task_identity_is_rejected(self):
+        task = self.task('F11', 'G')
+        foreign = self.task('F03', 'R')
+        self.archive(task, snapshot=cli.read(foreign / 'record.json'))
+        with self.assertRaisesRegex(ValueError, 'identity'): self.review(task)
+
+    def test_missing_ambiguous_or_unsafe_archived_task_record_is_rejected(self):
+        task = self.task()
+        data = json.dumps(cli.read(task / 'record.json')).encode()
+        cases = [[], [('nested/manual-task.json', data)],
+                        [('manual-task.json', data), ('nested/manual-task.json', data)],
+                        [('manual-task.json', data), ('manual-task.json', data)],
+                        [('./manual-task.json', data)], [('../manual-task.json', data)],
+                        [('manual-task.json', data), ('nested//synthetic.txt', b'SYNTHETIC')],
+                        [('manual-task.json', b'{"scenario":"F03","scenario":"F11"}')],
+                        [('manual-task.json', b'[]')]]
+        for index, members in enumerate(cases):
+            task = self.task(suffix='unsafe' + str(index))
+            self.archive(task, members=members)
+            with self.subTest(names=[n for n, _ in members]), self.assertRaises(ValueError): self.review(task)
+
+    def test_internal_checksum_corruption_and_linked_record_are_rejected(self):
+        task = self.task()
+        self.archive(task, bad_internal=True)
+        with self.assertRaisesRegex(ValueError, 'Internal checksum'): self.review(task)
+        for kind in (tarfile.SYMTYPE, tarfile.LNKTYPE):
+            package = self.archive(task)
+            with tarfile.open(package, 'w:gz') as archive:
+                member = tarfile.TarInfo(package.name[:-7] + '/manual-task.json')
+                member.type = kind; member.linkname = 'synthetic-foreign.json'
+                archive.addfile(member)
+            Path(str(package) + '.sha256').write_text(sha256(package) + '\n')
+            with self.subTest(kind=kind), self.assertRaisesRegex(ValueError, 'Unsafe package'): self.review(task)
+
+    def test_failed_preparation_without_archive_remains_reviewable_and_ineligible(self):
+        task = self.task(status='INCOMPLETE')
+        (task / 'operator/state-path.txt').unlink()
+        (task / 'SHA256SUMS.txt').unlink(); cli.task_checksums(task)
+        self.review(task, purpose='rehearsal')
+        value = self.status(task)['review']
+        self.assertFalse(value['eligibleForCalibration'])
+        self.assertIn('technical:INCOMPLETE', value['reasons'])
+
+    def test_legacy_foreign_archive_is_rejected_when_loading_review_or_frozen_plan(self):
+        import manual_task_reviews as reviews
+        tasks = self.six(reviewed=False)
+        self.archive(tasks[0], root='run-FOREIGN')
+        # Reproduce the old validator's acceptance, retaining valid hash bindings.
+        with patch.object(reviews, 'validate_archive_task', create=True):
+            for task in tasks: self.review(task)
+            self.freeze(tasks)
+        with self.assertRaisesRegex(ValueError, 'archive.*root'): self.status(tasks[0])
+        with self.assertRaisesRegex(ValueError, 'archive.*root'): cli.load_plan(self.plan_path)
+
+    def test_legacy_foreign_task_identity_is_rejected_by_effective_review(self):
+        import manual_task_reviews as reviews
+        task = self.task()
+        foreign = self.task('F03', 'R')
+        self.archive(task, snapshot=cli.read(foreign / 'record.json'))
+        with patch.object(reviews, 'validate_archive_task'):
+            self.review(task)
+        with self.assertRaisesRegex(ValueError, 'identity'): self.status(task)
 
     def test_explicit_accepted_eligible_calibration_without_mutating_originals(self):
         task = self.task()

@@ -37,6 +37,47 @@ def check_reference(proof, base):
         raise ValueError('Task evidence reference changed or escaped its directory')
 
 
+def unique_object(pairs):
+    """Reject ambiguous keys, including inside the archived source identity."""
+    value = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError('Duplicate key in archived manual-task.json: ' + key)
+        value[key] = item
+    return value
+
+
+def validate_archive_task(package, run_name, record):
+    """Associate a checksum-verified run package with its sealed controller task.
+
+    The package captures cleanup in progress. Only stable identity is compared;
+    final cleanup receipts, operation state and later events may legitimately differ.
+    Inspect members without extracting any archived path.
+    """
+    with tarfile.open(package) as archive:
+        names = [member.name for member in archive.getmembers()]
+        for name in names:
+            parts = name.split('/')
+            if (len(parts) < 2 or parts[0] != run_name
+                    or any(part in ('', '.', '..') for part in parts) or '\\' in name):
+                raise ValueError('Task archive has an unexpected root or unsafe member path')
+        records = [name for name in names if name.rsplit('/', 1)[-1] == 'manual-task.json']
+        if records != [run_name + '/manual-task.json']:
+            raise ValueError('Task archive requires one unambiguous root manual-task.json')
+        snapshot = json.loads(archive.extractfile(records[0]).read(), object_pairs_hook=unique_object)
+    fields = ('schema', 'lane', 'synthetic', 'plan', 'taskDirectory', 'scenario', 'arm', 'dataset', 'identity')
+    if not isinstance(snapshot, dict) or any(
+            key not in snapshot or key not in record
+            or json.dumps(snapshot[key], sort_keys=True) != json.dumps(record[key], sort_keys=True)
+            for key in fields):
+        raise ValueError('Archived task identity is missing or differs from the sealed task')
+    identity = snapshot['identity']
+    if not isinstance(identity, dict) or any(
+            not isinstance(identity.get(group), dict) or not identity[group]
+            for group in ('source', 'database', 'tools', 'environment')):
+        raise ValueError('Archived task identity lacks source/configuration groups')
+
+
 def sealed_task(task, implementation):
     record = read(task / 'record.json')
     if (record.get('schema') != 'manual-task/v1' or record.get('lane') != 'A'
@@ -82,6 +123,7 @@ def sealed_task(task, implementation):
         package = implementation / 'evidence/packages' / (run.name + '.tar.gz')
         try:
             verify_package(package)
+            validate_archive_task(package, run.name, record)
         except tarfile.TarError as error:
             raise ValueError('Invalid task archive: ' + str(error)) from error
         archives = [reference(package, task), reference(Path(str(package) + '.sha256'), task)]

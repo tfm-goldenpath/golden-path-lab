@@ -15,6 +15,21 @@ su archivo de suma. El comando los verifica y vincula la revisión a sus hashes.
 Una preparación fallida sin paquete puede revisarse si dispone de sumas finales
 y limpieza completada; sigue siendo inelegible.
 
+La verificación comprueba las sumas externas/internas y la asociación con la tarea.
+Cada archivo debe estar bajo la raíz de ejecución esperada, con rutas seguras y
+sin ambigüedad. Un único `manual-task.json` en esa raíz debe coincidir con la tarea,
+escenario, brazo, conjunto de datos e identidad completa de fuente/base de datos/
+herramientas/entorno del registro sellado. La copia tomada durante la limpieza
+puede diferir en operación en curso, estado de limpieza y eventos; no se exige
+igualdad de todos los bytes con el registro final.
+
+Estas comprobaciones se aplican también al cargar revisiones y selecciones
+congeladas. Las revisiones válidas conservan su formato y referencias por hash.
+Una revisión antigua con un paquete sustituido o sin registro de tarea ahora
+falla aunque sus sumas sean correctas. Conservar la evidencia fallida; no modificar
+registros, paquetes ni hashes de revisión para conseguir aceptación. El comando
+no usa ni ejecuta código archivado.
+
 Declaraciones obligatorias:
 
 | Opción | Significado |

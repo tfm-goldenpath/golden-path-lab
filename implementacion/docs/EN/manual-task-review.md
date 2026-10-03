@@ -14,6 +14,19 @@ archive checksum sidecar. The command verifies these files and binds the review
 to their hashes. A failed preparation without a run archive can be reviewed if
 it has a final task checksum manifest and successful cleanup; it is ineligible.
 
+Archive verification checks both outer/internal checksums and task association.
+Every member must belong to the expected run root with safe, unambiguous paths;
+one root `manual-task.json` must identify the same task, scenario, arm, dataset
+and complete source/database/tools/environment identity as the sealed record.
+The cleanup-time snapshot may have different operation state, cleanup status and
+events. It need not be byte-identical to the final record.
+
+These checks also apply when loading existing reviews and frozen selections.
+Valid review sidecars and their hash bindings keep the same format. An old review
+of a substituted or missing task archive now fails validation, even if the archive
+checksums pass. Preserve the failed evidence; do not rewrite records, packages or
+review hashes to make it pass. This command does not use or execute archived code.
+
 Required declarations:
 
 | Option | Meaning |
