@@ -15,6 +15,8 @@ import uuid
 
 from manual_tasks import (SCENARIOS, TERMINAL, clock, elapsed, make_sequence,
                           new_record, record_event, sha256, summarize, write_json)
+from manual_task_reviews import (ASSISTANCE, DECISIONS, PURPOSES, effective_review,
+                                 next_action, record_review, sealed_task)
 
 ROOT = Path(__file__).resolve().parents[1]
 STORE = ROOT / 'evidence/manual-tasks'
@@ -79,6 +81,8 @@ def load_plan(path):
         raise ValueError('Source/configuration changed; create a separately identified calibration plan')
     if database_identity(plan['database']['directory']) != plan['database']:
         raise ValueError('Frozen database changed')
+    if plan['limitsReview']:
+        validate_frozen_reviews(path, plan)
     return path, plan
 
 
@@ -328,7 +332,11 @@ def run_command(args):
     with locked(task):
         record = read(task / 'record.json')
         if args.command == 'status':
-            print(json.dumps(summarize(record, clock()), indent=2)); return 0
+            review = effective_review(task, ROOT)
+            value = summarize(record, clock())
+            value.update(technicalStatus=record['status'], archivedHumanAcceptance=record['humanAcceptance'],
+                         humanAcceptance=review['decision'], review=review, nextAction=next_action(record, review))
+            print(json.dumps(value, indent=2)); return 0
         if args.command == 'recover':
             op = record.get('runningOperation')
             if record['status'] in TERMINAL: raise ValueError('Attempt is already closed')
@@ -425,6 +433,54 @@ def run_command(args):
         return 0 if record['status'] not in ('INCOMPLETE', 'EXHAUSTED') else 2
 
 
+def review_command(args):
+    task = managed(args.task)
+    # Same lock order as freeze: session first, then task. No timed operation,
+    # plan loading or current-checkout identity check is used for historical review.
+    with locked(task.parent.parent), locked(task):
+        path = record_review(task, ROOT, reviewer=args.reviewer, rationale=args.rationale,
+                             decision=args.decision, purpose=args.purpose, assistance=args.assistance,
+                             supersedes=args.supersedes)
+        review = effective_review(task, ROOT)
+    print('REVIEW_RECORDED ' + str(path))
+    print('CALIBRATION_ELIGIBLE' if review['eligibleForCalibration'] else 'CALIBRATION_INELIGIBLE ' + ', '.join(review['reasons']))
+    print('Original archived humanAcceptance is unchanged; status displays this explicit review')
+    return 0
+
+
+def calibration_selection(task, path, plan):
+    record, _ = sealed_task(task, ROOT)
+    if record['dataset'] != 'calibration' or record['synthetic'] or record['status'] != 'COMPLETED':
+        raise ValueError('Use completed, cleaned-up real human calibration records')
+    if record['plan'] != str(path) or record['identity'] != {k: plan[k] for k in ['source', 'database', 'tools', 'environment']}:
+        raise ValueError('Calibration configuration mismatch')
+    review = effective_review(task, ROOT)
+    if not review['eligibleForCalibration']:
+        raise ValueError('Calibration needs an eligible human review: ' + ', '.join(review['reasons']))
+    return {'scenario': record['scenario'], 'arm': record['arm'],
+            **evidence_link(task / 'record.json', path.parent),
+            'review': evidence_link(Path(review['path']), path.parent)}
+
+
+def validate_frozen_reviews(path, plan):
+    decision = plan['limitsReview']
+    if decision.get('schema') != 'manual-limit-review/v2':
+        raise ValueError('Frozen limits lack explicit calibration review metadata; use a new plan')
+    selections = decision.get('calibrations', [])
+    covered = set()
+    for selected in selections:
+        record_path = managed(path.parent / selected['path'])
+        if record_path.name != 'record.json': raise ValueError('Invalid frozen calibration record reference')
+        current = calibration_selection(record_path.parent, path, plan)
+        if current != selected:
+            raise ValueError('Frozen calibration review or evidence changed; preserve the decision and use a new plan')
+        pair = (current['scenario'], current['arm'])
+        if pair in covered: raise ValueError('Duplicate frozen calibration selection')
+        covered.add(pair)
+    if covered != {(s, a) for s in SCENARIOS for a in ('R', 'G')} or len(selections) != 6:
+        raise ValueError('Frozen review requires exactly six unambiguous calibration combinations')
+
+
 def freeze_command(args):
     reviewer, rationale = args.reviewer.strip(), args.rationale.strip()
     if not reviewer or not rationale: raise ValueError('Supply a nonblank reviewer and calibration rationale')
@@ -437,19 +493,11 @@ def freeze_command(args):
             task = managed(task); record = read(task / 'record.json')
             if record['dataset'] != 'calibration' or record['synthetic'] or record['status'] != 'COMPLETED' or record.get('cleanup') != 'completed':
                 raise ValueError('Use completed, cleaned-up real human calibration records')
-            if record['plan'] != str(path) or record['identity']['source'] != plan['source']:
-                raise ValueError('Calibration configuration mismatch')
-            for event in record['events']:
-                evidence = event.get('evidence')
-                if evidence and sha256((task / evidence['path']).resolve()) != evidence['sha256']:
-                    raise ValueError('Calibration event evidence changed')
-            for line in (task / 'SHA256SUMS.txt').read_text().splitlines():
-                digest, name = line.split('  ', 1)
-                file = (task / name).resolve()
-                if not file.is_relative_to(task) or sha256(file) != digest:
-                    raise ValueError('Calibration archive checksum mismatch')
-            covered.add((record['scenario'], record['arm']))
-            sources.append(evidence_link(task / 'record.json', path.parent))
+            pair = (record['scenario'], record['arm'])
+            if pair in covered: raise ValueError('Duplicate calibration selection for ' + '/'.join(pair))
+            with locked(task):
+                sources.append(calibration_selection(task, path, plan))
+            covered.add(pair)
         if covered != {(s, a) for s in SCENARIOS for a in ['R', 'G']}:
             raise ValueError('Human calibration is required for all six tasks')
         limits = {}
@@ -461,7 +509,8 @@ def freeze_command(args):
             limits[scenario] = value
         if set(limits) != set(SCENARIOS): raise ValueError('Supply F03, F10 and F11 limits')
         plan['limitsSeconds'] = limits
-        plan['limitsReview'] = {'reviewer': reviewer, 'rationale': rationale, 'at': clock(), 'calibrations': sources}
+        plan['limitsReview'] = {'schema': 'manual-limit-review/v2', 'reviewer': reviewer, 'rationale': rationale,
+                                'at': clock(), 'calibrations': sources}
         frozen = path.with_name('frozen-plan.json')
         if frozen.exists(): raise ValueError('Frozen plan already exists')
         write_json(frozen, plan)
@@ -488,6 +537,13 @@ def main():
         if name == 'event':
             p.add_argument('kind', choices=['investigate', 'correct', 'wait', 'pause', 'interrupt', 'abandon', 'expire']); p.add_argument('--note', required=True)
         if name == 'tool': p.add_argument('tool', choices=['scan', 'provenance', 'manifest'])
+    p = sub.add_parser('review', help='Record a person\'s explicit declarations after closure and cleanup')
+    p.add_argument('task'); p.add_argument('--reviewer', required=True); p.add_argument('--rationale', required=True)
+    p.add_argument('--decision', choices=DECISIONS, required=True)
+    p.add_argument('--purpose', choices=PURPOSES, required=True)
+    p.add_argument('--assistance', choices=ASSISTANCE, required=True,
+                   help='Declared assistance during the task; none means unaided use of conventional tools')
+    p.add_argument('--supersedes', help='Exact current review path when explicitly revising a decision')
     p = sub.add_parser('freeze-limits'); p.add_argument('--plan', required=True); p.add_argument('--limit', action='append', required=True)
     p.add_argument('--calibration', action='append', required=True); p.add_argument('--reviewer', required=True); p.add_argument('--rationale', required=True)
     args = parser.parse_args()
@@ -495,6 +551,7 @@ def main():
         if args.command == 'plan': return plan_command(args)
         if args.command == 'prepare': return prepare_command(args)
         if args.command == 'freeze-limits': return freeze_command(args)
+        if args.command == 'review': return review_command(args)
         return run_command(args)
     except (ValueError, OSError, KeyError, subprocess.CalledProcessError) as error:
         print('ERROR: ' + str(error), file=sys.stderr); return 1

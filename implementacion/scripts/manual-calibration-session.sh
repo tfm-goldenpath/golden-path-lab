@@ -49,7 +49,7 @@ case "$action" in
       --scenario "$MANUAL_SCENARIO" --arm "$MANUAL_ARM" \
       --participant "$MANUAL_PARTICIPANT" --prior-knowledge "$MANUAL_KNOWLEDGE"
     ;;
-  start|status|check|cleanup|recover|event|tool|paths)
+  start|status|check|cleanup|recover|event|tool|review|paths)
     MANUAL_TASK=$(jq -er '.taskDirectory' "$MANUAL_DIRECTORY/current-task.json")
     [[ "$MANUAL_TASK" == "$MANUAL_DIRECTORY/calibration/task-"* ]] || { echo 'ERROR: Task selection belongs to another session' >&2; exit 1; }
     if [[ "$action" == paths ]]; then
@@ -78,6 +78,14 @@ During actual human work, record only actions that really happen:
 
 Read the check result and linked diagnostics before deciding to finish:
   bash calibration-session.sh cleanup
+
+After closure and successful cleanup, record your explicit review:
+  bash calibration-session.sh review --help # required declaration options
+  bash calibration-session.sh status
+Use the review command with your reviewer, decision, purpose, assistance and rationale.
+READY -> start; REVIEW -> investigate/edit/check; COMPLETED -> cleanup;
+cleaned-up attempt -> human review. Review identity and assistance are declarations.
+Original archived humanAcceptance stays unchanged; status shows the effective review.
 
 Do not run the human commands as an automatic batch. No command repairs a task.
 CORRECTION_REJECTED leaves the task in REVIEW with the same timer/window.

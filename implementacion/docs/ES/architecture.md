@@ -281,6 +281,12 @@ humana pendiente.
 La [calibración en carril A](manual-task-calibration.md) usa
 `scripts/manual-tasks.py` para órdenes de una tarea, planes conservados y límites
 de procesos. `manual_tasks.py` mantiene los eventos versionados y sus cálculos.
+`manual_task_reviews.py` conserva revisiones humanas separadas e inmutables,
+vínculos a evidencia y reglas de elegibilidad, reutilizando el verificador de
+paquetes. La CLI coordina bloqueos y exige seis selecciones revisadas elegibles
+al congelar límites. Revisar historia no exige el código actual; ejecutar tareas
+nuevas y congelar límites mantiene las comprobaciones estrictas de código y
+configuración. Véase el [procedimiento de revisión](manual-task-review.md).
 `demo.sh local manual` conserva la propiedad de la infraestructura; las funciones
 de `tests/scenarios/manual-tasks.sh` componen los módulos compartidos. Los
 oráculos de `manual-task-evidence.mjs` reutilizan los validadores existentes.

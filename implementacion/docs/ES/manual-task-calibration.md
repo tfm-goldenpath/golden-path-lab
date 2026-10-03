@@ -4,8 +4,9 @@
 
 Este procedimiento prepara **seis tareas humanas en el carril A: F03/F10/F11
 en R y G**. La implementación y las pruebas sintéticas no son calibración humana
-ni aceptación de ejecución real. Este incremento no aporta tiempos humanos,
-límites ni aceptación. El [piloto temporal B terminado](paired-rg-pilot-review.md)
+ni aceptación de ejecución real. Las calibraciones elegibles y límites siguen
+pendientes; el [ensayo guiado F11/G](manual-task-review.md#ejemplo-ensayo-guiado-aceptado)
+tiene una aceptación limitada y separada. El [piloto temporal B terminado](paired-rg-pilot-review.md)
 conserva su protocolo y resultados. Sus cuatro pares piloto y diez pares
 provisionales de campaña no se aplican a estas seis tareas.
 
@@ -195,6 +196,15 @@ devuelve `ERROR: No recorded interrupted operation; task unchanged` y conserva
 intacta la tarea sana en READY o REVIEW. Los huecos desconocidos conservan estado incompleto
 y un límite inferior observado. No reiniciar la ruta interrumpida en el mismo intento.
 
+## Revisión explícita después de limpiar
+
+La [guía de revisión humana](manual-task-review.md) contiene comandos exactos y
+un ejemplo de ensayo guiado y otro de calibración sin ayuda. `review` exige nombre,
+decisión explícita, motivo, propósito y declaración de asistencia. Conserva las
+revisiones fuera de la tarea sellada; `status` muestra decisión efectiva,
+elegibilidad, motivos, ruta/hash y siguiente acción. Completar o limpiar no concede
+aceptación; los archivos históricos pueden conservar `pending`.
+
 ## Tiempos y límites
 
 El intervalo total monotónico comienza inmediatamente antes de invocar la ruta
@@ -211,12 +221,13 @@ no permite unir dos relojes.
 - Verificación se informa aparte y es un subconjunto de las esperas.
 
 Las calibraciones van en `calibration/`, **sin límite experimental**. Después de
-calibrar realmente, la persona responsable elige un límite total por escenario,
+revisar y aceptar seis calibraciones elegibles sin ayuda, la persona responsable
+elige un límite total por escenario,
 idéntico para R y G, y registra su justificación:
 
 ```bash
 # Asignar CAL_F03_R, CAL_F03_G, CAL_F10_R, CAL_F10_G, CAL_F11_R y CAL_F11_G
-# a los seis directorios de calibración reales, completos y con limpieza terminada.
+# a exactamente seis calibraciones aceptadas, elegibles y realizadas sin ayuda.
 read -r -p 'Límite total F03, segundos: ' MANUAL_F03_LIMIT
 read -r -p 'Límite total F10, segundos: ' MANUAL_F10_LIMIT
 read -r -p 'Límite total F11, segundos: ' MANUAL_F11_LIMIT
@@ -232,9 +243,13 @@ python3 implementacion/scripts/manual-tasks.py freeze-limits --plan "$MANUAL_PLA
 
 El revisor y la justificación deben contener texto; se rechazan valores vacíos o
 compuestos solo por espacios antes de registrar una decisión.
-Salida: `LIMITS_FROZEN`. Registros sintéticos, incompletos o de otra configuración
-no permiten congelar límites. `frozen-plan.json` conserva la decisión del revisor
-declarado; no es aceptación generada por el asistente.
+Salida: `LIMITS_FROZEN`. Se exige una calibración aceptada, elegible y sin ayuda
+por escenario/brazo. Se rechazan selecciones sin revisión, rechazadas, ensayos,
+sintéticas, incompletas, sin limpiar, con integridad inválida o duplicadas. Deben
+coincidir plan, código, base, herramientas y entorno. `frozen-plan.json` conserva
+ruta/hash de cada registro y revisión; una revisión cambiada o sustituida bloquea
+su uso posterior. Las decisiones antiguas sin revisiones vinculadas se rechazan.
+Véase [integridad y revisiones posteriores](manual-task-review.md).
 
 En una sesión medida posterior autorizada por separado, usar `prepare --dataset
 measurement` con el mismo plan y el siguiente escenario/brazo indicado. Se exige

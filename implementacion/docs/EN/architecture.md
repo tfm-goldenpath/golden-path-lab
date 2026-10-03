@@ -273,7 +273,13 @@ development and the four-pair timing pilot are recorded in the
 The [lane A calibration procedure](manual-task-calibration.md) uses
 `scripts/manual-tasks.py` for one-task commands, preserved plans and subprocess
 deadlines. `manual_tasks.py` owns the versioned event state machine and timing
-calculations. `demo.sh local manual` remains the infrastructure owner; the
+calculations. `manual_task_reviews.py` owns separate immutable human review
+records, evidence bindings and eligibility rules, reusing the existing safe
+archive verifier. The CLI coordinates review locks and requires six eligible
+reviewed selections when freezing limits. Review/status of historical records
+has no current-source guard; new execution and limit freezing retain strict
+source/configuration checks. See the [review procedure](manual-task-review.md).
+`demo.sh local manual` remains the infrastructure owner; the
 definitions in `tests/scenarios/manual-tasks.sh` compose the existing context,
 laboratory, delivery, attestation and workload functions. Scenario assertions
 remain in `manual-task-evidence.mjs` and reuse the existing evidence validators.
