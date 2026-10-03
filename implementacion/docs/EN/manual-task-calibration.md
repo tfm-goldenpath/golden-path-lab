@@ -4,8 +4,9 @@
 
 This procedure supports **six human tasks in lane A: F03/F10/F11 in R and G**.
 Implementation and synthetic tests are not human calibration or live scenario
-acceptance. No human times, limits or acceptance have been supplied by this
-increment. The [completed lane B timing pilot](paired-rg-pilot-review.md) keeps
+acceptance. Eligible human calibrations and limits remain pending; the
+[guided F11/G rehearsal](manual-task-review.md#example-accepted-guided-rehearsal)
+has a separate, limited acceptance. The [completed lane B timing pilot](paired-rg-pilot-review.md) keeps
 its own protocol and observations. Its four pilot pairs and provisional ten
 campaign pairs do not apply to these six tasks.
 
@@ -90,8 +91,8 @@ seed and database. Do not overwrite a plan or edit its identity hashes.
 Initial development at `1b06e01` recorded a kubectl 1.37.0/1.35.8 mismatch.
 After the Codespace tools were aligned with the existing pins, `doctor` passed
 during the `8df21bf` follow-up. Keep that failure as historical evidence and run
-`doctor` before each session. Live harness validation and human calibration remain
-pending; a passing environment check does not establish either.
+`doctor` before each session. The guided F11/G rehearsal is recorded separately;
+validation of the other tasks and eligible human calibration remain pending.
 
 ```bash
 read -r -p 'Participant identifier: ' MANUAL_PARTICIPANT
@@ -193,6 +194,15 @@ returns `ERROR: No recorded interrupted operation; task unchanged`, preserving a
 healthy READY or REVIEW task. Unknown gaps remain incomplete with an observed lower
 bound. Do not restart an interrupted automated path inside the same attempt.
 
+## Explicit review after cleanup
+
+Use the [human review guide](manual-task-review.md) for exact commands, a guided
+rehearsal example and an unaided calibration example. `review` requires a person's
+name, explicit decision, rationale, purpose and assistance declaration. Reviews
+live separately from sealed task files; `status` shows the effective decision,
+eligibility, reasons, path/hash and next allowed action. Successful completion or
+cleanup never supplies acceptance. Old archived fields can remain `pending`.
+
 ## Timing and limits
 
 The monotonic total timer starts immediately before the prepared automated path
@@ -208,12 +218,13 @@ are retained alongside monotonic timestamps. A reboot cannot join two clocks.
 - Verification time is reported separately and is a subset of waiting time.
 
 Calibration records live under `calibration/`, with **no experimental time limit**.
-After real human calibration, the responsible person chooses one total-duration
+After six eligible, explicitly accepted unaided calibrations, the responsible
+person chooses one total-duration
 limit for each scenario, identical for R and G, and records the rationale:
 
 ```bash
 # Set CAL_F03_R, CAL_F03_G, CAL_F10_R, CAL_F10_G, CAL_F11_R, CAL_F11_G
-# to the six retained, completed and cleaned-up calibration task directories.
+# to exactly six accepted, eligible, unaided calibration task directories.
 read -r -p 'F03 total limit, seconds: ' MANUAL_F03_LIMIT
 read -r -p 'F10 total limit, seconds: ' MANUAL_F10_LIMIT
 read -r -p 'F11 total limit, seconds: ' MANUAL_F11_LIMIT
@@ -227,11 +238,13 @@ python3 implementacion/scripts/manual-tasks.py freeze-limits --plan "$MANUAL_PLA
   --reviewer "$MANUAL_REVIEWER" --rationale "$MANUAL_RATIONALE"
 ```
 
-Expected: `LIMITS_FROZEN`. Synthetic, incomplete or different-configuration records
-cannot support this command. Blank or whitespace-only reviewer and rationale
-values are rejected before recording a decision. The immutable `frozen-plan.json`
-records the decision;
-this is the operator's declared review, not assistant-created acceptance.
+The reviewer and rationale must contain nonblank text. Expected: `LIMITS_FROZEN`.
+Exactly one accepted, eligible, unaided calibration is required per scenario/arm.
+Unreviewed, rejected, rehearsed, synthetic, incomplete, uncleaned, integrity-invalid
+or duplicate selections fail. Full source/database/tools/environment and plan
+identities must match. `frozen-plan.json` retains each selected record and review
+path/hash; changed or superseded reviews block later use. Legacy decisions without
+review metadata are rejected. See [review integrity and revisions](manual-task-review.md).
 
 For a separately authorized later measurement session, use `prepare --dataset
 measurement` with the same plan and the next printed scenario/arm. The harness
@@ -281,12 +294,14 @@ Human checklist:
 3. Start with unchanged inputs; disable AI and record actual activity/wait changes.
 4. Retain attributable detection, every correction attempt and validated completion
    or an incomplete/censored outcome; clean up before the next independent task.
-5. Review all six calibrations before fixing the three equal-across-arm limits.
+5. Record a human review of each closed attempt; select exactly six accepted,
+   unaided, eligible calibrations before fixing the three equal-across-arm limits.
 6. Preserve evidence externally; leave overall pilot acceptance and scenario
    readiness as separate human decisions.
 
 Assistance: OpenAI Codex / GPT-6 implemented the procedure and synthetic tests.
-Human calibration, new live harness validation and final acceptance are pending.
+Eligible six-task calibration, live human use of the new review command and
+final pilot acceptance are pending. Historical checks below retain their original scope.
 
 Development base: main `fa4ed35d793a7257c13a335ad6b5ae208e79f60f`.
 `make -C implementacion test` passed: 896 service/unit cases, including the wrapper

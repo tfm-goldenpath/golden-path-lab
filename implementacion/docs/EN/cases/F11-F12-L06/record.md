@@ -6,6 +6,21 @@ existing explicit-false manifest contract, unchanged image and functional checks
 Its synthetic instrumentation tests add no human calibration or live acceptance;
 the historical runtime observations below remain separate.
 
+## Human-review mechanism follow-up
+
+After PR #40 merged at `f5eb8dd528b1b26a49f31cf81915963e0bb166c8`, the
+[explicit review mechanism](../../manual-task-review.md) separates technical
+completion, human decision, assistance, purpose and calibration eligibility.
+The retained F11/G task, cleanup evidence, original archive and three text review
+notes pass a read-only integrity check and remain unchanged. No new human review
+was recorded on the person's behalf; legacy notes are not automatically imported.
+The guided attempt remains excluded from calibration-limit selection. Live use
+of the new review command and six eligible calibrations remain pending.
+
+The user reported downloading the handoff below. Its local download copy was
+removed on request; original task/run evidence and review notes remain available.
+External verification of the downloaded copy remains the user's responsibility.
+
 ## Guided functional rehearsal reviewed 2026-10-03
 
 Francisco accepted `task-b069656237fc`, session `calibracion-54b7fa8-01`, as a

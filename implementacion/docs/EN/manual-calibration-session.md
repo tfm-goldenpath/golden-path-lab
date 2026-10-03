@@ -166,18 +166,22 @@ completion is separate from a person's later review.
 After `CLEANUP_COMPLETE`, preserve evidence, change scenario/arm and update prior
 knowledge in the copy, then prepare again. Cover F03/R, F03/G, F10/R, F10/G, F11/R
 and F11/G. Calibration limits remain unset. The plan separately retains the order
-of the eventual six measured tasks. The file does not run the campaign or establish
-human acceptance.
+of the eventual six measured tasks. Preparation does not run the campaign or
+establish human acceptance.
 
 ## Later human review
 
-A human review made after cleanup is a separate record. Preserve the original
-sealed task/package and every review note. `humanAcceptance: pending` in that
-snapshot does not automatically incorporate the later decision. A planned
-improvement in [TODO](../../TODO.md#guided-rehearsal-and-explicit-human-review)
-will record reviewer, time, decision, rationale, scope and evidence hashes, then
-update the displayed acceptance from that explicit review. It is not implemented
-yet; successful checking or cleanup never grants human acceptance by itself.
+Use the [review command and worked examples](manual-task-review.md) after closure
+and successful cleanup. The helper accepts `bash "$MANUAL_RUNNER" review` with
+all required review options and forwards them to the saved task. `status` displays
+the effective decision, purpose, assistance, eligibility/reasons and review path.
 
-Acceptance as a guided functional rehearsal does not make its times eligible for
-calibration limits or measured analysis. See the [reviewed F11/G rehearsal](cases/F11-F12-L06/record.md#guided-functional-rehearsal-reviewed-2026-10-03).
+The original sealed task/package and earlier notes remain unchanged. Their
+`humanAcceptance: pending` is the historical snapshot; only a person's explicit
+review updates the displayed acceptance. Guided rehearsals can be accepted while
+remaining ineligible for calibration limits. Missing reviews do not imply acceptance.
+
+READY → `start`; REVIEW → investigate/edit/`check`; COMPLETED → `cleanup`;
+closed and cleaned up → human `review`. Source changes require a new plan for
+formal calibration. The [reviewed F11/G rehearsal](cases/F11-F12-L06/record.md#guided-functional-rehearsal-reviewed-2026-10-03)
+remains excluded from calibration-limit selection.

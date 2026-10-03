@@ -56,3 +56,16 @@ test('session uses the saved task path and forwards the human note unchanged',t=
   const wrong=spawnSync('bash',[f.script,'start'],{env:f.env,encoding:'utf8'});
   assert.equal(wrong.status,1);assert.match(wrong.stderr,/another session/);
 });
+test('session forwards an explicit review without starting a task or recording activity',t=>{
+  const f=fixture(t), session=join(f.repo,'implementacion/evidence/manual-tasks/synthetic-session');
+  mkdirSync(session,{recursive:true});
+  const task=join(session,'calibration/task-synthetic');
+  writeFileSync(join(session,'current-task.json'),JSON.stringify({taskDirectory:task}));
+  const r=spawnSync('bash',[f.script,'review','--reviewer','Synthetic reviewer',
+    '--decision','accepted','--purpose','rehearsal','--assistance','ai',
+    '--rationale','Synthetic declarations only'],{env:f.env,encoding:'utf8'});
+  assert.equal(r.status,0,r.stderr);
+  const calls=readFileSync(join(f.repo,'calls'),'utf8');
+  assert.match(calls,/manual-tasks.py review .* --reviewer Synthetic reviewer --decision accepted --purpose rehearsal --assistance ai --rationale Synthetic declarations only/);
+  assert.doesNotMatch(calls,/manual-tasks.py (prepare|start|event|check)/);
+});

@@ -5,6 +5,21 @@ este oráculo y comprueba la corrección humana con los mismos controles.
 El ensayo guiado de F11/G se registra abajo; la calibración elegible de las seis
 tareas y la validación de los demás escenarios siguen pendientes.
 
+## Seguimiento del mecanismo de revisión humana
+
+Tras integrar PR #40 en `f5eb8dd528b1b26a49f31cf81915963e0bb166c8`, el
+[mecanismo explícito de revisión](../../manual-task-review.md) separa finalización
+técnica, decisión humana, asistencia, propósito y elegibilidad. La tarea F11/G,
+evidencia de limpieza, paquete original y tres notas de texto conservados superan
+una comprobación de integridad de solo lectura y permanecen intactos. No se
+registró una revisión nueva en nombre de la persona ni se importaron las notas.
+El ensayo guiado sigue excluido de selección de límites. Quedan pendientes el
+uso humano del nuevo comando y las seis calibraciones elegibles.
+
+El usuario comunicó haber descargado el paquete indicado abajo. Se retiró esa
+copia local a petición suya; se conservan evidencia original de tarea/ejecución
+y notas de revisión. La verificación de la descarga externa corresponde al usuario.
+
 ## Ensayo funcional guiado revisado el 2026-10-03
 
 Francisco aceptó `task-b069656237fc`, sesión `calibracion-54b7fa8-01`, como
