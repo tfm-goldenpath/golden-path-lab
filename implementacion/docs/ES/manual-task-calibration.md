@@ -53,6 +53,11 @@ comparables ambas sesiones.
 
 ## Comandos para la calibración
 
+El [fichero de comandos de sesión](manual-calibration-session.md) ofrece inputs
+editables, preparación en una llamada con log en directo y rutas guardadas para
+los comandos posteriores. Evita recrear un plan o copiar IDs de tareas. Los
+comandos explícitos siguientes siguen disponibles.
+
 Desde la raíz del repositorio, en el devcontainer Linux fijado. Se prepara una
 tarea por comando; no se lanza ninguna serie:
 
@@ -76,6 +81,13 @@ de corrección. Salida esperada: `PLAN_CREATED <ruta>`, secuencia de seis tareas
 `LIMITS_UNSET`. Conservar `plan.json` e `initial-plan.json`.
 Para la semilla del ejemplo, la secuencia medida futura conservada es
 `F11/G F11/R F03/G F03/R F10/R F10/G`. La calibración se registra por separado.
+
+Crear el plan una sola vez. `ERROR: Plan already exists` lo conserva intacto:
+reutilizar su ruta en `prepare` mientras coincidan las identidades del código,
+configuración y base. Tras cambiar la implementación, conservar la sesión original
+y crear un plan en otro directorio (por ejemplo `session-02/plan.json`), con la
+misma semilla declarada y base. No sobrescribir el plan ni editar sus hashes.
+
 El desarrollo inicial en `1b06e01` registró el desajuste kubectl 1.37.0/1.35.8.
 Tras alinear las herramientas de Codespaces con las versiones ya fijadas, `doctor`
 pasó durante la revisión de `8df21bf`. Conservar aquel fallo como evidencia histórica
@@ -96,6 +108,10 @@ python3 implementacion/scripts/manual-tasks.py tool "$MANUAL_TASK" scan
 ```
 
 Preparación correcta: `TASK <directorio>` y `READY; total timer has not started`.
+La línea `TASK` por sí sola no demuestra que la preparación haya terminado.
+Si falla, conservar el intento incompleto y ejecutar `cleanup` antes de preparar
+otro. Puede faltar `operator/prepared.json`; no crearlo manualmente ni ejecutar
+`start` con esa tarea anterior. Usar la nueva ruta solo después de `READY`.
 Al terminar o bloquearse de forma atribuible la ruta automática, `start` imprime
 `HUMAN_REVIEW_STARTED`. Leer `command.log` en el directorio de operación indicado;
 `state-path.txt` apunta a las salidas completas de herramientas. Que R complete
@@ -127,6 +143,12 @@ python3 implementacion/scripts/manual-tasks.py event "$MANUAL_TASK" wait \
 python3 implementacion/scripts/manual-tasks.py event "$MANUAL_TASK" correct \
   --note 'Reanudación de la corrección activa'
 python3 implementacion/scripts/manual-tasks.py check "$MANUAL_TASK"
+```
+
+Leer el resultado antes de continuar. Ejecutar la limpieza por separado cuando
+decidas terminar; limpiar durante `REVIEW` cierra el intento como `INCOMPLETE`.
+
+```bash
 python3 implementacion/scripts/manual-tasks.py status "$MANUAL_TASK"
 python3 implementacion/scripts/manual-tasks.py cleanup "$MANUAL_TASK"
 ```
@@ -138,9 +160,10 @@ sin repararla: F03 reconstruye y escanea, F10 consume el artefacto seleccionado 
 F11 comprueba el manifiesto editado. Imprime:
 
 - `VALIDATED_COMPLETION`: todas las comprobaciones requeridas pasan.
-- `REVIEW`: una decisión explícita `CORRECTION_REJECTED`, respaldada por evidencia,
+- `CORRECTION_REJECTED; task remains REVIEW`: una decisión respaldada por evidencia
   muestra que la corrección es insuficiente, incluida una incompatibilidad funcional
-  observada. Continuar con el mismo reloj y dentro de la ventana restante.
+  observada. `CHECK_RESULT` indica la ruta con enlaces a los diagnósticos. Continuar
+  con el mismo reloj/ventana; `event correct` solo registra la actividad.
 - `INCOMPLETE`: un fallo de build, registro, transporte, perfil o evaluador impide
   validar. La evidencia ausente, malformada o inconsistente también cierra el
   intento; un código distinto de cero no basta para atribuir un rechazo.
@@ -154,7 +177,12 @@ ininterpretable, registrar `event "$MANUAL_TASK" abandon --note '<motivo observa
 y limpiar. Una corrección fallida por sí sola no invalida la tarea.
 `cleanup` imprime `CLEANUP_COMPLETE`
 tras empaquetar y observar ausentes cluster, registro, builder y material privado
-propios. Repetir limpieza conserva el primer paquete.
+propios. La comprobación conserva inventarios Docker, incluidos los contenedores
+y volúmenes de caché del builder, sin invocar `buildx ls`, que puede recrear la
+configuración Docker privada eliminada. Ante `CLEANUP_FAILED`, revisar esos
+inventarios y logs de error antes de repetir la limpieza; un error de consulta no
+demuestra ausencia. Repetir limpieza conserva el primer paquete y registra otra
+operación.
 
 Guardar la ruta y preparar la siguiente calibración con su escenario/brazo y
 conocimientos actualizados. Cubrir las seis combinaciones; nunca reutilizar un

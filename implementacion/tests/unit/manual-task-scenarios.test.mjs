@@ -125,6 +125,49 @@ cmp "$root/owner/manual-task.json" "$root/original.json"
 `);
   assert.equal(r.status, 0, r.stderr);
 });
+for (const fault of ['none', 'registry', 'cluster', 'builder', 'volume', 'private', 'private-link', 'docker', 'inventory']) {
+  test(`cleanup observes owned resources without recreating private state: ${fault}`, t => {
+    const r = shell(t, String.raw`
+manual_operation=$FIXTURE/operation; private=$FIXTURE/private-synthetic
+registry=tfm-zot-run-synthetic; cluster=tfm-demo-run-synthetic; builder=tfm-build-run-synthetic
+export DOCKER_CONFIG="$private/docker"
+mkdir "$manual_operation"
+if [[ "$FAULT" == private ]]; then mkdir "$private"; fi
+if [[ "$FAULT" == private-link ]]; then ln -s "$FIXTURE/absent" "$private"; fi
+docker() {
+  echo "$*" >> "$FIXTURE/docker-commands"
+  case "$1" in
+    info)
+      if [[ "$FAULT" == docker ]]; then echo synthetic-daemon-error >&2; return 19; fi;;
+    ps)
+      if [[ "$FAULT" == inventory ]]; then echo synthetic-inventory-error >&2; return 20; fi
+      case "$FAULT:$*" in
+        registry:*name=*tfm-zot-*) echo "$registry";;
+        cluster:*label=*) echo "$cluster-control-plane";;
+        builder:*name=*buildx_buildkit_*) echo "buildx_buildkit_""$builder"0;;
+      esac;;
+    volume)
+      if [[ "$FAULT" == volume ]]; then echo "buildx_buildkit_""$builder"0_state; fi;;
+    buildx)
+      # Pinned Buildx really initializes this state during an inventory query.
+      mkdir -p "$DOCKER_CONFIG/buildx/activity"
+      echo default;;
+    *) echo unexpected-synthetic-command >&2; return 90;;
+  esac
+}
+manual_task_cleanup_check
+[[ ! -e "$private" && ! -L "$private" ]]
+` , {FAULT:fault});
+    if (fault === 'none') {
+      assert.equal(r.status, 0, r.stdout + r.stderr);
+      assert.match(readFileSync(join(r.dir,'operation/cleanup-check.txt'),'utf8'), /absent/);
+      assert.doesNotMatch(readFileSync(join(r.dir,'docker-commands'),'utf8'), /buildx ls/);
+    } else {
+      assert.notEqual(r.status, 0, 'a remaining resource or inventory error must fail cleanup');
+      assert.throws(() => lstatSync(join(r.dir,'operation/cleanup-check.txt')), {code:'ENOENT'});
+    }
+  });
+}
 test('safe packaging retains manual operations and input evidence but excludes private state', t => {
   const dir=directory(t), owner=join(dir,'run-synthetic');
   mkdirSync(join(owner,'manual-operations/0001-check/input-source'),{recursive:true});

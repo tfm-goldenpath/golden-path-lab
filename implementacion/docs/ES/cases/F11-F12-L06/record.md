@@ -4,6 +4,22 @@ El [procedimiento manual F11 en A](../../manual-task-calibration.md) conserva
 este oráculo y comprueba la corrección humana con los mismos controles.
 La validación real del nuevo procedimiento y la calibración siguen pendientes.
 
+## Observación manual del 2026-10-03
+
+F11/G, `task-a400cfbcaa31` de `calibracion-red-01`, usó el commit `29f099f` con
+la identidad del árbol local conservada en el intento. `0004-check` rechazó el
+manifiesto con los diagnósticos esperados ESCALATION y PRIVILEGED; siguió en
+`REVIEW` hasta que la limpieza explícita lo cerró como `INCOMPLETE`. La limpieza
+terminó correctamente. Las notas humanas contienen literalmente los ejemplos;
+no demuestran investigación o corrección real ni una calibración satisfactoria.
+
+El ajuste posterior muestra explícitamente `CORRECTION_REJECTED`, el estado
+`REVIEW` y la ruta del recibo. Las guías separan edición humana, comprobación y
+limpieza. Se conservan controles y evidencia original; no se repitió una tarea
+real para este cambio de mensajes. Aceptación humana pendiente.
+
+## Oráculo y operaciones
+
 La [matriz compartida](../../../EN/cases/F11-F12-L06/operations.json) se definió
 antes de implementar sobre `d86465410d74e39ef8e77a9979995bcb268abf9a`, según los
 requisitos del usuario. Se conservan los identificadores académicos. No se revisó

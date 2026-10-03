@@ -6,6 +6,22 @@ existing explicit-false manifest contract, unchanged image and functional checks
 Its synthetic instrumentation tests add no human calibration or live acceptance;
 the historical runtime observations below remain separate.
 
+## Manual calibration observation, 2026-10-03
+
+Task `task-a400cfbcaa31`, session `calibracion-red-01`, source commit `29f099f`
+with the locally recorded working-tree identity, ran F11/G in lane A. Its
+`0004-check/check-result.json` records `CORRECTION_REJECTED` in phase `manifest`;
+the linked evidence contains exactly the expected ESCALATION and PRIVILEGED
+diagnostics. The controller correctly retained `REVIEW` until explicit cleanup
+closed the unresolved attempt as `INCOMPLETE`; cleanup completed. The human event
+notes retained literal command examples. They do not establish actual diagnosis
+or correction work, and this attempt does not establish successful calibration.
+
+The subsequent CLI change prints `CORRECTION_REJECTED`, the continuing `REVIEW`
+state and the receipt path explicitly. EN/ES instructions separate human editing,
+verification and cleanup. Controls and original task evidence are unchanged;
+no live task was rerun for this feedback change. Human acceptance remains pending.
+
 ## Current hosted status (supplied review, 2026-09-30)
 
 The user reports successful [hosted run 36768108684](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36768108684)

@@ -52,6 +52,11 @@ measurement so the calibration remains comparable to the measured tasks.
 
 ## Commands for the calibration session
 
+The [session command file](manual-calibration-session.md) provides editable inputs,
+one preparation command with a live log, and saved task paths for later commands.
+Use it to avoid recreating a plan or copying task IDs. The explicit commands below
+remain available.
+
 Run from the repository root in the pinned Linux devcontainer. These commands
 prepare one task at a time and never launch a series:
 
@@ -75,6 +80,13 @@ correction. Expected plan output: `PLAN_CREATED <path>`, the six-task sequence,
 then `LIMITS_UNSET`. Keep both `plan.json` and `initial-plan.json`.
 For the example seed, the retained future measured sequence is
 `F11/G F11/R F03/G F03/R F10/R F10/G`. Calibration is stored separately.
+
+Create the plan once. `ERROR: Plan already exists` leaves it intact: reuse its
+path for `prepare` when source/configuration and database identities still match.
+After an implementation change, retain the original session and create a plan
+in a new directory (for example `session-02/plan.json`), with the same declared
+seed and database. Do not overwrite a plan or edit its identity hashes.
+
 Initial development at `1b06e01` recorded a kubectl 1.37.0/1.35.8 mismatch.
 After the Codespace tools were aligned with the existing pins, `doctor` passed
 during the `8df21bf` follow-up. Keep that failure as historical evidence and run
@@ -95,7 +107,11 @@ python3 implementacion/scripts/manual-tasks.py tool "$MANUAL_TASK" scan
 ```
 
 Successful preparation prints `TASK <directory>` and `READY; total timer has not
-started`. `start` prints `HUMAN_REVIEW_STARTED` when its automated path completes
+started`. The `TASK` line alone does not establish readiness. If preparation
+fails, retain the incomplete attempt and run `cleanup` before preparing another.
+Its `operator/prepared.json` may be absent; do not create it manually or run
+`start` against that old task. Use the new task path only after `READY`.
+`start` prints `HUMAN_REVIEW_STARTED` when its automated path completes
 or has an attributable block. Read the printed operation directory's
 `command.log`; `state-path.txt` points to the full raw tool outputs. A completed
 R path is not task completion. For F10 use `tool ... provenance`; for F11 use
@@ -125,6 +141,12 @@ python3 implementacion/scripts/manual-tasks.py event "$MANUAL_TASK" wait \
 python3 implementacion/scripts/manual-tasks.py event "$MANUAL_TASK" correct \
   --note 'Resuming active correction'
 python3 implementacion/scripts/manual-tasks.py check "$MANUAL_TASK"
+```
+
+Read the check result before continuing. Run cleanup separately when you decide
+to finish the attempt; cleanup during `REVIEW` closes it as `INCOMPLETE`.
+
+```bash
 python3 implementacion/scripts/manual-tasks.py status "$MANUAL_TASK"
 python3 implementacion/scripts/manual-tasks.py cleanup "$MANUAL_TASK"
 ```
@@ -136,9 +158,10 @@ it supplies no repair. F03 rebuilds and scans the edited dependency, F10 consume
 the selected existing artifact, and F11 checks the edited manifest. Output is:
 
 - `VALIDATED_COMPLETION`: every required completion check passed.
-- `REVIEW`: an explicit, evidenced `CORRECTION_REJECTED` decision shows that the
+- `CORRECTION_REJECTED; task remains REVIEW`: an explicit, evidenced decision shows that the
   submitted correction is insufficient, including an observed functional mismatch.
-  Continue within the same timer and remaining window.
+  The printed `CHECK_RESULT` path links the retained diagnostics. Continue within
+  the same timer and remaining window; `event correct` records activity only.
 - `INCOMPLETE`: a build, registry, transport, profile or evaluator failure prevents
   validation. Missing, malformed or inconsistent completion evidence also closes
   the attempt; a nonzero exit code alone cannot establish a rejected correction.
@@ -152,8 +175,13 @@ an uninterpretable attempt open, record `event "$MANUAL_TASK" abandon --note
 '<observed reason>'` and clean up. A failed correction alone does not invalidate
 the task.
 `cleanup` prints `CLEANUP_COMPLETE` only after packaging and observing that owned
-cluster/registry/builder/private state are absent. A repeated cleanup preserves
-the first evidence package. Keep the task path, then prepare the next calibration
+cluster/registry/builder/private state are absent. The check retains Docker
+inventories, including the builder containers and cache volumes, without invoking
+`buildx ls`, which can recreate the deleted private Docker configuration.
+`CLEANUP_FAILED` requires reviewing those inventories and error logs before
+repeating cleanup; an inventory error cannot establish absence. A repeated cleanup
+preserves the first evidence package and records another operation. Keep the task
+path, then prepare the next calibration
 with its scenario/arm and updated prior-knowledge declaration. Cover all six
 combinations; do not reuse a modified workspace as another arm's initial input.
 

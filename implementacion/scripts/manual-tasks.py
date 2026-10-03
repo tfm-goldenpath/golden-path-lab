@@ -86,7 +86,14 @@ def plan_command(args):
     path = managed(args.output); path.parent.mkdir(parents=True, exist_ok=True)
     if path.name != 'plan.json': raise ValueError('Use one plan.json per session directory')
     with locked(path.parent):
-        if path.exists(): raise FileExistsError('Plan already exists')
+        if path.exists():
+            if not getattr(args, 'reuse', False): raise FileExistsError('Plan already exists')
+            _, existing = load_plan(path)
+            if (existing['ordering']['seed'] != args.seed or existing['tools']['editor'] != args.editor
+                    or existing['database']['directory'] != str(Path(args.database).resolve())):
+                raise ValueError('Declared inputs differ from the existing plan; use a new session directory')
+            print('PLAN_REUSED ' + str(path))
+            return
         value = {'schema': 'manual-task-plan/v1', 'lane': 'A', 'created': clock(),
                  'ordering': make_sequence(args.seed), 'source': source_identity(),
                  'database': database_identity(args.database),
@@ -145,8 +152,9 @@ def process_identity(pid):
         return None
 
 
-def operation(task, record, name, tool=None):
+def operation(task, record, name, tool=None, follow=False):
     """Retain each invocation. The subprocess group is bounded by the total window."""
+    if follow and name != 'prepare': raise ValueError('Live log display is limited to preparation')
     folder = task / 'operations' / f'{len(list((task / "operations").iterdir())) + 1:04d}-{name}'
     folder.mkdir()
     env = os.environ.copy()
@@ -159,13 +167,32 @@ def operation(task, record, name, tool=None):
     write_json(folder / 'request.json', {'command': command, 'kind': 'human-requested' if name in ('tool', 'check') else name,
                                        'synthetic': record['synthetic'], 'started': clock()})
     process = None
+    reader = None
+
+    def display_log():
+        if reader:
+            try: print(reader.read(), end='', flush=True)
+            except BrokenPipeError: pass  # The original file remains the evidence.
+
     try:
         with (folder / 'command.log').open('xb') as stream:
+            if follow: reader = (folder / 'command.log').open(errors='replace')
             process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
             record['runningOperation'] = {'pid': process.pid, 'directory': str(folder), 'name': name,
                                           'bootId': clock()['bootId'], 'processStart': process_identity(process.pid)}
             save(task, record)
-            code = process.wait(timeout=remaining(record) if name in ('start', 'tool', 'check') else None)
+            if follow:
+                # Preparation is outside the task timer. Timed operations keep
+                # their original wait/deadline path and evidence endpoints.
+                while True:
+                    display_log()
+                    try:
+                        code = process.wait(timeout=0.2)
+                        break
+                    except subprocess.TimeoutExpired:
+                        continue
+            else:
+                code = process.wait(timeout=remaining(record) if name in ('start', 'tool', 'check') else None)
             finished = clock()
     except subprocess.TimeoutExpired:
         terminate(process)
@@ -185,6 +212,8 @@ def operation(task, record, name, tool=None):
         (folder / 'launch-error.txt').write_text(str(error) + '\n')
         code = 1; finished = clock()
     finally:
+        if reader:
+            display_log(); reader.close()
         record.pop('runningOperation', None); save(task, record)
     write_json(folder / 'exit.json', {'exitCode': code, 'finished': finished})
     print('EVIDENCE ' + str(folder))
@@ -214,6 +243,9 @@ def prepare_command(args):
     plan_path, plan = load_plan(args.plan)
     dataset = args.dataset
     with locked(plan_path.parent):
+        selection = plan_path.parent / 'current-task.json'
+        if selection.is_symlink() or (selection.exists() and not selection.is_file()):
+            raise ValueError('Unsafe current-task.json; task selection must be a regular file')
         preceding = [read(p) for p in plan_path.parent.glob('*/task-*/record.json')]
         if any(r.get('cleanup') != 'completed' for r in preceding):
             raise ValueError('Clean up the preceding attempt before preparing another')
@@ -237,8 +269,12 @@ def prepare_command(args):
         record.update({'plan': str(plan_path), 'taskDirectory': str(directory), 'position': position, 'participant': args.participant,
                        'priorKnowledge': args.prior_knowledge, 'created': clock()})
         save(directory, record)
+        # Save the path before any infrastructure operation, including failures.
+        write_json(selection, {'schema': 'manual-task-selection/v1', 'taskDirectory': str(directory),
+                               'scenario': scenario, 'arm': arm, 'dataset': dataset})
         print('TASK ' + str(directory), flush=True)
-        code, folder = operation(directory, record, 'prepare')
+        options = {'follow': True} if getattr(args, 'follow', False) else {}
+        code, folder = operation(directory, record, 'prepare', **options)
         if code == 0:
             prepared = read(directory / 'operator/prepared.json')
             comparisons = [read(Path(r['taskDirectory']) / 'operator/prepared.json')['comparability']
@@ -331,7 +367,10 @@ def run_command(args):
             if code == 0: task_checksums(task)
             print('CLEANUP_COMPLETE' if code == 0 else 'CLEANUP_FAILED; diagnostics retained')
             return 0 if code == 0 else 1
-        if args.command == 'start': guard_task(task, record)
+        if args.command == 'start':
+            if record['status'] != 'READY':
+                raise ValueError('Start requires READY; current status is ' + record['status'] + '. Clean up failed/interrupted attempts and prepare a new task')
+            guard_task(task, record)
         if record.get('started') and remaining(record) == 0 and record['status'] not in TERMINAL:
             emit(task, record, 'expire', note='Window exhausted before requested command')
             print(json.dumps(summarize(record, clock()), indent=2)); return 2
@@ -375,7 +414,13 @@ def run_command(args):
                 record_event(record, 'verification-finished', read(folder / 'exit.json')['finished'],
                              outcome=outcome, exitCode=code, evidence=evidence_link(evidence, task))
                 save(task, record)
-            print('VALIDATED_COMPLETION' if record['status'] == 'COMPLETED' else record['status'])
+            if record['status'] == 'REVIEW':
+                print('CORRECTION_REJECTED; task remains REVIEW; completion has not been validated')
+                print('CHECK_RESULT ' + str(folder / 'check-result.json'))
+                print('Inspect the linked diagnostics and continue within the same timer/window; '
+                      'cleanup now closes this unresolved attempt as INCOMPLETE')
+            else:
+                print('VALIDATED_COMPLETION' if record['status'] == 'COMPLETED' else record['status'])
         print(json.dumps(summarize(record, clock()), indent=2))
         return 0 if record['status'] not in ('INCOMPLETE', 'EXHAUSTED') else 2
 
@@ -432,10 +477,12 @@ def main():
     sub = parser.add_subparsers(dest='command', required=True)
     p = sub.add_parser('plan'); p.add_argument('--seed', required=True); p.add_argument('--output', required=True)
     p.add_argument('--database', required=True); p.add_argument('--editor', required=True)
+    p.add_argument('--reuse', action='store_true', help='Reuse an existing plan only if its inputs and identities still match')
     p = sub.add_parser('prepare'); p.add_argument('--plan', required=True)
     p.add_argument('--dataset', choices=['calibration', 'measurement'], default='calibration')
     p.add_argument('--scenario', choices=SCENARIOS, required=True); p.add_argument('--arm', choices=['R', 'G'], required=True)
     p.add_argument('--participant', required=True); p.add_argument('--prior-knowledge', required=True)
+    p.add_argument('--follow', action='store_true', help='Display preparation logs while retaining the original command.log')
     for name in ['start', 'status', 'check', 'cleanup', 'recover', 'event', 'tool']:
         p = sub.add_parser(name); p.add_argument('task')
         if name == 'event':

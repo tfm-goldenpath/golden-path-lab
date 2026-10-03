@@ -50,14 +50,28 @@ manual_task_profile_check() {
 }
 
 manual_task_cleanup_check() {
-  local containers builders
+  local resource filter
   docker info > "$manual_operation/cleanup-docker.log" 2>&1 || return
-  containers=$(docker ps -a --filter "name=^${registry}$" --format '{{.Names}}') || return
-  [[ -z "$containers" ]] || return 1
-  containers=$(docker ps -a --filter "label=io.x-k8s.kind.cluster=$cluster" --format '{{.Names}}') || return
-  [[ -z "$containers" ]] || return 1
-  builders=$(docker buildx ls --format '{{.Name}}') || return
-  [[ "$builders" != "$builder" && $'\n'"$builders"$'\n' != *$'\n'"$builder"$'\n'* && ! -e "$private" ]] || return 1
+  # Buildx ls initializes DOCKER_CONFIG and recreates the deleted private tree.
+  # Observe the owned docker-container nodes directly; absence of private state
+  # also establishes absence of their local builder metadata.
+  for resource in registry cluster builder; do
+    case "$resource" in
+      registry) filter="name=^${registry}$";;
+      cluster) filter="label=io.x-k8s.kind.cluster=$cluster";;
+      builder) filter="name=^buildx_buildkit_${builder}[0-9]+$";;
+    esac
+    docker ps -a --filter "$filter" --format '{{.Names}}' > "$manual_operation/cleanup-$resource.txt" 2> "$manual_operation/cleanup-$resource-error.log" || return
+    if [[ -s "$manual_operation/cleanup-$resource.txt" ]]; then
+      printf 'ERROR: Owned %s containers remain; inspect cleanup-%s.txt\n' "$resource" "$resource" >&2
+      return 1
+    fi
+  done
+  docker volume ls --filter "name=^buildx_buildkit_${builder}[0-9]+_state$" --format '{{.Name}}' > "$manual_operation/cleanup-builder-volumes.txt" 2> "$manual_operation/cleanup-builder-volumes-error.log" || return
+  if [[ -s "$manual_operation/cleanup-builder-volumes.txt" || -e "$private" || -L "$private" ]]; then
+    printf 'ERROR: Owned builder volumes or private state remain\n' >&2
+    return 1
+  fi
   printf 'Owned cluster, registry, builder and private state absent\n' > "$manual_operation/cleanup-check.txt"
 }
 

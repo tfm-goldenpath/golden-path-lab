@@ -207,6 +207,89 @@ class ManualTimingTests(unittest.TestCase):
 
 
 class ManualCommandTests(unittest.TestCase):
+    def test_plan_reuse_checks_declared_inputs_and_identities_without_rewriting(self):
+        with tempfile.TemporaryDirectory(prefix='synthetic-plan-reuse-') as directory:
+            root = Path(directory); path = root / 'plan.json'
+            database = {'directory': str(root / 'db'), 'sha256': {'synthetic': 'unchanged'}}
+            args = argparse.Namespace(output=str(path), seed='synthetic-seed', database=database['directory'],
+                                      editor='Synthetic editor 1', reuse=True)
+            with patch.object(cli, 'STORE', root), patch.object(cli, 'source_identity', return_value={'synthetic': True}), patch.object(cli, 'database_identity', return_value=database):
+                cli.plan_command(args)
+                before = {p: p.read_bytes() for p in [path, root / 'initial-plan.json']}
+                cli.plan_command(args)
+                for key in ['seed', 'editor', 'database']:
+                    changed = copy.copy(args); setattr(changed, key, 'different')
+                    with self.assertRaisesRegex(ValueError, 'inputs differ'): cli.plan_command(changed)
+                with patch.object(cli, 'source_identity', return_value={'changed': True}):
+                    with self.assertRaisesRegex(ValueError, 'Source/configuration'): cli.plan_command(args)
+                with patch.object(cli, 'database_identity', return_value={**database, 'sha256': {}}):
+                    with self.assertRaisesRegex(ValueError, 'database'): cli.plan_command(args)
+                for p, value in before.items(): self.assertEqual(p.read_bytes(), value)
+
+    def test_start_rejects_incomplete_preparation_before_reading_missing_receipt(self):
+        with tempfile.TemporaryDirectory(prefix='synthetic-not-ready-') as directory:
+            root = Path(directory)
+            r = new_record('F11', 'G', 'calibration', {}, synthetic=True)
+            record_event(r, 'abandon', clock(), note='Synthetic preparation failure')
+            write_json(root / 'record.json', r); before = (root / 'record.json').read_bytes()
+            with patch.object(cli, 'STORE', root.parent), patch.object(cli, 'guard_task') as guard:
+                with self.assertRaisesRegex(ValueError, 'READY'):
+                    cli.run_command(argparse.Namespace(command='start', task=str(root)))
+                guard.assert_not_called()
+            self.assertEqual((root / 'record.json').read_bytes(), before)
+
+    def test_prepare_follow_displays_logs_and_retains_failure_without_starting_timer(self):
+        import io
+        from contextlib import redirect_stdout
+        with tempfile.TemporaryDirectory(prefix='synthetic-follow-') as directory:
+            root, _ = self.operation_fixture(directory)
+            r = new_record('F11', 'G', 'calibration', {'database': {'directory': str(root)}}, synthetic=True)
+            (root / 'scripts/demo.sh').write_text('echo synthetic-progress\nsleep 0.25\necho synthetic-final\nexit 7\n')
+            output = io.StringIO()
+            with patch.object(cli, 'ROOT', root), redirect_stdout(output):
+                code, folder = cli.operation(root, r, 'prepare', follow=True)
+            self.assertEqual(code, 7)
+            self.assertIn('synthetic-progress\nsynthetic-final\n', output.getvalue())
+            self.assertEqual((folder / 'command.log').read_text(), 'synthetic-progress\nsynthetic-final\n')
+            self.assertIsNone(r.get('started'))
+
+    def test_failed_preparation_saves_its_path_and_does_not_replace_a_selector_symlink(self):
+        with tempfile.TemporaryDirectory(prefix='synthetic-task-selection-') as directory:
+            root = Path(directory); path = root / 'plan.json'
+            plan = {'source': {}, 'database': {}, 'tools': {}, 'environment': {}, 'limitsSeconds': dict.fromkeys(SCENARIOS)}
+            args = argparse.Namespace(plan=str(path), dataset='calibration', scenario='F11', arm='G',
+                                      participant='synthetic', prior_knowledge='synthetic only')
+            def failed_prepare(task, record, name):
+                return 7, task / 'operations'
+            with patch.object(cli, 'load_plan', return_value=(path, plan)), patch.object(cli, 'operation', side_effect=failed_prepare) as operation, patch.object(cli, 'new_record', side_effect=lambda *a, **kw: new_record(*a, **kw, synthetic=True)):
+                self.assertEqual(cli.prepare_command(args), 1)
+                task = Path(read_json(root / 'current-task.json')['taskDirectory'])
+                record = read_json(task / 'record.json')
+                self.assertEqual(record['status'], 'INCOMPLETE')
+                self.assertIsNone(record.get('started'))
+                before = (task / 'record.json').read_bytes()
+                (root / 'current-task.json').unlink()
+                (root / 'current-task.json').symlink_to(task / 'record.json')
+                with self.assertRaisesRegex(ValueError, 'Unsafe current-task'):
+                    cli.prepare_command(args)
+                self.assertEqual((task / 'record.json').read_bytes(), before)
+                self.assertEqual(operation.call_count, 1)
+
+    def test_follow_interruption_preserves_the_incomplete_attempt(self):
+        import io
+        from contextlib import redirect_stdout
+        with tempfile.TemporaryDirectory(prefix='synthetic-follow-interruption-') as directory:
+            root, _ = self.operation_fixture(directory)
+            r = new_record('F11', 'G', 'calibration', {'database': {'directory': str(root)}}, synthetic=True)
+            process = Mock(pid=99999999); process.wait.side_effect = KeyboardInterrupt
+            with patch.object(cli, 'ROOT', root), patch.object(cli.subprocess, 'Popen', return_value=process), patch.object(cli, 'terminate') as terminate, redirect_stdout(io.StringIO()):
+                code, folder = cli.operation(root, r, 'prepare', follow=True)
+            terminate.assert_called_once_with(process)
+            self.assertEqual(code, 130)
+            self.assertEqual(r['status'], 'INCOMPLETE')
+            self.assertIsNone(r.get('started'))
+            self.assertEqual(read_json(folder / 'exit.json')['exitCode'], 130)
+
     def operation_fixture(self, directory, limit=None):
         root = Path(directory)
         (root / 'scripts').mkdir(); (root / 'operations').mkdir()
@@ -215,6 +298,8 @@ class ManualCommandTests(unittest.TestCase):
         return root, r
 
     def test_verification_requires_an_explicit_evidenced_correction_rejection(self):
+        import io
+        from contextlib import redirect_stdout
         for case, code, status, outcome in [
             ('unclassified-build-error', 1, 'INCOMPLETE', 'error'),
             ('unclassified-reserved-exit', 43, 'INCOMPLETE', 'error'),
@@ -256,13 +341,24 @@ class ManualCommandTests(unittest.TestCase):
                 if not case.startswith('unclassified'):
                     script += 'cp synthetic-result.json "$5/check-result.json"\n'
                 (root / 'scripts/demo.sh').write_text(script + f'exit {code}\n')
-                with patch.object(cli, 'ROOT', root), patch.object(cli, 'STORE', root.parent), patch.object(cli, 'guard_task'):
+                output = io.StringIO()
+                with patch.object(cli, 'ROOT', root), patch.object(cli, 'STORE', root.parent), patch.object(cli, 'guard_task'), redirect_stdout(output):
                     self.assertEqual(cli.run_command(argparse.Namespace(command='check', task=str(root))), 0 if status in ('REVIEW', 'COMPLETED') else 2)
                 actual = read_json(root / 'record.json')
                 self.assertEqual(actual['status'], status)
                 self.assertEqual(actual['events'][-1]['exitCode'], code)
                 self.assertEqual(actual['events'][-1]['outcome'], outcome)
                 self.assertIn('synthetic-check-diagnostic', next((root / 'operations').glob('*/command.log')).read_text())
+                self.assertEqual(actual['humanAcceptance'], 'pending')
+                self.assertEqual(actual['started'], r['started'])
+                if status == 'REVIEW':
+                    self.assertIn('CORRECTION_REJECTED; task remains REVIEW', output.getvalue())
+                    self.assertIn('CHECK_RESULT ' + str(next((root / 'operations').glob('*/check-result.json'))), output.getvalue())
+                    self.assertIn('cleanup now closes this unresolved attempt as INCOMPLETE', output.getvalue())
+                    self.assertNotIn('VALIDATED_COMPLETION', output.getvalue())
+                    self.assertIsNone(actual.get('ended'))
+                else:
+                    self.assertNotIn('CORRECTION_REJECTED; task remains REVIEW', output.getvalue())
 
     def test_interrupted_tool_closes_attempt_but_cleanup_keeps_original_endpoint(self):
         for name in ['tool', 'cleanup']:
@@ -407,6 +503,7 @@ class ManualCommandTests(unittest.TestCase):
                     self.assertEqual(cli.prepare_command(args),0)
                     latest=[p for p in root.glob('measurement/task-*/record.json') if read_json(p)['status']=='READY']
                     self.assertEqual(len(latest),1)
+                    self.assertEqual(read_json(root/'current-task.json')['taskDirectory'], str(latest[0].parent))
                     record=read_json(latest[0]);self.assertTrue(record['synthetic'])
                     self.assertEqual(record['limitSeconds'],plan['limitsSeconds'][args.scenario])
                     self.assertEqual(record['position'],position['position'])
