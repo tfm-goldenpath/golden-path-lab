@@ -152,3 +152,26 @@ Example of an **unexecuted** report row (illustrative shape, not a successful ru
 See the [development handoff](../../registros/automated-remediation-validation.md)
 for actual validation results and the proposed PR description. Synthetic tests
 exercise contracts and sequencing; only a live run establishes local integration.
+
+## Observed local execution
+
+On 2026-10-04, `automated-six-01` on unchanged commit
+`ea790781990766a3cb20bae5a302e1175edd3bd0`, seed `automated-six-v1`,
+returned **6/6 VALIDATED** and exit 0. Order: F10/G, F10/R, F03/G, F03/R,
+F11/R, F11/G. Each expected detection, bounded repair, completion, cleanup and
+archive integrity check passed. There were no retries, interruptions or human
+interventions. Total invocation time was 2501.060 s (41.68 minutes), including
+preparation and cleanup; per-operation and task timings are retained separately.
+
+Before execution, user-authorized removal of two verified redundant DB copies
+reclaimed about 2.70 GiB. Earlier evidence and the canonical frozen DB were kept;
+no global Docker pruning occurred. About 7.5 GiB remained afterward, with no
+containers, volumes, kind clusters or task-owned builders left. The initial
+NOT_EXECUTED storage probe remains a separate retained observation.
+
+The [result record](../../registros/automated-remediation-validation.md) contains
+exact source/database identities, six task/run IDs, report/package checksums and
+timings. This successful local run remains provisional automated technical
+evidence. Human effort is deferred, human acceptance is pending and the paired
+hosted campaign and overall pilot acceptance remain separate. For another run
+after source changes, use a new session identifier and retain this sealed session.

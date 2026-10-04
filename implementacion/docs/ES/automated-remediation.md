@@ -151,3 +151,27 @@ Ejemplo de fila **no ejecutada**, ilustrativo y sin afirmar éxito:
 La [entrega de desarrollo](../../registros/automated-remediation-validation.md)
 recoge comprobaciones reales y descripción propuesta del PR. Las pruebas
 sintéticas validan contratos y secuencia; la integración exige una ejecución real.
+
+## Ejecución local observada
+
+El 2026-10-04, `automated-six-01` sobre el commit sin cambios
+`ea790781990766a3cb20bae5a302e1175edd3bd0`, semilla `automated-six-v1`,
+terminó con **6/6 VALIDATED** y exit 0. Orden: F10/G, F10/R, F03/G, F03/R,
+F11/R, F11/G. Pasaron detección esperada, reparación acotada, finalización,
+limpieza e integridad de cada paquete. No hubo reintentos, interrupciones ni
+intervenciones humanas. La invocación duró 2501.060 s (41,68 minutos), incluidas
+preparación y limpieza; los tiempos por operación y tarea se conservan aparte.
+
+Antes de ejecutar, la eliminación autorizada de dos copias redundantes verificadas
+de la base liberó unos 2,70 GiB. Se conservaron evidencias anteriores y la base
+canónica congelada; no hubo poda global de Docker. Quedaron unos 7,5 GiB libres,
+sin contenedores, volúmenes, clústeres kind ni builders propios pendientes.
+La prueba inicial de espacio NOT_EXECUTED permanece como observación separada.
+
+El [registro de resultados](../../registros/automated-remediation-validation.md)
+conserva identidades de fuente/base, las seis tareas/ejecuciones, checksums de
+informes/paquetes y tiempos. Este éxito local sigue siendo evidencia técnica
+automatizada provisional: esfuerzo humano aplazado, aceptación humana pendiente
+y campaña alojada por pares y aceptación global del piloto separadas. Para
+otra ejecución después de cambiar la fuente, usar una sesión nueva y conservar
+esta sesión sellada.
