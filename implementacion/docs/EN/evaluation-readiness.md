@@ -2,6 +2,12 @@
 
 [Español](../ES/evaluation-readiness.md) · [Current work](../../TODO.md) · [Final execution handoff](paired-rg-campaign.md)
 
+## Latest human decision — 4 October 2026
+
+Francisco's [canonical Spanish declaration of human acceptance](../../registros/evaluation_acceptance_20261004_ES.md) ([English translation](../../registros/evaluation_acceptance_20261004_EN.md)) closes the experimental evaluation within its documented reduced scope. It accepts the ten-pair campaign, functional observations, six automated repairs and pilot within their respective sources and execution boundaries. Human-effort measurement remains deferred; Francisco's external-copy location and checksum verification remain pending. Results and limitations have been incorporated into the local Spanish thesis chapters 4–6; the manuscript is maintained outside this repository and its final editorial review remains separate.
+
+This dated decision supersedes pending-human-acceptance wording retained below as historical context. It does not change evidence, hashes, scenario execution status or dataset boundaries, establish coverage of unexecuted hosted negatives, or repeat the full catalogue on the campaign source. The human review relies on retained reports and automated checks, without implying personal repetition of each verification.
+
 ## Current scope
 
 The readiness consolidation was prepared from `940582721d0a5bee2fce54272f5dac60a87fad00`
@@ -9,7 +15,8 @@ and merged as PR #45 at `895a3bde79089b7544c1dad76a6cd8f48eede0a8`.
 Fresh development RG/GR and the [ten-pair timing campaign](paired-rg-campaign-results.md)
 now have reviewed execution evidence on `895a3bd`. That legitimate-delivery path
 does not rerun the entire functional catalogue. Implementation, execution,
-automated review and human acceptance remain distinct; overall acceptance is pending.
+automated review and human acceptance remain distinct; the dated declaration above
+records acceptance of the reduced scope.
 
 Four datasets remain separate: functional scenario trials, PR44's scripted
 remediation, the completed four-pair timing pilot and the completed ten-pair timing
@@ -25,6 +32,10 @@ ineligible for human calibration even after later review. Human review, overall
 acceptance and campaign authorization are not implied by a PR merge.
 
 ## Evidence sources and review provenance
+
+The source descriptions, matrix and handoff below preserve their recorded review
+status before the dated human decision above. Pending-human-acceptance labels
+are historical; unexecuted cases and source limitations remain unchanged.
 
 Historical sources A1/A2/B1/AR/P below remain **committed records**, not a new
 audit of those originals. Their retention inventory did not reauthenticate historic

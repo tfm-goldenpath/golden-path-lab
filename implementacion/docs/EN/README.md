@@ -6,7 +6,8 @@ English is the primary language for implementation and technical contribution. S
 
 | Guide | Purpose |
 | --- | --- |
-| [Ten-pair campaign results](paired-rg-campaign-results.md) | Observed timings, original run/evidence references, checks and pending human acceptance. |
+| [Human acceptance — 4 October 2026](../../registros/evaluation_acceptance_20261004_EN.md) | Translation of the canonical Spanish decision: evaluation closed within reduced scope; human effort deferred and external-copy verification pending. |
+| [Ten-pair campaign results](paired-rg-campaign-results.md) | Observed timings, original run/evidence references, checks and documented limitations. |
 | [Evaluation readiness](evaluation-readiness.md) | Twenty scenario rows, historical evidence, current scope and final execution handoff. |
 | [Environment and versions](environment.md) | Devcontainer setup, pinned tools and environment checks. |
 | [Modular architecture](architecture.md) | Component responsibilities, interfaces and verification boundaries. |

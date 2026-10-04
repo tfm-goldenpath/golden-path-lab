@@ -2,6 +2,12 @@
 
 [English](../EN/evaluation-readiness.md) · [Trabajo actual](../../TODO.md) · [Entrega para ejecución final](paired-rg-campaign.md)
 
+## Última decisión humana — 4 de octubre de 2026
+
+La [declaración canónica de aceptación humana de Francisco](../../registros/evaluation_acceptance_20261004_ES.md) ([traducción inglesa](../../registros/evaluation_acceptance_20261004_EN.md)) cierra la evaluación experimental dentro del alcance reducido documentado. Acepta la campaña de diez pares, las observaciones funcionales, las seis reparaciones automatizadas y el piloto dentro de sus respectivas fuentes y fronteras de ejecución. La medición del esfuerzo humano sigue aplazada; quedan pendientes la ubicación y verificación de checksums de la copia externa, a cargo de Francisco. Los resultados y límites se han incorporado a los capítulos 4–6 de la memoria española local; el manuscrito se mantiene fuera de este repositorio y su revisión editorial final sigue siendo independiente.
+
+Esta decisión fechada sustituye el estado de aceptación humana pendiente conservado abajo como contexto histórico. No modifica evidencias, hashes, estados de ejecución ni fronteras de los datasets, no establece cobertura de negativos alojados no ejecutados ni repite el catálogo completo sobre la fuente de campaña. La revisión humana se apoya en los informes y comprobaciones automatizadas conservados, sin implicar la repetición personal de cada verificación.
+
 ## Alcance actual
 
 La consolidación se preparó desde `940582721d0a5bee2fce54272f5dac60a87fad00`
@@ -9,7 +15,8 @@ y se integró como PR #45 en `895a3bde79089b7544c1dad76a6cd8f48eede0a8`.
 Desarrollo RG/GR nuevo y la [campaña temporal de diez pares](paired-rg-campaign-results.md)
 ya tienen evidencia revisada en `895a3bd`. La ruta de entrega legítima no repite
 el catálogo funcional completo. Implementación, ejecución, revisión automatizada
-y aceptación humana siguen separadas; aceptación global pendiente.
+y aceptación humana siguen separadas; la declaración fechada anterior registra
+la aceptación del alcance reducido.
 
 Se mantienen cuatro datasets separados: ensayos funcionales, reparación mediante
 script de PR44, piloto temporal de cuatro pares y campaña temporal completada de diez pares. Las
@@ -26,6 +33,11 @@ Un merge no implica revisión humana realizada, aceptación global ni autorizaci
 de campaña.
 
 ## Fuentes de evidencia y procedencia de revisión
+
+Las descripciones de fuentes, la matriz y la entrega siguientes conservan su
+estado de revisión anterior a la decisión humana fechada. Las menciones a
+aceptación humana pendiente son históricas; los casos no ejecutados y las
+limitaciones de fuente permanecen sin cambios.
 
 Las fuentes históricas A1/A2/B1/AR/P siguen siendo **registros versionados**, sin
 nueva auditoría de esos originales. Su inventario de retención no reautenticó

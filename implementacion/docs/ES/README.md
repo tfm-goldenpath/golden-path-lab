@@ -6,7 +6,8 @@ Esta documentación ofrece apoyo en español. La implementación y la documentac
 
 | Guía | Contenido |
 | --- | --- |
-| [Resultados de diez pares](paired-rg-campaign-results.md) | Tiempos observados, runs/evidencias originales, comprobaciones y aceptación humana pendiente. |
+| [Aceptación humana — 4 de octubre de 2026](../../registros/evaluation_acceptance_20261004_ES.md) | Declaración canónica: evaluación cerrada dentro del alcance reducido; esfuerzo humano aplazado y verificación de copia externa pendiente. |
+| [Resultados de diez pares](paired-rg-campaign-results.md) | Tiempos observados, runs/evidencias originales, comprobaciones y limitaciones documentadas. |
 | [Preparación de la evaluación](evaluation-readiness.md) | Veinte escenarios, evidencia histórica, alcance actual y entrega para ejecución final. |
 | [Entorno y versiones](environment.md) | Preparación del devcontainer, versiones fijadas y comprobación del entorno. |
 | [Arquitectura modular](architecture.md) | Responsabilidades, interfaces y límites de verificación de los componentes. |
