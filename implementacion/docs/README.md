@@ -7,6 +7,8 @@ Choose a language:
 
 Start a contribution with the root [contribution guide](../../CONTRIBUTING.md). AI-assisted development has matching [English](EN/ai-assisted-development.md) and [Spanish](ES/ai-assisted-development.md) guides; the same requirements and deterministic checks apply with or without an assistant.
 
+Current evaluation readiness: [EN](EN/evaluation-readiness.md) / [ES](ES/evaluation-readiness.md), with twenty scenario rows and the final-source handoff.
+
 ## Organization
 
 Shared topics have the same filename in each language directory. Each language index identifies the available guides; a missing translation is linked to its English version instead of copied as an untranslated Spanish document.

@@ -145,6 +145,22 @@ of their original revisions.
 
 ## Invariants to preserve
 
+- Consult the [evaluation readiness matrix](implementacion/docs/EN/evaluation-readiness.md)
+  ([ES](implementacion/docs/ES/evaluation-readiness.md)) for all twenty scenario
+  IDs, observed revisions/boundaries and remaining final-source work. Code or a
+  green CI job does not establish scenario execution or human acceptance.
+- Keep functional scenario trials, scripted remediation with known repairs, the
+  four-pair timing pilot and the forthcoming timing campaign as separate datasets.
+  Shared L01/L03/L04 deliveries and positive counterparts are not independent
+  samples. F01/F02 are static checks; unsupported hosted negatives stay NOT_EXECUTED.
+- Human-effort measurement, eligible manual calibration and human-task limit
+  freezing are deferred under the current reduced scope. Automated remediation
+  records never become human calibration/productivity evidence, even after review.
+  Do not infer overall acceptance or campaign authorization from a merged PR.
+- Preserve incomplete campaign observations through archive verification and
+  analysis. Require mandatory identity/association and matching recorded values;
+  permit absent phase fields only before their producer checkpoint. Unknown
+  durations remain unknown, and original failures/retry restrictions remain intact.
 - R/G selects reference/Golden Path controls; A/B selects local/hosted execution
   and trust. A local key or `act` execution does not prove GitHub OIDC integration.
 - Bind evidence to the delivered image digest and authorized origin. Verify the
@@ -159,9 +175,10 @@ of their original revisions.
 - Synthetic reports belong in labelled unit tests. Real integration and campaign
   claims require real executions and their evidence. Never fabricate results,
   citations, measurements, human approval or an earlier TDD history.
-- The current demonstration exercises L01/F13, local directed F07 and F11 checks.
-  Hosted F07 remains NOT_EXECUTED. Additional
-  unit tests do not establish execution of the entire twenty-scenario catalogue.
+- The demonstration and separate vulnerability suite have recorded lane-A
+  execution at historical revisions documented in the readiness matrix. Those
+  observations do not establish execution on a future merged source. Hosted
+  F07 and other unsupported negative fixtures remain NOT_EXECUTED.
 - AI assists development; deterministic tools implement delivery decisions. Do
   not introduce AI into measured manual tasks or campaign acceptance decisions.
 

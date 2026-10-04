@@ -9,8 +9,9 @@ The synthetic `quotes-node` service makes delivery behavior observable without r
 
 The [F11/F12/L06 runtime extension](implementacion/docs/EN/cases/F11-F12-L06/runbook.md)
 adds Deployment CREATE/template UPDATE and isolated Pod checks. Implementation
-and offline tests are available; the supplied hosted review records success, while
-local acceptance remains pending.
+and offline tests are available; the recorded lane-A validation passed, and a
+supplied hosted review records runtime success. Final-source readiness and human
+acceptance remain pending. See the [twenty-scenario readiness matrix](implementacion/docs/EN/evaluation-readiness.md).
 
 ## Quick start in Codespaces or a devcontainer
 
@@ -39,7 +40,10 @@ The [language revision validation](implementacion/registros/language_normalizati
 
 ## Contributing with or without AI
 
-Follow [CONTRIBUTING.md](CONTRIBUTING.md) for scoped changes, actual test commands and truthful contribution records. The [AI-assisted development guide](implementacion/docs/EN/ai-assisted-development.md) explains the [shared agent instructions](AGENTS.md), [Copilot instructions](.github/copilot-instructions.md) and [scenario-change skill](.github/skills/scenario-change/SKILL.md). People own requirements, expected outcomes and review; deterministic controls decide delivery authorization. AI is excluded from the six measured manual tasks.
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for scoped changes, actual test commands and truthful contribution records. The [AI-assisted development guide](implementacion/docs/EN/ai-assisted-development.md) explains the [shared agent instructions](AGENTS.md), [Copilot instructions](.github/copilot-instructions.md) and [scenario-change skill](.github/skills/scenario-change/SKILL.md). People own requirements, expected outcomes and review; deterministic controls decide delivery authorization. Human-effort measurement and eligible manual calibration are deferred. The six
+automated remediation tasks use known repairs and cannot become human productivity
+or calibration evidence. Functional trials, remediation, the completed timing pilot
+and the forthcoming campaign remain separate datasets.
 
 These files guide assistants; tests, permissions and configured repository rules enforce their respective controls. No hooks, MCP connections, custom agents or remote permissions are installed by this guidance. The laboratory remains usable without AI.
 

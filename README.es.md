@@ -2,6 +2,10 @@
 
 [English](README.md) | [Español](README.es.md)
 
+La [matriz de preparación de veinte escenarios](implementacion/docs/ES/evaluation-readiness.md)
+consolida ejecuciones registradas, límites por carril y trabajo pendiente sobre
+fuente final; un merge no implica aceptación global ni autorización de campaña.
+
 Laboratorio reproducible de comprobaciones tempranas de políticas y entrega verificable a Kubernetes. La implementación acompaña al TFM **Golden Path para la entrega cloud-native: verificación temprana de políticas e integridad en el flujo CI/CD**. La memoria, el catálogo académico y las decisiones de investigación se mantienen en el [repositorio del TFM](https://github.com/tfm-goldenpath/golden-path).
 
 La base clásica **v0.1.0** está publicada en `9f1999e`. La [ejecución alojada 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654) superó L01/F13/F11 y la sustitución de imagen en `4f8fe77`, cambio incluido en esa versión. Su evidencia corresponde al commit ejecutado y al perfil clásico.
@@ -11,7 +15,9 @@ La versión publicada **v0.2.0**, en `dd381d3`, incorpora la [migración a bundl
 
 La [extensión F11/F12/L06](implementacion/docs/ES/cases/F11-F12-L06/runbook.md)
 añade CREATE/UPDATE de plantilla Deployment y Pods aislados. La implementación y
-pruebas offline están disponibles; la aceptación real local/hosted sigue pendiente.
+pruebas offline están disponibles; la validación A registrada pasó y existe una
+revisión alojada aportada. La preparación sobre fuente final y aceptación humana
+siguen pendientes, según la matriz enlazada arriba.
 
 ## Por qué se utiliza inglés
 
@@ -21,7 +27,10 @@ Esta página y las guías de `implementacion/docs/ES/` ofrecen apoyo documental 
 
 ## Contribuir con o sin IA
 
-La [guía de contribución](CONTRIBUTING.md) define cambios acotados, comandos de comprobación y registro veraz de aportaciones. La [guía de desarrollo asistido](implementacion/docs/ES/ai-assisted-development.md) explica [`AGENTS.md`](AGENTS.md), las [instrucciones de Copilot](.github/copilot-instructions.md) y la [skill de cambio de escenario](.github/skills/scenario-change/SKILL.md). Las personas asumen requisitos, resultados esperados y revisión; los controles deterministas deciden la autorización. La IA queda excluida de las seis tareas manuales medidas.
+La [guía de contribución](CONTRIBUTING.md) define cambios acotados, comandos de comprobación y registro veraz de aportaciones. La [guía de desarrollo asistido](implementacion/docs/ES/ai-assisted-development.md) explica [`AGENTS.md`](AGENTS.md), las [instrucciones de Copilot](.github/copilot-instructions.md) y la [skill de cambio de escenario](.github/skills/scenario-change/SKILL.md). Las personas asumen requisitos, resultados esperados y revisión; los controles deterministas deciden la autorización. La medición de esfuerzo humano y calibración manual elegible están aplazadas. Las
+seis reparaciones automatizadas usan soluciones conocidas y no constituyen datos
+de productividad/calibración humana. Ensayos funcionales, reparaciones, piloto
+temporal completado y futura campaña son datasets separados.
 
 Las instrucciones orientan; pruebas, permisos y reglas configuradas aplican sus respectivos controles. CI ejecuta las comprobaciones compartidas en cada PR y push. Esta guía no instala hooks, conexiones MCP, agentes personalizados ni permisos remotos. El laboratorio sigue siendo utilizable sin IA.
 

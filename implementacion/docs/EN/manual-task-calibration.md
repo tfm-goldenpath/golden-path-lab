@@ -1,5 +1,10 @@
 # Human calibration of F03 F10 and F11
 
+Current evaluation scope and final-source requirements are consolidated in the
+[twenty-scenario readiness matrix](evaluation-readiness.md). Human-effort
+measurement and eligible manual calibration are deferred; historical observations
+below keep their original source and review status.
+
 Current execution schedule: use the separate [automated remediation validation](automated-remediation.md) for F03/F10/F11 × R/G. Human-effort comparison and eligible manual calibration are deferred, not completed by automation. Historical rehearsals, review formats, the separate PR #43 paired campaign and pending overall pilot acceptance remain unchanged.
 
 [Español](../ES/manual-task-calibration.md) · [Participant instructions](manual-task-participant.md) · [Current status](../../TODO.md)

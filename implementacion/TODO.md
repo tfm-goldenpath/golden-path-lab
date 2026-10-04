@@ -1,12 +1,28 @@
 # Incremental implementation plan
 
-This plan organizes incremental adoption, tasks and completion criteria. Checkboxes distinguish implemented files, observed execution and pending acceptance; one does not imply the others. Current baseline: merged PR #15 at `dd381d3`, published as the **v0.2.0 prerelease**. The next milestone is **Scenario coverage and pilot**, not the campaign itself.
+This plan organizes incremental adoption, tasks and completion criteria. Checkboxes distinguish implemented files, observed execution and pending acceptance; one does not imply the others. Current source for this readiness increment: main `940582721d0a5bee2fce54272f5dac60a87fad00` (merged PR #44). The PR #15 baseline at `dd381d3` and **v0.2.0 prerelease** remain historical milestones. Implementation, observed runs and final evaluation acceptance remain distinct.
 
 The [modular architecture](docs/EN/architecture.md) separates orchestration, policies and evidence through verifiable contracts.
 
 The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the functional contract and H0–H6 acceptance conditions behind increments 0–3. This checklist tracks implementation and acceptance separately.
 
-## Current reduced scope: automated remediation validation
+## Current evaluation readiness
+
+- [x] Start `fix/evaluation-readiness` from clean current main containing PR #44. Reproduce campaign archive rejection of legitimate incomplete producer records before fixing behavior; preserve the initial test-helper failure and the subsequent targeted reproduction logs.
+- [x] Validate mandatory arm identity and full archive/pair agreement with phase-aware image/timer requirements. Preserve incomplete/invalid/unfavorable classifications, null durations, original bytes and retry restrictions; reject false success and corrupt/mismatched archives. Tests use labelled synthetic observations and actual temporary checksummed packages through the producer and analysis CLI.
+- [x] Consolidate exactly twenty scenario rows in matching [EN](docs/EN/evaluation-readiness.md) / [ES](docs/ES/evaluation-readiness.md) readiness guides. Cite historical lane-A, pilot and PR44 records; distinguish prior reviews, supplied reports and missing originals from a new audit. Shared controls and six scripted repairs do not increase the catalogue or independent sample count.
+- [x] Reconcile scope and the [EN](docs/EN/paired-rg-campaign.md) / [ES](docs/ES/paired-rg-campaign.md) final-source handoff: fresh RG/GR with one retained DB, explicit draft count/seed, human-only authorization, plan publication, approved positions and analysis of every retained attempt. Ten pairs remains provisional. List thesis alignment items without editing thesis files.
+- [x] Pass 37 campaign and 51 measurement regressions, pinned `doctor`, shared `make test` (six environment, 930 service/unit cases, 43 Python policy cases, Conftest/Kyverno, offline Cosign and static workflows), 464 local links, 26 executable Bash blocks, seven CLI help interfaces and workflow inputs. Both matrices contain exactly twenty rows. Retain failures and passing logs in `evidence/environment/evaluation-readiness/`; see the [handoff record](registros/evaluation-readiness.md). No hosted execution or human authorization occurred.
+- [ ] Review this fix and readiness matrix; after merge, establish clean final-source identity and successful pinned environment/shared checks. Retain exact check results in the [handoff record](registros/evaluation-readiness.md).
+- [ ] Separately authorize fresh hosted development RG/GR on that final source, review originals, then decide campaign count/seed/readiness and authorization. Final-source runs, plan publication, campaign execution and overall acceptance are **NOT_EXECUTED/pending** here; merging this PR supplies none of those decisions.
+- [ ] **Deferred:** human-effort measurement, eligible manual calibration and human-task limit freezing. Known repairs measure scripted execution and remain permanently ineligible for human calibration/productivity. Functional scenario trials, scripted remediation, the completed four-pair timing pilot and the forthcoming timing campaign remain separate datasets.
+
+The sections below preserve implementation history and observations at their
+original revisions. Their previously planned human calibration steps are deferred
+by the current reduced scope; they are not current campaign prerequisites or
+claims of completion. Historical failures and acceptance declarations stay intact.
+
+## Recorded automated remediation validation (PR #44)
 
 - [x] Start `feat/automated-remediation-validation` from main `387c75d15e3b0f50d343f6f32b1d6895ab3529dd`, containing merged PR #43. Add the separate [EN](docs/EN/automated-remediation.md) / [ES](docs/ES/automated-remediation.md) unattended F03/F10/F11 × R/G evaluation, reusing the task controller, delivery/scenario oracles, packaging and owned cleanup.
 - [x] Record scripted execution in core task records, operations, archives and reports. Require G automatic detection and R delivery before scripted diagnostics; apply only the three predefined repairs. Keep human acceptance pending and permanently exclude automated records from human calibration, measurement and limit freezing, including after later review.
@@ -15,7 +31,7 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 - [x] Execute and automatically verify all six live local combinations in `automated-six-01` on unchanged commit `ea790781990766a3cb20bae5a302e1175edd3bd0`, seed `automated-six-v1`: **6/6 VALIDATED**, completion/owned cleanup/archive integrity PASS, exit 0, no retries/interventions/interruptions. User-authorized deletion of two verified redundant DB copies reclaimed about 2.70 GiB; earlier evidence and the canonical DB remain. Register exact timings, identities and package/report hashes in the linked result record. This is provisional technical evidence, not human acceptance.
 - [ ] Human review of this increment. **Human-effort evaluation and eligible manual calibration are deferred**, not completed by automation. This technical evaluation provisionally replaces the immediate manual exercise in the execution schedule. Historical sections below retain their original observations and plans; guided rehearsals and the separate PR #43 paired campaign remain intact. Overall pilot acceptance and any hosted campaign authorization remain pending. Assistance: OpenAI Codex; no human acceptance supplied.
 
-## Current paired lane B pilot status
+## Recorded paired lane B timing pilot
 
 - [x] Independently review development RG `36926824792` and GR `36927943550` at `02674a57d290083648a9af44c48fd049808b2d70`: original ZIP/outer/internal/database hashes, eight unique authenticated bundles, independent images/caches, fresh CREATE, rollout/HTTP, timing endpoints and cleanup pass. G provenance runs only in G's position; GR correctly skips the second-position native step. See the [EN](docs/EN/paired-rg-pilot-review.md) / [ES](docs/ES/paired-rg-pilot-review.md) review.
 - [x] Record completed development job consumption on separate analysis copies: 5.650 and 5.983 minutes. Keep development runs outside the pilot sample and preserve historical preparation failure `36924958484`.
@@ -27,7 +43,7 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 - [ ] Human decision on the provisional ten campaign pairs. The review recommends retaining ten balanced pairs for an exploratory comparison, with observed variability and a rough 52.5–58.3 job-minute extrapolation for ten equivalent timing runs. This does not establish required precision or total campaign effort.
 - [ ] Close the overall pilot after separate manual-task calibration, scenario readiness review and human acceptance. The automated timing series is complete; overall pilot acceptance remains pending. Campaign remains NOT_EXECUTED. Assistance: OpenAI Codex / GPT-6. Historical entries below retain the observations of their original increments.
 
-## Current automated campaign support (implementation only)
+## Campaign support history (PR #43, implementation only)
 
 - [x] Start `feat/paired-rg-campaign` from clean main `ca97f67768788eb02ed50c11c36095a6a3779f1e`, containing merged PR #42. Preserve the completed lane B pilot, guided manual rehearsals and historical failures. No campaign observations or human declarations were produced by this increment.
 - [x] Extend the existing paired runner/workflow with `dataset=campaign`, deterministic balanced drafts with explicit even counts/seeds, final-source binding and separate human authorization. Bind protocol/configuration/source, ordered positions, the preserved database and fresh successful development RG/GR receipts. Reuse the delivery modules and current controls/timers; ten pairs remain an unapproved example.
@@ -37,7 +53,7 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 - [ ] Human review of this implementation and decision on pair count/seed/order, readiness and authorization. Follow the exact [EN](docs/EN/paired-rg-campaign.md) / [ES](docs/ES/paired-rg-campaign.md) commands after all preparation PRs are merged: clean final main, shared checks, separately authorized fresh development RG and GR with the same exported DB, evidence review, binding and person-entered freeze. Hosted plan publication and campaign integration remain untested. Historical pilot DB `36926824792` cannot substitute for final-source development evidence.
 - [ ] Separately authorize any campaign execution and review every original before the next pair. Retain all attempts; only the existing single full-pair retry for an evidenced external failure is allowed. No automated campaign dispatch, release, human review, manual task or merge occurred here. Manual calibration/limits, scenario readiness, overall pilot acceptance and campaign execution remain pending. AI contribution: OpenAI Codex implementation, synthetic tests and EN/ES handoff; human acceptance pending.
 
-## Current manual task calibration procedure
+## Manual task calibration history (human measurement now deferred)
 
 - [x] Implement a human-operated lane A interface for independent F03/F10/F11 tasks in R/G: prepare, start, activity events, conventional tool invocation, completion check, interruption recovery and cleanup. Reuse the shared modules through `demo.sh`; preserve controls and the completed lane B pilot. See the [EN](docs/EN/manual-task-calibration.md) / [ES](docs/ES/manual-task-calibration.md) operator guides and separate participant instructions.
 - [x] Retain versioned task/event records, source/configuration/database identities, attributed automatic/manual detection, active diagnosis/correction, waiting and verification, incomplete attempts and safe packages under ignored evidence directories. Distinguish detection latency, resolution since detection and total duration; window exhaustion is censored, never a zero time.

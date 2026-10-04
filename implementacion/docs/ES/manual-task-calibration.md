@@ -1,5 +1,10 @@
 # Calibración humana de F03 F10 y F11
 
+El alcance actual y los requisitos de fuente final se consolidan en la
+[matriz de veinte escenarios](evaluation-readiness.md). La medición de esfuerzo
+humano y calibración manual elegible están aplazadas; las observaciones históricas
+conservan su fuente y revisión originales.
+
 Calendario inmediato: usar la [validación automatizada de reparaciones](automated-remediation.md) para F03/F10/F11 × R/G. La comparación de esfuerzo humano y la calibración manual elegible se aplazan; la automatización no las completa. Se conservan ensayos históricos, formatos de revisión, campaña pareada separada de PR #43 y aceptación global del piloto pendiente.
 
 [English](../EN/manual-task-calibration.md) · [Instrucciones del participante](manual-task-participant.md) · [Estado actual](../../TODO.md)

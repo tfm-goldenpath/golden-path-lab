@@ -1,5 +1,10 @@
 # Automated F03/F10/F11 remediation validation
 
+Current evaluation scope and final-source requirements are consolidated in the
+[twenty-scenario readiness matrix](evaluation-readiness.md). Human-effort
+measurement and eligible manual calibration are deferred; historical observations
+below keep their original source and review status.
+
 [Español](../ES/automated-remediation.md) · [Architecture](architecture.md) · [Current work](../../TODO.md)
 
 This separate lane A technical evaluation provisionally replaces the six manual

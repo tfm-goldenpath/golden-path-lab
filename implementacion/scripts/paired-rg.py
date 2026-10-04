@@ -108,6 +108,57 @@ def campaign_source(expected):
         raise ValueError('Fetch final merged main before binding a campaign')
     return head
 
+def verify_arm_progress(observation, pair, label):
+    """Validate producer checkpoints without inventing unreached phase fields."""
+    required=('schema','protocol','configuration','source','warmupSource','runId','dataset',
+              'pair','order','attempt','planIdentity','primarySeconds','phases','admission','functional')
+    if pair.get('dataset')=='campaign':required+=('database','toolsLockSha256')
+    if any(key not in observation for key in required):
+        raise ValueError('Archive observation lacks mandatory identity or state')
+    if (observation['schema']!='paired-rg-observation/v1' or observation['protocol']!=PROTOCOL
+            or observation['configuration']!=label):
+        raise ValueError('Archive arm identity differs')
+    for key in ('source','warmupSource','runId','dataset','pair','order','attempt','planIdentity'):
+        if key not in pair or observation[key]!=pair[key]:raise ValueError('Archive arm identity differs: '+key)
+    phases=observation['phases'];admission=observation['admission']
+    if (not isinstance(phases,dict) or not all(isinstance(p,dict) for p in phases.values())
+            or not isinstance(admission,dict)
+            or admission.get('outcome') not in ('NOT_EXECUTED','ACCEPTED','REJECTED','ERROR')):
+        raise ValueError('Invalid archived execution state')
+    started='primaryStart' in observation;ended='primaryEnd' in observation
+    image='image' in observation
+    post_build=set(phases)-{'service-tests','workflow-policy','build'}
+    reached_admission=admission['outcome']!='NOT_EXECUTED'
+    functional=observation['functional']!='NOT_EXECUTED'
+    if not started and (phases or image or ended or reached_admission or functional):
+        raise ValueError('Recorded phase progress requires a primary start')
+    if started:
+        try:elapsed(observation['primaryStart'],observation['primaryStart'])
+        except (KeyError,TypeError,ValueError) as error:raise ValueError('Invalid primary start') from error
+    if image:
+        if (not isinstance(observation['image'],str)
+                or not re.fullmatch(r'.+@sha256:[a-f0-9]{64}',observation['image'])
+                or phases.get('build',{}).get('exitCode')!=0 or 'end' not in phases.get('build',{})):
+            raise ValueError('Image requires a completed build and digest')
+    elif post_build or reached_admission or functional:
+        raise ValueError('Post-build progress requires the image binding')
+    if ended:
+        try:
+            duration=elapsed(observation['primaryStart'],observation['primaryEnd'])
+            if (type(observation['primarySeconds']) not in (int,float) or duration<=0
+                    or duration!=observation['primarySeconds']
+                    or observation['primaryEnd']!=phases.get('admission',{}).get('end')
+                    or not reached_admission):raise ValueError('Inconsistent admission endpoint')
+        except (KeyError,TypeError,ValueError) as error:raise ValueError('Invalid primary endpoint') from error
+    elif (observation['primarySeconds'] is not None or reached_admission or functional
+            or {'rollout','http'} & set(phases)):
+        raise ValueError('Unreached admission must retain unknown primary duration')
+    # An interrupted admission phase can have an error/end from the exit trap
+    # without a recorded CREATE response. It supplies no primary endpoint.
+    if (pair.get('status')=='PASS' or observation.get('classification')=='valid-favorable'):
+        if not image or not started or not ended or classify(observation)!='valid-favorable':
+            raise ValueError('Claimed success lacks complete favorable execution evidence')
+
 def verify_pair_packages(directory, pair):
     """Retain partial failures; a PASS requires all independently bound packages."""
     records=pair.get('packageVerification',{})
@@ -125,14 +176,22 @@ def verify_pair_packages(directory, pair):
             import tarfile
             with tarfile.open(directory/'packages'/name) as archive:
                 member=name.removesuffix('.tar.gz')+'/measurement.json'
-                if member not in archive.getnames():raise ValueError('Pair package lacks its arm observation')
+                if member not in archive.getnames():
+                    # Bootstrap can register/package a state before arm-init.
+                    # Keep it as preparation evidence, never as an observation.
+                    if pair.get('status')!='PASS' and label not in pair.get('arms',{}):continue
+                    raise ValueError('Pair package lacks its arm observation')
                 observation=json.loads(archive.extractfile(member).read())
-            fields=('schema','protocol','configuration','source','warmupSource','runId','dataset',
-                    'pair','order','attempt','planIdentity','image','primaryStart','primaryEnd','primarySeconds','phases')
-            if pair.get('dataset')=='campaign':fields+=('database','toolsLockSha256')
-            for key in fields:
-                if key not in observation or observation[key]!=pair['arms'][label].get(key):
-                    raise ValueError('Archive observation differs from its pair')
+            # finalize derives classification without rewriting the original arm
+            # checkpoint (e.g. a pre-timer cache failure). Normalize only this
+            # derived field, and only to the classifier's actual result.
+            try:
+                finalized=dict(observation,classification=classify(observation)) if isinstance(observation,dict) else None
+            except (KeyError,TypeError,AttributeError,ValueError) as error:
+                raise ValueError('Invalid archived observation') from error
+            if not isinstance(observation,dict) or pair.get('arms',{}).get(label) not in (observation,finalized):
+                raise ValueError('Archive observation differs from its pair')
+            verify_arm_progress(observation,pair,label)
 
 def verify_development(directory, source, order):
     directory=Path(directory).resolve();verify_export(directory);pair=read(directory/'pair.json')

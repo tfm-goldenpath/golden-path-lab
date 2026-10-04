@@ -1,5 +1,10 @@
 # Plan de la primera base integrada
 
+El alcance actual y los requisitos de fuente final se consolidan en la
+[matriz de veinte escenarios](evaluation-readiness.md). La medición de esfuerzo
+humano y calibración manual elegible están aplazadas; las observaciones históricas
+conservan su fuente y revisión originales.
+
 [Documentación en español](README.md)
 
 [Guía del plan en inglés](../EN/implementation-plan.md). Este documento conserva el plan de origen en español; sus observaciones históricas no se reinterpretan como ejecuciones nuevas.
