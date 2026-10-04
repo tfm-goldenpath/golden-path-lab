@@ -6,6 +6,7 @@ English is the primary language for implementation and technical contribution. S
 
 | Guide | Purpose |
 | --- | --- |
+| [Ten-pair campaign results](paired-rg-campaign-results.md) | Observed timings, original run/evidence references, checks and pending human acceptance. |
 | [Evaluation readiness](evaluation-readiness.md) | Twenty scenario rows, historical evidence, current scope and final execution handoff. |
 | [Environment and versions](environment.md) | Devcontainer setup, pinned tools and environment checks. |
 | [Modular architecture](architecture.md) | Component responsibilities, interfaces and verification boundaries. |
@@ -34,5 +35,5 @@ The [external proposal review](../ES/context/external-proposal-review.md) is his
 - [Manual F03/F10/F11 calibration — lane A operator procedure](manual-task-calibration.md) and [participant instructions](manual-task-participant.md).
 
 Manual-effort measurement and eligible calibration are deferred. Functional trials,
-scripted remediation, the four-pair timing pilot and the future campaign remain
+scripted remediation, the four-pair timing pilot and the completed ten-pair campaign remain
 separate datasets. See the readiness guide for current status.

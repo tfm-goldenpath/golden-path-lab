@@ -4,14 +4,15 @@
 
 ## Current scope
 
-This is the readiness consolidation from main `940582721d0a5bee2fce54272f5dac60a87fad00`
-(merged PR #44), prepared on `fix/evaluation-readiness`. Implementation, recorded
-execution, evidence review and acceptance are different states. **Final-source
-execution is NOT_EXECUTED**: the eventual merged revision of this fix is not yet
-known. Passing regressions on this branch do not execute the scenario catalogue.
+The readiness consolidation was prepared from `940582721d0a5bee2fce54272f5dac60a87fad00`
+and merged as PR #45 at `895a3bde79089b7544c1dad76a6cd8f48eede0a8`.
+Fresh development RG/GR and the [ten-pair timing campaign](paired-rg-campaign-results.md)
+now have reviewed execution evidence on `895a3bd`. That legitimate-delivery path
+does not rerun the entire functional catalogue. Implementation, execution,
+automated review and human acceptance remain distinct; overall acceptance is pending.
 
 Four datasets remain separate: functional scenario trials, PR44's scripted
-remediation, the completed four-pair timing pilot and the forthcoming timing
+remediation, the completed four-pair timing pilot and the completed ten-pair timing
 campaign. PR44 has six additional observations within F03/F10/F11, not six new
 scenarios. Shared L01/L03/L04 deliveries, L06 CREATE and negative-case positive
 counterparts are linked observations, not independent samples. F01/F02 evaluate
@@ -25,9 +26,10 @@ acceptance and campaign authorization are not implied by a PR merge.
 
 ## Evidence sources and review provenance
 
-This document consolidates **committed records**, not a new independent audit of
-original artifacts. Local retention was inventoried without reauthenticating the
-historic bundles. Where originals are absent, the committed record is the source:
+Historical sources A1/A2/B1/AR/P below remain **committed records**, not a new
+audit of those originals. Their retention inventory did not reauthenticate historic
+bundles. The later C source has separate original-artifact review and publication.
+Where a historical original is absent, its committed record remains the source:
 
 - **A1:** [lane-A execution/review record](lane-a-validation.md#first-successful-end-to-end-lane-a-run-36881119588),
   run `36881119588`, source `b8eb603e7965e4d58cc9f58ec78f74971944a547`;
@@ -57,12 +59,20 @@ historic bundles. Where originals are absent, the committed record is the source
   were removed at the user's request; the external copy is not independently
   verified here. This source/data cannot be relabelled or pooled into the campaign.
 
+- **C:** [ten-pair campaign results and published originals](paired-rg-campaign-results.md),
+  source `895a3bde79089b7544c1dad76a6cd8f48eede0a8`, ten linked campaign runs,
+  database from development `37199309814`. 10/10 favorable, no exclusions/retries;
+  automated technical and integrity review PASS; human acceptance pending.
+  This supports the legitimate hosted delivery boundary only, not replacement,
+  component evolution, negative fixtures or additional independent positive samples.
+
 ## Coverage matrix — exactly twenty scenarios
 
 Paths below identify existing implementation and focused tests; `make -C
 implementacion test` also runs their shared checks. Each row uses the full
-source/run identity in the evidence key above. **Recorded PASS is historical;
-final-source execution and human readiness acceptance are pending for every row.**
+source/run identity in the evidence key above. **The full scenario fixtures have
+not been rerun on the campaign source; human readiness acceptance remains pending.**
+C supplies only the explicitly identified shared positive delivery boundaries.
 Unsupported B negatives remain NOT_EXECUTED regardless of A success. Regressions
 and CI checks demonstrate their named boundary only.
 
@@ -82,19 +92,19 @@ and CI checks demonstrate their named boundary only.
 | F12 | Reject mutable tag even when it resolves to authorized digest | [runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs) | CI; Deployment CREATE/UPDATE + Pod admission | A/B runtime | A1 demo; B1 | A1 PASS; B1 supplied review. Historical automated review; human pending; B1 supplied. | Tag resolution checked on both sides; not a provenance fault. Final-source pending. |
 | F13 | Reject missing signed results; restore legitimate delivery | [results.sh](../../tests/scenarios/results.sh); [results-scenario.test.mjs](../../tests/unit/results-scenario.test.mjs) | Preissuance admission; postissuance CI/admission | A both; B preissuance only | A1 demo (pre/postissuance); [results oracle](cases/F13-F14/record.md) | Both A boundaries PASS. Historical automated review; human pending. | B postissuance negative NOT_EXECUTED; preissuance is a separate observation of same ID. Final-source pending. |
 | F14 | Reject authenticated P0 replay under trusted P1 policy | [results.sh](../../tests/scenarios/results.sh); [results-scenario.test.mjs](../../tests/unit/results-scenario.test.mjs) | Authorized CI + fresh directed CREATE | A; B negative unsupported | A1 demo; earlier 36830599263 unchanged-apply failure retained | Corrected CREATE rejection PASS. Historical automated review; human pending. | B negative NOT_EXECUTED; P0 is labelled fixture, not real historic policy. Final-source pending. |
-| L01 | Accept legitimate delivery and new verified replacement digest | [l01.sh](../../tests/scenarios/l01.sh); [l01-update.test.mjs](../../tests/unit/l01-update.test.mjs) | CI + admission + rollout/HTTP | A/B | A1 demo; P timing deliveries support B legitimate path only | Shared L01/L03/L04 PASS; P 4/4 pairs favorable. Historical automated review; human pending. | P has no replacement trial; same-commit replacement is not L05 app evolution. Final-source pending. |
+| L01 | Accept legitimate delivery and new verified replacement digest | [l01.sh](../../tests/scenarios/l01.sh); [l01-update.test.mjs](../../tests/unit/l01-update.test.mjs) | CI + admission + rollout/HTTP | A/B | A1 demo; P and C timing deliveries support B legitimate path only | Shared L01/L03/L04 PASS; P 4/4 and C 10/10 timing pairs favorable. Historical automated review; human pending. | P/C have no replacement trial; same-commit replacement is not L05 app evolution. Final-source pending. |
 | L02 | Accept MEDIUM-only vulnerability fixture | [vulnerabilities.sh](../../tests/scenarios/vulnerabilities.sh); [vulnerabilities.test.mjs](../../tests/unit/vulnerabilities.test.mjs) | CI threshold + signature/evidence + admission/HTTP | A; B fixture unsupported | A1 vulnerabilities: lodash.unset 4.5.2 | Threshold and positive delivery PASS. Historical automated review; human pending. | B fixture NOT_EXECUTED; CVE-2026-2950 plus CVE-2025-13465 are snapshot-specific. Final-source pending. |
 | L03 | Accept legitimate component/inventory evolution with fresh SBOM | [l01.sh](../../tests/scenarios/l01.sh); [sbom-evidence.test.mjs](../../tests/unit/sbom-evidence.test.mjs) | SBOM CI + admission + functionality | A/B positive path | A1 demo; [L03 oracle](cases/L03/record.md) | Shared L01/L03/L04 PASS. Historical automated review; human pending. | Known is-number addition; no completeness claim or independent sample. Final-source pending. |
-| L04 | Accept valid independent image signature after fresh verification | [l01.sh](../../tests/scenarios/l01.sh); [ci-verification-gate.test.mjs](../../tests/unit/ci-verification-gate.test.mjs) | CI gate + results + admission/HTTP | A/B positive path | A1 demo; [L04 oracle](cases/L04/record.md) | Shared L01/L03/L04 PASS. Historical automated review; human pending. | Shared replacement/control; does not establish B negative F07. Final-source pending. |
+| L04 | Accept valid independent image signature after fresh verification | [l01.sh](../../tests/scenarios/l01.sh); [ci-verification-gate.test.mjs](../../tests/unit/ci-verification-gate.test.mjs) | CI gate + results + admission/HTTP | A/B positive path | A1 demo; C fresh signatures/admission/HTTP; [L04 oracle](cases/L04/record.md) | Shared L01/L03/L04 PASS. Historical automated review; human pending. | Shared replacement/control; C supports original-image signature delivery only. Neither establishes B negative F07. Final-source pending. |
 | L05 | Accept two authorized real application source revisions | [l05.sh](../../tests/scenarios/l05.sh); [l05-scenario.test.mjs](../../tests/unit/l05-scenario.test.mjs) | Source guard + CI + admission/HTTP for both | A explicit pair; B needs two separately authorized native runs | A1 demo: 7243334fe4ee7073801a86b25c90986b7d3c5ece → fc58e220e2d3f38d13216b23e61ffc31271f112f | Both A source deliveries PASS. Historical automated review; human pending. | B paired revision trial NOT_EXECUTED; warmup in timing pilot is not L05. Final-source pending. |
 | L06 | Accept permitted same-image template update | [runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs) | CREATE/template UPDATE + rollout/HTTP + positive Pod | A/B | A1 demo; B1 | Generation 1→2, digest/HTTP PASS; B1 supplied review. Historical automated review; human pending; B1 supplied. | CREATE shares L01; positive Pods and recovery do not add independent samples. Final-source pending. |
 
-## Final execution handoff
+## Execution procedure and recorded handoff
 
-Use the [campaign procedure](paired-rg-campaign.md), steps 1–6, as the executable
-command reference. Its commands were checked against the current CLI and workflow
-inputs; Bash syntax checking does not establish hosted execution. No remote step,
-plan authorization, publication or final-source development was performed here.
+The PR45 handoff below preceded the separately authorized development and campaign
+execution now recorded in C. Use the [campaign procedure](paired-rg-campaign.md)
+for any new campaign; its commands do not authorize another run. A different
+source or sample requires its own reviewed preparation and authorization.
 
 1. Merge all preparation fixes through normal review; on clean current main,
    record `TARGET`, check pinned `doctor` and shared tests, and inspect available
@@ -106,10 +116,12 @@ plan authorization, publication or final-source development was performed here.
    provenance, admission, rollout/HTTP, endpoints and cleanup evidence. A green
    job or a checksum alone is insufficient. Changes/failures require retained
    evidence and a new source/plan where applicable, not a silent retry.
-3. Select the draft count/seed explicitly; **ten pairs is only provisional**.
+3. Select a new draft count/seed explicitly; ten is an exploratory example,
+   not blanket approval for future campaigns.
    Bind the draft to those development exports, source/configuration and database.
-   A person must review and enter the authorization declaration. The assistant
-   does not supply a reviewer or use `campaign-freeze` on the person's behalf.
+   A person must review and supply the authorization declaration. An assistant may
+   record that explicitly supplied declaration as authorized;
+   it must never invent the reviewer, rationale or decision.
 4. After permission for remote plan publication, publish the exact frozen control
    through the existing plan-only job. Verify and export its identity/manifest.
 5. Execute only approved positions in their frozen order, review/export every
@@ -150,7 +162,8 @@ fields and presence must match.
 - Attribute lane-A evidence to local trust, even when hosted in Actions; do not
   generalize it to OIDC/GHCR mutation acceptance or all scenarios in both lanes.
 - Keep the four-pair pilot's original source and exploratory estimates separate
-  from the future campaign; ten pairs remains a proposal, not an approved sample.
+  from the ten-pair campaign; record its explicit authorization and exploratory
+  nature without claiming guaranteed statistical precision.
 - Report known-repair timings, G−R delivery intervals and Actions job minutes as
   distinct measures; preserve null/incomplete observations, exclusions and failures.
 - Keep technical success, archive integrity, human acceptance and overall evaluation

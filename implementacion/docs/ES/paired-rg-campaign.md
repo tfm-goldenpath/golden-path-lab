@@ -4,11 +4,12 @@
 
 ## Alcance y decisiones pendientes
 
-El soporte está implementado; la ejecución de campaña sigue **NOT_EXECUTED** y la
-aceptación humana, pendiente. Diez pares balanceados son un ejemplo de borrador y
-la recomendación provisional del piloto, no un tamaño muestral aprobado. Una
-persona debe decidir cantidad, semilla/orden, preparación, fuente final y permisos
-para publicar y ejecutar. Se mide una entrega legítima por brazo R/G en carril B;
+La [campaña autorizada de diez pares](paired-rg-campaign-results.md) en `895a3bd`
+terminó con 10/10 pares favorables y revisión técnica automatizada. Revisión humana
+de resultados y aceptación global pendientes; plan/evidencias publicados por
+separado. El procedimiento inferior se aplica a una campaña **nueva**: cantidad,
+semilla/orden, preparación, fuente y acciones remotas requieren autorización propia.
+La aprobación registrada no preaprueba otra muestra. Se mide una entrega legítima por brazo R/G en carril B;
 no se evalúan los veinte escenarios. R/G identifica referencia/Golden Path y A/B,
 ejecución local/alojada.
 
@@ -150,7 +151,8 @@ PLAN_ID=$(python3 "$CLI" campaign-inspect "$CAMPAIGN/control/frozen.json" --iden
 Genera `authorization.json` separado con hora UTC, `plan.json`, `frozen.json` y
 hashes. Salida: `FROZEN_CONTROL_ID` y `HUMAN_DECLARATION_RECORDED; no workflow
 dispatched`. Identidad del revisor y autorización son declaraciones humanas no
-autenticadas independientemente. El asistente no puede aportarlas. No hay
+autenticadas independientemente. Un asistente puede registrar la declaración
+aportada explícitamente si se le instruye; nunca inventa revisor, razón o decisión. No hay
 sobrescritura ni aceptación implícita. Usa la identidad canónica impresa, no el
 hash de bytes del JSON formateado. Cambiar fuente/configuración requiere un plan
 y comprobaciones de desarrollo nuevos.

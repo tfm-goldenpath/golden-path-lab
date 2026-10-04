@@ -10,7 +10,8 @@ el fallo previo de preparación de caché se conserva más abajo. Los cuatro par
 piloto autorizados GR/GR/RG/RG están completos y revisados independientemente: 4/4
 favorables, sin exclusiones ni reintentos. El [informe piloto](paired-rg-pilot-review.md)
 recoge tiempos, dispersión, consumo de jobs terminados y el fallo inicial de acceso
-ya resuelto. La campaña sigue **NOT_EXECUTED**. Medición de esfuerzo humano y calibración
+ya resuelto. La [campaña posterior de diez pares](paired-rg-campaign-results.md) en `895a3bd`
+terminó con 10/10 pares favorables; fuente, base y evidencia separadas del piloto. Medición de esfuerzo humano y calibración
 manual elegible quedan aplazadas; preparación funcional y aceptación humana siguen
 pendientes. La [matriz de preparación](evaluation-readiness.md) separa los cuatro
 datasets y los requisitos sobre fuente final. El contribuyente informa que ambas
@@ -164,7 +165,10 @@ La copia cambia deliberadamente; no reemplace el original. Incluya los archivos
 pair.json de todos los intentos al calcular consumo. Un reintento autorizado
 agrega `retry_of`, `external_cause` y `evidence` con la causa/ruta reales.
 
-## Plan y revisión pendiente
+## Plan histórico del piloto y entrega
+
+La recomendación provisional inferior precede la [campaña de diez pares](paired-rg-campaign-results.md)
+autorizada por separado; no sustituye sus resultados.
 
 ```bash
 make -C implementacion paired-plan

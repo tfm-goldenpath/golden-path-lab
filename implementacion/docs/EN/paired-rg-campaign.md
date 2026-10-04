@@ -4,10 +4,12 @@
 
 ## Scope and pending decisions
 
-Campaign support is implemented; **campaign execution and human acceptance remain
-NOT_EXECUTED/pending**. Ten balanced pairs are a draft example and the pilot's
-provisional recommendation, not an approved sample size. A person must decide the
-count, seed/order, readiness, final source and permission to publish/execute.
+The [authorized ten-pair campaign](paired-rg-campaign-results.md) at `895a3bd`
+completed with 10/10 favorable pairs and automated technical review. Human results
+review and overall acceptance remain pending. Its original plan/evidence are
+published separately. The procedure below applies to a **new** campaign: count,
+seed/order, readiness, source and remote actions require their own authorization;
+the recorded ten-pair approval does not preapprove another sample.
 This covers one legitimate delivery per R/G arm in lane B, not all twenty
 scenarios. R/G means reference/Golden Path; A/B means local/hosted execution.
 
@@ -149,8 +151,9 @@ PLAN_ID=$(python3 "$CLI" campaign-inspect "$CAMPAIGN/control/frozen.json" --iden
 This writes a separate timestamped `authorization.json`, exact `plan.json`,
 `frozen.json` and checksums. Expected: `FROZEN_CONTROL_ID` and
 `HUMAN_DECLARATION_RECORDED; no workflow dispatched`. Reviewer and authorization
-are human declarations, not independently authenticated facts. An assistant must
-not supply them. No overwrite, automatic review or implicit acceptance occurs.
+are human declarations, not independently authenticated facts. An assistant may
+record an explicitly supplied declaration when instructed, but must never invent
+the reviewer, rationale or decision. No overwrite, automatic review or implicit acceptance occurs.
 The control identity is SHA256 of canonical JSON; use the printed identity,
 not the byte checksum of a pretty-printed file. Source/configuration changes
 invalidate the binding and require a fresh plan and development checks.

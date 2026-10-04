@@ -30,7 +30,9 @@ Esta página y las guías de `implementacion/docs/ES/` ofrecen apoyo documental 
 La [guía de contribución](CONTRIBUTING.md) define cambios acotados, comandos de comprobación y registro veraz de aportaciones. La [guía de desarrollo asistido](implementacion/docs/ES/ai-assisted-development.md) explica [`AGENTS.md`](AGENTS.md), las [instrucciones de Copilot](.github/copilot-instructions.md) y la [skill de cambio de escenario](.github/skills/scenario-change/SKILL.md). Las personas asumen requisitos, resultados esperados y revisión; los controles deterministas deciden la autorización. La medición de esfuerzo humano y calibración manual elegible están aplazadas. Las
 seis reparaciones automatizadas usan soluciones conocidas y no constituyen datos
 de productividad/calibración humana. Ensayos funcionales, reparaciones, piloto
-temporal completado y futura campaña son datasets separados.
+temporal y [campaña completada de diez pares](implementacion/docs/ES/paired-rg-campaign-results.md)
+son datasets separados. En `895a3bd`, 10/10 pares superaron revisión técnica
+automatizada; revisión humana de resultados y aceptación global pendientes.
 
 Las instrucciones orientan; pruebas, permisos y reglas configuradas aplican sus respectivos controles. CI ejecuta las comprobaciones compartidas en cada PR y push. Esta guía no instala hooks, conexiones MCP, agentes personalizados ni permisos remotos. El laboratorio sigue siendo utilizable sin IA.
 

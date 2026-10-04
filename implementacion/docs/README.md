@@ -9,6 +9,8 @@ Start a contribution with the root [contribution guide](../../CONTRIBUTING.md). 
 
 Current evaluation readiness: [EN](EN/evaluation-readiness.md) / [ES](ES/evaluation-readiness.md), with twenty scenario rows and the final-source handoff.
 
+Campaign results and published evidence: [EN](EN/paired-rg-campaign-results.md) / [ES](ES/paired-rg-campaign-results.md). Ten pairs at `895a3bd` passed automated technical review; human acceptance remains pending.
+
 ## Organization
 
 Shared topics have the same filename in each language directory. Each language index identifies the available guides; a missing translation is linked to its English version instead of copied as an untranslated Spanish document.

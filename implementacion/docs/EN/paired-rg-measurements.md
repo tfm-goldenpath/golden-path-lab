@@ -10,7 +10,8 @@ the earlier cache-preparation failure remains recorded below. The four authorize
 pilot pairs GR/GR/RG/RG are now complete and independently reviewed: 4/4 favorable,
 no exclusions or retries. The [pilot report](paired-rg-pilot-review.md) records
 timings, dispersion, completed-job consumption and the resolved initial dispatch
-access failure. Campaign remains **NOT_EXECUTED**. Human-effort measurement and eligible manual
+access failure. The later [ten-pair campaign](paired-rg-campaign-results.md) at `895a3bd`
+completed with 10/10 favorable pairs; its source, database and evidence remain separate from this pilot. Human-effort measurement and eligible manual
 calibration are deferred; scenario readiness and human acceptance remain pending.
 The [readiness matrix](evaluation-readiness.md) separates the four datasets and
 final-source requirements. The contributor reports
@@ -222,7 +223,10 @@ A reviewed retry uses the same dispatch inputs plus `-f retry_of="$RUN"`,
 `-f external_cause=network-outage` and `-f evidence=G-prepare.log` (use the actual
 cause and diagnostic, never copy these blindly). Never use “Re-run jobs”.
 
-## Pilot plan and acceptance
+## Historical pilot plan and handoff
+
+The provisional recommendation below preceded the separately authorized
+[ten-pair campaign](paired-rg-campaign-results.md); it does not supersede its results.
 
 Regenerate without executing:
 

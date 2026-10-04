@@ -1,12 +1,24 @@
 # Incremental implementation plan
 
-This plan organizes incremental adoption, tasks and completion criteria. Checkboxes distinguish implemented files, observed execution and pending acceptance; one does not imply the others. Current source for this readiness increment: main `940582721d0a5bee2fce54272f5dac60a87fad00` (merged PR #44). The PR #15 baseline at `dd381d3` and **v0.2.0 prerelease** remain historical milestones. Implementation, observed runs and final evaluation acceptance remain distinct.
+This plan organizes incremental adoption, tasks and completion criteria. Checkboxes distinguish implemented files, observed execution and pending acceptance; one does not imply the others. Measured campaign source: `895a3bde79089b7544c1dad76a6cd8f48eede0a8` (merged PR #45); the results documentation is a later change. The PR #15 baseline at `dd381d3` and **v0.2.0 prerelease** remain historical milestones. Implementation, observed runs and final evaluation acceptance remain distinct.
 
 The [modular architecture](docs/EN/architecture.md) separates orchestration, policies and evidence through verifiable contracts.
 
 The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the functional contract and H0–H6 acceptance conditions behind increments 0–3. This checklist tracks implementation and acceptance separately.
 
-## Current evaluation readiness
+## Current evaluation results
+
+- [x] Prepare clean main `895a3bd`: pinned `doctor` and shared `make test` exit 0. Review fresh development RG `37199309814` and GR `37200632844`, using RG's retained database; both technical reviews PASS, neither is a campaign sample.
+- [x] Retain Francisco's explicit authorization of ten exploratory pairs, seed `final-campaign-895a3bd-v1`, order RG/RG/RG/RG/GR/GR/GR/RG/GR/GR. Freeze that exact plan and publish through plan-only run `37202322661`.
+- [x] Execute all ten positions sequentially with automated technical review between them. Existing analysis: 10/10 favorable pairs, zero exclusions/retries/interruptions, median G−R 55.090 s and 55.717 observed pair-job minutes; billed cost unknown. Preserve the position-4 review-only cleanup assertion and its correction, without changing originals or controls.
+- [x] Publish original evidence and derived reviews/analysis in the dedicated evidence prerelease at the measured source. See matching [EN](docs/EN/paired-rg-campaign-results.md) / [ES](docs/ES/paired-rg-campaign-results.md) results, retrieval commands, limitations and hashes. Keep raw evidence out of Git and earlier failures/revisions intact.
+- [ ] Human review of campaign results and this documentation; overall functional/pilot/evaluation acceptance remains pending. Publishing evidence or merging the results PR does not close these decisions or authorize another campaign.
+- [ ] **Deferred:** human-effort measurement, eligible manual calibration and human-task limits. Known repairs remain permanently ineligible. Functional trials, scripted repairs, the historical four-pair pilot and the ten-pair campaign are separate datasets. Thesis alignment is listed in the results guide; no thesis edits here.
+
+## Readiness implementation history (PR #45)
+
+The following checklist records the PR45 handoff before its merge and subsequent
+execution. Its then-pending actions are historical; current outcomes are above.
 
 - [x] Start `fix/evaluation-readiness` from clean current main containing PR #44. Reproduce campaign archive rejection of legitimate incomplete producer records before fixing behavior; preserve the initial test-helper failure and the subsequent targeted reproduction logs.
 - [x] Validate mandatory arm identity and full archive/pair agreement with phase-aware image/timer requirements. Preserve incomplete/invalid/unfavorable classifications, null durations, original bytes and retry restrictions; reject false success and corrupt/mismatched archives. Tests use labelled synthetic observations and actual temporary checksummed packages through the producer and analysis CLI.
