@@ -12,6 +12,18 @@ import time
 
 SCENARIOS = ('F03', 'F10', 'F11')
 TERMINAL = {'COMPLETED', 'EXHAUSTED', 'INCOMPLETE'}
+SCRIPTED = {'executionMode': 'scripted', 'dataset': 'automated-validation', 'actor': 'automation',
+            'humanAcceptance': 'pending', 'eligibleForHumanCalibration': False}
+
+
+def scripted(record):
+    return isinstance(record, dict) and record.get('executionMode') == 'scripted'
+
+
+def require_human(record):
+    if (record.get('executionMode', 'manual') != 'manual' or record.get('actor') == 'automation'
+            or record.get('eligibleForHumanCalibration') is False or record.get('dataset') == 'automated-validation'):
+        raise ValueError('Scripted execution is ineligible for human calibration or measurement')
 
 
 def clock():
@@ -61,16 +73,19 @@ def make_sequence(seed):
 
 
 def new_record(scenario, arm, dataset, identity, limit=None, synthetic=False):
-    if scenario not in SCENARIOS or arm not in ('R', 'G') or dataset not in ('calibration', 'measurement'):
+    if scenario not in SCENARIOS or arm not in ('R', 'G') or dataset not in ('calibration', 'measurement', 'automated-validation'):
         raise ValueError('Unknown manual task')
     if limit is not None and (type(limit) not in (int, float) or not 0 < limit < float('inf')):
         raise ValueError('Invalid total-duration limit')
     if dataset == 'measurement' and limit is None:
         raise ValueError('Human-calibrated limits must be frozen before measurement')
+    if dataset == 'automated-validation' and limit is not None:
+        raise ValueError('Scripted safety timeouts are not human-task limits')
     return {'schema': 'manual-task/v1', 'lane': 'A', 'scenario': scenario, 'arm': arm,
             'dataset': dataset, 'synthetic': synthetic, 'identity': copy.deepcopy(identity),
             'limitSeconds': limit, 'status': 'PREPARING', 'events': [],
-            'humanAcceptance': 'pending', 'detection': None, 'humanReviewStart': None}
+            'humanAcceptance': 'pending', 'detection': None, 'humanReviewStart': None,
+            **(SCRIPTED if dataset == 'automated-validation' else {})}
 
 
 def elapsed(a, b):
@@ -111,8 +126,10 @@ def record_event(record, kind, mark, **fields):
             raise ValueError('Detection is first-only and requires a started task')
         proof(fields.get('evidence'))
         mechanism = fields.get('mechanism', '')
-        if not re.fullmatch('(automatic|manual):(scan|provenance|manifest)', mechanism):
+        if not re.fullmatch('(automatic|manual|scripted):(scan|provenance|manifest)', mechanism):
             raise ValueError('Detection requires an attributable control mechanism')
+        if scripted(r) and mechanism.startswith('manual:') or not scripted(r) and mechanism.startswith('scripted:'):
+            raise ValueError('Detection actor differs from execution mode')
         if mechanism.startswith('automatic:') != (status == 'AUTOMATIC'):
             raise ValueError('Detection mechanism does not match the current path')
         if not late: r['detection'] = {'at': mark, **fields}
@@ -121,14 +138,20 @@ def record_event(record, kind, mark, **fields):
             raise ValueError('Invalid automated path transition')
         if fields['outcome'] == 'blocked' and not r['detection'] and not late:
             raise ValueError('A blocked path needs attributable detection')
-        r['humanReviewStart'] = mark
+        r['scriptedContinuationStart' if scripted(r) else 'humanReviewStart'] = mark
         r['status'] = 'REVIEW' if fields['outcome'] != 'error' else 'INCOMPLETE'
         activity = 'unobserved'
         if r['status'] == 'INCOMPLETE': r['ended'] = mark
     elif kind in ('investigate', 'correct', 'wait', 'pause'):
+        if scripted(r): raise ValueError('Scripted tasks cannot record human activity')
         if status != 'REVIEW': raise ValueError('Human activity starts after the automated path')
         activity = {'investigate': 'diagnosis', 'correct': 'correction', 'wait': 'waiting', 'pause': 'unobserved'}[kind]
         if kind == 'investigate' and not r.get('investigationStart'): r['investigationStart'] = mark
+    elif kind == 'scripted-repair':
+        if not scripted(r) or status != 'REVIEW' or not r['detection']:
+            raise ValueError('Scripted repair requires detected task at a verified boundary')
+        proof(fields.get('evidence'))
+        activity = 'automatic'
     elif kind == 'verification-started':
         if status != 'REVIEW': raise ValueError('Verification requires human review')
         r['status'] = 'VERIFYING'; activity = 'waiting'
@@ -170,6 +193,16 @@ def record_event(record, kind, mark, **fields):
 
 
 def summarize(r, now):
+    value = _summarize(r, now)
+    if scripted(r):
+        # Existing manual timing definitions are unchanged. These tasks never
+        # supply measured human diagnosis/correction observations, even zeroes.
+        value.pop('activeDiagnosisSeconds', None)
+        value.pop('activeCorrectionSeconds', None)
+    return value
+
+
+def _summarize(r, now):
     result = {'schema': 'manual-task-summary/v1', 'synthetic': r['synthetic'],
               'outcome': 'incomplete' if r['status'] == 'INCOMPLETE' else 'not-started',
               'totalSeconds': None, 'detectionLatencySeconds': None, 'resolutionSeconds': None,
@@ -177,6 +210,7 @@ def summarize(r, now):
               'activeDiagnosisSeconds': 0, 'activeCorrectionSeconds': 0,
               'waitingSeconds': 0, 'automaticSeconds': 0, 'unobservedSeconds': 0,
               'verificationSeconds': 0, 'humanAcceptance': r['humanAcceptance']}
+    if scripted(r): result.update(SCRIPTED, timingScope='scripted process with predefined repair; no human effort')
     if not r.get('started'): return result
     start = r['started']; end = r.get('ended') or now
     duration = elapsed(start, end)

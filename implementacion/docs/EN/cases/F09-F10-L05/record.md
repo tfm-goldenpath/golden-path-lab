@@ -54,3 +54,7 @@ verified/exported the distinct immutable source pair but failed environment pins
 and BuildKit DNS on kind. No full demo was launched; F09/F10 rejection/recovery,
 L05 deliveries and update/restart readiness remain **NOT_EXECUTED**. The diagnostic
 archive checksum and all 15 internal hashes passed; no signatures were generated.
+
+## Scripted validation increment, 2026-10-04
+
+The [separate automated evaluation](../../automated-remediation.md) reuses this scenario's existing local oracle for F03/F10/F11 × R/G with predefined repairs. It records machine activity, never human diagnosis or calibration. Live six-task integration remains **NOT_EXECUTED** at this handoff because storage is below the runner's preparation reserve. Historical observations above retain their original scope; human effort evaluation is deferred and overall acceptance remains pending.

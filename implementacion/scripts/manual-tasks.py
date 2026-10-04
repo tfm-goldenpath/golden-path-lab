@@ -14,7 +14,7 @@ import time
 import uuid
 
 from manual_tasks import (SCENARIOS, TERMINAL, clock, elapsed, make_sequence,
-                          new_record, record_event, sha256, summarize, write_json)
+                          new_record, record_event, sha256, summarize, write_json, scripted, SCRIPTED, require_human)
 from manual_task_reviews import (ASSISTANCE, DECISIONS, PURPOSES, effective_review,
                                  next_action, record_review, sealed_task)
 
@@ -105,12 +105,16 @@ def plan_command(args):
                  'limitsSeconds': {s: None for s in SCENARIOS}, 'limitsReview': None,
                  'environment': {'platform': 'linux/amd64', 'cache': 'fresh owned builder; preparation history retained',
                                  'signing': 'existing local development key profile'}}
+        if getattr(args, 'execution_mode', None) == 'scripted':
+            value.update(SCRIPTED, operationalTimeoutSeconds=args.timeouts)
+            value['tools'].update(editor='none; predefined transformations', aiDuringTasks='no runtime AI')
         if path.with_name('initial-plan.json').exists(): raise ValueError('Initial plan already exists')
         write_json(path.with_name('initial-plan.json'), value)
         write_json(path, value)
     print('PLAN_CREATED ' + str(path))
     print(' '.join(x['scenario'] + '/' + x['arm'] for x in value['ordering']['sequence']))
-    print('LIMITS_UNSET; calibration only until human-reviewed limits are frozen')
+    print('SCRIPTED_VALIDATION; ineligible for human calibration' if scripted(value)
+          else 'LIMITS_UNSET; calibration only until human-reviewed limits are frozen')
 
 
 def save(task, record):
@@ -166,9 +170,12 @@ def operation(task, record, name, tool=None, follow=False):
         env.pop(key, None)
     env['GP_VULNERABILITY_DB'] = record['identity']['database']['directory']
     env['GP_SOURCE_REPOSITORY'] = 'https://example.invalid/tfm/local'
+    env.pop('GP_REUSE_VULNERABILITY_DB', None)
+    if scripted(record): env['GP_REUSE_VULNERABILITY_DB'] = '1'
     command = ['bash', 'scripts/demo.sh', 'local', 'manual', name, str(task), str(folder)]
     if tool: command.append(tool)
-    write_json(folder / 'request.json', {'command': command, 'kind': 'human-requested' if name in ('tool', 'check') else name,
+    write_json(folder / 'request.json', {'command': command, 'kind': 'scripted-requested' if scripted(record) else 'human-requested' if name in ('tool', 'check') else name,
+                                       **(SCRIPTED if scripted(record) else {}),
                                        'synthetic': record['synthetic'], 'started': clock()})
     process = None
     reader = None
@@ -196,21 +203,24 @@ def operation(task, record, name, tool=None, follow=False):
                     except subprocess.TimeoutExpired:
                         continue
             else:
-                code = process.wait(timeout=remaining(record) if name in ('start', 'tool', 'check') else None)
+                code = process.wait(timeout=record['operationalTimeoutSeconds'] if scripted(record)
+                                    else remaining(record) if name in ('start', 'tool', 'check') else None)
             finished = clock()
     except subprocess.TimeoutExpired:
         terminate(process)
         finished = clock()
-        detection_from(folder, task, record, 'automatic' if name == 'start' else 'manual')
+        if not scripted(record): detection_from(folder, task, record, 'automatic' if name == 'start' else 'manual')
         if record['status'] not in TERMINAL:
-            emit(task, record, 'expire', note='Total-duration window exhausted during ' + name)
+            emit(task, record, 'abandon' if scripted(record) else 'expire', note='Operational timeout during ' + name if scripted(record) else 'Total-duration window exhausted during ' + name)
+        if scripted(record): record['operationalTimeout'] = {'operation': name, 'at': finished}
         code = 124
     except (KeyboardInterrupt, SystemExit):
         if process: terminate(process)
         if record['status'] not in TERMINAL:
             emit(task, record, 'interrupt', note='Interrupted operation: ' + name)
             if record['status'] not in TERMINAL:
-                emit(task, record, 'abandon', note='Manual tool interrupted; evidence retained')
+                emit(task, record, 'abandon', note=('Scripted' if scripted(record) else 'Manual') + ' tool interrupted; evidence retained')
+        if scripted(record): record['interruptedOperation'] = {'operation': name, 'at': clock()}
         code = 130; finished = clock()
     except OSError as error:
         (folder / 'launch-error.txt').write_text(str(error) + '\n')
@@ -219,7 +229,7 @@ def operation(task, record, name, tool=None, follow=False):
         if reader:
             display_log(); reader.close()
         record.pop('runningOperation', None); save(task, record)
-    write_json(folder / 'exit.json', {'exitCode': code, 'finished': finished})
+    write_json(folder / 'exit.json', {'exitCode': code, 'finished': finished, **(SCRIPTED if scripted(record) else {})})
     print('EVIDENCE ' + str(folder))
     return code, folder
 
@@ -227,6 +237,14 @@ def operation(task, record, name, tool=None, follow=False):
 def guard_task(task, record):
     if record.get('synthetic'): raise ValueError('Synthetic test histories cannot run human tasks')
     _, plan = load_plan(record['plan'])
+    if scripted(plan):
+        if any(record.get(k) != v for k, v in SCRIPTED.items()): raise ValueError('Scripted execution identity changed')
+        position = record.get('position')
+        if (type(position) is not int or position not in range(1, 7)
+                or plan['ordering']['sequence'][position - 1] != {'position': position, 'scenario': record['scenario'], 'arm': record['arm']}
+                or record.get('operationalTimeoutSeconds') != plan['operationalTimeoutSeconds'][record['scenario']]):
+            raise ValueError('Scripted position or operational timeout differs from its plan')
+    else: require_human(record)
     if record['identity']['source'] != plan['source'] or record['identity']['database'] != plan['database']:
         raise ValueError('Task configuration differs from its plan')
     if sha256(task / 'operator/prepared.json') != record['preparedSha256']:
@@ -246,6 +264,8 @@ def guard_task(task, record):
 def prepare_command(args):
     plan_path, plan = load_plan(args.plan)
     dataset = args.dataset
+    if scripted(plan) != (dataset == 'automated-validation'):
+        raise ValueError('Execution mode cannot be converted to human calibration or measurement')
     with locked(plan_path.parent):
         selection = plan_path.parent / 'current-task.json'
         if selection.is_symlink() or (selection.exists() and not selection.is_file()):
@@ -272,6 +292,9 @@ def prepare_command(args):
         record = new_record(scenario, arm, dataset, identity, plan['limitsSeconds'][scenario] if dataset == 'measurement' else None)
         record.update({'plan': str(plan_path), 'taskDirectory': str(directory), 'position': position, 'participant': args.participant,
                        'priorKnowledge': args.prior_knowledge, 'created': clock()})
+        if scripted(record):
+            record['position'] = args.position
+            record['operationalTimeoutSeconds'] = plan['operationalTimeoutSeconds'][scenario]
         save(directory, record)
         # Save the path before any infrastructure operation, including failures.
         write_json(selection, {'schema': 'manual-task-selection/v1', 'taskDirectory': str(directory),
@@ -287,6 +310,9 @@ def prepare_command(args):
                 emit(directory, record, 'abandon', note='Initial environment differs from earlier attempts; retain and clean up')
                 return 1
             record['preparedSha256'] = sha256(directory / 'operator/prepared.json')
+            if scripted(record):
+                from automated_repairs import preserve_original
+                preserve_original(directory)
             emit(directory, record, 'prepared', evidence=evidence_link(directory / 'operator/prepared.json', directory))
             print('READY; total timer has not started')
         elif record['status'] not in TERMINAL:
@@ -298,6 +324,9 @@ def detection_from(folder, task, record, mechanism):
     receipt = folder / 'detection.json'
     if not receipt.exists() or record['detection'] or record['status'] in TERMINAL: return
     value = read(receipt)
+    if scripted(record):
+        from automated_assessment import require_detection
+        require_detection(task, record, folder, mechanism)
     if value.get('scenario') != record['scenario'] or value.get('status') != 'ATTRIBUTED_DETECTION':
         raise ValueError('Malformed detection receipt')
     mark = value['at']
@@ -339,7 +368,8 @@ def run_command(args):
             print(json.dumps(value, indent=2)); return 0
         if args.command == 'recover':
             op = record.get('runningOperation')
-            if record['status'] in TERMINAL: raise ValueError('Attempt is already closed')
+            if record['status'] in TERMINAL and not (scripted(record) and op and op['name'] == 'cleanup'):
+                raise ValueError('Attempt is already closed')
             if not op: raise ValueError('No recorded interrupted operation; task unchanged')
             if op['bootId'] == clock()['bootId'] and op.get('processStart') is not None and process_identity(op['pid']) == op['processStart']:
                 # The task lock is free: its Python owner has gone away. Stop only
@@ -351,7 +381,7 @@ def run_command(args):
                     time.sleep(0.1)
                 if process_identity(op['pid']) == op['processStart']: os.killpg(op['pid'], signal.SIGKILL)
             record.pop('runningOperation', None)
-            detection_from(Path(op['directory']), task, record, 'automatic' if op['name'] == 'start' else 'manual')
+            if not scripted(record): detection_from(Path(op['directory']), task, record, 'automatic' if op['name'] == 'start' else 'manual')
             # Unknown termination time is not reconstructed as observed active time.
             record['interruption'] = {'observedAt': clock(), 'lastKnownEvent': record['events'][-1] if record['events'] else None,
                                       'timing': 'unknown after last event; incomplete attempt'}
@@ -394,7 +424,7 @@ def run_command(args):
                              outcome='completed' if code == 0 else 'blocked' if code == 42 and record['detection'] else 'error',
                              evidence=evidence_link(folder / 'exit.json', task))
                 save(task, record)
-                print('HUMAN_REVIEW_STARTED' if code in (0, 42) else 'INCOMPLETE')
+                print(('SCRIPTED_CONTINUATION_READY' if scripted(record) else 'HUMAN_REVIEW_STARTED') if code in (0, 42) else 'INCOMPLETE')
         elif args.command == 'tool':
             emit(task, record, 'tool-started', tool=args.tool)
             try: guard_task(task, record)
@@ -403,10 +433,10 @@ def run_command(args):
                 emit(task, record, 'abandon', note='Source/configuration drift; evidence retained')
                 raise
             code, folder = operation(task, record, 'tool', args.tool)
-            detection_from(folder, task, record, 'manual')
+            detection_from(folder, task, record, 'scripted' if scripted(record) else 'manual')
             if record['status'] not in TERMINAL:
                 emit(task, record, 'tool-finished', tool=args.tool, exitCode=code, evidence=evidence_link(folder / 'exit.json', task))
-            print('TOOL_RECORDED; inspect its evidence before resuming active work')
+            print('SCRIPTED_DIAGNOSTIC_RECORDED' if scripted(record) else 'TOOL_RECORDED; inspect its evidence before resuming active work')
         elif args.command == 'check':
             if not record['detection']: raise ValueError('Record verifiable detection with the applicable manual tool before completion checking')
             emit(task, record, 'verification-started')
@@ -423,10 +453,12 @@ def run_command(args):
                              outcome=outcome, exitCode=code, evidence=evidence_link(evidence, task))
                 save(task, record)
             if record['status'] == 'REVIEW':
-                print('CORRECTION_REJECTED; task remains REVIEW; completion has not been validated')
+                print('CORRECTION_REJECTED; scripted attempt will close without retry' if scripted(record)
+                      else 'CORRECTION_REJECTED; task remains REVIEW; completion has not been validated')
                 print('CHECK_RESULT ' + str(folder / 'check-result.json'))
-                print('Inspect the linked diagnostics and continue within the same timer/window; '
-                      'cleanup now closes this unresolved attempt as INCOMPLETE')
+                if not scripted(record):
+                    print('Inspect the linked diagnostics and continue within the same timer/window; '
+                          'cleanup now closes this unresolved attempt as INCOMPLETE')
             else:
                 print('VALIDATED_COMPLETION' if record['status'] == 'COMPLETED' else record['status'])
         print(json.dumps(summarize(record, clock()), indent=2))
@@ -450,6 +482,7 @@ def review_command(args):
 
 def calibration_selection(task, path, plan):
     record, _ = sealed_task(task, ROOT)
+    require_human(record)
     if record['dataset'] != 'calibration' or record['synthetic'] or record['status'] != 'COMPLETED':
         raise ValueError('Use completed, cleaned-up real human calibration records')
     if record['plan'] != str(path) or record['identity'] != {k: plan[k] for k in ['source', 'database', 'tools', 'environment']}:
@@ -485,6 +518,7 @@ def freeze_command(args):
     reviewer, rationale = args.reviewer.strip(), args.rationale.strip()
     if not reviewer or not rationale: raise ValueError('Supply a nonblank reviewer and calibration rationale')
     path, plan = load_plan(args.plan)
+    require_human(plan)
     with locked(path.parent):
         if plan['limitsReview'] or list((path.parent / 'measurement').glob('task-*')):
             raise ValueError('Limits are immutable after freezing or measurement preparation')
@@ -549,6 +583,9 @@ def main():
     p.add_argument('--calibration', action='append', required=True); p.add_argument('--reviewer', required=True); p.add_argument('--rationale', required=True)
     args = parser.parse_args()
     try:
+        if getattr(args, 'task', None) and args.command in ('start', 'tool', 'check', 'event'):
+            if scripted(read(managed(args.task) / 'record.json')):
+                raise ValueError('Use automated-remediation.py; record human takeover with intervention')
         if args.command == 'plan': return plan_command(args)
         if args.command == 'prepare': return prepare_command(args)
         if args.command == 'freeze-limits': return freeze_command(args)

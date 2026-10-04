@@ -240,3 +240,7 @@ run. Raw requests/responses and observed unfavorable state remain. Cleanup never
 turns an unfavorable result into a passing rejection.
 
 See [execution and handoff](runbook.md) and [structured observations](completion.json).
+
+## Scripted validation increment, 2026-10-04
+
+The [separate automated evaluation](../../automated-remediation.md) reuses this scenario's existing local oracle for F03/F10/F11 × R/G with predefined repairs. It records machine activity, never human diagnosis or calibration. Live six-task integration remains **NOT_EXECUTED** at this handoff because storage is below the runner's preparation reserve. Historical observations above retain their original scope; human effort evaluation is deferred and overall acceptance remains pending.

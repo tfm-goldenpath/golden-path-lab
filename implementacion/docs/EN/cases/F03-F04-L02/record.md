@@ -98,3 +98,7 @@ no human calibration observations or new live scenario acceptance.
 AI assistance: Codex, identified by the session as GPT-6; a more specific deployed
 model identifier was not exposed. Contribution: implementation, fixture research,
 regressions and documentation. Human review and final decision: **pending**.
+
+## Scripted validation increment, 2026-10-04
+
+The [separate automated evaluation](../../automated-remediation.md) reuses this scenario's existing local oracle for F03/F10/F11 × R/G with predefined repairs. It records machine activity, never human diagnosis or calibration. Live six-task integration remains **NOT_EXECUTED** at this handoff because storage is below the runner's preparation reserve. Historical observations above retain their original scope; human effort evaluation is deferred and overall acceptance remains pending.

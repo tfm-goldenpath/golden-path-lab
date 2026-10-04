@@ -13,7 +13,7 @@ import tempfile
 import tarfile
 
 from lane_a_evidence import regular, verify_package
-from manual_tasks import SCENARIOS, TERMINAL, sha256
+from manual_tasks import SCENARIOS, TERMINAL, sha256, require_human, scripted, SCRIPTED
 
 DECISIONS = ('accepted', 'rejected')
 PURPOSES = ('rehearsal', 'calibration', 'measurement')
@@ -66,6 +66,7 @@ def validate_archive_task(package, run_name, record):
             raise ValueError('Task archive requires one unambiguous root manual-task.json')
         snapshot = json.loads(archive.extractfile(records[0]).read(), object_pairs_hook=unique_object)
     fields = ('schema', 'lane', 'synthetic', 'plan', 'taskDirectory', 'scenario', 'arm', 'dataset', 'identity')
+    if scripted(record) or scripted(snapshot): fields += tuple(SCRIPTED)
     if not isinstance(snapshot, dict) or any(
             key not in snapshot or key not in record
             or json.dumps(snapshot[key], sort_keys=True) != json.dumps(record[key], sort_keys=True)
@@ -83,10 +84,12 @@ def sealed_task(task, implementation):
     if (record.get('schema') != 'manual-task/v1' or record.get('lane') != 'A'
             or record.get('taskDirectory') != str(task) or record.get('scenario') not in SCENARIOS
             or record.get('arm') not in ('R', 'G') or type(record.get('synthetic')) is not bool
-            or record.get('dataset') not in ('calibration', 'measurement')
+            or record.get('dataset') not in ('calibration', 'measurement', 'automated-validation')
             or task.parent.name != record['dataset'] or not task.name.startswith('task-')
             or record.get('plan') != str(task.parent.parent / 'plan.json')):
         raise ValueError('Invalid task identity for human review')
+    if record['dataset'] == 'automated-validation' and any(record.get(k) != v for k, v in SCRIPTED.items()):
+        raise ValueError('Invalid scripted task identity')
     if record.get('status') not in TERMINAL or record.get('cleanup') != 'completed' or record.get('runningOperation'):
         raise ValueError('Human review requires a closed, cleaned-up attempt')
     manifest = regular(task / 'SHA256SUMS.txt')
@@ -139,6 +142,8 @@ def sealed_task(task, implementation):
 
 def eligibility_reasons(record, review):
     reasons = []
+    try: require_human(record)
+    except ValueError: reasons.append('execution:scripted')
     if review['decision'] != 'accepted': reasons.append('decision:' + review['decision'])
     if review['purpose'] != 'calibration': reasons.append('purpose:' + review['purpose'])
     if review['assistance'] != 'none': reasons.append('assistance:' + review['assistance'])
@@ -160,6 +165,7 @@ def review_fields(value, record):
         raise ValueError('Explicit decision, purpose and assistance declarations are required')
     if value['purpose'] == 'measurement' and record['dataset'] != 'measurement':
         raise ValueError('Measurement review purpose requires a measurement task')
+    if value['purpose'] in ('calibration', 'measurement'): require_human(record)
 
 
 def history(task, implementation):
@@ -236,6 +242,7 @@ def record_review(task, implementation, *, reviewer, rationale, decision, purpos
 
 
 def next_action(record, review):
+    if scripted(record): return 'automated-remediation.py status/report; human calibration and measurement ineligible'
     if record.get('runningOperation'): return 'recover'
     if record.get('cleanup') == 'completed':
         return 'review' if review['decision'] == 'pending' else 'retain evidence; review eligibility before selecting limits'

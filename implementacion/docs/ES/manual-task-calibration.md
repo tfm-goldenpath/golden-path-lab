@@ -1,5 +1,7 @@
 # Calibración humana de F03 F10 y F11
 
+Calendario inmediato: usar la [validación automatizada de reparaciones](automated-remediation.md) para F03/F10/F11 × R/G. La comparación de esfuerzo humano y la calibración manual elegible se aplazan; la automatización no las completa. Se conservan ensayos históricos, formatos de revisión, campaña pareada separada de PR #43 y aceptación global del piloto pendiente.
+
 [English](../EN/manual-task-calibration.md) · [Instrucciones del participante](manual-task-participant.md) · [Estado actual](../../TODO.md)
 
 Este procedimiento prepara **seis tareas humanas en el carril A: F03/F10/F11

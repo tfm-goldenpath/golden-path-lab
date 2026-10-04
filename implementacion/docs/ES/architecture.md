@@ -313,3 +313,9 @@ El directorio final de la tarea conserva los eventos de limpieza registrados
 después de la captura del paquete del laboratorio.
 No cambia el protocolo temporal B ni demuestra cobertura negativa hosted o
 resultados humanos.
+
+## Evaluación de reparaciones mediante script
+
+El [runner automatizado](automated-remediation.md) importa preparación, operaciones protegidas, finalización, recuperación y limpieza del controlador existente. Solo añade secuencia de seis posiciones y continuación en fases verificadas. `automated_repairs.py` contiene las tres transformaciones predefinidas; `automated_assessment.py` comprueba detección, finalización, integridad y tiempos conservados. No introduce otra ruta de entrega ni IA en ejecución. `demo.sh` conserva la propiedad de los recursos.
+
+La identidad scripted figura en tareas, recibos y archivos; los esquemas manuales mantienen compatibilidad. Selección de calibración, preparación de mediciones y reutilización de límites rechazan automatización incluso después de una revisión humana. Originales y reparaciones usan el empaquetado seguro existente. Se añaden límites operativos y reutilización secuencial de la base canónica con comprobaciones de identidad intactas. Se aplaza la evaluación de esfuerzo humano; esta evidencia técnica provisional no cierra el piloto ni autoriza la campaña alojada separada.

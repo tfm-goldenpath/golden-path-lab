@@ -6,6 +6,15 @@ The [modular architecture](docs/EN/architecture.md) separates orchestration, pol
 
 The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the functional contract and H0–H6 acceptance conditions behind increments 0–3. This checklist tracks implementation and acceptance separately.
 
+## Current reduced scope: automated remediation validation
+
+- [x] Start `feat/automated-remediation-validation` from main `387c75d15e3b0f50d343f6f32b1d6895ab3529dd`, containing merged PR #43. Add the separate [EN](docs/EN/automated-remediation.md) / [ES](docs/ES/automated-remediation.md) unattended F03/F10/F11 × R/G evaluation, reusing the task controller, delivery/scenario oracles, packaging and owned cleanup.
+- [x] Record scripted execution in core task records, operations, archives and reports. Require G automatic detection and R delivery before scripted diagnostics; apply only the three predefined repairs. Keep human acceptance pending and permanently exclude automated records from human calibration, measurement and limit freezing, including after later review.
+- [x] Implement deterministic ordering, operation safety timeouts, verified continuation, interruption retention, explicit cleanup retry, storage reserves and canonical frozen DB reuse. Preserve original inputs and repair hashes; report technical validation, integrity, human intervention, failures and partial coverage separately. No runtime AI or human review automation.
+- [x] Validate focused synthetic regressions and shared checks; record exact results, limitations and proposed PR description in the [development handoff](registros/automated-remediation-validation.md). The live six-combination evaluation remains **NOT_EXECUTED** because available storage is below the 6 GiB preparation reserve. No pruning or earlier evidence deletion.
+- [ ] Execute and inspect the six live local combinations on a suitable unchanged source after storage is available. Synthetic fixtures and successful preflight do not establish delivery/admission integration or scenario acceptance.
+- [ ] Human review of this increment. **Human-effort evaluation and eligible manual calibration are deferred**, not completed by automation. This technical evaluation provisionally replaces the immediate manual exercise in the execution schedule. Historical sections below retain their original observations and plans; guided rehearsals and the separate PR #43 paired campaign remain intact. Overall pilot acceptance and any hosted campaign authorization remain pending. Assistance: OpenAI Codex; no human acceptance supplied.
+
 ## Current paired lane B pilot status
 
 - [x] Independently review development RG `36926824792` and GR `36927943550` at `02674a57d290083648a9af44c48fd049808b2d70`: original ZIP/outer/internal/database hashes, eight unique authenticated bundles, independent images/caches, fresh CREATE, rollout/HTTP, timing endpoints and cleanup pass. G provenance runs only in G's position; GR correctly skips the second-position native step. See the [EN](docs/EN/paired-rg-pilot-review.md) / [ES](docs/ES/paired-rg-pilot-review.md) review.

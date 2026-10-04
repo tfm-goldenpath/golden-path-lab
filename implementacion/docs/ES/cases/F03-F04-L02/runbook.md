@@ -72,3 +72,7 @@ Implementación, investigación, pruebas y documentación; revisión y decisión
 humanas pendientes.
 
 Para prerrequisitos independientes, la suite existente y conservación de fallos/bases de datos, use la [validación del carril A](../../lane-a-validation.md). Los intentos locales actuales se detienen en doctor; no cierran las barreras de integración pendientes de este caso.
+
+## Incremento de validación por script, 2026-10-04
+
+La [evaluación automatizada separada](../../automated-remediation.md) reutiliza el oráculo local existente para F03/F10/F11 × R/G con reparaciones predefinidas. Registra actividad de máquina, nunca diagnóstico ni calibración humanos. La integración de las seis tareas sigue **NOT_EXECUTED** en esta entrega por espacio inferior a la reserva de preparación. Las observaciones históricas conservan su alcance; se aplaza evaluar esfuerzo humano y la aceptación global sigue pendiente.

@@ -305,3 +305,9 @@ evidence is copied unchanged beside its receipt so links survive export. It
 excludes private state. The final task directory retains cleanup events written
 after the run archive snapshot. This procedure neither
 changes lane B timing nor establishes hosted negative coverage or human results.
+
+## Scripted remediation evaluation
+
+The [automated runner](automated-remediation.md) imports the existing task controller's preparation, guarded operations, completion, recovery and cleanup. It adds only six-position sequencing and verified continuation. `automated_repairs.py` owns the three predefined input transformations; `automated_assessment.py` checks retained detection, completion, integrity and timing evidence. No second delivery pipeline or runtime AI is introduced. `demo.sh` remains the resource owner.
+
+Explicit scripted identity is part of task records, operation receipts and archives; manual schemas remain compatible. Calibration selection, measurement preparation and frozen review reuse reject automation even after a later human review. Original inputs and repair receipts travel through existing safe packaging. Scripted operations use bounded safety timeouts and sequential canonical DB reuse with unchanged before/after identity checks. Human-effort evaluation is deferred; these provisional technical observations cannot close overall pilot acceptance or authorize the separate hosted campaign.
