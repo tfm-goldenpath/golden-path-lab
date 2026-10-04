@@ -57,10 +57,13 @@ EXPORT=$(mktemp -d /tmp/campaign-evidence-895a3bd.XXXXXX)
 gh release download evidence-campaign-895a3bd-20261004 \
   --repo tfm-goldenpath/golden-path-lab --dir "$EXPORT"
 (cd "$EXPORT" && sha256sum -c SHA256SUMS.txt)
-# Follow PUBLICATION-README.md to extract, restore exports and re-analyze.
+(cd "$EXPORT" && sha256sum -c PUBLICATION-V2-SHA256SUMS.txt)
+# Follow PUBLICATION-README-v2.md to extract, restore exports and re-analyze.
 ```
 
 El paquete conserva originales sin cambios y revisiones derivadas separadas. Solo omite exportaciones expandidas duplicadas tras compararlas byte a byte con sus ZIP incluidos; el README de publicación detalla restauración y validadores existentes. Antes de extraer/analizar, prever aproximadamente 6 GiB para descarga/expansión/una base restaurada **además de** 6 GiB de reserva. Conservar hashes originales y usar un directorio nuevo para otro análisis. Algunos logs mantienen rutas absolutas originales de Codespaces; no se reescriben. Las entregas anteriores que indicaban publicación pendiente siguen siendo snapshots históricos.
+
+La primera comprobación de recuperación detectó un `mkdir` ausente para el directorio padre `originals/` omitido. El archivo adicional `PUBLICATION-README-v2.md` corrige la instrucción; se conservan assets originales y comprobación fallida. Es una corrección de publicación, no un reintento de campaña.
 
 ## Límites y decisiones pendientes
 

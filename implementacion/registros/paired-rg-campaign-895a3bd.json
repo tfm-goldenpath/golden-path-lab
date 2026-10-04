@@ -161,11 +161,22 @@
       "name": "SHA256SUMS.txt",
       "sha256": "da7fca766756095e44361237355f678442f7a69b745719083f62cab32e83b472",
       "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/SHA256SUMS.txt"
+    },
+    {
+      "name": "PUBLICATION-README-v2.md",
+      "sha256": "4ea347b846b534b607c8aad6631c2982e2859dfc254e430b1154e112940509ac",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/PUBLICATION-README-v2.md"
+    },
+    {
+      "name": "PUBLICATION-V2-SHA256SUMS.txt",
+      "sha256": "e60c90dcb16d2a16466bec30c1756735af0bd29af09f0093f50a5468ea0a2449",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/PUBLICATION-V2-SHA256SUMS.txt"
     }
   ],
   "evidenceRoot": "final-development-895a3bd/",
   "operationalReport": "campaign-proposal-01/results-01/report.json",
   "analysis": "campaign-proposal-01/analysis-01/analysis.json",
   "cleanupReviewCorrection": "logs/campaign-operations-20261004T122234Z-syFRKt/position-04-cleanup-supplement.json",
-  "scope": "Technical evidence publication; no human results acceptance. Source and original hashes retained; development, pilot and scripted repairs are separate datasets."
+  "scope": "Technical evidence publication; no human results acceptance. Source and original hashes retained; development, pilot and scripted repairs are separate datasets.",
+  "publicationCorrection": "Original recovery instructions omitted creation of the originals/ parent. Published PUBLICATION-README-v2.md adds mkdir; original assets preserved. This was a publication instruction error, not a campaign retry."
 }

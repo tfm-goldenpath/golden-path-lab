@@ -57,10 +57,13 @@ EXPORT=$(mktemp -d /tmp/campaign-evidence-895a3bd.XXXXXX)
 gh release download evidence-campaign-895a3bd-20261004 \
   --repo tfm-goldenpath/golden-path-lab --dir "$EXPORT"
 (cd "$EXPORT" && sha256sum -c SHA256SUMS.txt)
-# Follow PUBLICATION-README.md to extract, restore exports and re-analyze.
+(cd "$EXPORT" && sha256sum -c PUBLICATION-V2-SHA256SUMS.txt)
+# Follow PUBLICATION-README-v2.md to extract, restore exports and re-analyze.
 ```
 
 The package contains unchanged originals and separate derived reviews. Only duplicate expanded exports are omitted after byte comparison with the included ZIPs; the publication README gives exact restoration and existing-validator commands. Check capacity before extraction or analysis: allow roughly 6 GiB for download/expansion/one restored DB **in addition to** a 6 GiB reserve. Preserve original hashes and write any new analysis to a new directory. Some original logs contain their original absolute Codespaces paths; restoration does not rewrite them. Earlier handoffs saying publication was pending remain historical snapshots.
+
+The first publication recovery check exposed a missing `mkdir` for the omitted `originals/` parent. The additive `PUBLICATION-README-v2.md` corrects that instruction; original assets and the failed check are preserved. This is a publication instruction correction, not a campaign retry.
 
 ## Limits and remaining decisions
 
