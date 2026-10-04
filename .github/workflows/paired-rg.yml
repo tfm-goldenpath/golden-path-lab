@@ -4,10 +4,10 @@ on:
     inputs:
       dataset:
         type: choice
-        options: [development, pilot]
+        options: [development, pilot, campaign]
         default: development
       pair:
-        description: Pair number (pilot 1-4 from the stored plan)
+        description: Pair number (pilot 1-4; campaign must match its frozen plan)
         required: true
         default: '1'
       order:
@@ -21,7 +21,7 @@ on:
         description: Original failed run ID; empty for attempt one
         default: ''
       database_run:
-        description: Successful development run preserving this source's frozen DB; required for pilot
+        description: Successful development run preserving this source's frozen DB; required for pilot/campaign
         default: ''
       external_cause:
         type: choice
@@ -30,13 +30,53 @@ on:
       evidence:
         description: Relative original artifact log proving the reviewed external failure
         default: ''
+      publish_plan:
+        description: Frozen control JSON for a plan-only publication; no delivery runs in this mode
+        default: ''
+      plan_run:
+        description: Successful plan-only publication run ID; required for campaign delivery
+        default: ''
+      plan_identity:
+        description: Expected frozen control identity from campaign-freeze; required for publication/campaign
+        default: ''
 permissions:
   contents: read
 concurrency:
   group: paired-rg-${{ github.repository }}
   cancel-in-progress: false
 jobs:
+  plan:
+    if: inputs.publish_plan != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate human-authorized plan and fresh development artifacts without delivery
+        working-directory: implementacion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATASET: ${{ inputs.dataset }}
+          SOURCE: ${{ inputs.expected_source }}
+          CAMPAIGN_PLAN_JSON: ${{ inputs.publish_plan }}
+          PLAN_IDENTITY: ${{ inputs.plan_identity }}
+        run: |
+          [[ "$DATASET" == campaign ]]
+          python3 scripts/paired-rg.py publish-plan --expected-source "$SOURCE" --plan-identity "$PLAN_IDENTITY" --output evidence/measurements/campaign-plan
+      - name: Retain the verified frozen plan
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: paired-rg-plan-${{ github.run_id }}
+          path: implementacion/evidence/measurements/campaign-plan/**
+          if-no-files-found: error
+          retention-days: 30
   pair:
+    if: inputs.publish_plan == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     permissions:
@@ -75,6 +115,8 @@ jobs:
           DATABASE_RUN: ${{ inputs.database_run }}
           CAUSE: ${{ inputs.external_cause }}
           EVIDENCE: ${{ inputs.evidence }}
+          PLAN_RUN: ${{ inputs.plan_run }}
+          PLAN_IDENTITY: ${{ inputs.plan_identity }}
         run: |
           args=()
           if [[ -n "$PRIOR_RUN" ]]; then args+=(--retry-from .tmp/paired-prior --cause "$CAUSE" --evidence "$EVIDENCE"); fi
@@ -82,6 +124,11 @@ jobs:
             [[ "$DATABASE_RUN" =~ ^[0-9]+$ ]]
             gh run download "$DATABASE_RUN" --repo tfm-goldenpath/golden-path-lab --name "paired-rg-$DATABASE_RUN" --dir .tmp/paired-database
             args+=(--database-from .tmp/paired-database)
+          fi
+          if [[ "$DATASET" == campaign ]]; then
+            [[ "$PLAN_RUN" =~ ^[1-9][0-9]*$ ]]
+            gh run download "$PLAN_RUN" --repo tfm-goldenpath/golden-path-lab --name "paired-rg-plan-$PLAN_RUN" --dir .tmp/paired-campaign-plan
+            args+=(--campaign-plan .tmp/paired-campaign-plan --plan-identity "$PLAN_IDENTITY" --plan-run "$PLAN_RUN")
           fi
           python3 scripts/paired-rg.py init --dataset "$DATASET" --pair "$PAIR" --order "$ORDER" --expected-source "$SOURCE" "${args[@]}"
       - name: Read pinned Node version

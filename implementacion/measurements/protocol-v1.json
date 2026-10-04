@@ -51,7 +51,10 @@
   },
   "campaign": {
     "pairsProvisional": 10,
-    "enabled": false
+    "enabled": true,
+    "requiresFrozenPlan": true,
+    "authorization": "explicit human declaration bound to final source, configuration, order and database; never inferred from enabled support",
+    "scope": "automated legitimate-delivery pairs only"
   },
-  "vulnerabilityDatabase": "first development snapshot preserved; reuse via database_run for subsequent smoke/pilot pairs; reject pooled database drift"
+  "vulnerabilityDatabase": "first development snapshot preserved; reuse via database_run for subsequent smoke/pilot/campaign pairs at the same source; reject pooled database drift"
 }
