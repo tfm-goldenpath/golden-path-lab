@@ -10,8 +10,10 @@ el fallo previo de preparación de caché se conserva más abajo. Los cuatro par
 piloto autorizados GR/GR/RG/RG están completos y revisados independientemente: 4/4
 favorables, sin exclusiones ni reintentos. El [informe piloto](paired-rg-pilot-review.md)
 recoge tiempos, dispersión, consumo de jobs terminados y el fallo inicial de acceso
-ya resuelto. La campaña sigue **NOT_EXECUTED**. Calibración manual, revisión de
-preparación de escenarios y aceptación humana siguen pendientes. El contribuyente informa que ambas
+ya resuelto. La campaña sigue **NOT_EXECUTED**. Medición de esfuerzo humano y calibración
+manual elegible quedan aplazadas; preparación funcional y aceptación humana siguen
+pendientes. La [matriz de preparación](evaluation-readiness.md) separa los cuatro
+datasets y los requisitos sobre fuente final. El contribuyente informa que ambas
 suites A pasaron en `36885654089`, revisión
 `5ae6f84a01407789933bd36bcdb05250a6d6c4f5`; este incremento no reaudita ese paquete.
 Las revisiones y fallos históricos permanecen en [la guía A](lane-a-validation.md).
@@ -126,7 +128,7 @@ TARGET=$(git rev-parse origin/main)
 gh workflow run paired-rg.yml --repo tfm-goldenpath/golden-path-lab --ref main \
   -f dataset=development -f pair=1 -f order=RG -f expected_source="$TARGET"
 gh run list --repo tfm-goldenpath/golden-path-lab --workflow paired-rg.yml --limit 5
-RUN=<id-real-del-run>
+read -r -p 'ID real del run resultante: ' RUN
 gh run watch "$RUN" --repo tfm-goldenpath/golden-path-lab --exit-status
 DEST="implementacion/evidence/measurements/download-$RUN"
 gh run download "$RUN" --repo tfm-goldenpath/golden-path-lab \

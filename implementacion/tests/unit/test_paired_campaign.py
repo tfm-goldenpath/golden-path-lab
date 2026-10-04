@@ -440,4 +440,197 @@ class CampaignIO(unittest.TestCase):
             self.assertEqual(result.returncode,0,result.stderr)
             self.assertEqual(M.read(p/'analysis/analysis.json')['campaign']['missingPositions'],[1,2,3,4])
 
+class IncompleteArchiveAnalysis(unittest.TestCase):
+    """SYNTHETIC phase failures; real producer markers, packager and CLI analysis.
+
+    Only infrastructure cleanup is substituted: these tests start no containers,
+    publish no images and make no human authorization declarations outside fixtures.
+    """
+    def produced(self, root, stage):
+        from itertools import count
+        from test_paired_measurements import at
+        artifact=root/'original';control,pair=campaign_export(artifact)
+        pair['sharedPreparation']={};pair['arms']={};pair['packageVerification']={}
+        for file in (artifact/'packages').iterdir():file.unlink()
+        first,second=pair['order'];paths={}
+        for arm in ('infrastructure',first,second):
+            state=root/'states'/arm;state.mkdir(parents=True);paths[arm]=str(state)
+            M.write(state/'synthetic.json',{'synthetic':True,'purpose':'unit test only'})
+            if arm=='infrastructure':continue
+            rec=M.new_record(pair,arm)
+            rec.update(database={'sha256':pair['frozenDatabase']},
+                       toolsLockSha256=control['plan']['binding']['configuration']['toolsLockSha256'])
+            M.write(state/'measurement.json',rec)
+        path=Path(paths[first])/'measurement.json'
+        def command(operation, **kwargs):runner.marking(SimpleNamespace(command=operation,path=path,**kwargs))
+        def phase(name):
+            command('mark',name=name,action='start',code=None)
+            command('mark',name=name,action='end',code=0)
+        ticks=count(1)
+        with patch.object(runner,'stamp',side_effect=lambda:at(next(ticks))),patch.object(M,'stamp',side_effect=lambda:at(next(ticks))):
+            if stage=='bootstrap':
+                path.unlink()
+                # Bootstrap registered the first state but failed before arm-init;
+                # it never registered a second arm state.
+                del paths[second]
+            elif stage=='cache-validation':
+                # shell_phase records the reason before finalize derives classification;
+                # the archive deliberately preserves that original checkpoint.
+                rec=M.read(path);rec['invalidReason']={'cause':'cache-condition','diagnostic':'SYNTHETIC cache drift'}
+                M.write(path,rec)
+            elif stage!='unstarted':
+                command('begin')
+                if stage=='before-image':
+                    command('mark',name='service-tests',action='start',code=None)
+                else:
+                    phase('service-tests')
+                    if first=='G':phase('workflow-policy')
+                    command('mark',name='build',action='start',code=None)
+                    if stage not in ('during-build','lost-build'):
+                        command('mark',name='build',action='end',code=0)
+                        if stage!='before-bind':
+                            M.write(path.parent/'state.json',{'digest':'sha256:'+'1'*64,'imageRepository':'ghcr.io/synthetic/fixture'})
+                            command('bind-image');phase('manifest')
+                            if first=='G':
+                                for name in ('manifest-policy','analysis','native-provenance','verify-delivery','authorize-results'):phase(name)
+                            if stage=='during-admission':
+                                command('mark',name='admission',action='start',code=None)
+                if stage!='lost-build':command('interrupted',code=23)
+        M.write(artifact/'pair.json',pair);M.write(artifact/'paths.json',paths)
+        with patch.object(runner,'pair_path',return_value=artifact),patch.object(runner,'timed_process',return_value=0):
+            self.assertEqual(runner.finalize(),1)
+        M.write(root/'frozen.json',control)
+        return artifact,M.read(artifact/'pair.json'),first,second
+
+    def analyze(self, root, artifact):
+        result=subprocess.run([sys.executable,str(ROOT/'scripts/paired-rg.py'),'analyze',
+            '--campaign-plan',str(root/'frozen.json'),'--artifact',str(artifact),
+            '--evidence-output',str(root/'analysis'),'--output',str(root/'analysis/analysis.json')],
+            capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+        return M.read(root/'analysis/analysis.json')
+
+    def rewrite(self, artifact, pair, arm, archived=None):
+        """Rehash deliberate synthetic mutations; semantic checks must still fail."""
+        archive=artifact/'packages'/(arm+'.tar.gz')
+        synthetic_archive(archive,{'synthetic.json':b'{"synthetic":true}',
+            'measurement.json':json.dumps(pair['arms'][arm] if archived is None else archived).encode()})
+        pair['packageVerification'][arm]=runner.verify_package(archive)
+        M.write(artifact/'pair.json',pair);runner.hash_export(artifact)
+
+    def test_producer_failures_survive_real_archive_and_cli_analysis(self):
+        for stage in ('unstarted','before-image','during-build','lost-build','before-bind','before-admission','during-admission'):
+            with self.subTest(stage=stage),tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+                root=Path(tmp);artifact,pair,first,second=self.produced(root,stage)
+                hashes={str(p):runner.sha(p) for p in artifact.rglob('*') if p.is_file()}
+                runner.verify_pair_packages(artifact,pair)
+                result=self.analyze(root,artifact);row=result['rows'][0]
+                self.assertEqual(result['attempts'],1);self.assertEqual(result['excludedAttempts'],1)
+                self.assertEqual(row['classifications'],{'R':'indeterminate','G':'indeterminate'})
+                self.assertIn('pair-status:INCOMPLETE_OR_UNFAVORABLE',row['exclusionReasons'])
+                self.assertEqual(result['campaign']['unresolvedPositions'],[1])
+                for field in ('RSeconds','GSeconds','absoluteSeconds','relativePercent'):self.assertIsNone(row[field])
+                self.assertNotIn('primaryStart',pair['arms'][second])
+                self.assertNotIn('primaryEnd',pair['arms'][first])
+                self.assertEqual(hashes,{str(p):runner.sha(p) for p in artifact.rglob('*') if p.is_file()})
+                self.assertEqual((root/'analysis/inputs/0/pair.json').read_bytes(),(artifact/'pair.json').read_bytes())
+
+    def test_incomplete_invalid_and_policy_rejection_keep_actual_classification(self):
+        for field,value,kind in [('invalidReason',{'cause':'cache-condition'},'invalid'),('policyRejected',True,'valid-unfavorable')]:
+            with self.subTest(kind=kind),tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+                root=Path(tmp);artifact,pair,first,_=self.produced(root,'before-admission')
+                pair['arms'][first][field]=value;pair['arms'][first]['classification']=M.classify(pair['arms'][first])
+                self.rewrite(artifact,pair,first)
+                row=self.analyze(root,artifact)['rows'][0]
+                self.assertEqual(row['classifications'][first],kind)
+                self.assertIn(first+':'+kind,row['exclusionReasons']);self.assertIsNone(row[first+'Seconds'])
+
+    def test_completed_first_arm_does_not_supply_time_for_unstarted_second_arm(self):
+        with tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+            root=Path(tmp);artifact,pair,first,second=self.produced(root,'unstarted')
+            initialized=pair['arms'][first]
+            pair['arms'][first]=dict(favorable(12,first,pair),
+                image='ghcr.io/synthetic/fixture@sha256:'+'1'*64,
+                database=initialized['database'],toolsLockSha256=initialized['toolsLockSha256'])
+            pair['arms'][first]['classification']=M.classify(pair['arms'][first])
+            self.rewrite(artifact,pair,first)
+            row=self.analyze(root,artifact)['rows'][0]
+            self.assertEqual(row[first+'Seconds'],12);self.assertIsNone(row[second+'Seconds'])
+            self.assertEqual(row['classifications'][first],'valid-favorable')
+            self.assertFalse(row['included']);self.assertIsNone(row['absoluteSeconds'])
+
+    def test_finalizer_derived_classification_preserves_original_cache_failure(self):
+        with tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+            root=Path(tmp);artifact,pair,first,_=self.produced(root,'cache-validation')
+            original=M.read(root/'states'/first/'measurement.json')
+            self.assertEqual(original['classification'],'indeterminate')
+            self.assertEqual(pair['arms'][first]['classification'],'invalid')
+            row=self.analyze(root,artifact)['rows'][0]
+            self.assertEqual(row['classifications'][first],'invalid')
+            self.assertIsNone(row[first+'Seconds'])
+            self.assertEqual(original,M.read(root/'states'/first/'measurement.json'))
+
+    def test_bootstrap_package_without_initialized_arm_remains_preparation_evidence(self):
+        with tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+            root=Path(tmp);artifact,pair,first,_=self.produced(root,'bootstrap')
+            self.assertEqual(pair['arms'],{});self.assertIn(first,pair['packageVerification'])
+            row=self.analyze(root,artifact)['rows'][0]
+            self.assertEqual(row['classifications'],{'R':'indeterminate','G':'indeterminate'})
+            self.assertIsNone(row['RSeconds']);self.assertIsNone(row['GSeconds'])
+            # A claimed arm record still requires its own archived observation.
+            pair['arms'][first]=M.new_record(pair,first)
+            with self.assertRaisesRegex(ValueError,'lacks its arm observation'):runner.verify_pair_packages(artifact,pair)
+
+    def test_rehashed_success_with_failed_execution_is_rejected(self):
+        with tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+            artifact=Path(tmp)/'original';_,pair=campaign_export(artifact)
+            pair['arms']['R']['failureExitCode']=23
+            self.rewrite(artifact,pair,'R')
+            with self.assertRaisesRegex(ValueError,'Claimed success'):runner.verify_pair_packages(artifact,pair)
+
+    def test_absence_cannot_hide_phase_progress_or_fabricate_completion(self):
+        mutations=[lambda r:r.update(primarySeconds=0),lambda r:r.update(functional='PASS'),
+                   lambda r:r.update(admission={'outcome':'ACCEPTED'}),lambda r:r.pop('primaryStart'),
+                   lambda r:r.pop('image'),lambda r:r.update(classification='valid-favorable')]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate),tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+                root=Path(tmp);artifact,pair,first,_=self.produced(root,'before-admission')
+                mutate(pair['arms'][first]);self.rewrite(artifact,pair,first)
+                with self.assertRaises(ValueError):runner.verify_pair_packages(artifact,pair)
+
+    def test_mandatory_identity_and_database_cannot_be_absent_in_both_copies(self):
+        for key in ('schema','protocol','configuration','source','warmupSource','runId','dataset','pair','order','attempt','planIdentity','database','toolsLockSha256'):
+            with self.subTest(key=key),tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+                artifact,pair,first,_=self.produced(Path(tmp),'unstarted')
+                del pair['arms'][first][key];self.rewrite(artifact,pair,first)
+                with self.assertRaises(ValueError):runner.verify_pair_packages(artifact,pair)
+
+    def test_presence_and_all_recorded_values_must_match_archive(self):
+        for key,value in [('image','ghcr.io/synthetic/foreign@sha256:'+'2'*64),
+                          ('failureExitCode',99),('functional','PASS'),('primaryEnd',None),('primarySeconds',0)]:
+            with self.subTest(key=key),tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+                artifact,pair,first,_=self.produced(Path(tmp),'before-admission')
+                self.rewrite(artifact,pair,first,dict(pair['arms'][first],**{key:value}))
+                with self.assertRaisesRegex(ValueError,'observation differs'):runner.verify_pair_packages(artifact,pair)
+
+    def test_success_cannot_omit_phase_fields_or_claim_incomplete_as_pass(self):
+        for field in ('image','primaryStart','primaryEnd'):
+            with self.subTest(field=field),tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+                artifact=Path(tmp)/'original';_,pair=campaign_export(artifact)
+                runner.verify_pair_packages(artifact,pair)
+                del pair['arms']['R'][field];self.rewrite(artifact,pair,'R')
+                with self.assertRaises(ValueError):runner.verify_pair_packages(artifact,pair)
+        with tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+            artifact,pair,_,_=self.produced(Path(tmp),'before-admission');pair['status']='PASS'
+            with self.assertRaises(ValueError):runner.verify_pair_packages(artifact,pair)
+
+    def test_archive_corruption_and_foreign_arm_association_are_rejected(self):
+        with tempfile.TemporaryDirectory(prefix='synthetic-incomplete-') as tmp:
+            artifact,pair,first,second=self.produced(Path(tmp),'unstarted')
+            pair['packageVerification'][first]=pair['packageVerification'][second]
+            with self.assertRaises(ValueError):runner.verify_pair_packages(artifact,pair)
+            with (artifact/'packages'/(second+'.tar.gz')).open('ab') as stream:stream.write(b'SYNTHETIC tampering')
+            with self.assertRaises(ValueError):runner.verify_export(artifact)
+            with self.assertRaises(ValueError):runner.verify_pair_packages(artifact,pair)
+
 if __name__=='__main__':unittest.main()

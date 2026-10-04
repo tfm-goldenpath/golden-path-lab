@@ -1,5 +1,10 @@
 # Validación automatizada de reparaciones F03/F10/F11
 
+El alcance actual y los requisitos de fuente final se consolidan en la
+[matriz de veinte escenarios](evaluation-readiness.md). La medición de esfuerzo
+humano y calibración manual elegible están aplazadas; las observaciones históricas
+conservan su fuente y revisión originales.
+
 [English](../EN/automated-remediation.md) · [Arquitectura](architecture.md) · [Trabajo actual](../../TODO.md)
 
 Esta evaluación técnica separada en carril A sustituye provisionalmente las seis

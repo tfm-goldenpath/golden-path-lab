@@ -6,14 +6,15 @@ English is the primary language for implementation and technical contribution. S
 
 | Guide | Purpose |
 | --- | --- |
+| [Evaluation readiness](evaluation-readiness.md) | Twenty scenario rows, historical evidence, current scope and final execution handoff. |
 | [Environment and versions](environment.md) | Devcontainer setup, pinned tools and environment checks. |
 | [Modular architecture](architecture.md) | Component responsibilities, interfaces and verification boundaries. |
 | [Delivery contracts](delivery-contracts.md) | Artifact identity, required evidence and authorization checks. |
 | [AI-assisted development](ai-assisted-development.md) | Scoped assistance, human responsibility, shared instructions, scenario skill and truthful attribution. |
 | [F01/F02 workflow trials](cases/F01-F02/runbook.md) | Inert static workflow cases, exact Conftest attribution and retained evidence. |
-| [F11/F12/L06 runtime trials](cases/F11-F12-L06/runbook.md) | Deployment CREATE/template UPDATE, isolated Pods, attribution and state evidence; hosted success from supplied review; local acceptance pending. |
+| [F11/F12/L06 runtime trials](cases/F11-F12-L06/runbook.md) | Deployment CREATE/template UPDATE, isolated Pods, attribution and state evidence; recorded lane-A success and supplied hosted review; final-source acceptance pending. |
 | [F07 early CI / L04](cases/L04/record.md) | Fresh verification, exact recovery and shared legitimate replacement. |
-| [F03/F04/L02 vulnerabilities](cases/F03-F04-L02/runbook.md) | Original SBOM analysis, frozen database, remediation and bounded local commands; image/admission pending. |
+| [F03/F04/L02 vulnerabilities](cases/F03-F04-L02/runbook.md) | Original SBOM analysis, frozen database, remediation and bounded local commands; recorded lane-A image/admission success; final-source acceptance pending. |
 | [F07 hosted compatibility](cases/F07/hosted-compatibility.md) | Local coverage, bounded GHCR findings and inactive protocol commands. |
 | [L01/F13 case specification](cases/L01-F13/README.md) | Expected behavior of legitimate delivery, missing results and directed F11 checks. |
 | [L01/F13 execution runbook](cases/L01-F13/runbook.md) | Local and hosted commands, expected outputs, diagnostics and cleanup. |
@@ -31,3 +32,7 @@ The [external proposal review](../ES/context/external-proposal-review.md) is his
 - [Paired R/G measurements — protocol and manual smoke procedure](paired-rg-measurements.md).
 - [Automated F03/F10/F11 remediation — unattended technical validation](automated-remediation.md).
 - [Manual F03/F10/F11 calibration — lane A operator procedure](manual-task-calibration.md) and [participant instructions](manual-task-participant.md).
+
+Manual-effort measurement and eligible calibration are deferred. Functional trials,
+scripted remediation, the four-pair timing pilot and the future campaign remain
+separate datasets. See the readiness guide for current status.

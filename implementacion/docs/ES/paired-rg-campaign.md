@@ -14,8 +14,10 @@ ejecución local/alojada.
 
 El piloto de cuatro pares y sus fallos históricos se conservan. Los
 [ensayos manuales guiados](manual-task-rehearsal-review.md) siguen excluidos de la
-calibración. La calibración manual, sus tres límites, la preparación de escenarios
-y la aceptación global del piloto continúan siendo decisiones separadas.
+calibración. La medición de esfuerzo humano, la calibración manual elegible y sus
+límites están aplazados en el alcance reducido. Preparación funcional, aceptación
+global y autorización de campaña siguen separadas. Consultar la [matriz de veinte
+escenarios](evaluation-readiness.md).
 
 `paired-rg.py` coordina los mismos módulos y pasos explícitos de provenance nativa.
 `paired_campaign.py` valida planes y declaraciones; `paired_measurements.py`
@@ -30,12 +32,15 @@ Desde la raíz del repositorio, elige un directorio nuevo ignorado por Git:
 ```bash
 CAMPAIGN="$PWD/implementacion/evidence/measurements/campaign-draft-01"
 CLI="$PWD/implementacion/scripts/paired-rg.py"
-python3 "$CLI" campaign-draft --seed example-unapproved-campaign-v1 \
-  --pairs 10 --output "$CAMPAIGN/draft.json"
+read -r -p 'Cantidad par propuesta (10 es provisional): ' CAMPAIGN_PAIRS
+read -r -p 'Semilla determinista propuesta: ' CAMPAIGN_SEED
+python3 "$CLI" campaign-draft --seed "$CAMPAIGN_SEED" \
+  --pairs "$CAMPAIGN_PAIRS" --output "$CAMPAIGN/draft.json"
 python3 "$CLI" campaign-inspect "$CAMPAIGN/draft.json"
 ```
 
-Salida: `DRAFT`, diez posiciones (cinco RG y cinco GR), luego `NOT_AUTHORIZED`.
+Salida: `DRAFT`, cantidad propuesta balanceada RG/GR y `NOT_AUTHORIZED`.
+Diez no está preseleccionado ni aprobado.
 La cantidad explícita debe ser par entre 2 y 1000; el documento congelado tiene
 además un máximo de 60 000 bytes para la entrada del workflow. Estos límites son
 técnicos, no recomendaciones estadísticas. Se ordenan posiciones etiquetadas y
@@ -49,12 +54,16 @@ Espera a que **todas las PR de preparación estén integradas**. No edites un ar
 versionado para insertar su propio SHA. Actualiza main y comprueba la revisión:
 
 ```bash
+cd /workspaces/golden-path-lab
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+test -z "$(git status --porcelain)"
 git fetch origin main
 git switch main
 git pull --ff-only origin main
 TARGET=$(git rev-parse HEAD)
 test "$TARGET" = "$(git rev-parse origin/main)"
-test -z "$(git status --porcelain --untracked-files=no)"
+test -z "$(git status --porcelain)"
+df -h . /var/lib/docker
 make -C implementacion doctor
 make -C implementacion test
 ```
@@ -67,10 +76,14 @@ gh workflow run paired-rg.yml --repo tfm-goldenpath/golden-path-lab --ref main \
   -f dataset=development -f pair=1 -f order=RG -f expected_source="$TARGET"
 gh run list --repo tfm-goldenpath/golden-path-lab --workflow paired-rg.yml --limit 5
 read -r -p 'ID real de desarrollo RG: ' DEV_RG
-gh run watch "$DEV_RG" --repo tfm-goldenpath/golden-path-lab --exit-status
+WATCH_STATUS=0
+gh run watch "$DEV_RG" --repo tfm-goldenpath/golden-path-lab --exit-status || WATCH_STATUS=$?
+printf 'Workflow watch exit: %s\n' "$WATCH_STATUS"
 gh run download "$DEV_RG" --repo tfm-goldenpath/golden-path-lab \
   --name "paired-rg-$DEV_RG" --dir "$CAMPAIGN/originals/development-RG"
 python3 "$CLI" verify-export "$CAMPAIGN/originals/development-RG"
+mkdir -p "$CAMPAIGN/logs"
+gh run view "$DEV_RG" --repo tfm-goldenpath/golden-path-lab --log > "$CAMPAIGN/logs/$DEV_RG.log"
 ```
 
 Revisa hashes externos/internos, bytes/identidad de la base, imágenes
@@ -85,10 +98,14 @@ gh workflow run paired-rg.yml --repo tfm-goldenpath/golden-path-lab --ref main \
   -f database_run="$DEV_RG"
 gh run list --repo tfm-goldenpath/golden-path-lab --workflow paired-rg.yml --limit 5
 read -r -p 'ID real de desarrollo GR: ' DEV_GR
-gh run watch "$DEV_GR" --repo tfm-goldenpath/golden-path-lab --exit-status
+WATCH_STATUS=0
+gh run watch "$DEV_GR" --repo tfm-goldenpath/golden-path-lab --exit-status || WATCH_STATUS=$?
+printf 'Workflow watch exit: %s\n' "$WATCH_STATUS"
 gh run download "$DEV_GR" --repo tfm-goldenpath/golden-path-lab \
   --name "paired-rg-$DEV_GR" --dir "$CAMPAIGN/originals/development-GR"
 python3 "$CLI" verify-export "$CAMPAIGN/originals/development-GR"
+mkdir -p "$CAMPAIGN/logs"
+gh run view "$DEV_GR" --repo tfm-goldenpath/golden-path-lab --log > "$CAMPAIGN/logs/$DEV_GR.log"
 ```
 
 Revisa también GR, incluida la provenance nativa en primera posición. Estos runs
@@ -175,10 +192,14 @@ gh workflow run paired-rg.yml --repo tfm-goldenpath/golden-path-lab --ref main \
   -f database_run="$DEV_RG" -f plan_run="$PLAN_RUN" -f plan_identity="$PLAN_ID"
 gh run list --repo tfm-goldenpath/golden-path-lab --workflow paired-rg.yml --limit 5
 read -r -p 'ID real del par: ' RUN
-gh run watch "$RUN" --repo tfm-goldenpath/golden-path-lab --exit-status
+WATCH_STATUS=0
+gh run watch "$RUN" --repo tfm-goldenpath/golden-path-lab --exit-status || WATCH_STATUS=$?
+printf 'Workflow watch exit: %s\n' "$WATCH_STATUS"
 gh run download "$RUN" --repo tfm-goldenpath/golden-path-lab \
-  --name "paired-rg-$RUN" --dir "$CAMPAIGN/originals/$RUN"
-python3 "$CLI" verify-export "$CAMPAIGN/originals/$RUN"
+  --name "paired-rg-$RUN" --dir "$CAMPAIGN/originals/campaign/$RUN"
+python3 "$CLI" verify-export "$CAMPAIGN/originals/campaign/$RUN"
+mkdir -p "$CAMPAIGN/logs"
+gh run view "$RUN" --repo tfm-goldenpath/golden-path-lab --log > "$CAMPAIGN/logs/$RUN.log"
 mkdir -p "$CAMPAIGN/jobs"
 gh api "repos/tfm-goldenpath/golden-path-lab/actions/runs/$RUN/jobs" > "$CAMPAIGN/jobs/$RUN.json"
 ```
@@ -215,13 +236,24 @@ continuar. Conserva el ID original y su consumo de job en el análisis.
 
 ## 6. Analizar originales sin mezclarlos ni modificarlos
 
-Incluye explícitamente todos los intentos, también el original fallido cuando
-haya reintento. Ejemplo con un run (repite `--artifact`/`--jobs` por los demás):
+Incluye todos los intentos, también originales fallidos y reintentos. El bloque
+selecciona cada directorio conservado de campaña; contrastar ese inventario con
+la lista de runs antes de interpretar la cobertura:
 
 ```bash
 ANALYSIS="$CAMPAIGN/analysis-01"
+ARTIFACT_ARGS=()
+JOB_ARGS=()
+for ORIGINAL in "$CAMPAIGN"/originals/campaign/*; do
+  test -d "$ORIGINAL" || continue
+  ARTIFACT_ARGS+=(--artifact "$ORIGINAL")
+  RUN_ID=$(basename "$ORIGINAL")
+  if test -f "$ORIGINAL/pair.json" && test -f "$CAMPAIGN/jobs/$RUN_ID.json"; then
+    JOB_ARGS+=(--jobs "$CAMPAIGN/jobs/$RUN_ID.json")
+  fi
+done
 python3 "$CLI" analyze --campaign-plan "$CAMPAIGN/control/frozen.json" \
-  --artifact "$CAMPAIGN/originals/$RUN" --jobs "$CAMPAIGN/jobs/$RUN.json" \
+  "${ARTIFACT_ARGS[@]}" "${JOB_ARGS[@]}" \
   --evidence-output "$ANALYSIS" --output "$ANALYSIS/analysis.json"
 (cd "$ANALYSIS" && sha256sum -c SHA256SUMS.txt)
 tar -czf "$CAMPAIGN/analysis-01.tar.gz" -C "$CAMPAIGN" analysis-01
@@ -271,3 +303,39 @@ explícitamente sintéticas e instrucciones EN/ES. Revisión y aceptación human
 pendientes. TODO y `evidence/environment/paired-rg-campaign/` recogen validación
 local; las pruebas sintéticas no demuestran publicación alojada, desarrollo en
 fuente final ni ejecución de campaña.
+
+## Entrega final y archivos incompletos
+
+Los comandos se contrastaron con CLI e inputs del workflow; este incremento no
+los ejecutó como validación alojada. Detenerse si falla fuente/entorno.
+`WATCH_STATUS` conserva el resultado fallido mientras permite descargar evidencia;
+una descarga correcta no autoriza pasar a GR ni a la posición siguiente. Revisar
+RG y GR exitosos sobre fuente final antes de vincular. Los logs quedan fuera del
+original inmutable: añadir archivos dentro rompe su manifiesto. Comprobar espacio
+antes de cada descarga y conservar copia externa; no borrar originales para que
+quepa el siguiente intento.
+
+La verificación admite brazo sin iniciar, build fallido/incompleto o imagen que
+no alcanzó admisión sin exigir campos imagen/inicio/final aún no producidos.
+Exige identidad/configuración/base, coincidencia completa archivo/brazo y coherencia
+de fases; rechaza éxito falso. Admisión interrumpida sin respuesta registrada
+conserva duración desconocida aunque el trap cerrara su fase. El análisis mantiene
+clasificación y motivos de exclusión; tiempos ausentes quedan null.
+
+El bucle de análisis incluye cada directorio de `originals/campaign/`, también
+originales fallidos y reintentos; no apartar ninguno para mejorar resultados.
+Exportaciones sin finalizar con fallo registrado quedan en `unfinalizedArtifacts`;
+si una cancelación impidió el manifiesto, conservar logs nativos aparte y comunicar
+la posición ausente. Los metadatos de consumo deben corresponder a jobs terminados;
+omitir los incompletos/no disponibles sin inventar consumo. El análisis no sustituye
+archivos originales de brazos/base. No mezclar desarrollo, piloto, reparación ni
+ensayos funcionales con observaciones de campaña.
+
+La [preparación de evaluación](evaluation-readiness.md) contiene matriz de veinte
+filas, procedencia de revisión, esfuerzo humano aplazado y alineación futura de tesis.
+
+Solo la clasificación derivada por el finalizador puede diferir del checkpoint
+archivado, y debe coincidir con su recálculo desde los mismos hechos (por ejemplo,
+fallo de caché antes del temporizador). Un paquete de bootstrap anterior a arm-init
+se conserva como preparación si ni par ni archivo declaran observación del brazo;
+no aporta duración ni éxito. Los demás campos y su presencia deben coincidir.

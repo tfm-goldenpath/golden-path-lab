@@ -1,5 +1,10 @@
 # Plan for the first integrated base
 
+Current evaluation scope and final-source requirements are consolidated in the
+[twenty-scenario readiness matrix](evaluation-readiness.md). Human-effort
+measurement and eligible manual calibration are deferred; historical observations
+below keep their original source and review status.
+
 [English documentation](README.md)
 
 [Versión en español del plan de origen](../ES/implementation-plan.md).

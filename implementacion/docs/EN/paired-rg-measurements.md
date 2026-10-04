@@ -10,8 +10,10 @@ the earlier cache-preparation failure remains recorded below. The four authorize
 pilot pairs GR/GR/RG/RG are now complete and independently reviewed: 4/4 favorable,
 no exclusions or retries. The [pilot report](paired-rg-pilot-review.md) records
 timings, dispersion, completed-job consumption and the resolved initial dispatch
-access failure. Campaign remains **NOT_EXECUTED**. Manual-task calibration,
-scenario readiness review and human acceptance remain pending. The contributor reports
+access failure. Campaign remains **NOT_EXECUTED**. Human-effort measurement and eligible manual
+calibration are deferred; scenario readiness and human acceptance remain pending.
+The [readiness matrix](evaluation-readiness.md) separates the four datasets and
+final-source requirements. The contributor reports
 successful lane A functional suites in run `36885654089`, source
 `5ae6f84a01407789933bd36bcdb05250a6d6c4f5`; this increment does not independently
 reaudit that package. Existing lane A reviews and unsuccessful attempts remain
@@ -177,7 +179,7 @@ gh workflow run paired-rg.yml --repo tfm-goldenpath/golden-path-lab --ref main \
   -f dataset=development -f pair=1 -f order=RG -f expected_source="$TARGET"
 gh run list --repo tfm-goldenpath/golden-path-lab --workflow paired-rg.yml --limit 5
 # Select the actual resulting ID, never another workflow's successful run.
-RUN=<actual-run-id>
+read -r -p 'Actual resulting run ID: ' RUN
 gh run watch "$RUN" --repo tfm-goldenpath/golden-path-lab --exit-status
 DEST="implementacion/evidence/measurements/download-$RUN"
 gh run download "$RUN" --repo tfm-goldenpath/golden-path-lab \

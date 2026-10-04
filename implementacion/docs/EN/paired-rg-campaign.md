@@ -13,8 +13,10 @@ scenarios. R/G means reference/Golden Path; A/B means local/hosted execution.
 
 The completed four-pair pilot and all historical failures are unchanged. The
 [guided manual rehearsals](manual-task-rehearsal-review.md) remain ineligible for
-calibration. Manual calibration, its three limits, scenario readiness and overall
-pilot acceptance are separate; this increment does not complete them.
+calibration. Human-effort measurement, eligible manual calibration and its limits
+are deferred under the reduced scope. Scenario readiness, overall acceptance and
+campaign authorization remain separate decisions. See the [twenty-scenario
+readiness matrix](evaluation-readiness.md).
 
 `paired-rg.py` remains the coordinator over the same shell modules and explicit
 native-provenance steps. `paired_campaign.py` validates plan/authorization
@@ -29,12 +31,15 @@ From the repository root, choose a new ignored directory:
 ```bash
 CAMPAIGN="$PWD/implementacion/evidence/measurements/campaign-draft-01"
 CLI="$PWD/implementacion/scripts/paired-rg.py"
-python3 "$CLI" campaign-draft --seed example-unapproved-campaign-v1 \
-  --pairs 10 --output "$CAMPAIGN/draft.json"
+read -r -p 'Proposed even pair count (10 is provisional): ' CAMPAIGN_PAIRS
+read -r -p 'Proposed deterministic seed: ' CAMPAIGN_SEED
+python3 "$CLI" campaign-draft --seed "$CAMPAIGN_SEED" \
+  --pairs "$CAMPAIGN_PAIRS" --output "$CAMPAIGN/draft.json"
 python3 "$CLI" campaign-inspect "$CAMPAIGN/draft.json"
 ```
 
-Expected: `DRAFT`, ten numbered slots with five RG/five GR, then `NOT_AUTHORIZED`.
+Expected: `DRAFT`, the proposed number of slots balanced RG/GR, then
+`NOT_AUTHORIZED`. Ten is not preselected or approved.
 The explicit even count must be 2–1000; a separate 60,000-byte frozen-control limit
 keeps the workflow input bounded. Neither bound is a statistical recommendation.
 The algorithm sorts equally many labelled RG/GR slots by SHA256(seed:slot),
@@ -48,12 +53,16 @@ do not edit a tracked file to insert its own SHA. Fetch/check out the final main
 then perform these local checks:
 
 ```bash
+cd /workspaces/golden-path-lab
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+test -z "$(git status --porcelain)"
 git fetch origin main
 git switch main
 git pull --ff-only origin main
 TARGET=$(git rev-parse HEAD)
 test "$TARGET" = "$(git rev-parse origin/main)"
-test -z "$(git status --porcelain --untracked-files=no)"
+test -z "$(git status --porcelain)"
+df -h . /var/lib/docker
 make -C implementacion doctor
 make -C implementacion test
 ```
@@ -66,10 +75,14 @@ gh workflow run paired-rg.yml --repo tfm-goldenpath/golden-path-lab --ref main \
   -f dataset=development -f pair=1 -f order=RG -f expected_source="$TARGET"
 gh run list --repo tfm-goldenpath/golden-path-lab --workflow paired-rg.yml --limit 5
 read -r -p 'Actual development RG run ID: ' DEV_RG
-gh run watch "$DEV_RG" --repo tfm-goldenpath/golden-path-lab --exit-status
+WATCH_STATUS=0
+gh run watch "$DEV_RG" --repo tfm-goldenpath/golden-path-lab --exit-status || WATCH_STATUS=$?
+printf 'Workflow watch exit: %s\n' "$WATCH_STATUS"
 gh run download "$DEV_RG" --repo tfm-goldenpath/golden-path-lab \
   --name "paired-rg-$DEV_RG" --dir "$CAMPAIGN/originals/development-RG"
 python3 "$CLI" verify-export "$CAMPAIGN/originals/development-RG"
+mkdir -p "$CAMPAIGN/logs"
+gh run view "$DEV_RG" --repo tfm-goldenpath/golden-path-lab --log > "$CAMPAIGN/logs/$DEV_RG.log"
 ```
 
 Review original outer/internal archive checksums, DB bytes/identity, independent
@@ -84,10 +97,14 @@ gh workflow run paired-rg.yml --repo tfm-goldenpath/golden-path-lab --ref main \
   -f database_run="$DEV_RG"
 gh run list --repo tfm-goldenpath/golden-path-lab --workflow paired-rg.yml --limit 5
 read -r -p 'Actual development GR run ID: ' DEV_GR
-gh run watch "$DEV_GR" --repo tfm-goldenpath/golden-path-lab --exit-status
+WATCH_STATUS=0
+gh run watch "$DEV_GR" --repo tfm-goldenpath/golden-path-lab --exit-status || WATCH_STATUS=$?
+printf 'Workflow watch exit: %s\n' "$WATCH_STATUS"
 gh run download "$DEV_GR" --repo tfm-goldenpath/golden-path-lab \
   --name "paired-rg-$DEV_GR" --dir "$CAMPAIGN/originals/development-GR"
 python3 "$CLI" verify-export "$CAMPAIGN/originals/development-GR"
+mkdir -p "$CAMPAIGN/logs"
+gh run view "$DEV_GR" --repo tfm-goldenpath/golden-path-lab --log > "$CAMPAIGN/logs/$DEV_GR.log"
 ```
 
 Review GR equally, including native provenance in its first position. Neither
@@ -179,10 +196,14 @@ gh workflow run paired-rg.yml --repo tfm-goldenpath/golden-path-lab --ref main \
   -f database_run="$DEV_RG" -f plan_run="$PLAN_RUN" -f plan_identity="$PLAN_ID"
 gh run list --repo tfm-goldenpath/golden-path-lab --workflow paired-rg.yml --limit 5
 read -r -p 'Actual pair run ID: ' RUN
-gh run watch "$RUN" --repo tfm-goldenpath/golden-path-lab --exit-status
+WATCH_STATUS=0
+gh run watch "$RUN" --repo tfm-goldenpath/golden-path-lab --exit-status || WATCH_STATUS=$?
+printf 'Workflow watch exit: %s\n' "$WATCH_STATUS"
 gh run download "$RUN" --repo tfm-goldenpath/golden-path-lab \
-  --name "paired-rg-$RUN" --dir "$CAMPAIGN/originals/$RUN"
-python3 "$CLI" verify-export "$CAMPAIGN/originals/$RUN"
+  --name "paired-rg-$RUN" --dir "$CAMPAIGN/originals/campaign/$RUN"
+python3 "$CLI" verify-export "$CAMPAIGN/originals/campaign/$RUN"
+mkdir -p "$CAMPAIGN/logs"
+gh run view "$RUN" --repo tfm-goldenpath/golden-path-lab --log > "$CAMPAIGN/logs/$RUN.log"
 mkdir -p "$CAMPAIGN/jobs"
 gh api "repos/tfm-goldenpath/golden-path-lab/actions/runs/$RUN/jobs" > "$CAMPAIGN/jobs/$RUN.json"
 ```
@@ -219,13 +240,24 @@ continuing. Keep the original run ID and its job consumption in the analysis.
 ## 6. Analyze originals without pooling or rewriting them
 
 For each observed run, include its original artifact, plus the original failed
-artifact when a retry exists. List every attempt explicitly. Example for one
-observed run (repeat `--artifact`/`--jobs` for all the others):
+artifact when a retry exists. The following selects every retained campaign
+attempt directory. Compare the inventory with the workflow run list before
+interpreting coverage:
 
 ```bash
 ANALYSIS="$CAMPAIGN/analysis-01"
+ARTIFACT_ARGS=()
+JOB_ARGS=()
+for ORIGINAL in "$CAMPAIGN"/originals/campaign/*; do
+  test -d "$ORIGINAL" || continue
+  ARTIFACT_ARGS+=(--artifact "$ORIGINAL")
+  RUN_ID=$(basename "$ORIGINAL")
+  if test -f "$ORIGINAL/pair.json" && test -f "$CAMPAIGN/jobs/$RUN_ID.json"; then
+    JOB_ARGS+=(--jobs "$CAMPAIGN/jobs/$RUN_ID.json")
+  fi
+done
 python3 "$CLI" analyze --campaign-plan "$CAMPAIGN/control/frozen.json" \
-  --artifact "$CAMPAIGN/originals/$RUN" --jobs "$CAMPAIGN/jobs/$RUN.json" \
+  "${ARTIFACT_ARGS[@]}" "${JOB_ARGS[@]}" \
   --evidence-output "$ANALYSIS" --output "$ANALYSIS/analysis.json"
 (cd "$ANALYSIS" && sha256sum -c SHA256SUMS.txt)
 tar -czf "$CAMPAIGN/analysis-01.tar.gz" -C "$CAMPAIGN" analysis-01
@@ -277,3 +309,41 @@ explicitly synthetic regressions and EN/ES instructions. Human review and final
 acceptance are pending. Local verification is recorded in TODO and
 `evidence/environment/paired-rg-campaign/`; synthetic results do not establish
 hosted plan publication, final-source development or campaign execution.
+
+## Final-source handoff and incomplete archives
+
+These commands are checked against the CLI and workflow inputs, not executed
+hosted validation in this increment. Stop on a failed source/environment guard.
+`WATCH_STATUS` preserves a failed run's outcome while allowing evidence download;
+never proceed to GR or the next position merely because downloading succeeded.
+Review successful final-source development RG and GR before binding. Log downloads
+are outside immutable original exports; adding files inside them breaks their
+manifest. Inspect capacity before each download and retain an external copy;
+never prune original evidence to fit the next attempt.
+
+Archive verification now permits an unstarted arm, a failed/incomplete build or
+an image whose execution stopped before admission without requiring unreached
+image/start/end fields. It still requires identity/configuration/database and
+exact archive-to-arm agreement, checks phase consistency, and rejects false
+successful completion. Interrupted admission without a recorded response has
+unknown primary duration even when the exit trap closed its phase. Analysis
+retains classifications and exclusion reasons; missing time stays null.
+
+The analysis loop includes every directory under `originals/campaign/`, including
+failed originals and retries. Move none out to improve results. Unfinalized
+exports with failure records remain `unfinalizedArtifacts`; if cancellation left
+no valid manifest, retain native logs separately and report the missing position.
+Job metadata must describe completed jobs; omit unavailable/incomplete metadata
+rather than inventing consumption. Analysis exports do not replace original arm
+and database archives. Do not combine development, pilot, remediation or functional
+scenario data with campaign observations.
+
+See [evaluation readiness](evaluation-readiness.md) for the twenty-row matrix,
+review provenance, deferred human-effort scope and thesis alignment follow-up.
+
+Only the finalizer-derived classification may differ from its archived checkpoint,
+and only when it equals recomputation from those same facts (for example, cache
+validation failing before the timer). A bootstrap package created before arm-init
+can be retained as preparation evidence when neither the pair nor archive claims
+an arm observation; it supplies no duration or successful arm. All other recorded
+fields and presence must match.

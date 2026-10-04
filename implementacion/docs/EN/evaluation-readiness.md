@@ -1,0 +1,157 @@
+# Evaluation readiness and twenty-scenario coverage
+
+[Español](../ES/evaluation-readiness.md) · [Current work](../../TODO.md) · [Final execution handoff](paired-rg-campaign.md)
+
+## Current scope
+
+This is the readiness consolidation from main `940582721d0a5bee2fce54272f5dac60a87fad00`
+(merged PR #44), prepared on `fix/evaluation-readiness`. Implementation, recorded
+execution, evidence review and acceptance are different states. **Final-source
+execution is NOT_EXECUTED**: the eventual merged revision of this fix is not yet
+known. Passing regressions on this branch do not execute the scenario catalogue.
+
+Four datasets remain separate: functional scenario trials, PR44's scripted
+remediation, the completed four-pair timing pilot and the forthcoming timing
+campaign. PR44 has six additional observations within F03/F10/F11, not six new
+scenarios. Shared L01/L03/L04 deliveries, L06 CREATE and negative-case positive
+counterparts are linked observations, not independent samples. F01/F02 evaluate
+inert workflow data statically; they do not execute malicious workflows.
+
+Human-effort measurement and eligible manual calibration/limit selection are
+**deferred**. Known scripted repairs measure automated execution, not diagnosis,
+productivity or autonomous repair discovery. These records remain permanently
+ineligible for human calibration even after later review. Human review, overall
+acceptance and campaign authorization are not implied by a PR merge.
+
+## Evidence sources and review provenance
+
+This document consolidates **committed records**, not a new independent audit of
+original artifacts. Local retention was inventoried without reauthenticating the
+historic bundles. Where originals are absent, the committed record is the source:
+
+- **A1:** [lane-A execution/review record](lane-a-validation.md#first-successful-end-to-end-lane-a-run-36881119588),
+  run `36881119588`, source `b8eb603e7965e4d58cc9f58ec78f74971944a547`;
+  demo `run-TxAlzChs`, vulnerabilities `run-SeGfzbLB`. The record describes the
+  prior automated independent integrity/cryptographic review and passing audits.
+  Retained local root: `evidence/raw/lane-a-run-36881119588/`. Human acceptance
+  remains pending. A GitHub-hosted devcontainer with local keys is still lane A.
+- **A2 (reported only):** the [measurement guide](paired-rg-measurements.md) records
+  contributor-reported successful A suites in `36885654089`, source
+  `5ae6f84a01407789933bd36bcdb05250a6d6c4f5`. Its original artifact is not retained
+  here and this consolidation does not assign new per-scenario proof to it.
+- **B1 (supplied review):** [runtime record](cases/F11-F12-L06/record.md), run
+  `36768108684`, runtime increment merged at
+  `eed5aad2828a7156e4c49bf2e2f3d9c2b0476137`. The contributor supplied the hosted
+  F11/F12/L06 review; this is not a new audit or final-source acceptance.
+- **AR:** [PR44 result record](../../registros/automated-remediation-validation.md),
+  `automated-six-01`, seed `automated-six-v1`, source
+  `ea790781990766a3cb20bae5a302e1175edd3bd0`. Six VALIDATED tasks, completion,
+  cleanup and integrity PASS; no retries, interruptions or human interventions.
+  Originals remain under `evidence/manual-tasks/automated-six-01/`, linked raw runs
+  and safe packages. Human acceptance is pending; all six are calibration-ineligible.
+- **P:** [four-pair timing pilot](paired-rg-pilot-review.md), source
+  `02674a57d290083648a9af44c48fd049808b2d70`, runs `36964061878`, `36964593732`,
+  `36965104583`, `36965606734`, database from development `36926824792`.
+  The committed review records 4/4 favorable, zero retries/exclusions, median
+  G−R 55.339 s and 22.050 observed job minutes. Local original review downloads
+  were removed at the user's request; the external copy is not independently
+  verified here. This source/data cannot be relabelled or pooled into the campaign.
+
+## Coverage matrix — exactly twenty scenarios
+
+Paths below identify existing implementation and focused tests; `make -C
+implementacion test` also runs their shared checks. Each row uses the full
+source/run identity in the evidence key above. **Recorded PASS is historical;
+final-source execution and human readiness acceptance are pending for every row.**
+Unsupported B negatives remain NOT_EXECUTED regardless of A success. Regressions
+and CI checks demonstrate their named boundary only.
+
+| ID | Property / expected outcome | Implementation / focused test | Boundary | Supported lane | Recorded source/run and evidence | Observed / review status | Remaining limitation / final source |
+|---|---|---|---|---|---|---|---|
+| F01 | Reject privileged pull_request_target workflow | [workflows.py](../../tests/scenarios/workflows.py); [test_workflow_scenarios.py](../../tests/policies/test_workflow_scenarios.py) | Static workflow / PR CI | Static, lane-independent | A1 demo; [static record](../../registros/f01_f02_workflows_EN.md) | Exact event DENY recorded. Historical automated review; human pending. | No workflow fixture executes; ruleset enforcement is external. Final-source pending. |
+| F02 | Reject mutable external Action tag | [workflows.py](../../tests/scenarios/workflows.py); [test_workflow_scenarios.py](../../tests/policies/test_workflow_scenarios.py) | Static workflow / PR CI | Static, lane-independent | A1 demo; static record above | Exact ACTION_SHA DENY recorded. Historical automated review; human pending. | No upstream-tag attack is executed. Final-source pending. |
+| F03 | Reject fixable HIGH/CRITICAL dependency; repaired image passes | [vulnerabilities.sh](../../tests/scenarios/vulnerabilities.sh); [vulnerabilities.test.mjs](../../tests/unit/vulnerabilities.test.mjs) | Real SBOM scan / CI; repaired admission + HTTP | A; B fixture unsupported | A1 vulnerabilities; AR F03/G run-G0n1bJ9K, R run-gKNMKGI0 | A1 PASS; AR both VALIDATED. Historical automated review; human pending. | B negative NOT_EXECUTED; minimist finding bounded to frozen DB. Final-source pending. |
+| F04 | Reject HIGH/CRITICAL with no fix in the selected snapshot | [vulnerabilities.sh](../../tests/scenarios/vulnerabilities.sh); [vulnerabilities.test.mjs](../../tests/unit/vulnerabilities.test.mjs) | Real SBOM scan / CI | A; B fixture unsupported | A1 vulnerabilities: ip 2.0.1, CVE-2024-29415 | Attributable rejection PASS. Historical automated review; human pending. | B negative NOT_EXECUTED; no universal absence-of-fix claim. Final-source pending. |
+| F05 | Reject absent SBOM; accept exact restoration | [sbom.sh](../../tests/scenarios/sbom.sh); [sbom-scenario.test.mjs](../../tests/unit/sbom-scenario.test.mjs) | Fresh CI gate + directed admission | A; B negative unsupported | A1 demo; [SBOM record](cases/F05/record.md) | CI/admission rejection and restoration PASS. Historical automated review; human pending. | B negative NOT_EXECUTED; L03 counterpart is shared. Final-source pending. |
+| F06 | Reject SBOM bound to another digest | [sbom.sh](../../tests/scenarios/sbom.sh); [f06-scenario.test.mjs](../../tests/unit/f06-scenario.test.mjs) | Fresh CI gate + directed admission | A; B negative unsupported | A1 demo; [SBOM record](cases/F06/record.md) | Subject rejection and restoration PASS. Historical automated review; human pending. | B negative NOT_EXECUTED; schema checks do not prove inventory completeness. Final-source pending. |
+| F07 | Reject missing independent image signature | [f07.sh](../../tests/scenarios/f07.sh); [f07-ci-scenario.test.mjs](../../tests/unit/f07-ci-scenario.test.mjs) | Fresh CI + admission; exact recovery | A; B negative unsupported | A1 demo; [compatibility](cases/F07/hosted-compatibility.md) | Missing-signature rejection PASS. Historical automated review; human pending. | B negative NOT_EXECUTED; GHCR mutation unproven. Final-source pending. |
+| F08 | Reject corrupted image signature | [f08.sh](../../tests/scenarios/f08.sh); [f08-scenario.test.mjs](../../tests/unit/f08-scenario.test.mjs) | Fresh CI + directed admission | A; B negative unsupported | A1 demo; [signature record](cases/F08/record.md) | Targeted cryptographic rejection PASS. Historical automated review; human pending. | B negative NOT_EXECUTED; transport errors are not detection. Final-source pending. |
+| F09 | Reject absent provenance | [provenance.sh](../../tests/scenarios/provenance.sh); [provenance-scenario.test.mjs](../../tests/unit/provenance-scenario.test.mjs) | Fresh CI + directed admission | A; B negative unsupported | A1 demo; [origin record](cases/F09-F10-L05/record.md) | Rejection and restoration PASS. Historical automated review; human pending. | B negative NOT_EXECUTED; retrieval failure cannot prove absence. Final-source pending. |
+| F10 | Reject authentic provenance from unauthorized repository | [provenance.sh](../../tests/scenarios/provenance.sh); [provenance-scenario.test.mjs](../../tests/unit/provenance-scenario.test.mjs) | Fresh CI + directed admission | A; B negative unsupported | A1 demo; AR G run-rZHXsd7i, R run-pd8oXkxS | A1 PASS; AR both VALIDATED. Historical automated review; human pending. | B negative NOT_EXECUTED; AR selects authorized artifact without editing claims. Final-source pending. |
+| F11 | Reject privileged and escalation flags | [runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs) | CI; Deployment CREATE/UPDATE + Pod admission | A/B runtime; AR A only | A1 demo; B1; AR R run-Dh0ak8AA, G run-4mg9a28a | A1 PASS; B1 supplied review; AR both VALIDATED. Historical automated review; human pending; B1 supplied. | Coordinated two-field fault; accepted guided rehearsals remain ineligible. Final-source pending. |
+| F12 | Reject mutable tag even when it resolves to authorized digest | [runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs) | CI; Deployment CREATE/UPDATE + Pod admission | A/B runtime | A1 demo; B1 | A1 PASS; B1 supplied review. Historical automated review; human pending; B1 supplied. | Tag resolution checked on both sides; not a provenance fault. Final-source pending. |
+| F13 | Reject missing signed results; restore legitimate delivery | [results.sh](../../tests/scenarios/results.sh); [results-scenario.test.mjs](../../tests/unit/results-scenario.test.mjs) | Preissuance admission; postissuance CI/admission | A both; B preissuance only | A1 demo (pre/postissuance); [results oracle](cases/F13-F14/record.md) | Both A boundaries PASS. Historical automated review; human pending. | B postissuance negative NOT_EXECUTED; preissuance is a separate observation of same ID. Final-source pending. |
+| F14 | Reject authenticated P0 replay under trusted P1 policy | [results.sh](../../tests/scenarios/results.sh); [results-scenario.test.mjs](../../tests/unit/results-scenario.test.mjs) | Authorized CI + fresh directed CREATE | A; B negative unsupported | A1 demo; earlier 36830599263 unchanged-apply failure retained | Corrected CREATE rejection PASS. Historical automated review; human pending. | B negative NOT_EXECUTED; P0 is labelled fixture, not real historic policy. Final-source pending. |
+| L01 | Accept legitimate delivery and new verified replacement digest | [l01.sh](../../tests/scenarios/l01.sh); [l01-update.test.mjs](../../tests/unit/l01-update.test.mjs) | CI + admission + rollout/HTTP | A/B | A1 demo; P timing deliveries support B legitimate path only | Shared L01/L03/L04 PASS; P 4/4 pairs favorable. Historical automated review; human pending. | P has no replacement trial; same-commit replacement is not L05 app evolution. Final-source pending. |
+| L02 | Accept MEDIUM-only vulnerability fixture | [vulnerabilities.sh](../../tests/scenarios/vulnerabilities.sh); [vulnerabilities.test.mjs](../../tests/unit/vulnerabilities.test.mjs) | CI threshold + signature/evidence + admission/HTTP | A; B fixture unsupported | A1 vulnerabilities: lodash.unset 4.5.2 | Threshold and positive delivery PASS. Historical automated review; human pending. | B fixture NOT_EXECUTED; CVE-2026-2950 plus CVE-2025-13465 are snapshot-specific. Final-source pending. |
+| L03 | Accept legitimate component/inventory evolution with fresh SBOM | [l01.sh](../../tests/scenarios/l01.sh); [sbom-evidence.test.mjs](../../tests/unit/sbom-evidence.test.mjs) | SBOM CI + admission + functionality | A/B positive path | A1 demo; [L03 oracle](cases/L03/record.md) | Shared L01/L03/L04 PASS. Historical automated review; human pending. | Known is-number addition; no completeness claim or independent sample. Final-source pending. |
+| L04 | Accept valid independent image signature after fresh verification | [l01.sh](../../tests/scenarios/l01.sh); [ci-verification-gate.test.mjs](../../tests/unit/ci-verification-gate.test.mjs) | CI gate + results + admission/HTTP | A/B positive path | A1 demo; [L04 oracle](cases/L04/record.md) | Shared L01/L03/L04 PASS. Historical automated review; human pending. | Shared replacement/control; does not establish B negative F07. Final-source pending. |
+| L05 | Accept two authorized real application source revisions | [l05.sh](../../tests/scenarios/l05.sh); [l05-scenario.test.mjs](../../tests/unit/l05-scenario.test.mjs) | Source guard + CI + admission/HTTP for both | A explicit pair; B needs two separately authorized native runs | A1 demo: 7243334fe4ee7073801a86b25c90986b7d3c5ece → fc58e220e2d3f38d13216b23e61ffc31271f112f | Both A source deliveries PASS. Historical automated review; human pending. | B paired revision trial NOT_EXECUTED; warmup in timing pilot is not L05. Final-source pending. |
+| L06 | Accept permitted same-image template update | [runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs) | CREATE/template UPDATE + rollout/HTTP + positive Pod | A/B | A1 demo; B1 | Generation 1→2, digest/HTTP PASS; B1 supplied review. Historical automated review; human pending; B1 supplied. | CREATE shares L01; positive Pods and recovery do not add independent samples. Final-source pending. |
+
+## Final execution handoff
+
+Use the [campaign procedure](paired-rg-campaign.md), steps 1–6, as the executable
+command reference. Its commands were checked against the current CLI and workflow
+inputs; Bash syntax checking does not establish hosted execution. No remote step,
+plan authorization, publication or final-source development was performed here.
+
+1. Merge all preparation fixes through normal review; on clean current main,
+   record `TARGET`, check pinned `doctor` and shared tests, and inspect available
+   storage before downloading evidence. Keep the future revision distinct from A1,
+   AR and P; never rewrite their source identities.
+2. Separately authorize and run fresh development **RG then GR** on that same
+   `TARGET`, with GR restoring `database_run=$DEV_RG`. Download both original
+   exports and Actions logs; verify hashes and review real build/cache, native
+   provenance, admission, rollout/HTTP, endpoints and cleanup evidence. A green
+   job or a checksum alone is insufficient. Changes/failures require retained
+   evidence and a new source/plan where applicable, not a silent retry.
+3. Select the draft count/seed explicitly; **ten pairs is only provisional**.
+   Bind the draft to those development exports, source/configuration and database.
+   A person must review and enter the authorization declaration. The assistant
+   does not supply a reviewer or use `campaign-freeze` on the person's behalf.
+4. After permission for remote plan publication, publish the exact frozen control
+   through the existing plan-only job. Verify and export its identity/manifest.
+5. Execute only approved positions in their frozen order, review/export every
+   attempt before the next, and retain failures. Only the existing one full-pair
+   retry for an evidenced, reviewed external failure is permitted. Never rerun
+   because a control rejects, a run is slow or this analysis defect occurred.
+6. Analyze **all** retained campaign attempt directories (including retry originals
+   and incomplete/unfinalized attempts) with the selected control. Export originals
+   and derived analysis separately; unknown durations stay null and partial
+   coverage remains explicit. Download outside Codespaces before retention expires.
+
+The analyzer now checks exact arm/archive agreement and mandatory identity even
+for incomplete observations. Image/start/end fields may be absent only before
+their producer checkpoint. No image can be omitted once post-build phases exist;
+no duration or functional completion is inferred when admission has no recorded
+endpoint. Successful observations still require complete favorable evidence.
+Unknown fields are not synthesized from archive timestamps, phase exits or job
+minutes. Existing retry/source/database guards and original bytes are preserved.
+
+Functional readiness review remains separate: use A1's per-boundary record and
+identify which functional suites need a new run on the eventual final source.
+A lane-A suite rerun cannot close unsupported hosted negatives. Fresh development
+RG/GR validates the timing runner on that source, not all twenty scenarios.
+
+Only the finalizer-derived classification may differ from its archived checkpoint,
+and only when it equals recomputation from those same facts (for example, cache
+validation failing before the timer). A bootstrap package created before arm-init
+can be retained as preparation evidence when neither the pair nor archive claims
+an arm observation; it supplies no duration or successful arm. All other recorded
+fields and presence must match.
+
+## Thesis statements needing later alignment (no thesis edits)
+
+- Replace any claim of completed human diagnosis/remediation comparison or eligible
+  manual calibration with deferred scope; distinguish guided rehearsals and scripts.
+- Separate twenty scenario IDs from boundary checks, shared positive controls and
+  PR44's six additional observations; retain unsupported hosted NOT_EXECUTED cases.
+- Attribute lane-A evidence to local trust, even when hosted in Actions; do not
+  generalize it to OIDC/GHCR mutation acceptance or all scenarios in both lanes.
+- Keep the four-pair pilot's original source and exploratory estimates separate
+  from the future campaign; ten pairs remains a proposal, not an approved sample.
+- Report known-repair timings, G−R delivery intervals and Actions job minutes as
+  distinct measures; preserve null/incomplete observations, exclusions and failures.
+- Keep technical success, archive integrity, human acceptance and overall evaluation
+  completion separate. Update final-source/run references only after actual execution.
