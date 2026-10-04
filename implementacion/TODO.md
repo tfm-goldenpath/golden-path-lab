@@ -1,5 +1,14 @@
 # Incremental implementation plan
 
+## Current human acceptance — 4 October 2026
+
+- [x] Francisco accepted the ten-pair exploratory campaign and the functional observations, six automated repairs and pilot within their respective sources and execution boundaries. The experimental evaluation is closed within the documented reduced scope. See the [canonical Spanish declaration](registros/evaluation_acceptance_20261004_ES.md) and its [English translation](registros/evaluation_acceptance_20261004_EN.md): dossier `20261004T153508Z`, measured source `895a3bde79089b7544c1dad76a6cd8f48eede0a8`, reviewed documentation `ad7be26dc94a90c3a1c72245b2522ce344d2d0cb`.
+- [ ] **Deferred:** human-effort measurement; automated repairs remain separate from human-work measurement.
+- [ ] **External preservation — responsible: Francisco:** record the location of the complete external copy and verify its checksums.
+- [x] Incorporate results and limitations into the local Spanish thesis chapters 4–6, including the concise conclusions and reduced-scope acceptance. This is a manuscript update outside this repository; final editorial review and deposit remain separate.
+
+The declaration supplements the original dossier without changing its evidence, results or hashes. It does not establish execution of unsupported hosted negatives or repetition of the complete catalogue on the campaign source. Earlier pending-acceptance wording and checklists below retain their historical status; this dated declaration records the current human decision.
+
 This plan organizes incremental adoption, tasks and completion criteria. Checkboxes distinguish implemented files, observed execution and pending acceptance; one does not imply the others. Measured campaign source: `895a3bde79089b7544c1dad76a6cd8f48eede0a8` (merged PR #45); the results documentation is a later change. The PR #15 baseline at `dd381d3` and **v0.2.0 prerelease** remain historical milestones. Implementation, observed runs and final evaluation acceptance remain distinct.
 
 The [modular architecture](docs/EN/architecture.md) separates orchestration, policies and evidence through verifiable contracts.
@@ -12,7 +21,8 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 - [x] Retain Francisco's explicit authorization of ten exploratory pairs, seed `final-campaign-895a3bd-v1`, order RG/RG/RG/RG/GR/GR/GR/RG/GR/GR. Freeze that exact plan and publish through plan-only run `37202322661`.
 - [x] Execute all ten positions sequentially with automated technical review between them. Existing analysis: 10/10 favorable pairs, zero exclusions/retries/interruptions, median G−R 55.090 s and 55.717 observed pair-job minutes; billed cost unknown. Preserve the position-4 review-only cleanup assertion and its correction, without changing originals or controls.
 - [x] Publish original evidence and derived reviews/analysis in the dedicated evidence prerelease at the measured source. See matching [EN](docs/EN/paired-rg-campaign-results.md) / [ES](docs/ES/paired-rg-campaign-results.md) results, retrieval commands, limitations and hashes. Keep raw evidence out of Git and earlier failures/revisions intact.
-- [ ] Human review of campaign results and this documentation; overall functional/pilot/evaluation acceptance remains pending. Publishing evidence or merging the results PR does not close these decisions or authorize another campaign.
+- [x] Record Francisco's human acceptance on 4 October 2026 for dossier `20261004T153508Z`: campaign, functional observations, six automated repairs and pilot accepted within their respective sources and the reduced scope. See the [declaration](registros/evaluation_acceptance_20261004_ES.md). This decision does not authorize another campaign or supply unexecuted coverage.
+- [ ] Review the publication changes and English translation in the human-acceptance documentation PR; the experimental acceptance above does not pre-approve this new editorial change.
 - [ ] **Deferred:** human-effort measurement, eligible manual calibration and human-task limits. Known repairs remain permanently ineligible. Functional trials, scripted repairs, the historical four-pair pilot and the ten-pair campaign are separate datasets. Thesis alignment is listed in the results guide; no thesis edits here.
 
 ## Readiness implementation history (PR #45)
