@@ -6,6 +6,7 @@ Esta documentación ofrece apoyo en español. La implementación y la documentac
 
 | Guía | Contenido |
 | --- | --- |
+| [Resultados de diez pares](paired-rg-campaign-results.md) | Tiempos observados, runs/evidencias originales, comprobaciones y aceptación humana pendiente. |
 | [Preparación de la evaluación](evaluation-readiness.md) | Veinte escenarios, evidencia histórica, alcance actual y entrega para ejecución final. |
 | [Entorno y versiones](environment.md) | Preparación del devcontainer, versiones fijadas y comprobación del entorno. |
 | [Arquitectura modular](architecture.md) | Responsabilidades, interfaces y límites de verificación de los componentes. |
@@ -35,4 +36,4 @@ La carpeta `cases/L01-F13/` reúne la documentación del ensayo integrado, inclu
 
 La medición de esfuerzo humano y calibración elegible están aplazadas. Ensayos
 funcionales, reparaciones con script, piloto temporal de cuatro pares y campaña
-futura son datasets separados. La guía de preparación recoge el estado actual.
+completada de diez pares son datasets separados. La guía de preparación recoge el estado actual.

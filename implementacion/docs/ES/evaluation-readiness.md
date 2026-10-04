@@ -4,14 +4,15 @@
 
 ## Alcance actual
 
-Consolidación desde main `940582721d0a5bee2fce54272f5dac60a87fad00` (PR #44
-integrada), preparada en `fix/evaluation-readiness`. Implementación, ejecución
-observada, revisión de evidencia y aceptación son estados distintos. **La
-ejecución sobre fuente final es NOT_EXECUTED**: todavía no se conoce la revisión
-fusionada de este arreglo. Las regresiones de esta rama no ejecutan el catálogo.
+La consolidación se preparó desde `940582721d0a5bee2fce54272f5dac60a87fad00`
+y se integró como PR #45 en `895a3bde79089b7544c1dad76a6cd8f48eede0a8`.
+Desarrollo RG/GR nuevo y la [campaña temporal de diez pares](paired-rg-campaign-results.md)
+ya tienen evidencia revisada en `895a3bd`. La ruta de entrega legítima no repite
+el catálogo funcional completo. Implementación, ejecución, revisión automatizada
+y aceptación humana siguen separadas; aceptación global pendiente.
 
 Se mantienen cuatro datasets separados: ensayos funcionales, reparación mediante
-script de PR44, piloto temporal de cuatro pares y futura campaña temporal. Las
+script de PR44, piloto temporal de cuatro pares y campaña temporal completada de diez pares. Las
 seis tareas de PR44 son observaciones adicionales de F03/F10/F11, no escenarios
 nuevos. Las entregas compartidas L01/L03/L04, CREATE de L06 y contrapartes positivas
 son observaciones vinculadas, no muestras independientes. F01/F02 evalúan datos
@@ -26,9 +27,10 @@ de campaña.
 
 ## Fuentes de evidencia y procedencia de revisión
 
-Se consolidan **registros versionados**, sin una nueva auditoría independiente de
-los originales. Se inventarió la retención local sin reautenticar bundles
-históricos. Cuando falta el original, la fuente es el registro versionado:
+Las fuentes históricas A1/A2/B1/AR/P siguen siendo **registros versionados**, sin
+nueva auditoría de esos originales. Su inventario de retención no reautenticó
+bundles históricos. La fuente posterior C tiene revisión y publicación de originales
+separadas. Si falta un original histórico, su registro versionado sigue como fuente:
 
 - **A1:** [registro de ejecución/revisión A](lane-a-validation.md), run
   `36881119588`, fuente `b8eb603e7965e4d58cc9f58ec78f74971944a547`; demo
@@ -58,13 +60,20 @@ históricos. Cuando falta el original, la fuente es el registro versionado:
   se retiraron a petición del usuario; no se verificó aquí la copia externa.
   No se pueden reasignar esta fuente/datos ni agruparlos con la campaña.
 
+- **C:** [resultados y originales publicados de diez pares](paired-rg-campaign-results.md),
+  fuente `895a3bde79089b7544c1dad76a6cd8f48eede0a8`, diez runs enlazados,
+  base del desarrollo `37199309814`. 10/10 favorables sin exclusiones/reintentos;
+  revisión técnica automatizada e integridad PASS; aceptación humana pendiente.
+  Solo respalda la frontera de entrega legítima alojada, no reemplazo, evolución
+  de componente, negativos ni muestras positivas independientes adicionales.
+
 ## Matriz de cobertura — exactamente veinte escenarios
 
 Las rutas identifican implementación y pruebas existentes; `make -C
 implementacion test` ejecuta también sus comprobaciones comunes. Cada fila usa la
-identidad completa fuente/run de su clave anterior. **PASS registrado es histórico;
-ejecución sobre fuente final y aceptación humana de preparación pendientes en
-todas las filas.** Los negativos B no soportados siguen NOT_EXECUTED aunque A
+identidad completa fuente/run de su clave anterior. **Los fixtures completos no
+se han repetido sobre la fuente de campaña; la aceptación humana sigue pendiente.**
+C solo aporta las fronteras positivas compartidas identificadas expresamente. Los negativos B no soportados siguen NOT_EXECUTED aunque A
 pase. Las regresiones y CI solo demuestran su frontera indicada.
 
 | ID | Propiedad / resultado esperado | Implementación / prueba enfocada | Frontera | Carril soportado | Fuente/run y evidencia registrados | Observación / estado de revisión | Limitación restante / fuente final |
@@ -83,19 +92,19 @@ pase. Las regresiones y CI solo demuestran su frontera indicada.
 | F12 | Rechazar etiqueta mutable aunque resuelva al digest autorizado | [runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs) | CI; admisión Deployment CREATE/UPDATE + Pod | Runtime A/B | A1 demo; B1 | A1 PASS; B1 revisión aportada. Revisión automatizada histórica; humana pendiente; B1 aportada. | Resolución de etiqueta verificada antes/después; no es fallo de procedencia. Fuente final pendiente. |
 | F13 | Rechazar resultados firmados ausentes; restaurar entrega legítima | [results.sh](../../tests/scenarios/results.sh); [results-scenario.test.mjs](../../tests/unit/results-scenario.test.mjs) | Admisión previa; CI/admisión tras emisión | A ambas; B solo previa a emisión | A1 demo (antes/después de emisión); [oráculo resultados](cases/F13-F14/record.md) | Ambas fronteras A PASS. Revisión automatizada histórica; humana pendiente. | Negativo B tras emisión NOT_EXECUTED; prueba previa es otra observación del mismo ID. Fuente final pendiente. |
 | F14 | Rechazar replay P0 autenticado bajo política P1 | [results.sh](../../tests/scenarios/results.sh); [results-scenario.test.mjs](../../tests/unit/results-scenario.test.mjs) | CI autorizado + CREATE dirigido nuevo | A; negativo B no soportado | A1 demo; se conserva fallo unchanged-apply de 36830599263 | Rechazo CREATE corregido PASS. Revisión automatizada histórica; humana pendiente. | Negativo B NOT_EXECUTED; P0 es fixture identificado, no política histórica real. Fuente final pendiente. |
-| L01 | Aceptar entrega legítima y reemplazo con digest nuevo verificado | [l01.sh](../../tests/scenarios/l01.sh); [l01-update.test.mjs](../../tests/unit/l01-update.test.mjs) | CI + admisión + rollout/HTTP | A/B | A1 demo; entregas P apoyan solo ruta B legítima | L01/L03/L04 compartidos PASS; P 4/4 pares favorables. Revisión automatizada histórica; humana pendiente. | P no ensaya reemplazo; reemplazo del mismo commit no es evolución L05. Fuente final pendiente. |
+| L01 | Aceptar entrega legítima y reemplazo con digest nuevo verificado | [l01.sh](../../tests/scenarios/l01.sh); [l01-update.test.mjs](../../tests/unit/l01-update.test.mjs) | CI + admisión + rollout/HTTP | A/B | A1 demo; entregas P y C apoyan solo ruta B legítima | L01/L03/L04 compartidos PASS; P 4/4 y C 10/10 pares temporales favorables. Revisión automatizada histórica; humana pendiente. | P/C no ensayan reemplazo; reemplazo del mismo commit no es evolución L05. Fuente final pendiente. |
 | L02 | Aceptar fixture con vulnerabilidades solo MEDIUM | [vulnerabilities.sh](../../tests/scenarios/vulnerabilities.sh); [vulnerabilities.test.mjs](../../tests/unit/vulnerabilities.test.mjs) | Umbral CI + firma/evidencias + admisión/HTTP | A; fixture B no soportado | A1 vulnerabilities: lodash.unset 4.5.2 | Umbral y entrega positiva PASS. Revisión automatizada histórica; humana pendiente. | Fixture B NOT_EXECUTED; ambos CVE-2026-2950 y CVE-2025-13465 dependen del snapshot. Fuente final pendiente. |
 | L03 | Aceptar evolución legítima de componente/inventario con SBOM nuevo | [l01.sh](../../tests/scenarios/l01.sh); [sbom-evidence.test.mjs](../../tests/unit/sbom-evidence.test.mjs) | CI SBOM + admisión + funcionalidad | Ruta positiva A/B | A1 demo; [oráculo L03 — EN](../EN/cases/L03/record.md) | L01/L03/L04 compartidos PASS. Revisión automatizada histórica; humana pendiente. | Adición conocida is-number; no prueba completitud ni muestra independiente. Fuente final pendiente. |
-| L04 | Aceptar firma independiente válida tras verificación fresca | [l01.sh](../../tests/scenarios/l01.sh); [ci-verification-gate.test.mjs](../../tests/unit/ci-verification-gate.test.mjs) | Gate CI + resultados + admisión/HTTP | Ruta positiva A/B | A1 demo; [oráculo L04](cases/L04/record.md) | L01/L03/L04 compartidos PASS. Revisión automatizada histórica; humana pendiente. | Reemplazo/control compartido; no demuestra negativo F07 en B. Fuente final pendiente. |
+| L04 | Aceptar firma independiente válida tras verificación fresca | [l01.sh](../../tests/scenarios/l01.sh); [ci-verification-gate.test.mjs](../../tests/unit/ci-verification-gate.test.mjs) | Gate CI + resultados + admisión/HTTP | Ruta positiva A/B | A1 demo; C firma fresca/admisión/HTTP; [oráculo L04](cases/L04/record.md) | L01/L03/L04 compartidos PASS. Revisión automatizada histórica; humana pendiente. | Reemplazo/control compartido; C solo apoya entrega firmada de imagen inicial. No demuestra negativo F07 en B. Fuente final pendiente. |
 | L05 | Aceptar dos revisiones reales autorizadas de aplicación | [l05.sh](../../tests/scenarios/l05.sh); [l05-scenario.test.mjs](../../tests/unit/l05-scenario.test.mjs) | Control fuente + CI + admisión/HTTP en ambas | A par explícito; B exige dos runs nativos autorizados | A1 demo: 7243334fe4ee7073801a86b25c90986b7d3c5ece → fc58e220e2d3f38d13216b23e61ffc31271f112f | Ambas entregas de fuente A PASS. Revisión automatizada histórica; humana pendiente. | Par de revisiones B NOT_EXECUTED; precalentamiento del piloto no es L05. Fuente final pendiente. |
 | L06 | Aceptar actualización de plantilla permitida con la misma imagen | [runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs) | CREATE/UPDATE plantilla + rollout/HTTP + Pod positivo | A/B | A1 demo; B1 | Generación 1→2, digest/HTTP PASS; B1 revisión aportada. Revisión automatizada histórica; humana pendiente; B1 aportada. | CREATE comparte L01; Pods positivos y recuperación no añaden muestras independientes. Fuente final pendiente. |
 
-## Entrega para ejecución final
+## Procedimiento y entrega registrada
 
-Usar los pasos 1–6 del [procedimiento de campaña](paired-rg-campaign.md) como
-referencia ejecutable. Los comandos se contrastaron con CLI e inputs del workflow;
-comprobar sintaxis Bash no demuestra ejecución alojada. Aquí no se realizaron
-pasos remotos, autorización/publicación ni desarrollo sobre fuente final.
+La entrega PR45 inferior precedió desarrollo y campaña autorizados por separado,
+ahora registrados en C. Usar el [procedimiento de campaña](paired-rg-campaign.md)
+para otra campaña; sus comandos no autorizan otra ejecución. Fuente o muestra
+distinta requieren preparación revisada y autorización propias.
 
 1. Integrar todos los arreglos mediante revisión normal; en main actual limpio,
    registrar `TARGET`, comprobar `doctor`, pruebas comunes y espacio antes de
@@ -106,10 +115,11 @@ pasos remotos, autorización/publicación ni desarrollo sobre fuente final.
    admisión, rollout/HTTP, extremos temporales y limpieza reales. Un job verde o
    checksum no basta. Conservar cambios/fallos y preparar nueva fuente/plan cuando
    corresponda; nunca repetir silenciosamente.
-3. Elegir explícitamente cantidad/semilla; **diez pares sigue siendo provisional**.
+3. Elegir cantidad/semilla del nuevo borrador explícitamente; diez es un ejemplo
+   exploratorio, no aprobación general de futuras campañas.
    Vincular borrador, desarrollo, fuente/configuración y base. Una persona debe
-   revisar y aportar la declaración de autorización. El asistente no proporciona
-   revisor ni ejecuta `campaign-freeze` en nombre de esa persona.
+   revisar y aportar la declaración de autorización. El asistente puede registrar una
+   declaración explícita con autorización; nunca inventa revisor, razón o decisión.
 4. Con permiso para publicar remotamente, publicar el control exacto mediante el
    job existente exclusivo de plan. Verificar/exportar identidad y manifiesto.
 5. Ejecutar solo posiciones aprobadas en su orden congelado y revisar/exportar
@@ -149,7 +159,8 @@ no aporta duración ni éxito. Los demás campos y su presencia deben coincidir.
 - Atribuir A a confianza local aunque se ejecute en Actions; no generalizar a
   OIDC/mutaciones GHCR ni a todos los escenarios en ambos carriles.
 - Conservar fuente y estimaciones exploratorias del piloto separadas de campaña;
-  diez pares es propuesta, no muestra aprobada.
+  registrar autorización explícita de diez pares y carácter exploratorio, sin
+  afirmar precisión estadística garantizada.
 - Diferenciar tiempos de reparación conocida, intervalos G−R y minutos Actions;
   conservar null/incompletos, exclusiones y fallos.
 - Separar éxito técnico, integridad, aceptación humana y finalización global;

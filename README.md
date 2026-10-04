@@ -43,7 +43,9 @@ The [language revision validation](implementacion/registros/language_normalizati
 Follow [CONTRIBUTING.md](CONTRIBUTING.md) for scoped changes, actual test commands and truthful contribution records. The [AI-assisted development guide](implementacion/docs/EN/ai-assisted-development.md) explains the [shared agent instructions](AGENTS.md), [Copilot instructions](.github/copilot-instructions.md) and [scenario-change skill](.github/skills/scenario-change/SKILL.md). People own requirements, expected outcomes and review; deterministic controls decide delivery authorization. Human-effort measurement and eligible manual calibration are deferred. The six
 automated remediation tasks use known repairs and cannot become human productivity
 or calibration evidence. Functional trials, remediation, the completed timing pilot
-and the forthcoming campaign remain separate datasets.
+and the [completed ten-pair campaign](implementacion/docs/EN/paired-rg-campaign-results.md)
+remain separate datasets. At `895a3bd`, all ten campaign pairs passed automated
+technical review; human results review and overall acceptance remain pending.
 
 These files guide assistants; tests, permissions and configured repository rules enforce their respective controls. No hooks, MCP connections, custom agents or remote permissions are installed by this guidance. The laboratory remains usable without AI.
 

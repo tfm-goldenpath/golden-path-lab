@@ -150,7 +150,8 @@ of their original revisions.
   IDs, observed revisions/boundaries and remaining final-source work. Code or a
   green CI job does not establish scenario execution or human acceptance.
 - Keep functional scenario trials, scripted remediation with known repairs, the
-  four-pair timing pilot and the forthcoming timing campaign as separate datasets.
+  four-pair timing pilot and the [recorded ten-pair timing campaign](implementacion/docs/EN/paired-rg-campaign-results.md)
+  as separate datasets. Campaign technical success is not human acceptance.
   Shared L01/L03/L04 deliveries and positive counterparts are not independent
   samples. F01/F02 are static checks; unsupported hosted negatives stay NOT_EXECUTED.
 - Human-effort measurement, eligible manual calibration and human-task limit

@@ -1,0 +1,182 @@
+{
+  "kind": "authored-campaign-publication-index",
+  "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+  "dataset": "campaign",
+  "humanAcceptance": "pending",
+  "overallEvaluationAcceptance": "pending",
+  "release": "https://github.com/tfm-goldenpath/golden-path-lab/releases/tag/evidence-campaign-895a3bd-20261004",
+  "plan": {
+    "count": 10,
+    "seed": "final-campaign-895a3bd-v1",
+    "order": [
+      "RG",
+      "RG",
+      "RG",
+      "RG",
+      "GR",
+      "GR",
+      "GR",
+      "RG",
+      "GR",
+      "GR"
+    ],
+    "planIdentity": "16de58e45504e333d810d9f891ef740c91d997ed7300927628da8d79f21f73fc",
+    "controlIdentity": "15c7508d96b05751e9a0913674c03f1ee63f8ca80d989ae5b0a29c2ddb79dc26",
+    "publicationRun": "37202322661"
+  },
+  "databaseSourceRun": "37199309814",
+  "database": {
+    "trivy.db": "f684c51b045908383ef92b1ad55b1723e6f9db6cad7479602f3f51dae6b3c179",
+    "metadata.json": "b13d003bf452cc52343ca98360433ae64e8657e258cf88c332b4ef551e9ca3d8"
+  },
+  "developmentRuns": [
+    {
+      "runId": "37199309814",
+      "order": "RG",
+      "technicalReview": "PASS",
+      "dataset": "development"
+    },
+    {
+      "runId": "37200632844",
+      "order": "GR",
+      "technicalReview": "PASS",
+      "databaseSourceRun": "37199309814",
+      "dataset": "development"
+    }
+  ],
+  "campaignRuns": [
+    {
+      "position": 1,
+      "order": "RG",
+      "runId": "37202413477",
+      "originalRunAttempt": 1,
+      "artifactId": 11303646242,
+      "zipSha256": "6af4b6c2b2a75018c45484eea227a548e19ab59fec6e134a69e328974bd8220e",
+      "reviewSha256": "255c9d289f6e0da91f5fbf6f09380a812a857d1d499fd2a614c7adee8b1f9776"
+    },
+    {
+      "position": 2,
+      "order": "RG",
+      "runId": "37202927807",
+      "originalRunAttempt": 1,
+      "artifactId": 11303034818,
+      "zipSha256": "352bb6bda5a63f12bf7c8f6dbc317dc5141dec1cc3a97736ee97d036000308f7",
+      "reviewSha256": "efb399553ff1819738584f4e39686b6a05ce94c56e3e2ad29a274f474fd21001"
+    },
+    {
+      "position": 3,
+      "order": "RG",
+      "runId": "37203375745",
+      "originalRunAttempt": 1,
+      "artifactId": 11304031919,
+      "zipSha256": "301a38c78916d5183cfcdfa18ff39650cc36a6902b2c8e1d431b081c2cbe1c7f",
+      "reviewSha256": "b6c2355d7176f588ae1df98bdf3fc9f34b6a261a8a3c177c07505b64d85a3430"
+    },
+    {
+      "position": 4,
+      "order": "RG",
+      "runId": "37203826554",
+      "originalRunAttempt": 1,
+      "artifactId": 11303712763,
+      "zipSha256": "8f3fdbaae09afd51231421b9628f7fda35dbef9e03434d762bfdcdc384f06947",
+      "reviewSha256": "baedd55a66cd10528017245374a3f1a2c786ba0da06a78beacce34fccb3fdc24"
+    },
+    {
+      "position": 5,
+      "order": "GR",
+      "runId": "37204323164",
+      "originalRunAttempt": 1,
+      "artifactId": 11303992457,
+      "zipSha256": "cdf02b064be7f1eaafe2824e11dd7b70b6ea09a2a0ac2ab57abbe4947298af83",
+      "reviewSha256": "23897663b05056ebecd3cc8f98b5ee865e9bfe611f81b065a97a3c4397e5f988"
+    },
+    {
+      "position": 6,
+      "order": "GR",
+      "runId": "37204709536",
+      "originalRunAttempt": 1,
+      "artifactId": 11304442220,
+      "zipSha256": "d96c28ac30b22af1d50f244dc38e0a26545aa6ef4603cf843e9cac6454dea16d",
+      "reviewSha256": "4e58558fde15dfe49c323dee687b62df7827e54cfab2f3c32fa04d515ed6edbe"
+    },
+    {
+      "position": 7,
+      "order": "GR",
+      "runId": "37205158171",
+      "originalRunAttempt": 1,
+      "artifactId": 11304652347,
+      "zipSha256": "641f109bd000a603e04b97faa84ba992a869fb07bbcc16a9f223abbcb5bbaad3",
+      "reviewSha256": "183537aee39bbfc9802c9c3abf23ee413d9432ecc02bea99ca19e0b088cda1e4"
+    },
+    {
+      "position": 8,
+      "order": "RG",
+      "runId": "37205613639",
+      "originalRunAttempt": 1,
+      "artifactId": 11305045211,
+      "zipSha256": "40e22cbb63be9d00935574d3a9a2244a2099fd606578cfa1b65951136a33b80b",
+      "reviewSha256": "2ae65d3f70995da9c7e6d6f86c4f55ff96b1469d9c3c5f51afe931401ad78001"
+    },
+    {
+      "position": 9,
+      "order": "GR",
+      "runId": "37206042810",
+      "originalRunAttempt": 1,
+      "artifactId": 11305380116,
+      "zipSha256": "463a6afdda0d4cb4017c875f8befd49edcde8ca7b5c6a3abffd2ab48e27ba6bd",
+      "reviewSha256": "fdd59b883fa34248764a486e549de6cf12a1a4e7aee86c88e74686496567e367"
+    },
+    {
+      "position": 10,
+      "order": "GR",
+      "runId": "37206506779",
+      "originalRunAttempt": 1,
+      "artifactId": 11305535631,
+      "zipSha256": "e37111addea4a05d643c9d3b68e2583cbb38ba5de5abcd527c1c65ad99e7d903",
+      "reviewSha256": "94c7034f999f5444cc9e4194fce266522ff9064f225174bd7150d3c21eeb38f8"
+    }
+  ],
+  "assets": [
+    {
+      "name": "campaign-evidence-895a3bd-20261004.tar.gz",
+      "sha256": "99925065ddb8725b165a736e8d8845fe88718ee21f69c746fd2852d96bf43afa",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/campaign-evidence-895a3bd-20261004.tar.gz"
+    },
+    {
+      "name": "PUBLICATION-README.md",
+      "sha256": "9380a5af8541dd558da96937cb6afece5947e7be44e9707d104ceefdca618820",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/PUBLICATION-README.md"
+    },
+    {
+      "name": "report.json",
+      "sha256": "7bcee14d78662617840b6221d44badb2767d8ea80a6c8277960c782e94e2727e",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/report.json"
+    },
+    {
+      "name": "analysis.json",
+      "sha256": "9d648fb3f589f18c3e37c35187b84824959c543f19d94776552c2229be7beb51",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/analysis.json"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "sha256": "da7fca766756095e44361237355f678442f7a69b745719083f62cab32e83b472",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/SHA256SUMS.txt"
+    },
+    {
+      "name": "PUBLICATION-README-v2.md",
+      "sha256": "4ea347b846b534b607c8aad6631c2982e2859dfc254e430b1154e112940509ac",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/PUBLICATION-README-v2.md"
+    },
+    {
+      "name": "PUBLICATION-V2-SHA256SUMS.txt",
+      "sha256": "e60c90dcb16d2a16466bec30c1756735af0bd29af09f0093f50a5468ea0a2449",
+      "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/PUBLICATION-V2-SHA256SUMS.txt"
+    }
+  ],
+  "evidenceRoot": "final-development-895a3bd/",
+  "operationalReport": "campaign-proposal-01/results-01/report.json",
+  "analysis": "campaign-proposal-01/analysis-01/analysis.json",
+  "cleanupReviewCorrection": "logs/campaign-operations-20261004T122234Z-syFRKt/position-04-cleanup-supplement.json",
+  "scope": "Technical evidence publication; no human results acceptance. Source and original hashes retained; development, pilot and scripted repairs are separate datasets.",
+  "publicationCorrection": "Original recovery instructions omitted creation of the originals/ parent. Published PUBLICATION-README-v2.md adds mkdir; original assets preserved. This was a publication instruction error, not a campaign retry."
+}
