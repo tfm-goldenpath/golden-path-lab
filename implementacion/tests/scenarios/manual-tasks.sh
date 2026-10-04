@@ -78,26 +78,27 @@ manual_task_cleanup_check() {
 manual_task_detection() {
   local control=$1 evidence=$2
   # Timestamp the attributed control result immediately, before any later phase.
-  python3 - "$manual_operation" "$manual_scenario" "$control" "$evidence" <<'PY'
+  python3 - "$manual_operation" "$manual_scenario" "$control" "$evidence" "${manual_execution_mode:-manual}" <<'PY'
 import json,pathlib,sys
 sys.path.insert(0,'scripts')
-from manual_tasks import clock,sha256,write_json
-folder,scenario,control,evidence=sys.argv[1:]
+from manual_tasks import clock,sha256,write_json,SCRIPTED,scripted
+folder,scenario,control,evidence,execution=sys.argv[1:]
 at=clock()
 proof=pathlib.Path(folder)/'detection-evidence.json'
 with proof.open('xb') as stream: stream.write(pathlib.Path(evidence).read_bytes())
-write_json(pathlib.Path(folder)/'detection.json', {'status':'ATTRIBUTED_DETECTION','scenario':scenario,
+write_json(pathlib.Path(folder)/'detection.json', {**(SCRIPTED if execution=='scripted' else {}),'status':'ATTRIBUTED_DETECTION','scenario':scenario,
  'control':control,'at':at,'evidence':{'path':proof.name,'sha256':sha256(proof)}})
 PY
 }
 
 manual_task_check_result() {
-  python3 - "$manual_operation" "$manual_scenario" "$1" "$2" "${3:-}" <<'PY'
-import pathlib,sys
+  python3 - "$manual_operation" "$manual_scenario" "$1" "$2" "${3:-}" "${manual_execution_mode:-manual}" <<'PY'
+import json,pathlib,sys
 sys.path.insert(0,'scripts')
-from manual_tasks import sha256,write_json
-folder,scenario,status,phase,evidence=sys.argv[1:]
+from manual_tasks import sha256,write_json,SCRIPTED,scripted
+folder,scenario,status,phase,evidence,execution=sys.argv[1:]
 value={'schema':'manual-task-check/v1','scenario':scenario,'status':status,'phase':phase}
+if execution=='scripted': value.update(SCRIPTED)
 if evidence:
  proof=pathlib.Path(evidence)
  if proof.parent != pathlib.Path(folder):
@@ -200,6 +201,7 @@ manual_task_prepare() {
     [[ "$gate_status" == 42 ]] || fail 'F10 preparation did not establish the authenticated origin fault.'
     jq -e '.status=="PROVENANCE_REPOSITORY_UNAUTHORIZED" and .inventoryComplete==true' "$state_dir/CI-prepared-fault.result.json" >/dev/null
     printf '%s\n' "$authorized" > "$manual_task/participant/authorized-artifact.txt"
+    if [[ "${manual_execution_mode:-manual}" == scripted ]]; then chmod a-w "$manual_task/participant/authorized-artifact.txt"; fi
   fi
   printf '%s\n' "$image" > "$manual_task/participant/image.txt"
   cp "$candidate/tfm-golden.json" "$manual_task/participant/manifest.json"
@@ -230,11 +232,19 @@ participant=p.parent.parent/'participant'
 inputs=[participant/name for name in ['image.txt','manifest.json']]
 if v['scenario']=='F03': inputs += [participant/'source'/name for name in ['Dockerfile','exercise.cjs','package.json','package-lock.json']]
 v['initialInputs']={str(f):sha256(f) for f in inputs}
+record=json.loads((p.parent.parent/'record.json').read_text())
+from manual_tasks import SCRIPTED,scripted
+if scripted(record):
+ v.update(SCRIPTED)
+ catalog=participant/'authorized-artifact.txt'
+ if catalog.exists(): v['invariants'][str(catalog)]=sha256(catalog)
 write_json(p,v)
 PY
   cp "$manual_task/operator/prepared.json" "$manual_owner/manual-preparation.json"
-  cp docs/EN/manual-task-participant.md "$manual_task/participant/README.md"
-  cp docs/ES/manual-task-participant.md "$manual_task/participant/README.es.md"
+  if [[ "${manual_execution_mode:-manual}" != scripted ]]; then
+    cp docs/EN/manual-task-participant.md "$manual_task/participant/README.md"
+    cp docs/ES/manual-task-participant.md "$manual_task/participant/README.es.md"
+  fi
   state_dir=$manual_owner
   preserve=1
 }
@@ -390,7 +400,9 @@ manual_task_check() {
   manual_task_check_result INTEGRATION_ERROR profile
   manual_task_profile_check after
   jq -n --arg scenario "$manual_scenario" --arg image "$image" --arg evidence "$state_dir" \
-    '{status:"VALIDATED_COMPLETION",scenario:$scenario,image:$image,evidence:$evidence,humanAcceptance:"pending"}' > "$manual_operation/completion.json"
+    --arg execution "${manual_execution_mode:-manual}" \
+    '{status:"VALIDATED_COMPLETION",scenario:$scenario,image:$image,evidence:$evidence,humanAcceptance:"pending"} +
+    (if $execution=="scripted" then {executionMode:"scripted",dataset:"automated-validation",actor:"automation",eligibleForHumanCalibration:false} else {} end)' > "$manual_operation/completion.json"
   manual_task_check_result VALIDATED_COMPLETION complete "$manual_operation/completion.json"
 }
 
@@ -400,6 +412,7 @@ manual_task_dispatch() {
   [[ "$mode" == local && "$manual_task" == "$root/evidence/manual-tasks/"* && -f "$manual_task/record.json" ]] || fail 'Manual tasks require owned lane A records.'
   manual_scenario=$(jq -er .scenario "$manual_task/record.json")
   manual_arm=$(jq -er .arm "$manual_task/record.json")
+  manual_execution_mode=$(jq -r '.executionMode // "manual"' "$manual_task/record.json")
   [[ "$manual_scenario" =~ ^F(03|10|11)$ && "$manual_arm" =~ ^[RG]$ ]] || fail 'Unknown task'
   manual_namespace=tfm-reference; [[ "$manual_arm" != G ]] || manual_namespace=tfm-golden
   if [[ "$command" == prepare ]]; then manual_task_prepare; return; fi
@@ -418,7 +431,8 @@ manual_task_dispatch() {
     if [[ ! -e "$state_dir/.evidence-packaged" ]]; then
       cp "$manual_task/record.json" "$state_dir/manual-task.json"
       jq '{status:(if .status=="COMPLETED" then "PASS" else "INCOMPLETE" end),
-        scope:"manual-task",scenario,arm,dataset,humanAcceptance:"pending"}' \
+        scope:(if .executionMode=="scripted" then "automated-validation" else "manual-task" end),scenario,arm,dataset,humanAcceptance:"pending"} +
+        (if .executionMode=="scripted" then {executionMode,actor,eligibleForHumanCalibration} else {} end)' \
         "$manual_task/record.json" > "$state_dir/result.json"
     fi
     preserve=0

@@ -187,3 +187,5 @@ Copilot assistance follows the approved method: human requirements/oracles, boun
 The base is complete when the service, R, G, B integration and initial negatives produce interpretable evidence within declared limits. Installed executables and YAML alone do not close it. Preserve failed observations and resolve or delimit incompatibilities.
 
 Then complete remaining case specifications/injections, required contract tests, four pilot pairs and six agreed manual tasks. Freeze campaign versions and revise the provisional ten-pair target after the pilot. This plan does not change the overall budget, add analyzer comparisons or treat the first demonstration as statistical evaluation.
+
+Current execution schedule: use the separate [automated remediation validation](automated-remediation.md) for F03/F10/F11 × R/G. Human-effort comparison and eligible manual calibration are deferred, not completed by automation. Historical rehearsals, review formats, the separate PR #43 paired campaign and pending overall pilot acceptance remain unchanged.

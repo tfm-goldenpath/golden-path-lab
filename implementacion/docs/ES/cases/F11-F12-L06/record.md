@@ -197,3 +197,16 @@ mantienen constantes. Errores de API, RBAC, firmas, transporte o webhook, denega
 adicionales y aceptación inesperada detienen el ensayo y conservan evidencias.
 La limpieza no convierte un fallo en éxito. Los resultados compartidos L01/L06
 no aumentan los veinte escenarios. Véase el [oráculo detallado en inglés](../../../EN/cases/F11-F12-L06/record.md).
+
+## Incremento de validación por script, 2026-10-04
+
+La [evaluación automatizada separada](../../automated-remediation.md) reutiliza el oráculo local existente para F03/F10/F11 × R/G con reparaciones predefinidas. Registra actividad de máquina, nunca diagnóstico ni calibración humanos. En la entrega inicial, la integración de las seis tareas quedó **NOT_EXECUTED** por espacio inferior a la reserva de preparación. Las observaciones históricas conservan su alcance; se aplaza evaluar esfuerzo humano y la aceptación global sigue pendiente.
+
+El 2026-10-04, tras eliminar con autorización del usuario dos copias redundantes
+verificadas de la base, `automated-six-01` sobre
+`ea790781990766a3cb20bae5a302e1175edd3bd0` validó las seis combinaciones
+locales, incluido este escenario en R y G. Pasaron finalización, limpieza propia
+e integridad, sin reintentos, interrupciones ni intervención humana. El
+[registro de resultados](../../../../registros/automated-remediation-validation.md)
+conserva identificadores, tiempos y hashes. La aceptación humana sigue pendiente;
+esta ejecución local no cambia resultados alojados ni observaciones anteriores.

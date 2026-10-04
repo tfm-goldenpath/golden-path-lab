@@ -1,5 +1,7 @@
 # Revisión humana y elegibilidad para calibración
 
+Calendario inmediato: usar la [validación automatizada de reparaciones](automated-remediation.md) para F03/F10/F11 × R/G. La comparación de esfuerzo humano y la calibración manual elegible se aplazan; la automatización no las completa. Se conservan ensayos históricos, formatos de revisión, campaña pareada separada de PR #43 y aceptación global del piloto pendiente.
+
 [English](../EN/manual-task-review.md) · [Procedimiento](manual-task-calibration.md)
 
 Observaciones conservadas: [ocho intentos guiados/fallidos que cubren las seis combinaciones](manual-task-rehearsal-review.md)

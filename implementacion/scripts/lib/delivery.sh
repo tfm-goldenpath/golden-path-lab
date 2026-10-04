@@ -92,8 +92,14 @@ delivery_database_prepare() {
     else
       delivery_analysis_command database-download trivy image --cache-dir "$cache" --download-db-only
     fi
-    mkdir -p "$snapshot/db"
-    cp --reflink=auto "$cache/db/trivy.db" "$cache/db/metadata.json" "$snapshot/db/"
+    if [[ "${manual_execution_mode:-manual}" == scripted && "${GP_REUSE_VULNERABILITY_DB:-}" == 1 && -n "${GP_VULNERABILITY_DB:-}" ]]; then
+      # Sequential scripted tasks retain the canonical DB; scans still check its
+      # identity before/after and disable updates. Never delete this shared input.
+      snapshot=$cache
+    else
+      mkdir -p "$snapshot/db"
+      cp --reflink=auto "$cache/db/trivy.db" "$cache/db/metadata.json" "$snapshot/db/"
+    fi
     python3 scripts/vulnerability-database.py identify "$snapshot" > "$state_dir/database-identity.json"
     put vulnerabilityDatabase "$snapshot"
   fi

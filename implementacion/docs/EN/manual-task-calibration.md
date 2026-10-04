@@ -1,5 +1,7 @@
 # Human calibration of F03 F10 and F11
 
+Current execution schedule: use the separate [automated remediation validation](automated-remediation.md) for F03/F10/F11 × R/G. Human-effort comparison and eligible manual calibration are deferred, not completed by automation. Historical rehearsals, review formats, the separate PR #43 paired campaign and pending overall pilot acceptance remain unchanged.
+
 [Español](../ES/manual-task-calibration.md) · [Participant instructions](manual-task-participant.md) · [Current status](../../TODO.md)
 
 This procedure supports **six human tasks in lane A: F03/F10/F11 in R and G**.

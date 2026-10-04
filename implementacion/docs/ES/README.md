@@ -29,4 +29,5 @@ La [guía de contribución](../../../CONTRIBUTING.md) y la [plantilla de PR](../
 La carpeta `cases/L01-F13/` reúne la documentación del ensayo integrado, incluidas las comprobaciones dirigidas de F11. Sus pruebas se implementan una sola vez en [`tests/scenarios/`](../../tests/scenarios/); no se crean copias de código por idioma ni carpetas vacías para los veinte escenarios.
 
 - [Mediciones R/G pareadas — protocolo y prueba manual](paired-rg-measurements.md).
+- [Reparación automatizada F03/F10/F11 — validación técnica desatendida](automated-remediation.md).
 - [Calibración manual F03/F10/F11 — procedimiento en carril A](manual-task-calibration.md) e [instrucciones del participante](manual-task-participant.md).

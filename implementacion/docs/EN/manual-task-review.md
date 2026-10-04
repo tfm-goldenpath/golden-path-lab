@@ -1,5 +1,7 @@
 # Human review and calibration eligibility
 
+Current execution schedule: use the separate [automated remediation validation](automated-remediation.md) for F03/F10/F11 × R/G. Human-effort comparison and eligible manual calibration are deferred, not completed by automation. Historical rehearsals, review formats, the separate PR #43 paired campaign and pending overall pilot acceptance remain unchanged.
+
 [Español](../ES/manual-task-review.md) · [Task procedure](manual-task-calibration.md)
 
 Retained observations: [eight guided/failed attempts covering the six combinations](manual-task-rehearsal-review.md)

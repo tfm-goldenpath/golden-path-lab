@@ -1,5 +1,7 @@
 # Calibración con inputs y rutas reutilizables
 
+Calendario inmediato: usar la [validación automatizada de reparaciones](automated-remediation.md) para F03/F10/F11 × R/G. La comparación de esfuerzo humano y la calibración manual elegible se aplazan; la automatización no las completa. Se conservan ensayos históricos, formatos de revisión, campaña pareada separada de PR #43 y aceptación global del piloto pendiente.
+
 [English](../EN/manual-calibration-session.md) · [Procedimiento y oráculos](manual-task-calibration.md)
 
 El [fichero de comandos](../../scripts/manual-calibration-session.sh) prepara

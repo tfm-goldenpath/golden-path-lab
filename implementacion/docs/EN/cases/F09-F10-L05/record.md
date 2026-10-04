@@ -54,3 +54,15 @@ verified/exported the distinct immutable source pair but failed environment pins
 and BuildKit DNS on kind. No full demo was launched; F09/F10 rejection/recovery,
 L05 deliveries and update/restart readiness remain **NOT_EXECUTED**. The diagnostic
 archive checksum and all 15 internal hashes passed; no signatures were generated.
+
+## Scripted validation increment, 2026-10-04
+
+The [separate automated evaluation](../../automated-remediation.md) reuses this scenario's existing local oracle for F03/F10/F11 × R/G with predefined repairs. It records machine activity, never human diagnosis or calibration. At the initial handoff, live six-task integration was **NOT_EXECUTED** because storage was below the runner's preparation reserve. Historical observations above retain their original scope; human effort evaluation is deferred and overall acceptance remains pending.
+
+On 2026-10-04, after user-authorized removal of two verified redundant database
+copies, session `automated-six-01` on `ea790781990766a3cb20bae5a302e1175edd3bd0`
+validated all six local combinations, including this scenario in R and G.
+Completion, owned cleanup and archive integrity passed without retries,
+interruptions or human intervention. See the [result record](../../../../registros/automated-remediation-validation.md)
+for exact task/run IDs, timings and hashes. Human acceptance remains pending;
+hosted results and earlier observations are not changed by this local execution.
