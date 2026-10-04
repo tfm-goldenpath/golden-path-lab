@@ -8,11 +8,13 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
+import paired_campaign as campaign
 from paired_measurements import (PROTOCOL, WORKFLOW, read, write, identity, stamp, elapsed,
                                 event, classify, new_record, validate_source, cache_evidence,
                                 retry_ticket, summarize, cache_manifest, pilot_plan, required_fields_match)
-from lane_a_evidence import preserve_databases, hash_export, verify_package
+from lane_a_evidence import preserve_databases, hash_export, verify_package, sha, regular
 ROOT = Path(__file__).resolve().parents[1]
 
 def git(*args):
@@ -65,14 +67,20 @@ def restore_database(previous, destination):
     for name,h in expected['sha256'].items():
         if name not in ('trivy.db','metadata.json') or hashlib.sha256((destination/'db'/name).read_bytes()).hexdigest()!=h:raise ValueError('Replay database mismatch')
     if set(expected['sha256'])!={'trivy.db','metadata.json'}:raise ValueError('Incomplete database identity')
+    listed=set()
     for line in (destination/'SHA256SUMS.txt').read_text().splitlines():
         h,name=line.split('  ',1)
-        if name not in ('db/trivy.db','db/metadata.json','identity.json') or hashlib.sha256((destination/name).read_bytes()).hexdigest()!=h:raise ValueError('Database internal checksum mismatch')
+        if name in listed or name not in ('db/trivy.db','db/metadata.json','identity.json') or hashlib.sha256((destination/name).read_bytes()).hexdigest()!=h:raise ValueError('Database internal checksum mismatch')
+        listed.add(name)
+    if listed!={'db/trivy.db','db/metadata.json','identity.json'}:raise ValueError('Incomplete database checksum manifest')
     if read(destination/'db/metadata.json')!=expected['metadata']:raise ValueError('Database metadata mismatch')
     return expected['sha256']
 
 def verify_export(directory):
     """Verify the retained artifact before using its retry record or diagnostics."""
+    directory=Path(directory)
+    if directory.resolve()!=directory.absolute() or any(f.is_symlink() for f in directory.rglob('*')):
+        raise ValueError('Symlinked artifact path')
     files=set()
     for line in (directory/'SHA256SUMS.txt').read_text().splitlines():
         expected,name=line.split('  ',1);path=directory/name
@@ -85,6 +93,140 @@ def verify_export(directory):
         files.add(name)
     actual={str(f.relative_to(directory)) for f in directory.rglob('*') if f.is_file() and f.name!='SHA256SUMS.txt'}
     if files!=actual:raise ValueError('Artifact manifest is incomplete')
+
+def campaign_configuration():
+    return {'workflow':WORKFLOW,'protocolSha256':sha(ROOT/'measurements/protocol-v1.json'),
+            'implementationTree':git('rev-parse','HEAD:implementacion'),
+            'toolsLockSha256':sha(ROOT/'tools.lock.json'),'versionsSha256':sha(ROOT/'versions.env'),
+            'warmupSource':read(ROOT/'measurements/protocol-v1.json')['warmupSource']}
+
+def campaign_source(expected):
+    head=git('rev-parse','HEAD')
+    if head!=expected or not campaign.digest(head,40) or git('status','--porcelain','--untracked-files=no'):
+        raise ValueError('Campaign binding requires the exact clean final source')
+    if git('rev-parse','origin/main')!=head:
+        raise ValueError('Fetch final merged main before binding a campaign')
+    return head
+
+def verify_pair_packages(directory, pair):
+    """Retain partial failures; a PASS requires all independently bound packages."""
+    records=pair.get('packageVerification',{})
+    if pair.get('status')=='PASS':
+        if set(records)!={'infrastructure','R','G'}:
+            raise ValueError('Successful pair arm/infrastructure packages are missing')
+        images=[pair['arms'][a].get('image','') for a in 'RG']
+        if len(set(images))!=2 or not all(re.fullmatch(r'.+@sha256:[a-f0-9]{64}',image) for image in images):
+            raise ValueError('Pair images must be independent')
+    for label,record in records.items():
+        name=record['archive']
+        if label not in ('infrastructure','R','G') or Path(name).name!=name or verify_package(directory/'packages'/name)!=record:
+            raise ValueError('Pair package verification differs')
+        if label in ('R','G'):
+            import tarfile
+            with tarfile.open(directory/'packages'/name) as archive:
+                member=name.removesuffix('.tar.gz')+'/measurement.json'
+                if member not in archive.getnames():raise ValueError('Pair package lacks its arm observation')
+                observation=json.loads(archive.extractfile(member).read())
+            fields=('schema','protocol','configuration','source','warmupSource','runId','dataset',
+                    'pair','order','attempt','planIdentity','image','primaryStart','primaryEnd','primarySeconds','phases')
+            if pair.get('dataset')=='campaign':fields+=('database','toolsLockSha256')
+            for key in fields:
+                if key not in observation or observation[key]!=pair['arms'][label].get(key):
+                    raise ValueError('Archive observation differs from its pair')
+
+def verify_development(directory, source, order):
+    directory=Path(directory).resolve();verify_export(directory);pair=read(directory/'pair.json')
+    if (pair.get('dataset')!='development' or pair.get('source')!=source or pair.get('order')!=order
+            or pair.get('workflow')!=WORKFLOW or pair.get('attempt')!=1 or pair.get('status')!='PASS'
+            or pair.get('protocol')!=PROTOCOL or pair.get('retentionErrors')):
+        raise ValueError('Fresh successful development '+order+' at the final source is required')
+    protocol=read(ROOT/'measurements/protocol-v1.json')
+    if read(directory/'protocol.json')!=protocol or pair.get('warmupSource')!=protocol['warmupSource']:
+        raise ValueError('Development protocol differs from final source')
+    if summarize([pair])['completeFavorablePairs']!=1:
+        raise ValueError('Development delivery/control evidence is incomplete')
+    verify_pair_packages(directory,pair)
+    with tempfile.TemporaryDirectory(prefix='paired-database-check-') as tmp:
+        database=restore_database(directory,Path(tmp)/'db')
+    if database!=pair.get('frozenDatabase'):
+        raise ValueError('Development database bytes differ from its pair record')
+    return pair, {'runId':campaign.run_id(pair['runId']),'order':order,
+                  'pairSha256':sha(directory/'pair.json'),'manifestSha256':sha(directory/'SHA256SUMS.txt')}
+
+def bind_campaign(args):
+    source=campaign_source(args.expected_source)
+    rg,rg_receipt=verify_development(args.development_rg,source,'RG')
+    gr,gr_receipt=verify_development(args.development_gr,source,'GR')
+    if gr.get('databaseSourceRun')!=rg['runId'] or gr['frozenDatabase']!=rg['frozenDatabase']:
+        raise ValueError('Development GR must restore the final-source RG database')
+    plan=campaign.bind(read(args.draft),source,campaign_configuration(),rg['frozenDatabase'],[rg_receipt,gr_receipt])
+    exclusive_write(args.output,plan)
+    print('BOUND_PENDING_HUMAN_AUTHORIZATION '+identity(plan))
+
+def exclusive_write(path,value):
+    path=Path(path)
+    if path.exists() or path.is_symlink():raise ValueError('Refusing to replace an existing plan or analysis export')
+    write(path,value)
+
+def freeze_campaign(args):
+    from datetime import datetime,timezone
+    plan=read(args.plan);campaign.validate_plan(plan)
+    campaign_source(plan['binding']['source'])
+    if campaign_configuration()!=plan['binding']['configuration']:
+        raise ValueError('Campaign configuration drift after binding')
+    if args.authorize is not True:raise ValueError('Explicit human --authorize is required')
+    value=campaign.freeze(plan,args.reviewer,args.rationale,datetime.now(timezone.utc).isoformat())
+    destination=Path(args.output);destination.mkdir(parents=True,exist_ok=False)
+    write(destination/'frozen.json',value);write(destination/'plan.json',plan)
+    write(destination/'authorization.json',value['authorization']);hash_export(destination)
+    print('FROZEN_CONTROL_ID '+identity(value))
+    print('HUMAN_DECLARATION_RECORDED; no workflow dispatched')
+
+def load_campaign(directory, expected_identity):
+    directory=Path(directory).resolve();verify_export(directory)
+    value=read(directory/'frozen.json');campaign.validate_frozen(value,expected_identity)
+    if read(directory/'plan.json')!=value['plan'] or read(directory/'authorization.json')!=value['authorization']:
+        raise ValueError('Frozen campaign files disagree')
+    return value
+
+def hosted_run(run,source):
+    run=campaign.run_id(run)
+    value=json.loads(subprocess.check_output(['gh','api',f'repos/tfm-goldenpath/golden-path-lab/actions/runs/{run}'],text=True))
+    if (str(value.get('id'))!=run or value.get('head_sha')!=source or value.get('head_branch')!='main'
+            or value.get('path')!='.github/workflows/paired-rg.yml' or value.get('event')!='workflow_dispatch'
+            or value.get('status')!='completed' or value.get('conclusion')!='success' or value.get('run_attempt')!=1):
+        raise ValueError('Expected a completed original paired workflow run at the frozen main source')
+    return {k:value[k] for k in ('id','head_sha','head_branch','path','event','status','conclusion','run_attempt')}
+
+def publish_campaign(args):
+    # Input is data only. This operation runs in a separate read-only workflow job.
+    if os.environ.get('DATASET')!='campaign':raise ValueError('Plan-only publication requires campaign dataset')
+    value=json.loads(os.environ['CAMPAIGN_PLAN_JSON']);campaign.validate_frozen(value,args.plan_identity)
+    head=git('rev-parse','HEAD');protocol=read(ROOT/'measurements/protocol-v1.json')
+    validate_source(os.environ,head,git('status','--porcelain','--untracked-files=no'),
+        git('rev-parse',protocol['warmupSource']+':implementacion/services/quotes-node/src'),
+        git('rev-parse','HEAD:implementacion/services/quotes-node/src'))
+    if args.expected_source!=head:raise ValueError('Expected source differs from plan publication source')
+    campaign.validate_execution(value,head,campaign_configuration(),1,value['plan']['pairs'][0]['order'])
+    validation=[];pairs=[]
+    with tempfile.TemporaryDirectory(prefix='paired-campaign-publication-') as temp:
+        for receipt in value['plan']['binding']['development']:
+            run=receipt['runId'];metadata=hosted_run(run,head);directory=Path(temp)/run
+            subprocess.run(['gh','run','download',run,'--repo','tfm-goldenpath/golden-path-lab',
+                '--name','paired-rg-'+run,'--dir',str(directory)],check=True)
+            pair,actual=verify_development(directory,head,receipt['order'])
+            if actual!=receipt or pair['frozenDatabase']!=value['plan']['binding']['database']:
+                raise ValueError('Development receipts or database changed after human authorization')
+            validation.append(metadata);pairs.append(pair)
+    if pairs[1].get('databaseSourceRun')!=pairs[0]['runId']:
+        raise ValueError('Development GR did not reuse RG database')
+    destination=Path(args.output);destination.mkdir(parents=True,exist_ok=False)
+    write(destination/'frozen.json',value);write(destination/'plan.json',value['plan'])
+    write(destination/'authorization.json',value['authorization'])
+    write(destination/'publication.json',{'schema':'paired-rg-plan-publication/v1','runId':os.environ['GITHUB_RUN_ID'],
+        'source':head,'workflow':WORKFLOW,'controlIdentity':identity(value),'developmentValidation':validation})
+    hash_export(destination)
+    print('PLAN_PUBLISHED_WITHOUT_DELIVERY '+identity(value))
 
 def initial(args):
     protocol=read(ROOT/'measurements/protocol-v1.json');plan=read(ROOT/'measurements/pilot-plan-v1.json')
@@ -99,6 +241,20 @@ def initial(args):
         expected=next((p['order'] for p in plan['pairs'] if p['pair']==args.pair),None)
         if order!=expected: raise ValueError('Order differs from frozen pilot plan')
         if not args.database_from and not args.retry_from:raise ValueError('Pilot requires a preserved development database')
+    control=None
+    if args.dataset=='campaign':
+        if not args.campaign_plan or not args.plan_identity or not args.plan_run:
+            raise ValueError('Campaign requires its published frozen plan and identity')
+        control=load_campaign(args.campaign_plan,args.plan_identity)
+        campaign.validate_execution(control,head,campaign_configuration(),args.pair,order)
+        publication=read(Path(args.campaign_plan)/'publication.json')
+        if (publication.get('runId')!=campaign.run_id(args.plan_run) or publication.get('source')!=head
+                or publication.get('workflow')!=WORKFLOW or publication.get('controlIdentity')!=identity(control)):
+            raise ValueError('Campaign plan publication does not match the selected run')
+        hosted_run(args.plan_run,head)
+        if not args.database_from and not args.retry_from:
+            raise ValueError('Campaign requires its preserved final-source development database')
+        plan=control['plan']
     if args.database_from and args.retry_from:raise ValueError('Retry restores only its original database')
     p=pair_path();p.mkdir(parents=True,exist_ok=False)
     run=os.environ['GITHUB_RUN_ID']
@@ -107,8 +263,15 @@ def initial(args):
            'warmupSource':warm,'workflow':WORKFLOW,'runId':run,'created':stamp(),
            'status':'INCOMPLETE','arms':{},'actionsJobMinutes':None,'billedMinutes':None,'monetaryExpenditure':None,
            'sharedPreparation':{},'humanReview':'pending'}
+    if control:
+        value.update(planIdentity=identity(plan),campaignPlan=control,
+                     frozenDatabase=plan['binding']['database'],campaignPlanRun=args.plan_run)
+        # Preserve a validly identified attempt even if database restoration fails.
+        write(p/'pair.json',value);write(p/'plan.json',plan);write(p/'campaign-control.json',control)
+        write(p/'protocol.json',protocol)
     if args.retry_from:
         prev=Path(args.retry_from).resolve();verify_export(prev);prior=read(prev/'pair.json')
+        if control:campaign.validate_observation(prior,control)
         evidence=(prev/args.evidence).resolve()
         if not evidence.is_relative_to(prev) or not evidence.is_file():raise ValueError('Prior evidence missing')
         ticket=retry_ticket(prior,args.cause,evidence.read_text(),os.environ['GITHUB_ACTOR'])
@@ -116,15 +279,23 @@ def initial(args):
         if any(value[k]!=ticket[k] for k in ('order','source','planIdentity')):raise ValueError('Retry changed order/source/plan')
         if value['warmupSource']!=prior['warmupSource'] or value['pair']!=prior['pair']:raise ValueError('Retry changed pair/cache source')
         value.update(attempt=2,retryOf=prior['runId'],externalFailureReview=ticket)
+        if control:write(p/'pair.json',value)
         # Original attempt and consumption remain intact; annotation is separate.
         shutil.copytree(prev,p/'prior-attempt')
         db=p/'retry-db';value['frozenDatabase']=restore_database(prev,db)
         value['retryDatabase']=str(db)
+        if control and prior.get('campaignPlan')!=control:raise ValueError('Retry changed campaign authorization')
     elif args.database_from:
         previous=Path(args.database_from).resolve();verify_export(previous);prior=read(previous/'pair.json')
         if prior.get('dataset')!='development' or prior['source']!=head or prior['status']!='PASS':raise ValueError('Database source must be a successful development pair at this revision')
         value['frozenDatabase']=restore_database(previous,p/'retry-db')
         value['retryDatabase']=str(p/'retry-db');value['databaseSourceRun']=prior['runId']
+        if control:
+            receipt=plan['binding']['development'][0]
+            if prior['runId']!=receipt['runId'] or sha(previous/'pair.json')!=receipt['pairSha256'] or sha(previous/'SHA256SUMS.txt')!=receipt['manifestSha256']:
+                raise ValueError('Campaign database source differs from frozen development receipt')
+    if control and value['frozenDatabase']!=plan['binding']['database']:
+        raise ValueError('Campaign database differs from frozen plan')
     write(p/'pair.json',value);write(p/'protocol.json',protocol);write(p/'plan.json',plan)
     output('first',order[0]);output('second',order[1]);output('pair_dir',p)
 
@@ -281,9 +452,94 @@ def finalize():
     hash_export(p)
     return 0 if v['status']=='PASS' else 1
 
+def job_consumption(pair,jobs,job_id):
+    from datetime import datetime
+    matches=[j for j in jobs['jobs'] if j['id']==job_id]
+    if len(matches)!=1:raise ValueError('Expected exactly one selected job')
+    job=matches[0]
+    if str(job.get('run_id'))!=str(pair['runId']):raise ValueError('Consumption belongs to another run')
+    if pair.get('dataset')=='campaign' and job.get('status')!='completed':
+        raise ValueError('Campaign consumption requires completed job metadata')
+    if not job.get('completed_at') or not job.get('started_at'):raise ValueError('Job not complete; consumption unknown')
+    seconds=(datetime.fromisoformat(job['completed_at'].replace('Z','+00:00'))-datetime.fromisoformat(job['started_at'].replace('Z','+00:00'))).total_seconds()
+    if seconds<0:raise ValueError('Invalid completed job timestamps')
+    pair['actionsJobMinutes']=seconds/60
+    pair['actionsStepTimes']=[{k:step.get(k) for k in ('name','started_at','completed_at','conclusion')} for step in job.get('steps',[])]
+
+def analyze(args):
+    if not args.campaign_plan:
+        if args.artifact or args.jobs or args.evidence_output:raise ValueError('Campaign artifact analysis requires --campaign-plan')
+        pairs=[read(p) for p in args.pairs]
+        if any(p.get('dataset')=='campaign' for p in pairs):raise ValueError('Use frozen campaign and original --artifact inputs')
+        write(args.output,summarize(pairs));return
+    if args.pairs:raise ValueError('Campaign analysis uses immutable --artifact inputs, not edited pair files')
+    control=read(args.campaign_plan);campaign.validate_frozen(control)
+    if not args.evidence_output:raise ValueError('Campaign analysis requires a separate --evidence-output directory')
+    destination=Path(args.evidence_output).resolve()
+    if destination.exists():raise ValueError('Preserve previous analyses; choose a new evidence output directory')
+    if Path(args.output).resolve()!=destination/'analysis.json':
+        raise ValueError('--output must be analysis.json inside the new evidence output')
+    pairs=[];inputs=[];unfinalized=[];retained_originals=[]
+    for index,name in enumerate(args.artifact):
+        directory=Path(name).resolve();verify_export(directory)
+        if destination.is_relative_to(directory):raise ValueError('Analysis cannot modify its original artifact')
+        if not (directory/'pair.json').exists():
+            # Preserve the archive-level failure without inventing a pair identity.
+            failures=sorted(directory.glob('failure-*.json'))
+            if not failures:raise ValueError('Artifact has neither pair nor failure records')
+            unfinalized.append({'artifact':str(directory),'manifestSha256':sha(directory/'SHA256SUMS.txt'),
+                                'reason':'No finalized pair identity; not pooled as a timing observation',
+                                'failures':[read(f) for f in failures]})
+            for file in failures:inputs.append((f'inputs/{index}/{file.name}',file))
+        else:
+            pair=read(directory/'pair.json');campaign.validate_observation(pair,control)
+            if read(directory/'campaign-control.json')!=control or read(directory/'plan.json')!=control['plan']:
+                raise ValueError('Artifact plan/control differs from selected campaign')
+            for package in (directory/'packages').glob('*.tar.gz'):verify_package(package)
+            verify_pair_packages(directory,pair)
+            if pair.get('status')=='PASS' or list((directory/'databases').glob('*.tar.gz')):
+                with tempfile.TemporaryDirectory(prefix='paired-analysis-db-') as tmp:
+                    if restore_database(directory,Path(tmp)/'db')!=pair['frozenDatabase']:
+                        raise ValueError('Campaign archived database differs from frozen plan')
+            if pair['attempt']==2:
+                previous=directory/'prior-attempt';verify_export(previous)
+                prior=read(previous/'pair.json');ticket=pair['externalFailureReview']
+                campaign.validate_observation(prior,control);retained_originals.append(prior)
+                path=regular(previous/ticket['evidencePath'])
+                if not path.resolve().is_relative_to(previous) or sha(path)!=ticket['evidenceSha256']:
+                    raise ValueError('Retained retry diagnostic does not match its review')
+                if ticket['previousRun']!=prior['runId']:raise ValueError('Retry original run mismatch')
+                inputs.append((f'inputs/{index}/retry-evidence.txt',path))
+                inputs.append((f'inputs/{index}/prior-pair.json',previous/'pair.json'))
+            pairs.append(pair);inputs.append((f'inputs/{index}/pair.json',directory/'pair.json'))
+        inputs.append((f'inputs/{index}/original-SHA256SUMS.txt',directory/'SHA256SUMS.txt'))
+    if any(not any(prior==pair for pair in pairs) for prior in retained_originals):
+        raise ValueError('Retry nested original differs from the supplied original attempt')
+    assigned=set()
+    for index,name in enumerate(args.jobs):
+        jobs=read(name);candidates=[j for j in jobs['jobs'] if j.get('name')=='pair']
+        if len(candidates)!=1:raise ValueError('Jobs metadata must contain exactly one completed pair job')
+        job=candidates[0];run=str(job['run_id'])
+        if run in assigned:raise ValueError('Duplicate Actions job consumption input')
+        selected=[p for p in pairs if p['runId']==run]
+        if not selected:raise ValueError('Job consumption has no matching campaign attempt')
+        for pair in selected:job_consumption(pair,jobs,job['id'])
+        assigned.add(run);inputs.append((f'jobs/{index}.json',regular(name)))
+    result=summarize(pairs,campaign=control)
+    result['unfinalizedArtifacts']=unfinalized
+    result['analysisInputs']=[{'file':name,'originalPath':str(p),'sha256':sha(p)} for name,p in inputs]
+    destination.mkdir(parents=True)
+    for name,path in inputs:
+        target=destination/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,target)
+    # Original records stay byte-for-byte above; derived records retain job enrichment separately.
+    write(destination/'observations.json',pairs);write(destination/'frozen.json',control)
+    write(destination/'analysis.json',result);hash_export(destination)
+    print('CAMPAIGN_ANALYSIS '+result['campaign']['status'])
+
 def main():
     parser=argparse.ArgumentParser();sub=parser.add_subparsers(dest='command',required=True)
-    a=sub.add_parser('init');a.add_argument('--dataset',choices=['development','pilot'],required=True);a.add_argument('--pair',type=int,required=True);a.add_argument('--order',choices=['RG','GR'],required=True);a.add_argument('--expected-source',required=True);a.add_argument('--retry-from');a.add_argument('--database-from');a.add_argument('--cause',default='');a.add_argument('--evidence',default='')
+    a=sub.add_parser('init');a.add_argument('--dataset',choices=['development','pilot','campaign'],required=True);a.add_argument('--pair',type=int,required=True);a.add_argument('--order',choices=['RG','GR'],required=True);a.add_argument('--expected-source',required=True);a.add_argument('--retry-from');a.add_argument('--database-from');a.add_argument('--cause',default='');a.add_argument('--evidence',default='')
+    a.add_argument('--campaign-plan');a.add_argument('--plan-identity');a.add_argument('--plan-run')
     a=sub.add_parser('phase');a.add_argument('phase',choices=['bootstrap','prepare','finish']);a.add_argument('--slot',type=int,choices=[1,2],default=1);a.add_argument('--native',default='success')
     for name in ['begin','bind-image','functional','interrupted','admission','mark']:
         a=sub.add_parser(name);a.add_argument('path')
@@ -298,13 +554,43 @@ def main():
     sub.add_parser('dependencies')
     sub.add_parser('registry-cleanup')
     a=sub.add_parser('plan');a.add_argument('--seed',required=True);a.add_argument('--output',required=True)
-    a=sub.add_parser('analyze');a.add_argument('pairs',nargs='+');a.add_argument('--output',required=True)
+    a=sub.add_parser('analyze');a.add_argument('pairs',nargs='*');a.add_argument('--output',required=True)
+    a.add_argument('--campaign-plan');a.add_argument('--artifact',action='append',default=[])
+    a.add_argument('--jobs',action='append',default=[]);a.add_argument('--evidence-output')
+    a=sub.add_parser('campaign-draft',help='Prepare a balanced draft; does not authorize execution')
+    a.add_argument('--seed',required=True);a.add_argument('--pairs',type=int,required=True);a.add_argument('--output',required=True)
+    a=sub.add_parser('campaign-bind',help='Bind a draft to final source and verified RG/GR development exports')
+    a.add_argument('--draft',required=True);a.add_argument('--expected-source',required=True)
+    a.add_argument('--development-rg',required=True);a.add_argument('--development-gr',required=True);a.add_argument('--output',required=True)
+    a=sub.add_parser('campaign-freeze',help='Human-only explicit campaign authorization; no dispatch')
+    a.add_argument('--plan',required=True);a.add_argument('--reviewer',required=True);a.add_argument('--rationale',required=True)
+    a.add_argument('--authorize',action='store_true');a.add_argument('--output',required=True)
+    a=sub.add_parser('publish-plan',help='Workflow read-only plan-artifact publication; no deliveries')
+    a.add_argument('--expected-source',required=True);a.add_argument('--plan-identity',required=True);a.add_argument('--output',required=True)
+    a=sub.add_parser('campaign-inspect',help='Validate a draft, bound plan or explicitly authorized control')
+    a.add_argument('path');a.add_argument('--identity-only',action='store_true')
+    a=sub.add_parser('verify-export',help='Verify original artifact checksums without editing it');a.add_argument('path')
     a=sub.add_parser('job-minutes');a.add_argument('pair');a.add_argument('jobs');a.add_argument('--job-id',type=int,required=True)
     args=parser.parse_args()
     if args.command=='init':initial(args)
     elif args.command=='phase':return shell_phase(args)
     elif args.command=='finalize':return finalize()
     elif args.command=='plan':write(args.output,pilot_plan(args.seed))
+    elif args.command=='campaign-draft':
+        exclusive_write(args.output,campaign.draft(args.seed,args.pairs));print('DRAFT; human pair-count/order decision and final-source binding pending')
+    elif args.command=='campaign-bind':bind_campaign(args)
+    elif args.command=='campaign-freeze':freeze_campaign(args)
+    elif args.command=='publish-plan':publish_campaign(args)
+    elif args.command=='campaign-inspect':
+        value=read(args.path)
+        if value.get('schema')=='paired-rg-campaign-control/v1':
+            campaign.validate_frozen(value)
+            if args.identity_only:print(identity(value))
+            else:print('FROZEN_CONTROL_ID '+identity(value));print(json.dumps(value,indent=2))
+        else:
+            if args.identity_only:raise ValueError('A draft or bound plan has no authorized control identity')
+            campaign.validate_plan(value,bound=value.get('state')!='DRAFT');print(json.dumps(value,indent=2));print('NOT_AUTHORIZED')
+    elif args.command=='verify-export':verify_export(Path(args.path));print('EXPORT_CHECKSUMS_OK; not human acceptance')
     elif args.command=='freeze-db':
         p=pair_path();v=read(p/'pair.json');actual=read(args.identity)['sha256']
         if v.get('frozenDatabase',actual)!=actual:raise ValueError('Frozen database changed between pairs')
@@ -325,14 +611,10 @@ def main():
         v['policySha256']=hashlib.sha256((state/'admission-policies.json').read_bytes()).hexdigest()
         v['database']=read(state/'database-identity.json');v['toolsLockSha256']=hashlib.sha256((ROOT/'tools.lock.json').read_bytes()).hexdigest()
         write(state/'measurement.json',v)
-    elif args.command=='analyze':write(args.output,summarize([read(p) for p in args.pairs]))
+    elif args.command=='analyze':analyze(args)
     elif args.command=='job-minutes':
-        from datetime import datetime
-        v=read(args.pair);jobs=read(args.jobs)['jobs'];job=next(j for j in jobs if j['id']==args.job_id)
-        if str(job.get('run_id'))!=str(v['runId']):raise ValueError('Consumption belongs to another run')
-        if not job.get('completed_at'):raise ValueError('Job not complete; consumption unknown')
-        v['actionsJobMinutes']=(datetime.fromisoformat(job['completed_at'].replace('Z','+00:00'))-datetime.fromisoformat(job['started_at'].replace('Z','+00:00'))).total_seconds()/60
-        v['actionsStepTimes']=[{k:step.get(k) for k in ('name','started_at','completed_at','conclusion')} for step in job.get('steps',[])];v['actionsJobEvidence']={'file':args.jobs,'jobId':args.job_id};write(args.pair,v)
+        v=read(args.pair);job_consumption(v,read(args.jobs),args.job_id)
+        v['actionsJobEvidence']={'file':args.jobs,'jobId':args.job_id};write(args.pair,v)
     else:marking(args)
     return 0
 if __name__=='__main__':
@@ -347,5 +629,8 @@ if __name__=='__main__':
                 write(p/('failure-'+str(now['monotonicNs'])+'.json'),
                       {'schema':'paired-rg-failure/v1','time':now,'command':sys.argv[1],
                        'diagnostic':str(error),'classification':'indeterminate'})
+                if sys.argv[1]=='init':
+                    if (p/'retry-db').exists():shutil.rmtree(p/'retry-db')
+                    hash_export(p)
             except (OSError,ValueError):pass
         sys.exit(1)

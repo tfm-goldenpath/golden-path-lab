@@ -214,6 +214,15 @@ Instrumentación implementada; desarrollo y cuatro pares del piloto temporal
 completados en la [revisión incorporada](paired-rg-pilot-review.md). Aceptación
 humana pendiente.
 
+Para [campaña](paired-rg-campaign.md), `paired-rg-campaign-plan/v1` vincula fuente
+y configuración finales, posiciones balanceadas, base y recibos de desarrollo.
+`paired-rg-campaign-control/v1` contiene ese plan y una declaración humana
+explícita con esquema propio y hash canónico del plan. La validación al publicar
+tiene un recibo separado; ni checksums ni éxito de entrega implican autorización.
+Los esquemas de observación/par conservan v1, añadiendo referencias al control
+solo en registros de campaña. El análisis rechaza entradas incompatibles y
+conserva originales.
+
 El [procedimiento manual A](manual-task-calibration.md) reutiliza los controles de
 producción. Oráculos de preparación, acciones humanas y tiempos quedan separados
 de la autorización. F03 exige análisis nuevo de la imagen corregida y compatibilidad

@@ -225,6 +225,15 @@ measurement arms from scenario completion. Instrumentation is implemented;
 development and the four-pair timing pilot are recorded in the
 [merged review](paired-rg-pilot-review.md); human acceptance remains pending.
 
+For [campaigns](paired-rg-campaign.md), the separate
+`paired-rg-campaign-plan/v1` contract binds final source/configuration, balanced
+positions and database/development receipts. `paired-rg-campaign-control/v1`
+contains that plan and an explicit human authorization declaration with its own
+schema and canonical plan hash. Publication validation is a separate receipt;
+neither checksums nor successful delivery infer human authorization. Existing
+observation/pair schemas remain v1, with campaign control references added only
+for campaign records. Analysis rejects incompatible inputs and preserves originals.
+
 The [manual lane A procedure](manual-task-calibration.md) reuses these same
 production controls. Its preparatory oracles, participant actions and timing
 records are separate from delivery authorization. F03 completion requires fresh

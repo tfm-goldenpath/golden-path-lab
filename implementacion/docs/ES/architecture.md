@@ -276,6 +276,14 @@ Instrumentación implementada; desarrollo y cuatro pares del piloto temporal
 completados en la [revisión incorporada](paired-rg-pilot-review.md). Aceptación
 humana pendiente.
 
+La [extensión de campaña](paired-rg-campaign.md) conserva el coordinador y usa
+`paired_campaign.py` para contratos de borrador, vinculación y autorización.
+Un job del mismo workflow valida y conserva el plan y recibos de desarrollo en
+fuente final; no tiene permisos de entrega/firma. El job de pares consume ese
+control antes de crear infraestructura. El análisis conserva intentos y muestra
+posiciones ausentes/duplicadas; no es un planificador entre runs ni un servicio
+de aprobación humana.
+
 ## Procedimiento de tareas manuales
 
 La [calibración en carril A](manual-task-calibration.md) usa

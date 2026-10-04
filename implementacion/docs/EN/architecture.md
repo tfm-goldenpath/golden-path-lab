@@ -268,6 +268,13 @@ measurement arms from scenario completion. Instrumentation is implemented;
 development and the four-pair timing pilot are recorded in the
 [merged review](paired-rg-pilot-review.md); human acceptance remains pending.
 
+The [campaign extension](paired-rg-campaign.md) keeps this coordinator and uses
+`paired_campaign.py` for pure draft/binding/authorization contracts. A plan-only
+job in the same workflow validates and retains final-source development receipts;
+it has no delivery/signing permissions. The existing pair job consumes that frozen
+control before infrastructure. Analysis retains attempts and reports missing or
+duplicate positions; it is not a cross-run scheduler or a human approval service.
+
 ## Human manual task procedure
 
 The [lane A calibration procedure](manual-task-calibration.md) uses

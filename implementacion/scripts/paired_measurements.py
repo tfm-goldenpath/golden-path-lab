@@ -132,7 +132,14 @@ def retry_ticket(previous, cause, evidence, reviewer):
             'order': previous['order'], 'source': previous['source'], 'planIdentity': previous['planIdentity'],
             'cause': cause, 'evidenceSha256': hashlib.sha256(evidence.encode()).hexdigest(), 'reviewedBy': reviewer}
 
-def summarize(pairs):
+def summarize(pairs, campaign=None):
+    if campaign is not None or any(p.get('dataset')=='campaign' for p in pairs):
+        from paired_campaign import validate_frozen, validate_observation
+        if campaign is None:
+            if not pairs:raise ValueError('Frozen campaign required')
+            campaign=pairs[0].get('campaignPlan')
+        validate_frozen(campaign)
+        for p in pairs:validate_observation(p,campaign)
     if len({p['dataset'] for p in pairs}) > 1:
         raise ValueError('Do not pool development, pilot and campaign')
     if len({p['source'] for p in pairs})>1 or len({p['planIdentity'] for p in pairs})>1:
@@ -140,16 +147,37 @@ def summarize(pairs):
     if len({identity(p['frozenDatabase']) for p in pairs if p.get('frozenDatabase')})>1:
         raise ValueError('Do not pool frozen databases')
     rows = []
+    duplicates=set()
+    if campaign:
+        counts={}
+        for p in pairs:
+            key=(p['pair'],p['attempt']);counts[key]=counts.get(key,0)+1
+        duplicates={pair for (pair,attempt),count in counts.items() if count>1}
+        if len({p['runId'] for p in pairs})!=len(pairs):
+            duplicates.update(p['pair'] for p in pairs if sum(q['runId']==p['runId'] for q in pairs)>1)
     keys = set()
     for p in pairs:
         if p.get('order') not in ('RG','GR') or p.get('attempt') not in (1,2):
             raise ValueError('Invalid pair order or retry count')
         if p['attempt']==2:
             originals=[q for q in pairs if q['pair']==p['pair'] and q['attempt']==1 and q['runId']==p.get('retryOf')]
+            # Repeated identical input stays visible as a duplicate, including
+            # when a retry refers to it. Conflicting originals remain an error.
+            if campaign and len(originals)>1 and len({identity(q) for q in originals})==1:
+                originals=originals[:1]
             if len(originals)!=1 or originals[0]['order']!=p['order'] or originals[0].get('status')=='PASS':
                 raise ValueError('Retry requires its original failed attempt with the same order')
+            if campaign:
+                ticket=p.get('externalFailureReview',{})
+                prior=originals[0]
+                # Reuse the bounded external-failure rule, without inventing a review.
+                expected=retry_ticket(prior,ticket.get('cause'), 'validate existing receipt',ticket.get('reviewedBy',''))
+                if (any(ticket.get(k)!=expected[k] for k in ('schema','previousRun','attempt','order','source','planIdentity','cause','reviewedBy'))
+                        or not re.fullmatch('[a-f0-9]{64}',ticket.get('evidenceSha256',''))
+                        or not ticket.get('evidencePath')):
+                    raise ValueError('Campaign retry requires its retained external-failure review')
         key = (p['planIdentity'], p['pair'], p['attempt'])
-        if key in keys:
+        if key in keys and not campaign:
             raise ValueError('Duplicate pair attempt')
         keys.add(key)
         arms = p.get('arms', {})
@@ -158,8 +186,15 @@ def summarize(pairs):
                 raise ValueError('Mismatched arm identity')
             for field in ('planIdentity','dataset','pair','order','attempt','source','warmupSource','runId'):
                 if arm.get(field)!=p.get(field):raise ValueError('Mismatched arm '+field)
-        good = p.get('status')=='PASS' and all(classify(arms.get(c, {})) == 'valid-favorable' for c in 'RG')
+        classifications={c:classify(arms.get(c,{})) for c in 'RG'}
+        reasons=[]
+        if p.get('status')!='PASS':reasons.append('pair-status:'+str(p.get('status','missing')))
+        reasons.extend(c+':'+kind for c,kind in classifications.items() if kind!='valid-favorable')
+        if p['pair'] in duplicates:reasons.append('duplicate-position-attempt')
+        good = not reasons
         row = {'pair': p['pair'], 'attempt': p['attempt'], 'order': p['order'], 'included': good,
+               'runId':p.get('runId'),'classifications':classifications,'exclusionReasons':reasons,
+               'RSeconds':arms.get('R',{}).get('primarySeconds'),'GSeconds':arms.get('G',{}).get('primarySeconds'),
                'absoluteSeconds': None, 'relativePercent': None}
         if good:
             r, g = [arms[c]['primarySeconds'] for c in 'RG']
@@ -170,13 +205,33 @@ def summarize(pairs):
     values = [r['absoluteSeconds'] for r in rows if r['included']]
     relatives = [r['relativePercent'] for r in rows if r['included']]
     median = statistics.median(values) if values else None
-    return {'schema':'paired-rg-analysis/v1', 'attempts':len(rows), 'completeFavorablePairs':len(values),
+    result={'schema':'paired-rg-analysis/v1', 'attempts':len(rows), 'completeFavorablePairs':len(values),
             'excludedAttempts':len(rows)-len(values), 'rows':rows, 'medianDifferenceSeconds':median,
             'medianRelativePercent':statistics.median(relatives) if relatives else None,
             'medianAbsoluteDeviationSeconds':statistics.median(abs(v-median) for v in values) if values else None,
             'rangeSeconds':[min(values),max(values)] if values else None,
             'observedActionsJobMinutes':sum(p.get('actionsJobMinutes') or 0 for p in pairs) if all(p.get('actionsJobMinutes') is not None for p in pairs) else None,
             'billedMinutes':None,'monetaryExpenditure':None,'sharedPreparationAllocation':'none; reported separately'}
+    if campaign:
+        planned=list(range(1,campaign['plan']['pairCount']+1))
+        observed=sorted({p['pair'] for p in pairs});included={r['pair'] for r in rows if r['included']}
+        result['campaign']={'planIdentity':identity(campaign['plan']),'controlIdentity':identity(campaign),
+            'plannedPairs':len(planned),'observedPositions':observed,
+            'missingPositions':sorted(set(planned)-set(observed)),
+            'duplicatePositions':sorted(duplicates),'retryPositions':sorted({p['pair'] for p in pairs if p['attempt']==2}),
+            'unresolvedPositions':sorted(set(observed)-included),
+            'status':'PARTIAL' if set(planned)!=set(observed) else 'AMBIGUOUS_DUPLICATES' if duplicates else 'OBSERVED_ALL_POSITIONS',
+            'humanAcceptance':'pending'}
+        jobs={}
+        for pair in pairs:
+            run=pair['runId'];minutes=pair.get('actionsJobMinutes')
+            if run in jobs and jobs[run]!=minutes:raise ValueError('Conflicting Actions job consumption')
+            jobs[run]=minutes
+        if any(v is not None and (type(v) not in (int,float) or not math.isfinite(v) or v<0) for v in jobs.values()):
+            raise ValueError('Invalid completed Actions job consumption')
+        result['observedActionsJobMinutes']=sum(jobs.values()) if jobs and all(v is not None for v in jobs.values()) else None
+        result['actionsJobConsumptionCoverage']={'observedRuns':len(jobs),'knownCompletedJobs':sum(v is not None for v in jobs.values())}
+    return result
 
 
 def cache_manifest(directory):

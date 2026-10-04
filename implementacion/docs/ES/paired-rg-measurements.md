@@ -174,7 +174,11 @@ Semilla `paired-rg-pilot-v1-2026-10-01`; orden almacenado **GR, GR, RG, RG** par
 pares 1–4 mediante orden SHA256 de cuatro posiciones balanceadas. Sólo regenerar
 el plan no ejecuta entregas. Piloto requiere `-f database_run=<run-smoke-revisado>`. Fije fuente tras revisión de desarrollo y autorice
 piloto por separado. Diez pares de campaña siguen provisionales; dispatch de
-campaña deshabilitado. Calibración manual, releases y tesis quedan fuera.
+campaña exige ahora un plan congelado con autorización humana explícita según
+la [guía de campaña](paired-rg-campaign.md). La guía cubre desarrollo RG/GR nuevo
+en la fuente final, vinculación, publicación y análisis de campañas parciales.
+Este soporte no aprueba diez pares ni cierra el piloto global. Calibración manual,
+ejecución de campaña, releases y tesis quedan fuera de esta entrega.
 
 Los siguientes registros describen la implementación inicial y sus correcciones.
 La [revisión actual](paired-rg-pilot-review.md) recoge por separado las ejecuciones posteriores.

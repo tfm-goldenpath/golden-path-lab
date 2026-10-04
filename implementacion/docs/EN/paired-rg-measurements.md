@@ -18,6 +18,12 @@ reaudit that package. Existing lane A reviews and unsuccessful attempts remain
 in [the validation guide](lane-a-validation.md). They do not establish lane B
 OIDC/GHCR measurements.
 
+Campaign support now extends this runner with an explicit draft, final-source
+binding, separate human authorization and a checksummed plan artifact. See the
+[campaign procedure](paired-rg-campaign.md) for final-source RG/GR development,
+freezing, separately authorized execution and partial-campaign analysis. This
+support does not approve ten pairs or close the overall pilot.
+
 The unit is one legitimate delivery independently built and published per arm.
 The twenty scenario IDs and `make demo`, `reference`, `vulnerabilities` and
 `lane-a-validation` commands retain their functional purpose. Faults, recovery,
@@ -229,8 +235,10 @@ The stored seed `paired-rg-pilot-v1-2026-10-01` produces **GR, GR, RG, RG** for
 pairs 1–4 by sorting four balanced labelled slots on SHA256(seed:slot).
 Pilot dispatch validates pair/order and requires `-f database_run=<reviewed-smoke-run>`. Fix a single source after development review;
 execute pilot only with separate authorization. Ten balanced campaign pairs are
-provisional and campaign dispatch is disabled. Manual-task calibration, campaign
-execution and release automation are outside this implementation.
+provisional. Campaign dispatch now requires the separately frozen and explicitly
+authorized plan described in the [campaign guide](paired-rg-campaign.md).
+Manual-task calibration, campaign execution and release automation remain
+outside this implementation handoff.
 
 ## Development verification and contribution
 
