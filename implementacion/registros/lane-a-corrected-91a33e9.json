@@ -1,0 +1,275 @@
+{
+  "kind": "authored-corrected-lane-a-evidence-index",
+  "date": "2026-10-05",
+  "runId": 37353632299,
+  "attempt": 1,
+  "runUrl": "https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/37353632299",
+  "source": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+  "main": "c2b403cd436449b1b2818f5fe92983ecf946d072",
+  "ref": "test/catalogue-campaign-source",
+  "correctionCommit": "b0d330e4aab84db752ddc87c67fa70f4982f600d",
+  "originalFailedRun": 37342413975,
+  "originalFailedSource": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+  "coverage": {
+    "executed": 20,
+    "total": 20,
+    "ids": [
+      "F01",
+      "F02",
+      "F03",
+      "F04",
+      "F05",
+      "F06",
+      "F07",
+      "F08",
+      "F09",
+      "F10",
+      "F11",
+      "F12",
+      "F13",
+      "F14",
+      "L01",
+      "L02",
+      "L03",
+      "L04",
+      "L05",
+      "L06"
+    ],
+    "lane": "A",
+    "F01F02": "static only"
+  },
+  "artifacts": [
+    {
+      "id": 11364830065,
+      "name": "lane-a-databases-demo-37353632299-1",
+      "size_in_bytes": 120672496,
+      "digest": "sha256:88fe4228a5b1a76a882d7bbcc33727d88962e947dcbf764bdd4d0e8ff4f25d81",
+      "expires_at": "2026-10-19T18:21:50Z"
+    },
+    {
+      "id": 11363777688,
+      "name": "lane-a-databases-vulnerabilities-37353632299-1",
+      "size_in_bytes": 120672455,
+      "digest": "sha256:0873e2573b1305d6eb009ada49f2824af9d69fbcc70876e212c96ba9efc76fed",
+      "expires_at": "2026-10-19T18:15:36Z"
+    },
+    {
+      "id": 11363314552,
+      "name": "lane-a-demo-37353632299-1",
+      "size_in_bytes": 4176767,
+      "digest": "sha256:c0490c0ee8d033b4f79489084d3247e6b0d08a35c3e3e53a28b34323e12e28f0",
+      "expires_at": "2026-10-19T18:21:48Z"
+    },
+    {
+      "id": 11363283724,
+      "name": "lane-a-vulnerabilities-37353632299-1",
+      "size_in_bytes": 639212,
+      "digest": "sha256:a334d2f7f8b10fcb3ad4d7ab794aa5619f203e9113a5359b1351a94294b5da0c",
+      "expires_at": "2026-10-19T18:15:34Z"
+    }
+  ],
+  "suites": {
+    "demo": {
+      "jobId": 111910409914,
+      "scenarioRun": "run-QtLWFwof",
+      "status": "PASS",
+      "stages": 27,
+      "auditBoundaries": 27,
+      "outerHashes": 76,
+      "packages": [
+        {
+          "archive": "run-QtLWFwof.tar.gz",
+          "sha256": "3e71dd18430f3436e194368eaa22faca05686e5d533d42d9e9e77fcb8612bbb8",
+          "internalHashes": 1963
+        }
+      ],
+      "database": {
+        "status": "PASS",
+        "archiveSha256": "f1cb118db9533ba2af384c8d2c31ff09932051f12e0be03e8aec9a806caac82d",
+        "uncompressedBytes": 1486107926,
+        "databaseSha256": {
+          "trivy.db": "d0b30302df0af5b967f542393733c4c17eccd22aa97a5b802f937202e656f784",
+          "metadata.json": "af4ce38126e8ab62549de68f2d861d5d49115891a47c78cd5391493588cda2d6"
+        },
+        "metadata": {
+          "Version": 2,
+          "NextUpdate": "2026-10-06T13:07:51.292695253Z",
+          "UpdatedAt": "2026-10-05T13:07:51.292695513Z",
+          "DownloadedAt": "2026-10-05T18:14:20.624379437Z"
+        },
+        "matchingRunAndImageIdentities": 4,
+        "internalHashes": 3,
+        "campaignRecordedDatabase": {
+          "trivy.db": "f684c51b045908383ef92b1ad55b1723e6f9db6cad7479602f3f51dae6b3c179",
+          "metadata.json": "b13d003bf452cc52343ca98360433ae64e8657e258cf88c332b4ef551e9ca3d8"
+        },
+        "matchesCampaign": {
+          "trivy.db": false,
+          "metadata.json": false
+        },
+        "campaignReferenceReview": "Reuse of committed historical index; campaign DB bytes not rescanned or rehashed in this review.",
+        "restorer": "Existing corrected paired-rg.py::restore_database; actual preserved database, not synthetic fixture"
+      },
+      "images": [
+        {
+          "case": "initial",
+          "image": "172.19.0.3:5000/quotes-node-run-qtlwfwof@sha256:63419eebdcc0f1a79ba7ccb88f16c04ba2e4e948315b2d5b3042c8021398e7a0",
+          "status": "PASS"
+        },
+        {
+          "case": "L01-update",
+          "image": "172.19.0.3:5000/quotes-node-run-qtlwfwof@sha256:bcd33cf302f5662e3f33db0e201a67c80fcf53d22b27fae09709d3f0ffc9ceff",
+          "status": "PASS"
+        },
+        {
+          "case": "L05-from",
+          "image": "172.19.0.3:5000/quotes-node-run-qtlwfwof@sha256:fe3b975397ac5102a91f26034b9336d9ed6f5b6db1b3c47a24c0ceb315296d3c",
+          "status": "PASS"
+        },
+        {
+          "case": "L05-to",
+          "image": "172.19.0.3:5000/quotes-node-run-qtlwfwof@sha256:493ec9d866ce17ed53e0a6f86deef3c61f1da2e3d910a54f96e0bfe2e2ebf86a",
+          "status": "PASS"
+        }
+      ]
+    },
+    "vulnerabilities": {
+      "jobId": 111910410156,
+      "scenarioRun": "run-WjHQj2u4",
+      "status": "PASS",
+      "stages": 26,
+      "auditBoundaries": 12,
+      "outerHashes": 75,
+      "packages": [
+        {
+          "archive": "run-WjHQj2u4.tar.gz",
+          "sha256": "545c70f4ae01342bcaa4422d6f69b686bfec67637dd30ab40f7c8188076c3c9f",
+          "internalHashes": 349
+        }
+      ],
+      "database": {
+        "status": "PASS",
+        "archiveSha256": "f28b4218d8942171ed364921a8141a609ae4f71f3b0781b64c124b8490ab0bba",
+        "uncompressedBytes": 1486107926,
+        "databaseSha256": {
+          "trivy.db": "d0b30302df0af5b967f542393733c4c17eccd22aa97a5b802f937202e656f784",
+          "metadata.json": "730db3416b46e936c454c0bd2a1150bda5c81149b9753f2a9859bee3e8d60e9e"
+        },
+        "metadata": {
+          "Version": 2,
+          "NextUpdate": "2026-10-06T13:07:51.292695253Z",
+          "UpdatedAt": "2026-10-05T13:07:51.292695513Z",
+          "DownloadedAt": "2026-10-05T18:13:35.872879988Z"
+        },
+        "matchingRunAndImageIdentities": 5,
+        "internalHashes": 3,
+        "campaignRecordedDatabase": {
+          "trivy.db": "f684c51b045908383ef92b1ad55b1723e6f9db6cad7479602f3f51dae6b3c179",
+          "metadata.json": "b13d003bf452cc52343ca98360433ae64e8657e258cf88c332b4ef551e9ca3d8"
+        },
+        "matchesCampaign": {
+          "trivy.db": false,
+          "metadata.json": false
+        },
+        "campaignReferenceReview": "Reuse of committed historical index; campaign DB bytes not rescanned or rehashed in this review.",
+        "restorer": "Existing corrected paired-rg.py::restore_database; actual preserved database, not synthetic fixture"
+      },
+      "images": [
+        {
+          "case": "F03-repaired",
+          "image": "172.19.0.3:5000/quotes-node-run-wjhqj2u4@sha256:23dfa8a80625c5f655cd6b9f0c9edfe5b4035d3228e970b30408081f9c677e29",
+          "status": "PASS"
+        },
+        {
+          "case": "F03-vulnerable",
+          "image": "172.19.0.3:5000/quotes-node-run-wjhqj2u4@sha256:b9218a7d375fdfed0adef5d3e96010112e97be718ef9d4d2665447c45547b02c",
+          "status": "BLOCKED"
+        },
+        {
+          "case": "F04",
+          "image": "172.19.0.3:5000/quotes-node-run-wjhqj2u4@sha256:cab1730fe0ba779aa95cc1c1a4e41f26f8646d47e7f5ca2f1887408a13c843da",
+          "status": "BLOCKED"
+        },
+        {
+          "case": "L02",
+          "image": "172.19.0.3:5000/quotes-node-run-wjhqj2u4@sha256:a415d12c89e510581ee7bba0ef9ead3af943881166282ceef911d160d04abe6b",
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "review": {
+    "outerHashes": 151,
+    "internalScenarioHashes": 2312,
+    "isolationBoundaries": 14,
+    "distinctBundles": 28,
+    "authenticBundles": 27,
+    "expectedF08Rejection": 1,
+    "authenticatedPositiveContracts": 24,
+    "offlineScanReplays": 4,
+    "existingDatabaseRestorerOnRealArchives": "PASS",
+    "l05SourceReview": "PASS",
+    "auxiliaryReviewErrorsPreserved": [
+      "l05-review-initial-assertion.json",
+      "f08-review-initial-assertion.json"
+    ],
+    "sensitiveDataInspection": {
+      "status": "PASS",
+      "scannedFilesAndZipMembers": 2779,
+      "patterns": [
+        "private PEM/OpenSSH key headers",
+        "GitHub credential token formats"
+      ],
+      "matches": [],
+      "scope": "Original Actions logs/exports, extracted scenario contents and derived review files; large binary scanner databases are excluded from text pattern matching. Public local trust keys are intentionally retained."
+    },
+    "documentation": {
+      "status": "PASS",
+      "localLinks": 262,
+      "bashBlocksSyntaxOnly": 10,
+      "concreteScenarioPaths": 58,
+      "twentyRowMatrices": 4
+    }
+  },
+  "humanReview": "pending",
+  "humanAcceptance": "pending",
+  "limits": [
+    "Not the same complete source as timing campaign 895a3bd",
+    "New scanner databases differ from campaign hashes; no identical-condition reproduction",
+    "Hosted OIDC/GHCR negatives unsupported and NOT_EXECUTED",
+    "Shared positives/recoveries are not independent samples",
+    "Human-effort and economic evaluation remain deferred",
+    "No new timing campaign or human acceptance"
+  ],
+  "publication": {
+    "status": "PASS",
+    "verifiedUtc": "2026-10-05T18:46:20.019697+00:00",
+    "releaseId": 403052949,
+    "previousAssetsUnchanged": 11,
+    "preTaskAssetsUnchanged": 9,
+    "freshRemoteDownload": "PASS: exact byte equality for ZIP and checksum",
+    "githubAssetDigest": "PASS",
+    "zipCrc": "PASS",
+    "exactManifestMembershipAndHashes": 168,
+    "originalFilesIdenticalToInitialSupplement": 22,
+    "archive": {
+      "id": 613384625,
+      "name": "lane-a-37353632299-91a33e9-evidence-v2.zip",
+      "size": 246596801,
+      "digest": "sha256:1f276947f5ed375df0b4ab41cd93360ea9f6f8443749f36c0d5b216d500bbe4b",
+      "browser_download_url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-37353632299-91a33e9-evidence-v2.zip"
+    },
+    "checksum": {
+      "id": 613384623,
+      "name": "lane-a-37353632299-91a33e9-evidence-v2.zip.sha256",
+      "size": 109,
+      "digest": "sha256:1e9e47547f642b66ce6b20233c6fded14006f01bb929910b05da7fe377e3e1d6",
+      "browser_download_url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-37353632299-91a33e9-evidence-v2.zip.sha256"
+    },
+    "initialSupplement": {
+      "name": "lane-a-37353632299-91a33e9-evidence.zip",
+      "sha256": "6087de78ac4c0bc5b0b8064dd2de45050f2c149343134d5b59e65f893b84eddd",
+      "status": "Preserved unchanged; superseded by v2 which corrects the F04 documentation filename. Experiment originals/results are identical."
+    }
+  }
+}

@@ -1,0 +1,312 @@
+{
+  "schema": "resource-economic-assessment/v1",
+  "date": "2026-10-05",
+  "scope": "Economic evaluation limited to observed execution time and evidence storage; monetary amounts, rates and hypothetical costs excluded by user instruction",
+  "analysisBaseCommit": "ba56ca91552ac2d508882b191410a578f05d632c",
+  "experimentalSources": {
+    "campaign": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+    "correctedCatalogue": "91a33e910ee2ba9ded5391393b06ca70005de4d4"
+  },
+  "groups": {
+    "campaign": {
+      "runs": 10,
+      "activeJobs": 10,
+      "sumJobSeconds": 3343.0,
+      "sumJobMinutes": 55.71666666666667,
+      "artifactsObserved": 10,
+      "artifactZipBytes": 1169988488
+    },
+    "development": {
+      "runs": 2,
+      "activeJobs": 2,
+      "sumJobSeconds": 698.0,
+      "sumJobMinutes": 11.633333333333333,
+      "artifactsObserved": 2,
+      "artifactZipBytes": 234028888
+    },
+    "plan-publication": {
+      "runs": 1,
+      "activeJobs": 1,
+      "sumJobSeconds": 24.0,
+      "sumJobMinutes": 0.4,
+      "artifactsObserved": 0,
+      "artifactZipBytes": null
+    },
+    "catalogue-failed": {
+      "runs": 1,
+      "activeJobs": 2,
+      "sumJobSeconds": 321.0,
+      "sumJobMinutes": 5.35,
+      "artifactsObserved": 4,
+      "artifactZipBytes": 77486
+    },
+    "catalogue-corrected": {
+      "runs": 1,
+      "activeJobs": 2,
+      "sumJobSeconds": 1294.0,
+      "sumJobMinutes": 21.566666666666666,
+      "artifactsObserved": 4,
+      "artifactZipBytes": 246160930
+    }
+  },
+  "runs": [
+    {
+      "dataset": "campaign",
+      "runId": 37202413477,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111436627985
+      ],
+      "sumJobSeconds": 334.0,
+      "jobWindowSeconds": 334.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.566666666666666
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37202927807,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111438131246
+      ],
+      "sumJobSeconds": 326.0,
+      "jobWindowSeconds": 326.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.433333333333334
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37203375745,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111439432573
+      ],
+      "sumJobSeconds": 359.0,
+      "jobWindowSeconds": 359.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.983333333333333
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37203826554,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111440781356
+      ],
+      "sumJobSeconds": 322.0,
+      "jobWindowSeconds": 322.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.366666666666666
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37204323164,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111442244632
+      ],
+      "sumJobSeconds": 281.0,
+      "jobWindowSeconds": 281.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 4.683333333333334
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37204709536,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111443388235
+      ],
+      "sumJobSeconds": 333.0,
+      "jobWindowSeconds": 333.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.55
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37205158171,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111444717519
+      ],
+      "sumJobSeconds": 341.0,
+      "jobWindowSeconds": 341.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.683333333333334
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37205613639,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111446069433
+      ],
+      "sumJobSeconds": 323.0,
+      "jobWindowSeconds": 323.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.383333333333334
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37206042810,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111447318269
+      ],
+      "sumJobSeconds": 352.0,
+      "jobWindowSeconds": 352.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.866666666666666
+    },
+    {
+      "dataset": "campaign",
+      "runId": 37206506779,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111448729198
+      ],
+      "sumJobSeconds": 372.0,
+      "jobWindowSeconds": 372.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 6.2
+    },
+    {
+      "dataset": "development",
+      "runId": 37199309814,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111427525572
+      ],
+      "sumJobSeconds": 352.0,
+      "jobWindowSeconds": 352.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.866666666666666
+    },
+    {
+      "dataset": "development",
+      "runId": 37200632844,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111431428371
+      ],
+      "sumJobSeconds": 346.0,
+      "jobWindowSeconds": 346.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.766666666666667
+    },
+    {
+      "dataset": "plan-publication",
+      "runId": 37202322661,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 1,
+      "skippedJobIds": [
+        111436374429
+      ],
+      "sumJobSeconds": 24.0,
+      "jobWindowSeconds": 24.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 0.4
+    },
+    {
+      "dataset": "catalogue-failed",
+      "runId": 37342413975,
+      "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "activeJobs": 2,
+      "skippedJobIds": [],
+      "sumJobSeconds": 321.0,
+      "jobWindowSeconds": 164.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 5.35
+    },
+    {
+      "dataset": "catalogue-corrected",
+      "runId": 37353632299,
+      "source": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+      "activeJobs": 2,
+      "skippedJobIds": [],
+      "sumJobSeconds": 1294.0,
+      "jobWindowSeconds": 835.0,
+      "jobWindowDefinition": "earliest active job start to latest active job completion; excludes initial queue",
+      "sumJobMinutes": 21.566666666666666
+    }
+  ],
+  "campaignPrimary": {
+    "pairs": 10,
+    "medianDifferenceSeconds": 55.090335879499996,
+    "meanDifferenceSeconds": 54.9390435021,
+    "rangeDifferenceSeconds": [
+      44.120437685,
+      67.265213706
+    ],
+    "medianRelativePercent": 831.6502519503558,
+    "sumRSeconds": 64.620668687,
+    "sumGSeconds": 614.011103708,
+    "sumDifferenceSeconds": 549.390435021,
+    "sumPrimaryIntervalsSeconds": 678.631772395,
+    "outsidePrimaryIntervalsSeconds": 2664.368227605
+  },
+  "preservation": {
+    "correctedCatalogueArtifactZipBytes": 246160930,
+    "databaseArtifactZipBytes": 241344951,
+    "databaseSharePercent": 98.04356483378577,
+    "databaseTarExpandedBytes": 2972215852,
+    "unit": "bytes; MiB uses 2^20 and GiB uses 2^30",
+    "limitation": "Payload sizes and configured expiration, not storage occupancy history or a billing meter"
+  },
+  "measurementLimits": [
+    "Job elapsed seconds are not CPU time or active human effort",
+    "Primary G intervals include hosted provenance and scheduling gaps",
+    "Shared preparation is not allocated to R or G",
+    "Failed catalogue resource use is retained and separately identified",
+    "No new experiment; functional, timing, development and plan data remain separate",
+    "Prior pilot, automated repairs, full development history, Codespaces, caches, images, and review work are outside this inventory",
+    "No productivity, avoided-loss, profitability or total-project-cost conclusion"
+  ],
+  "humanReview": "pending",
+  "newHumanAcceptance": "pending",
+  "evidence": {
+    "inputManifestSha256": "781d949dc4b6ded2c59f8100a9627cb2b684605be32d6ee29cfc1c3c08d76d30",
+    "assessmentSha256": "e3786f9aa18e313ecde6b8426f4b358b4f5ebafc78bb9ef45e2f44facd3ad021",
+    "inputFiles": 46,
+    "newArithmeticReview": "PASS: Python derivation and independent Node verification",
+    "reusedHistoricalReview": "Scenario/crypto/DB verification remains in original campaign and lane A records; no new scenario execution or cryptographic audit"
+  },
+  "publication": {
+    "status": "PASS",
+    "verifiedUtc": "2026-10-05T19:18:53.264126+00:00",
+    "releaseId": 403052949,
+    "previousAssetsUnchanged": 13,
+    "archive": {
+      "id": 613456873,
+      "name": "economic-evaluation-resources-20261005.zip",
+      "size": 96182,
+      "digest": "sha256:39540320f23a0ba87fe742b7e646c5a556aa03a13808d6b4efdb252f6e0bbcc0",
+      "browser_download_url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/economic-evaluation-resources-20261005.zip"
+    },
+    "checksum": {
+      "id": 613456874,
+      "name": "economic-evaluation-resources-20261005.zip.sha256",
+      "size": 109,
+      "digest": "sha256:d9afbefe7c0204a00b0844f67ac5f1f5e215c7b095e59e290893720cc1a9746e",
+      "browser_download_url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/economic-evaluation-resources-20261005.zip.sha256"
+    },
+    "freshDownload": "exact ZIP/checksum byte match",
+    "zipCrc": "PASS",
+    "internalHashes": 57,
+    "offlineReproduction": "assessment.json and jobs.csv byte-identical after fresh download",
+    "newExperimentalRuns": 0,
+    "financialDataPublished": false
+  }
+}
