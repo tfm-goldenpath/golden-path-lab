@@ -30,6 +30,16 @@ corregida, pero no se acredita el catálogo completo en `895a3bd`. A3 sigue fall
 A4 no modifica retrospectivamente la aceptación del 4 de octubre. La nueva revisión
 y aceptación humanas siguen pendientes.
 
+## Evaluación económica de recursos — 5 de octubre de 2026
+
+La [evaluación económica](economic-evaluation.md) documenta ahora recursos observados:
+55,717 minutos de jobs de los diez pares, 21,567 del catálogo A corregido y 5,350
+del intento fallido conservado. La preparación se mantiene separada. El cálculo
+usa metadatos originales, intervalos pareados y tamaños de artefactos, sin repetir
+experimentos. Por indicación del usuario se excluyen importes, tarifas y costes
+supuestos. Es una evaluación de recursos, no de rentabilidad o productividad humana.
+La nueva revisión humana sigue pendiente.
+
 ## Alcance actual
 
 La consolidación se preparó desde `940582721d0a5bee2fce54272f5dac60a87fad00`

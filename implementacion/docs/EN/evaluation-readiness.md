@@ -29,6 +29,16 @@ full-catalogue execution on `895a3bd` remains unestablished. A3 remains failed;
 A4 does not retrospectively amend the 4 October acceptance. New human review and
 acceptance remain pending.
 
+## Resource-based economic assessment — 5 October 2026
+
+The [economic evaluation](economic-evaluation.md) now documents observed resources:
+55.717 job minutes for the ten timing pairs, 21.567 for the corrected lane A
+catalogue, and 5.350 for the retained failed catalogue attempt. Preparation remains
+separate. Original job metadata, paired intervals and artifact sizes support the
+calculation; no experiment was repeated. At the user's request, monetary amounts,
+rates and assumed costs are excluded. This is a resource assessment, not a
+profitability or human-productivity result. New human review remains pending.
+
 ## Current scope
 
 The readiness consolidation was prepared from `940582721d0a5bee2fce54272f5dac60a87fad00`

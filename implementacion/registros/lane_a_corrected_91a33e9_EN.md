@@ -170,3 +170,10 @@ The thesis and historical acceptance declarations were not edited.
 | Execute the authorized corrected-source workflow; review original evidence, cryptography, DBs and sources; prepare EN/ES records and download | OpenAI Codex / GPT-6 | Pending | Automated technical review PASS, 20/20 lane A; new human acceptance pending |
 
 Publication note: v2 corrects the F04 evidence filename to `F04/analysis.json`. The initial supplement is retained unchanged; all original experiment bytes and results are identical.
+
+**Later economic supplement (5 October):** the [resource assessment](../docs/EN/economic-evaluation.md)
+records this run's 21.567 summed job minutes and artifact footprint separately
+from the timing campaign and failed attempt. It updates the earlier pending-
+economic-analysis limitation with observed resources only; monetary valuation is
+excluded at the user's request. This does not change experiment results or human
+acceptance, and the published original supplement remains unchanged.

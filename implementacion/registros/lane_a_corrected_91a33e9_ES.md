@@ -177,3 +177,10 @@ repitió la campaña ni se modificaron las declaraciones históricas de aceptaci
 | Ejecutar workflow autorizado sobre fuente corregida; revisar originales, criptografía, bases y fuentes; preparar registros EN/ES y descarga | OpenAI Codex / GPT-6 | Pendiente | Revisión técnica automatizada PASS, 20/20 vía A; nueva aceptación humana pendiente |
 
 Nota de publicación: v2 corrige el nombre de evidencia F04 a `F04/analysis.json`. Se conserva intacto el suplemento inicial; los bytes y resultados experimentales originales son idénticos.
+
+**Suplemento económico posterior (5 de octubre):** la [evaluación de recursos](../docs/ES/economic-evaluation.md)
+recoge los 21,567 minutos de jobs y los artefactos de este run separados de campaña
+e intento fallido. Actualiza la limitación anterior de análisis económico pendiente
+con recursos observados; la valoración monetaria se excluye por indicación del
+usuario. No cambia resultados ni aceptación humana; el suplemento original publicado
+permanece intacto.

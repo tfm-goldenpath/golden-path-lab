@@ -37,7 +37,15 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 - [x] Publish and freshly download the corrected-source evidence ZIP v2 with both real databases, original logs/metadata and EN/ES analysis. Verify exact byte equality, GitHub digests, CRC and all 168 internal hashes; preserve the nine pre-task assets and initial supplement. The index records the publication-only F04 filename correction; experimental bytes/results are unchanged.
 - [ ] Human review of the correction and acceptance of this new live evidence; technical success does not amend the 4 October declaration or establish complete catalogue execution on `895a3bd`.
 - [x] Publish the requested downloadable definition, analysis and evidence supplement on the existing evidence prerelease, with a separate SHA-256 file and [publication index](registros/lane-a-catalogue-publication-20261005.json). Verify all 165 internal file hashes, both original manifests, both failed-suite exports and a fresh download against exact local bytes. The seven prior release assets are unchanged; corrected code `b0d330e` is distinct from experimental source `895a3bd`.
-- [ ] Human review/acceptance of this complementary evidence. Human-effort and economic evaluation and unsupported lane B negatives remain pending. The 4 October declaration, campaign, historical records and thesis files are unchanged.
+- [ ] Human review/acceptance of this complementary evidence. Human-effort evaluation and unsupported lane B negatives remain pending; the later resource-based economic assessment is recorded below. The 4 October declaration, campaign, historical records and thesis files are unchanged.
+
+## Resource-based economic evaluation — 5 October 2026
+
+- [x] Add matching [EN](docs/EN/economic-evaluation.md) / [ES](docs/ES/economic-evaluation.md) resource assessment and a [calculation/identity index](registros/economic-evaluation-20261005.json), using existing evidence only. Keep 55.717 campaign job minutes, 11.633 development minutes, 0.400 plan-publication minutes, 5.350 failed-catalogue minutes and 21.567 corrected-catalogue minutes separate.
+- [x] Verify 46 preserved small inputs, source/run/attempt identities and independent Python/Node arithmetic for 17 allocated jobs plus thirteen skipped jobs. Relate the original median 55.090 s G−R primary increment to its boundary; report artifact payloads and the corrected catalogue's 98.044% database share. Preserve all failures and experimental originals.
+- [x] Apply the user's scope correction: no monetary amounts, tariffs or assumed costs. No profitability, human-time-saving or total-project-resource claim; no new workflow, timing campaign, thesis edit or retrospective acceptance change.
+- [x] Publish the small resource-calculation supplement on the existing evidence release, preserve all thirteen previous assets, verify a fresh download and all 57 internal hashes, and reproduce the JSON/CSV byte for byte offline. No monetary amounts or billing data are included.
+- [ ] Human review of this complementary resource interpretation. Human-effort measurement and unsupported hosted negatives remain pending; monetary valuation is excluded from this task by request.
 
 ## Readiness implementation history (PR #45)
 
