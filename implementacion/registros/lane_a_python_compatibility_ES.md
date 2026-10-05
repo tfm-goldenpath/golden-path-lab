@@ -8,6 +8,14 @@ usaba `TarFile.extractall(filter='data')`, no disponible en el Python Debian
 `3.11.2-6+deb12u8` de esos jobs. Este registro corresponde al arreglo posterior
 del árbol de trabajo, sin otra ejecución del catálogo ni de la campaña temporal.
 
+**Actualización de publicación:** la implementación revisada está confirmada en
+`b0d330e4aab84db752ddc87c67fa70f4982f600d`. [Descargar ZIP de evidencias](https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip)
+y [archivo SHA-256](https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip.sha256);
+el [índice de publicación](lane-a-catalogue-publication-20261005.json) vincula fuentes
+y bytes descargados. Las secciones de revisión local conservan el estado previo
+a publicar. El anexo se aloja en la publicación de evidencias existente; su etiqueta
+experimental sigue en `895a3bd`, no en el código corregido. Revisión humana pendiente.
+
 ## Cambio y fuente
 
 [restore_database](../scripts/paired-rg.py) valida ahora el inventario completo

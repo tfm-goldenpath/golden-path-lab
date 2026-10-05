@@ -8,6 +8,13 @@ scenarios executed; all twenty remain NOT_EXECUTED in this attempt.** This is
 an implementation/environment compatibility failure, not an attributable security
 rejection. No scenario retry or corrected-source execution was performed.
 
+**Later publication:** [download the definition, analysis and evidence ZIP](https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip)
+and its [SHA-256 file](https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip.sha256).
+The [publication index](lane-a-catalogue-publication-20261005.json) records a fresh
+download and exact-byte verification. The ZIP keeps this failed experiment separate
+from the local correction committed as `b0d330e4aab84db752ddc87c67fa70f4982f600d`.
+Handoff statements below describing no commit/publication are historical.
+
 ## Identity and scope
 
 | Item | Recorded identity |

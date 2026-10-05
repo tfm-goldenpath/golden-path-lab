@@ -8,6 +8,14 @@ stopped at shared tests. The database-restoration function used
 `3.11.2-6+deb12u8`. This record concerns the subsequent working-tree correction,
 not another execution of the catalogue or timing campaign.
 
+**Publication update:** the reviewed implementation is now committed as
+`b0d330e4aab84db752ddc87c67fa70f4982f600d`. [Download the evidence ZIP](https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip)
+and [SHA-256 file](https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip.sha256);
+the [publication index](lane-a-catalogue-publication-20261005.json) binds the sources
+and downloaded bytes. The local-review sections below retain their prepublication
+state. The existing evidence prerelease hosts this supplement; its experimental
+tag still points to `895a3bd`, not the corrected code. Human review remains pending.
+
 ## Change and source
 
 [restore_database](../scripts/paired-rg.py) now validates the complete archive

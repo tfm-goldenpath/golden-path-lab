@@ -9,6 +9,13 @@ intento.** Es un fallo de compatibilidad entre implementación y entorno, no un
 rechazo de seguridad atribuible. No se repitió la ejecución ni se ensayó código
 corregido.
 
+**Publicación posterior:** [descargar ZIP con definición, análisis y evidencias](https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip)
+y su [archivo SHA-256](https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip.sha256).
+El [índice de publicación](lane-a-catalogue-publication-20261005.json) registra una
+descarga nueva y comparación exacta de bytes. El ZIP separa el experimento fallido
+del arreglo local confirmado como `b0d330e4aab84db752ddc87c67fa70f4982f600d`.
+Las menciones inferiores a ausencia de commit/publicación son históricas.
+
 ## Identidad y alcance
 
 | Elemento | Identidad registrada |

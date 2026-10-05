@@ -1,0 +1,40 @@
+{
+  "kind": "authored-complementary-lane-a-publication-index",
+  "date": "2026-10-05",
+  "releaseId": 403052949,
+  "releaseUrl": "https://github.com/tfm-goldenpath/golden-path-lab/releases/tag/evidence-campaign-895a3bd-20261004",
+  "existingReleaseReused": true,
+  "previousAssetsUnchanged": 7,
+  "experimentalSource": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+  "experimentalRun": "37342413975",
+  "experimentalRunAttempt": 1,
+  "experimentalOutcome": "Both suites FAIL at shared-tests; all 20 scenarios NOT_EXECUTED; databases NOT_CREATED",
+  "correctedCodeCommit": "b0d330e4aab84db752ddc87c67fa70f4982f600d",
+  "correctedCodeEvidence": "Local precommit checks with exact matching file hashes; no corrected-source lane A workflow",
+  "archive": {
+    "assetId": 613292923,
+    "name": "lane-a-catalogue-37342413975-fix-b0d330e.zip",
+    "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip",
+    "sizeBytes": 5862321,
+    "sha256": "3e18d534d3ee4f0d2a9dee7894e3462e90b086b5c66c5db5db492d70dfdae298",
+    "members": 166,
+    "internalFileHashes": 165
+  },
+  "checksum": {
+    "assetId": 613292924,
+    "url": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip.sha256",
+    "sha256": "3ac0d8f1e375cce110e56c38d489a2c466cf9924995df858e6b41628e21c2304"
+  },
+  "verification": {
+    "localZipCrc": "PASS",
+    "allInternalHashes": "PASS",
+    "original97FileManifest": "PASS",
+    "local30FileManifest": "PASS",
+    "originalSuiteAuditor": "PASS for demo and vulnerabilities",
+    "freshRemoteDownload": "PASS: exact byte comparison for both new assets",
+    "githubAssetDigest": "PASS"
+  },
+  "humanReview": "pending",
+  "humanAcceptanceOfNewEvidence": "pending",
+  "scope": "Subsequent failed catalogue attempt and local compatibility correction, separate from the timing campaign and 4 October acceptance; release target remains experimental source, not corrected code."
+}
