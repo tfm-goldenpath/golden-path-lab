@@ -21,8 +21,13 @@ históricas inferiores conservan sus fuentes y estados originales.
 La [corrección local solicitada después](../../registros/lane_a_python_compatibility_ES.md)
 copia los cuatro miembros permitidos de la base sin filtros de extracción. Pasan
 55 pruebas de mediciones y 37 de campaña con los paquetes Debian de Python de los
-jobs fallidos. El árbol corregido no tiene nueva ejecución Actions; queda pendiente
-la integración de veinte escenarios sobre su futura fuente confirmada en Git.
+jobs fallidos. La [ejecución posterior autorizada sobre la fuente corregida](../../registros/lane_a_corrected_91a33e9_ES.md)
+**37353632299**, intento 1, pasa demo y vulnerabilities en
+`91a33e910ee2ba9ded5391393b06ca70005de4d4`: revisión independiente **20/20 PASS**
+en vía A, con F01/F02 estáticos. Ambas bases reales están conservadas y difieren
+de la base de campaña temporal. El registro enlazado contiene evidencia por
+escenario, revisión criptográfica y descarga. El fallo original `895a3bd` permanece;
+la aceptación humana nueva y los negativos B no soportados siguen pendientes.
 
 ## Ejecución independiente
 

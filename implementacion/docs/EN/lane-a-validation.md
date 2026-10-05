@@ -21,8 +21,13 @@ observations below retain their original sources and statuses.
 The subsequently requested [local compatibility fix](../../registros/lane_a_python_compatibility_EN.md)
 copies the four allowlisted database members without extraction filters. Its
 55 measurement and 37 campaign regressions pass with the failed jobs' Debian
-Python packages. The corrected working tree has no new Actions execution;
-the twenty-scenario integration check on its future committed source is pending.
+Python packages. The subsequently authorized [corrected-source execution](../../registros/lane_a_corrected_91a33e9_EN.md)
+**37353632299**, attempt 1, passes demo and vulnerabilities on
+`91a33e910ee2ba9ded5391393b06ca70005de4d4`: independent review confirms **20/20 PASS**
+in lane A, with F01/F02 static. Both real databases are retained and differ from
+the timing campaign's database. The linked record provides per-scenario evidence,
+cryptographic review and a download. The original `895a3bd` failure remains intact;
+new human acceptance and unsupported lane B negatives remain pending.
 
 ## Execution
 

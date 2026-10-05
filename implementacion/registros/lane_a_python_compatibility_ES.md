@@ -16,6 +16,12 @@ y bytes descargados. Las secciones de revisión local conservan el estado previo
 a publicar. El anexo se aloja en la publicación de evidencias existente; su etiqueta
 experimental sigue en `895a3bd`, no en el código corregido. Revisión humana pendiente.
 
+**Validación real posterior:** el usuario autorizó el [run 37353632299](lane_a_corrected_91a33e9_ES.md)
+sobre `91a33e910ee2ba9ded5391393b06ca70005de4d4`. Ambas suites y su revisión
+independiente pasan los veinte escenarios de vía A; también pasa la restauración
+de bases reales. Las menciones inferiores a revisión solo local describen la etapa
+anterior. La aceptación humana de esta ejecución nueva sigue pendiente.
+
 ## Cambio y fuente
 
 [restore_database](../scripts/paired-rg.py) valida ahora el inventario completo

@@ -16,6 +16,12 @@ and downloaded bytes. The local-review sections below retain their prepublicatio
 state. The existing evidence prerelease hosts this supplement; its experimental
 tag still points to `895a3bd`, not the corrected code. Human review remains pending.
 
+**Subsequent live validation:** the user authorized [run 37353632299](lane_a_corrected_91a33e9_EN.md)
+on committed source `91a33e910ee2ba9ded5391393b06ca70005de4d4`. Both suites and
+independent review pass all twenty lane A scenarios; actual database restoration
+also passes. The local-only statements below describe the earlier review stage.
+Human acceptance of this new execution is pending.
+
 ## Change and source
 
 [restore_database](../scripts/paired-rg.py) now validates the complete archive
