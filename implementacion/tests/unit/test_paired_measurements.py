@@ -2,11 +2,13 @@
 import copy
 import hashlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -205,26 +207,60 @@ class RetentionAndAdmission(unittest.TestCase):
    with self.assertRaises(ValueError):runner.verify_export(p)
    (p/'extra.log').unlink();(p/'pair.json').write_text('{}')
    with self.assertRaises(ValueError):runner.verify_export(p)
- def test_database_replay_and_mismatch(self):
-  # Tiny labelled synthetic DB bytes exercise retention, never scanning.
-  import io,tarfile
-  with tempfile.TemporaryDirectory() as temp:
-   p=Path(temp);(p/'databases').mkdir();db=b'synthetic-unit-database';metadata=b'{}'
-   hashes={'trivy.db':hashlib.sha256(db).hexdigest(),'metadata.json':hashlib.sha256(metadata).hexdigest()}
-   identity_bytes=json.dumps({'status':'PASS','expectedIdentity':{'sha256':hashes,'metadata':{}}}).encode()
-   files={'db/trivy.db':db,'db/metadata.json':metadata,'identity.json':identity_bytes}
-   files['SHA256SUMS.txt']=''.join(hashlib.sha256(v).hexdigest()+'  '+k+'\n' for k,v in files.items()).encode()
-   target=p/'databases/db.tar.gz'
-   with tarfile.open(target,'w:gz') as tar:
-    for name,data in files.items():
-     member=tarfile.TarInfo(name);member.size=len(data);tar.addfile(member,io.BytesIO(data))
-   Path(str(target)+'.sha256').write_text(hashlib.sha256(target.read_bytes()).hexdigest()+'  db.tar.gz\n')
-   self.assertEqual(runner.restore_database(p,p/'restored'),hashes)
-   target.write_bytes(target.read_bytes()+b'changed')
-   with self.assertRaisesRegex(ValueError,'checksum'):runner.restore_database(p,p/'bad')
  def test_different_databases_not_pooled(self):
   p=pair();q=pair();q['pair']=2;p['frozenDatabase']={'trivy.db':'a'};q['frozenDatabase']={'trivy.db':'b'}
   with self.assertRaisesRegex(ValueError,'databases'):summarize([p,q])
+
+class DatabaseReplay(unittest.TestCase):
+ def setUp(self):
+  # Tiny labelled synthetic DB bytes exercise retention, never scanning.
+  temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup);self.p=Path(temp.name)
+  (self.p/'databases').mkdir();db=b'synthetic-unit-database';metadata=b'{}'
+  self.hashes={'trivy.db':hashlib.sha256(db).hexdigest(),'metadata.json':hashlib.sha256(metadata).hexdigest()}
+  identity_bytes=json.dumps({'status':'PASS','expectedIdentity':{'sha256':self.hashes,'metadata':{}}}).encode()
+  self.files={'db/trivy.db':db,'db/metadata.json':metadata,'identity.json':identity_bytes}
+  self.files['SHA256SUMS.txt']=''.join(hashlib.sha256(v).hexdigest()+'  '+k+'\n' for k,v in self.files.items()).encode()
+  self.archive=self.p/'databases/db.tar.gz'
+  self.write_archive()
+ def write_archive(self,entries=None):
+  with tarfile.open(self.archive,'w:gz') as tar:
+   for name,data in self.files.items() if entries is None else entries:
+    member=tarfile.TarInfo(name) if isinstance(name,str) else name
+    if member.isfile():member.size=len(data)
+    tar.addfile(member,io.BytesIO(data) if member.isfile() else None)
+  Path(str(self.archive)+'.sha256').write_text(hashlib.sha256(self.archive.read_bytes()).hexdigest()+'  db.tar.gz\n')
+ def test_replay_without_bulk_extraction_api(self):
+  # Python 3.11.2 in lane A lacks the filter argument. Copy allowlisted bytes
+  # without either extraction API, even when the test host supports filters.
+  with patch.object(tarfile.TarFile,'extractall',side_effect=AssertionError('Bulk extraction forbidden')),patch.object(tarfile.TarFile,'extract',side_effect=AssertionError('Member extraction forbidden')):
+   self.assertEqual(runner.restore_database(self.p,self.p/'restored'),self.hashes)
+  for name,data in self.files.items():self.assertEqual((self.p/'restored'/name).read_bytes(),data)
+ def test_archive_checksum_mismatch(self):
+  self.archive.write_bytes(self.archive.read_bytes()+b'changed')
+  with self.assertRaisesRegex(ValueError,'checksum'):runner.restore_database(self.p,self.p/'bad')
+ def test_reject_unsafe_members_before_writing(self):
+  entries=list(self.files.items())
+  cases=[entries+[entries[0]],entries[:-1]+[entries[0]],entries[:-1],entries+[('extra',b'unexpected')]]
+  for name in ['../escaped','/absolute','db/../trivy.db']:
+   cases.append([(name,entries[0][1])]+entries[1:])
+  for kind in [tarfile.SYMTYPE,tarfile.LNKTYPE,tarfile.DIRTYPE,tarfile.CHRTYPE,tarfile.FIFOTYPE]:
+   member=tarfile.TarInfo(entries[0][0]);member.type=kind;member.linkname='../escaped'
+   cases.append([(member,b'')]+entries[1:])
+  for index,malformed in enumerate(cases):
+   with self.subTest(index=index):
+    self.write_archive(malformed);destination=self.p/f'unsafe-{index}'
+    with self.assertRaisesRegex(ValueError,'Unsafe replay database'):runner.restore_database(self.p,destination)
+    self.assertFalse(destination.exists())
+ def test_destination_must_be_new(self):
+  destination=self.p/'existing';destination.mkdir();sentinel=destination/'identity.json';sentinel.write_bytes(b'keep')
+  with self.assertRaises(FileExistsError):runner.restore_database(self.p,destination)
+  self.assertEqual(sentinel.read_bytes(),b'keep');self.assertEqual(list(destination.iterdir()),[sentinel])
+ def test_reject_symlinked_destination_and_parent(self):
+  target=self.p/'target';target.mkdir();link=self.p/'link';link.symlink_to(target,target_is_directory=True)
+  for destination in [link,link/'restored']:
+   with self.subTest(destination=destination),self.assertRaisesRegex(ValueError,'Symlinked database destination'):
+    runner.restore_database(self.p,destination)
+  self.assertEqual(list(target.iterdir()),[])
 
 class FinalFailureRecords(unittest.TestCase):
  def test_actual_exit_trap_preserves_original_logging_failure(self):

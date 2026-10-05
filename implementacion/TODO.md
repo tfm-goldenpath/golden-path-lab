@@ -25,6 +25,16 @@ The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the
 - [ ] Review the publication changes and English translation in the human-acceptance documentation PR; the experimental acceptance above does not pre-approve this new editorial change.
 - [ ] **Deferred:** human-effort measurement, eligible manual calibration and human-task limits. Known repairs remain permanently ineligible. Functional trials, scripted repairs, the historical four-pair pilot and the ten-pair campaign are separate datasets. Thesis alignment is listed in the results guide; no thesis edits here.
 
+## Complementary catalogue attempt — 5 October 2026
+
+- [x] Create `test/catalogue-campaign-source` from clean updated main `c2b403cd436449b1b2818f5fe92983ecf946d072`; verify the existing tag points exactly to campaign source `895a3bde79089b7544c1dad76a6cd8f48eede0a8`.
+- [x] Dispatch the one authorized `lane-a-validation.yml` run `37342413975`, attempt 1, on that tag. An initial integration-token HTTP 403 created no run; existing saved-user authentication created the identified run. No experimental retry or paired workflow dispatch.
+- [x] Preserve both failed suites, four original ZIPs, separate NOT_CREATED database indexes, Actions logs and metadata. Verify four GitHub ZIP digests, 28 outer hashes per suite, exact manifest membership, source/main/configuration and failure attribution. Originals and derived reports remain separate and ignored. See [EN](registros/catalogue_campaign_source_895a3bd_EN.md), [ES](registros/catalogue_campaign_source_895a3bd_ES.md) and [index](registros/catalogue-campaign-source-895a3bd.json).
+- [ ] **Catalogue repetition remains incomplete: 0/20 executed in this attempt.** Both suites pass doctor but fail shared-tests (928/930 unit checks pass) because `paired-rg.py::restore_database` uses `TarFile.extractall(filter='data')`, unsupported by the pinned Python build. Static F01/F02, smoke, real scenarios, scans, signatures, admission and recoveries are not reached. No suite database exists to compare with the campaign.
+- [x] Implement the subsequently requested Python 3.11.2 compatibility correction: copy only the four allowlisted regular archive members, reject unsafe members/destinations and retain all checksum/identity checks. The 55 measurement and 37 campaign regressions, doctor and full shared suite pass using the same Debian Python packages as the failed jobs on Codespaces (not a full devcontainer reproduction); see [EN](registros/lane_a_python_compatibility_EN.md) / [ES](registros/lane_a_python_compatibility_ES.md).
+- [ ] Review the correction and separately authorize live validation on its new committed source. Local checks do not complete the catalogue; retain run `37342413975` as failed and do not credit corrected code to `895a3bd`.
+- [ ] Human review/acceptance of this complementary evidence and preservation outside Codespaces. Human-effort and economic evaluation and unsupported lane B negatives remain pending. The 4 October declaration, campaign, historical records and thesis files are unchanged.
+
 ## Readiness implementation history (PR #45)
 
 The following checklist records the PR45 handoff before its merge and subsequent

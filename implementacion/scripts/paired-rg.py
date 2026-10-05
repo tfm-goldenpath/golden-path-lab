@@ -56,11 +56,18 @@ def restore_database(previous, destination):
     archive=dbs[0]
     if hashlib.sha256(archive.read_bytes()).hexdigest()!=Path(str(archive)+'.sha256').read_text().split()[0]:
         raise ValueError('Database archive checksum mismatch')
-    destination.mkdir()
+    if destination.is_symlink() or destination.resolve()!=destination.absolute():
+        raise ValueError('Symlinked database destination')
     with tarfile.open(archive) as t:
-        names=t.getnames()
-        if len(names)!=4 or set(names)!={'db/trivy.db','db/metadata.json','identity.json','SHA256SUMS.txt'} or any(not m.isfile() for m in t.getmembers()):raise ValueError('Unsafe replay database')
-        t.extractall(destination,filter='data')
+        members=t.getmembers();names=[m.name for m in members]
+        if len(names)!=4 or set(names)!={'db/trivy.db','db/metadata.json','identity.json','SHA256SUMS.txt'} or any(not m.isfile() for m in members):raise ValueError('Unsafe replay database')
+        # The pinned Python 3.11.2 lacks tarfile extraction filters. Copy only
+        # allowlisted regular-file bytes; never apply archive paths or metadata.
+        destination.mkdir(mode=0o700)
+        (destination/'db').mkdir(mode=0o700)
+        for member in members:
+            with t.extractfile(member) as source, (destination/member.name).open('xb') as target:
+                shutil.copyfileobj(source,target)
     record=read(destination/'identity.json')
     if record['status']!='PASS':raise ValueError('Cannot restore a drifted database')
     expected=record['expectedIdentity']

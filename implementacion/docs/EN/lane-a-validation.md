@@ -6,6 +6,24 @@ hosting the local devcontainer still executes **lane A**, with local keys and an
 owned local registry. It does not establish hosted OIDC or GHCR mutation coverage.
 Human acceptance remains pending.
 
+## Later attempt on the measured campaign source — 5 October 2026
+
+[Run 37342413975](../../registros/catalogue_campaign_source_895a3bd_EN.md) used
+`895a3bde79089b7544c1dad76a6cd8f48eede0a8` through its existing evidence tag.
+Both suites failed shared-tests on unsupported `TarFile.extractall(filter=...)`
+in the pinned Python build, after doctor passed and before static F01/F02 or live
+scenarios. Coverage in this attempt is **0/20**, databases **NOT_CREATED**.
+The linked record preserves the failure, all four artifacts and a correction
+proposal. It is a later observation, with new human review/acceptance pending;
+it does not amend the 4 October acceptance of the prior reduced scope. Historical
+observations below retain their original sources and statuses.
+
+The subsequently requested [local compatibility fix](../../registros/lane_a_python_compatibility_EN.md)
+copies the four allowlisted database members without extraction filters. Its
+55 measurement and 37 campaign regressions pass with the failed jobs' Debian
+Python packages. The corrected working tree has no new Actions execution;
+the twenty-scenario integration check on its future committed source is pending.
+
 ## Execution
 
 Use the pinned [implementation devcontainer](../../../.devcontainer/implementacion/devcontainer.json).

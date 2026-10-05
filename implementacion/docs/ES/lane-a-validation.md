@@ -6,6 +6,24 @@ en GitHub sigue siendo **carril A**, con claves locales y un registro propio;
 no demuestra OIDC alojado ni modificaciones en GHCR. La aceptación humana sigue
 pendiente.
 
+## Intento posterior sobre la fuente medida — 5 de octubre de 2026
+
+El [run 37342413975](../../registros/catalogue_campaign_source_895a3bd_ES.md) utilizó
+`895a3bde79089b7544c1dad76a6cd8f48eede0a8` mediante su etiqueta de evidencia.
+Ambas suites fallaron en shared-tests por `TarFile.extractall(filter=...)` no
+soportado en Python fijado, tras pasar doctor y antes de F01/F02 estáticos o
+escenarios reales. Cobertura de este intento: **0/20**; bases **NOT_CREATED**.
+El registro conserva fallo, cuatro artefactos y propuesta de corrección. Es una
+observación posterior, con revisión/aceptación humana nueva pendientes; no modifica
+la aceptación del alcance reducido anterior del 4 de octubre. Las observaciones
+históricas inferiores conservan sus fuentes y estados originales.
+
+La [corrección local solicitada después](../../registros/lane_a_python_compatibility_ES.md)
+copia los cuatro miembros permitidos de la base sin filtros de extracción. Pasan
+55 pruebas de mediciones y 37 de campaña con los paquetes Debian de Python de los
+jobs fallidos. El árbol corregido no tiene nueva ejecución Actions; queda pendiente
+la integración de veinte escenarios sobre su futura fuente confirmada en Git.
+
 ## Ejecución independiente
 
 Use el [devcontainer fijado](../../../.devcontainer/implementacion/devcontainer.json)

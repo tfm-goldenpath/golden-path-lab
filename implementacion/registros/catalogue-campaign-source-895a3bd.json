@@ -1,0 +1,152 @@
+{
+  "kind": "authored-catalogue-validation-index",
+  "experimentalSource": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+  "tag": "evidence-campaign-895a3bd-20261004",
+  "documentationBranch": "test/catalogue-campaign-source",
+  "documentationBase": "c2b403cd436449b1b2818f5fe92983ecf946d072",
+  "recordedMain": "c2b403cd436449b1b2818f5fe92983ecf946d072",
+  "runId": 37342413975,
+  "runAttempt": 1,
+  "runUrl": "https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/37342413975",
+  "workflow": ".github/workflows/lane-a-validation.yml",
+  "createdAt": "2026-10-05T16:38:42Z",
+  "lane": "A",
+  "dataset": "functional catalogue attempt; separate from timing campaign",
+  "executionStatus": "FAIL",
+  "failedStage": "shared-tests",
+  "failure": {
+    "diagnostic": "TarFile.extractall() got an unexpected keyword argument 'filter'",
+    "location": "implementacion/scripts/paired-rg.py:63",
+    "pythonPackage": "3.11.2-6+deb12u8"
+  },
+  "coverage": {
+    "executed": 0,
+    "total": 20,
+    "status": "NOT_EXECUTED",
+    "ids": [
+      "F01",
+      "F02",
+      "F03",
+      "F04",
+      "F05",
+      "F06",
+      "F07",
+      "F08",
+      "F09",
+      "F10",
+      "F11",
+      "F12",
+      "F13",
+      "F14",
+      "L01",
+      "L02",
+      "L03",
+      "L04",
+      "L05",
+      "L06"
+    ]
+  },
+  "suites": {
+    "demo": {
+      "jobId": 111872525387,
+      "status": "FAIL",
+      "originalExitCode": 2,
+      "retentionExitCode": 0,
+      "scenarioRun": null,
+      "scenarioExecution": "NOT_EXECUTED",
+      "databaseStatus": "NOT_CREATED",
+      "databaseSha256": null,
+      "sourceJsonSha256": "fabe04730d893ec03fec7e4aefd4df3a188f053fbb721931b5ea3e8508ba0122",
+      "outerManifestSha256": "1aab1e41a2ef15a399bd82ad20a8328c4c06a8dd4ae24e8965a39a16d0265a15",
+      "resultSha256": "96a70106a20b6a98952df2bcb266710ec9f7cb454c6e91310903b647c8eb36a9",
+      "sharedTestsLogSha256": "09ed462560e37cc68d53c81066ef2d670559f526a7c82ea30a7a7ec6c1f0d277"
+    },
+    "vulnerabilities": {
+      "jobId": 111872524933,
+      "status": "FAIL",
+      "originalExitCode": 2,
+      "retentionExitCode": 0,
+      "scenarioRun": null,
+      "scenarioExecution": "NOT_EXECUTED",
+      "databaseStatus": "NOT_CREATED",
+      "databaseSha256": null,
+      "sourceJsonSha256": "44a76ed8258007d51751b33e546b78c44a1b6d1cc80f0e6d12f4b8b45f4e7ffb",
+      "outerManifestSha256": "5708c69c54b2258e6feb5a2def72d2bb042362fe66549284842762b567bdf7ac",
+      "resultSha256": "2b8064e61dd3b91571f7838a7e94ec8b04589c7743069e8b868ffe194273fa64",
+      "sharedTestsLogSha256": "715e173b9d1b2c972ff011531e2c28111d2ac4a0d7e564aadb867da198b7b140"
+    }
+  },
+  "artifacts": [
+    {
+      "id": 11359227691,
+      "name": "lane-a-demo-37342413975-1",
+      "zipSha256": "d0f5123aa2df5d6edc3131e7e7aa5f7e51fc208b4bf632334fbeecd24b5fea85",
+      "size": 38528,
+      "expiresAt": "2026-10-19T16:41:18Z"
+    },
+    {
+      "id": 11359710585,
+      "name": "lane-a-databases-demo-37342413975-1",
+      "zipSha256": "bdd507fd6f163558eb438aff770b00f445b8554828717d9f5226517f7ecb57c7",
+      "size": 183,
+      "expiresAt": "2026-10-19T16:41:20Z"
+    },
+    {
+      "id": 11358289299,
+      "name": "lane-a-vulnerabilities-37342413975-1",
+      "zipSha256": "953639ab696334ee970529b9acb4dbc81e5123fbd9ff182afb39f3ccd660dc3b",
+      "size": 38592,
+      "expiresAt": "2026-10-19T16:41:25Z"
+    },
+    {
+      "id": 11358334028,
+      "name": "lane-a-databases-vulnerabilities-37342413975-1",
+      "zipSha256": "3cac54ced4887fc042170ba855ca06633baf35b8f9b90f7203fb0bf729bda96b",
+      "size": 183,
+      "expiresAt": "2026-10-19T16:41:27Z"
+    }
+  ],
+  "campaignDatabaseReference": {
+    "sourceRun": 37199309814,
+    "sha256": {
+      "trivy.db": "f684c51b045908383ef92b1ad55b1723e6f9db6cad7479602f3f51dae6b3c179",
+      "metadata.json": "b13d003bf452cc52343ca98360433ae64e8657e258cf88c332b4ef551e9ca3d8"
+    },
+    "comparison": "NOT_APPLICABLE: no database acquired by either suite",
+    "review": "Committed campaign index reused; campaign DB bytes not reverified here"
+  },
+  "integrity": {
+    "artifactZipDigestsMatched": 4,
+    "outerFileHashesVerified": 56,
+    "existingAuditor": "paired-rg.py::verify_export",
+    "scenarioPackages": 0,
+    "bundleReauthentication": "NOT_APPLICABLE: no scenario bundles produced",
+    "originalFileCount": 84
+  },
+  "preservationRoot": "implementacion/evidence/raw/catalogue-campaign-source-20261005",
+  "originalsDirectory": "originals",
+  "derivedDirectory": "derived",
+  "evidenceHashes": {
+    "originals/run-final.json": "1a4f78a11c85fed418dfd226d718b66f73d2e6129832f6a741500334e2da89fa",
+    "originals/jobs-final.json": "02a29098809eded940d3a9dff871294e6a82f7df6577f4860b4948c6bd14342f",
+    "originals/artifacts.json": "6193bffb14eae417b3735fb13848a59920b7911369c3f53d4c25b0e879575b99",
+    "originals/actions-logs.zip": "7e6c3b9030f675126c2ef4001444213395467c510508b24bb525015d54e0500b",
+    "originals/actions.log": "1e4e01d217f7b4284c3b40790e832c0aa14f2e9b6e86a7a11df5fd912b4ff156",
+    "derived/verified-downloads.json": "198799b447da9d34f5f53b0a7ca98cdfffa64d48f04c5c8ba82f5f822da3bf9d",
+    "derived/failure-review.json": "4ff0dd34f424f1de5d059ca3c010ec7ba89021858ac5024df29a93f01a19a4f0",
+    "derived/ORIGINALS-SHA256SUMS.txt": "925a7b7e3b4d0f257006782a1b1b5efde2b32e68ad86704bd2ad45926eb4f2a5"
+  },
+  "humanReview": "pending",
+  "humanAcceptanceOfNewEvidence": "pending",
+  "priorAcceptance": "The 2026-10-04 declaration remains unchanged within its original reduced scope.",
+  "externalPreservation": "pending; local originals downloaded before artifact expiration",
+  "scope": "One created workflow run; no experiment retry, paired workflow, implementation change or remote publication.",
+  "localHandoff": {
+    "archive": "implementacion/evidence/packages/catalogue-campaign-source-37342413975-review.tar.gz",
+    "sha256": "cfcede7ff976f270e00f9dd3c434f9c09ea496128992df43532e96d2358f21ef",
+    "sizeBytes": 318654,
+    "internalReviewFileHashes": 97,
+    "scope": "Preservation/review export, not a scenario evidence package; originals and derived files separated",
+    "externalCopyVerified": false
+  }
+}
