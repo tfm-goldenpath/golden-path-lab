@@ -140,6 +140,18 @@ Functions require the initialized context. A module must not silently redefine i
 
 Mutations belong to scenarios; rules belong to controls. A scenario requiring a new Golden Path capability introduces that capability separately, with requirements and tests. Shared cleanup retains one owner.
 
+## Visual defense layer
+
+The optional [visual defense layer](defense-demo.md) uses a separate thin CLI and
+Python session coordinator over the same function-only modules. It owns its
+prepared-session lifecycle, budget, immutable receipts and read-only viewer;
+`demo.sh` retains ownership of the full laboratory's existing cleanup trap.
+The layer adds no acceptance policy. An optional attestation observer closes
+copies at actual function boundaries and is inactive in normal module use.
+Directed DEMO_VALID_ACCEPT is not complete L01 or a campaign observation. The
+optional `GP_VULNERABILITY_SNAPSHOT_ROOT` only changes storage placement for a
+new retained database; default callers, identity checks and thresholds are unchanged.
+
 ## Limitations and architectural alternatives
 
 Modules deliberately share context and central order. `lab-contracts.mjs` groups generation, validation and file access; predicate URIs, required checks and policy versions also appear in producers/consumers. A change needs coordinated review. If duplication becomes costly, introduce versioned shared configuration and explicit consistency checks; current tests do not prove all such consistency.

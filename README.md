@@ -2,6 +2,8 @@
 
 [English](README.md) | [Español](README.es.md)
 
+For the visual defense demo, see the [execution commands and preservation guide](implementacion/docs/EN/defense-demo-operations.md) ([español](implementacion/docs/ES/defense-demo-operations.md)), including what to save before changing Codespaces resources.
+
 A reproducible laboratory for early policy checks and verifiable software delivery to Kubernetes. The implementation supports the TFM **Golden Path para la entrega cloud-native: verificación temprana de políticas e integridad en el flujo CI/CD**. Thesis authoring and its research decisions remain in the [thesis repository](https://github.com/tfm-goldenpath/golden-path).
 
 The synthetic `quotes-node` service makes delivery behavior observable without requiring a complex business application. The current demonstration exercises a legitimate delivery and replacement with a different verified image digest (**L01**), missing signed authorization (**F13**) and directed checks against a privileged workload (**F11**).

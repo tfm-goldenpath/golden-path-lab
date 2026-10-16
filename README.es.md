@@ -2,6 +2,8 @@
 
 [English](README.md) | [Español](README.es.md)
 
+La demo visual de defensa tiene una [guía de ejecución con comandos y conservación](implementacion/docs/ES/defense-demo-operations.md), que incluye qué guardar antes de cambiar los recursos del Codespace.
+
 La [matriz de preparación de veinte escenarios](implementacion/docs/ES/evaluation-readiness.md)
 consolida ejecuciones registradas, límites por carril y trabajo pendiente sobre
 fuente final; un merge no implica aceptación global ni autorización de campaña.

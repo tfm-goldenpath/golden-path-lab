@@ -1,0 +1,1269 @@
+{
+  "schema": "defense-catalogue/v1",
+  "stages": [
+    {
+      "id": "source",
+      "title": "Fuente y entorno",
+      "description": "Identidad de fuente, herramientas fijadas, plataforma y reserva de espacio."
+    },
+    {
+      "id": "ci",
+      "title": "PR y CI local",
+      "description": "make test real. No acredita aprobación de PR ni controles externos de GitHub."
+    },
+    {
+      "id": "infrastructure",
+      "title": "Infraestructura",
+      "description": "kind, zot, builder, namespaces y actor restringido de esta sesión."
+    },
+    {
+      "id": "build",
+      "title": "Build y registro",
+      "description": "Base por digest; linux/amd64; publicación en zot e identidad inmutable."
+    },
+    {
+      "id": "manifest",
+      "title": "Manifiesto / Conftest",
+      "description": "Campos exactos de securityContext y referencia por digest."
+    },
+    {
+      "id": "sbom",
+      "title": "SBOM",
+      "description": "CycloneDX original, esquema oficial y asociación con la imagen; no prueba completitud."
+    },
+    {
+      "id": "vulnerabilities",
+      "title": "Vulnerabilidades",
+      "description": "Trivy sobre SBOM y DB identificada; bloquea HIGH/CRITICAL incluso sin reparación."
+    },
+    {
+      "id": "signature",
+      "title": "Firma de imagen",
+      "description": "Predicado independiente cosign/sign/v1; SBOM o resultados no lo sustituyen."
+    },
+    {
+      "id": "sbom-attestation",
+      "title": "Atestación SBOM",
+      "description": "Bundle autenticado antes de comprobar subject y contenido."
+    },
+    {
+      "id": "provenance",
+      "title": "Procedencia",
+      "description": "Origen local ligado a repositorio, revisión e imagen; no GitHub OIDC ni nivel SLSA."
+    },
+    {
+      "id": "delivery-gate",
+      "title": "Gate de entrega",
+      "description": "Registro releído y bundles originales autenticados; presencia no equivale a autenticidad."
+    },
+    {
+      "id": "results",
+      "title": "Resultados",
+      "description": "Gates previos; generación determinista, firma, publicación y verificación."
+    },
+    {
+      "id": "admission",
+      "title": "Admisión Kyverno",
+      "description": "tfm-runtime, tfm-signature, tfm-sbom, tfm-provenance y tfm-results."
+    },
+    {
+      "id": "deployment",
+      "title": "Despliegue y HTTP",
+      "description": "Deployment, Pods Ready, digest efectivo y respuesta real."
+    },
+    {
+      "id": "preservation",
+      "title": "Conservación",
+      "description": "Copias cerradas, hashes, exportación y limpieza de recursos propios."
+    }
+  ],
+  "operations": {
+    "environment": {
+      "adapter": "environment",
+      "title": "Herramientas y capacidad",
+      "stages": [
+        "source"
+      ],
+      "controls": [
+        {
+          "id": "environment",
+          "tool": "doctor / df / Docker",
+          "property": "Versiones, AMD64, espacio e inodos",
+          "input": "versions.env, tools.lock.json",
+          "output": "output.log, resources.json",
+          "condition": "doctor exit 0; reserva disponible"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Herramientas y capacidad",
+      "dependsOn": []
+    },
+    "initialize": {
+      "adapter": "initialize",
+      "title": "Identidad de sesión",
+      "stages": [
+        "source"
+      ],
+      "controls": [
+        {
+          "id": "source",
+          "tool": "Git / SHA-256",
+          "property": "Revisión y bytes de fuente",
+          "input": "checkout",
+          "output": "source.json",
+          "condition": "identidad conservada"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Identidad de sesión",
+      "dependsOn": []
+    },
+    "ci": {
+      "adapter": "ci",
+      "title": "Batería compartida de CI",
+      "stages": [
+        "ci"
+      ],
+      "controls": [
+        {
+          "id": "ci-0",
+          "tool": "make test",
+          "property": "Entorno",
+          "input": "Makefile + fixtures etiquetadas",
+          "output": "output.log, workflow-static/*",
+          "condition": "make test termina con 0; tiempo agregado, no duración individual"
+        },
+        {
+          "id": "ci-1",
+          "tool": "make test",
+          "property": "Servicio y contratos Node",
+          "input": "Makefile + fixtures etiquetadas",
+          "output": "output.log, workflow-static/*",
+          "condition": "make test termina con 0; tiempo agregado, no duración individual"
+        },
+        {
+          "id": "ci-2",
+          "tool": "make test",
+          "property": "Políticas Python",
+          "input": "Makefile + fixtures etiquetadas",
+          "output": "output.log, workflow-static/*",
+          "condition": "make test termina con 0; tiempo agregado, no duración individual"
+        },
+        {
+          "id": "ci-3",
+          "tool": "make test",
+          "property": "Conftest / Rego",
+          "input": "Makefile + fixtures etiquetadas",
+          "output": "output.log, workflow-static/*",
+          "condition": "make test termina con 0; tiempo agregado, no duración individual"
+        },
+        {
+          "id": "ci-4",
+          "tool": "make test",
+          "property": "Kyverno CLI",
+          "input": "Makefile + fixtures etiquetadas",
+          "output": "output.log, workflow-static/*",
+          "condition": "make test termina con 0; tiempo agregado, no duración individual"
+        },
+        {
+          "id": "ci-5",
+          "tool": "make test",
+          "property": "Cosign criptográfico local",
+          "input": "Makefile + fixtures etiquetadas",
+          "output": "output.log, workflow-static/*",
+          "condition": "make test termina con 0; tiempo agregado, no duración individual"
+        },
+        {
+          "id": "ci-6",
+          "tool": "make test",
+          "property": "F01/F02 estáticos",
+          "input": "Makefile + fixtures etiquetadas",
+          "output": "output.log, workflow-static/*",
+          "condition": "make test termina con 0; tiempo agregado, no duración individual"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Batería compartida de CI",
+      "dependsOn": []
+    },
+    "preflight": {
+      "adapter": "preflight",
+      "title": "Preflight de entrega",
+      "stages": [
+        "ci",
+        "source"
+      ],
+      "controls": [
+        {
+          "id": "preflight",
+          "tool": "delivery_preflight",
+          "property": "Subconjunto del laboratorio; no toda la batería CI",
+          "input": "fuente actual",
+          "output": "unit-tests.log, workflow-policy.json, tool-versions.txt",
+          "condition": "función termina con 0"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Preflight de entrega",
+      "dependsOn": []
+    },
+    "infrastructure": {
+      "adapter": "infrastructure",
+      "title": "Crear laboratorio propio",
+      "stages": [
+        "infrastructure"
+      ],
+      "controls": [
+        {
+          "id": "resources",
+          "tool": "kind / Docker / zot / Buildx",
+          "property": "Recursos efímeros de la sesión",
+          "input": "pins y run ID",
+          "output": "output.log",
+          "condition": "creación y registro disponibles"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Crear laboratorio propio",
+      "dependsOn": []
+    },
+    "build": {
+      "adapter": "build",
+      "title": "Construir y publicar",
+      "stages": [
+        "build"
+      ],
+      "controls": [
+        {
+          "id": "build",
+          "tool": "Buildx",
+          "property": "Base por digest, imagen nueva AMD64",
+          "input": "Dockerfile, commit, label de sesión",
+          "output": "build-inputs.json, build-metadata.json",
+          "condition": "digest canónico"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Construir y publicar",
+      "dependsOn": []
+    },
+    "namespaces": {
+      "adapter": "namespaces",
+      "title": "Namespaces y actor restringido",
+      "stages": [
+        "infrastructure"
+      ],
+      "controls": [
+        {
+          "id": "actor",
+          "tool": "Kubernetes RBAC",
+          "property": "Actor deployer; no puede editar políticas",
+          "input": "identidad de sesión",
+          "output": "output.log",
+          "condition": "creación de roles acotados"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Namespaces y actor restringido",
+      "dependsOn": []
+    },
+    "manifests": {
+      "adapter": "manifests",
+      "title": "Generar manifiestos",
+      "stages": [
+        "manifest"
+      ],
+      "controls": [
+        {
+          "id": "manifest-generation",
+          "tool": "lab-contracts.mjs",
+          "property": "Imagen exacta en R y G",
+          "input": "digest",
+          "output": "tfm-reference.json, tfm-golden.json",
+          "condition": "generación válida"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Generar manifiestos",
+      "dependsOn": []
+    },
+    "reference": {
+      "adapter": "reference",
+      "title": "Preparar referencia HTTP R",
+      "stages": [
+        "deployment"
+      ],
+      "controls": [
+        {
+          "id": "reference",
+          "tool": "workload_reference",
+          "property": "Referencia preparada con la misma imagen",
+          "input": "tfm-reference.json",
+          "output": "tfm-reference-{health,version,quote}.json",
+          "condition": "rollout + oráculo HTTP"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Preparar referencia HTTP R",
+      "dependsOn": []
+    },
+    "manifest-policy": {
+      "adapter": "manifest-policy",
+      "title": "Validación positiva Conftest",
+      "stages": [
+        "manifest"
+      ],
+      "controls": [
+        {
+          "id": "manifest-policy",
+          "tool": "Conftest",
+          "property": "Configuración legítima",
+          "input": "tfm-golden.json",
+          "output": "manifest-policy.json",
+          "condition": "namespace manifests; exit 0"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Validación positiva Conftest",
+      "dependsOn": []
+    },
+    "analysis": {
+      "adapter": "analysis",
+      "title": "Inventario y análisis real",
+      "stages": [
+        "sbom",
+        "vulnerabilities"
+      ],
+      "controls": [
+        {
+          "id": "sbom-generation",
+          "tool": "Trivy",
+          "property": "CycloneDX original",
+          "input": "imagen",
+          "output": "sbom.cdx.json, sbom-generation-exit.txt",
+          "condition": "generación termina con 0"
+        },
+        {
+          "id": "sbom-schema",
+          "tool": "AJV / lab-contracts",
+          "property": "Esquema CycloneDX y campos del contrato",
+          "input": "SBOM",
+          "output": "sbom-schema-generation.json",
+          "condition": "validación esquema + contenido"
+        },
+        {
+          "id": "database",
+          "tool": "vulnerability-database.py",
+          "property": "Identidad estable de DB antes/después",
+          "input": "DB real",
+          "output": "database-identity.json, trivy-db.json",
+          "condition": "hashes idénticos"
+        },
+        {
+          "id": "scan",
+          "tool": "Trivy sbom",
+          "property": "Escaneo original, sin ignorar unfixed",
+          "input": "SBOM + DB",
+          "output": "vulnerabilities.json, analysis-association.json",
+          "condition": "escaneo y asociación válidos"
+        },
+        {
+          "id": "severity",
+          "tool": "Conftest / authorize",
+          "property": "Sin HIGH/CRITICAL",
+          "input": "informe Trivy",
+          "output": "vulnerability-policy.json, analysis-authorization.json",
+          "condition": "autoriza sin relajar umbral"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Inventario y análisis real",
+      "dependsOn": []
+    },
+    "delivery-evidence": {
+      "adapter": "delivery-evidence",
+      "title": "Firmar y verificar entrega",
+      "stages": [
+        "signature",
+        "sbom-attestation",
+        "provenance",
+        "delivery-gate"
+      ],
+      "controls": [
+        {
+          "id": "image-signature",
+          "tool": "Cosign",
+          "property": "Predicado independiente y digest",
+          "input": "imagen + clave local",
+          "output": "image.bundle.json, verified-image-bundle.txt",
+          "condition": "autenticación antes de contenido"
+        },
+        {
+          "id": "sbom-signature",
+          "tool": "Cosign / AJV",
+          "property": "SBOM autenticado y subject",
+          "input": "sbom.cdx.json",
+          "output": "sbom.bundle.json, verified-sbom.json",
+          "condition": "firma + esquema + contrato"
+        },
+        {
+          "id": "provenance",
+          "tool": "Cosign / lab-contracts",
+          "property": "Repo, commit y builder local",
+          "input": "fuente + imagen",
+          "output": "provenance.bundle.json, verified-provenance.json",
+          "condition": "firma + origen autorizado"
+        },
+        {
+          "id": "delivery-gate",
+          "tool": "ci-verification-gate.mjs",
+          "property": "Registro actual completo y autenticado",
+          "input": "bundles recuperados",
+          "output": "CI-delivery.result.json + *.bundle.json",
+          "condition": "VERIFIED; tres predicados; sin resultados"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Firmar y verificar entrega",
+      "dependsOn": []
+    },
+    "missing-results": {
+      "adapter": "missing-results",
+      "title": "Inventario preparado sin resultados",
+      "stages": [
+        "results"
+      ],
+      "controls": [
+        {
+          "id": "absence-preparation",
+          "tool": "strict inventory",
+          "property": "Ausencia estructural; confianza verificada aparte",
+          "input": "registro",
+          "output": "registry-inventory-before-results.json, F13-early.json",
+          "condition": "inventario completo; fase before-results"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Inventario preparado sin resultados",
+      "dependsOn": []
+    },
+    "admission-install": {
+      "adapter": "admission-install",
+      "title": "Instalar las cinco políticas",
+      "stages": [
+        "infrastructure",
+        "admission"
+      ],
+      "controls": [
+        {
+          "id": "tfm-runtime",
+          "tool": "Kyverno",
+          "property": "tfm-runtime",
+          "input": "admission-policies.json",
+          "output": "admission-policy-loaded.json",
+          "condition": "Ready, misma identidad y spec"
+        },
+        {
+          "id": "tfm-signature",
+          "tool": "Kyverno",
+          "property": "tfm-signature",
+          "input": "admission-policies.json",
+          "output": "admission-policy-loaded.json",
+          "condition": "Ready, misma identidad y spec"
+        },
+        {
+          "id": "tfm-sbom",
+          "tool": "Kyverno",
+          "property": "tfm-sbom",
+          "input": "admission-policies.json",
+          "output": "admission-policy-loaded.json",
+          "condition": "Ready, misma identidad y spec"
+        },
+        {
+          "id": "tfm-provenance",
+          "tool": "Kyverno",
+          "property": "tfm-provenance",
+          "input": "admission-policies.json",
+          "output": "admission-policy-loaded.json",
+          "condition": "Ready, misma identidad y spec"
+        },
+        {
+          "id": "tfm-results",
+          "tool": "Kyverno",
+          "property": "tfm-results",
+          "input": "admission-policies.json",
+          "output": "admission-policy-loaded.json",
+          "condition": "Ready, misma identidad y spec"
+        },
+        {
+          "id": "webhook-readiness",
+          "tool": "API server → Kyverno",
+          "property": "Sondeo dry-run; no cuenta como ensayo F13",
+          "input": "manifiesto legítimo sin resultados",
+          "output": "admission-readiness-probe.log",
+          "condition": "rechazo único require-results"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Instalar las cinco políticas",
+      "dependsOn": []
+    },
+    "seal": {
+      "adapter": "seal",
+      "title": "Sellar preparación",
+      "stages": [
+        "source",
+        "infrastructure"
+      ],
+      "controls": [
+        {
+          "id": "seal",
+          "tool": "adapter / SHA-256",
+          "property": "Identidades de recursos, confianza, digest y políticas",
+          "input": "preparación actual",
+          "output": "prepared-resources.json",
+          "condition": "identidad persistida; no emisión"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Sellar preparación",
+      "dependsOn": []
+    },
+    "resume": {
+      "adapter": "resume",
+      "title": "Comprobar disponibilidad",
+      "stages": [
+        "source",
+        "infrastructure",
+        "admission"
+      ],
+      "controls": [
+        {
+          "id": "resume",
+          "tool": "adapter / Kubernetes",
+          "property": "Misma fuente, clave, registro, clúster, políticas Ready y actor",
+          "input": "preparación sellada",
+          "output": "resume-*.json",
+          "condition": "comparación exacta, sin reconstruir ni firmar"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "readiness",
+      "boundary": "Comprobar disponibilidad",
+      "dependsOn": []
+    },
+    "f11-early": {
+      "adapter": "f11-early",
+      "title": "F11 · primera barrera",
+      "stages": [
+        "manifest"
+      ],
+      "controls": [
+        {
+          "id": "f11-conftest",
+          "tool": "scenario_f11_early",
+          "property": "privileged=true y allowPrivilegeEscalation=true",
+          "input": "variante F11",
+          "output": "F11-early.attribution.json, F11-security-diff.txt",
+          "condition": "exactamente PRIVILEGED y ESCALATION"
+        }
+      ],
+      "expected": "deny",
+      "scenario": "F11",
+      "attempt": "attempt-1",
+      "boundary": "Conftest; solicitud detenida antes de admisión",
+      "dependsOn": [
+        "preparation"
+      ]
+    },
+    "f13": {
+      "adapter": "f13",
+      "title": "F13 · faltan resultados",
+      "stages": [
+        "results",
+        "admission"
+      ],
+      "controls": [
+        {
+          "id": "f13-inventory",
+          "tool": "scenario_f13_prepare",
+          "property": "Ausencia en inventarios completos consistentes",
+          "input": "registro actual",
+          "output": "F13-inventory-consistency.json",
+          "condition": "sin resultados; firma/SBOM/procedencia presentes"
+        },
+        {
+          "id": "f13-denial",
+          "tool": "scenario_f13_admission",
+          "property": "CREATE denegado exclusivamente por resultados",
+          "input": "tfm-golden.json",
+          "output": "F13-admission.log, F13-attribution.json",
+          "condition": "tfm-results / require-results; oráculo exacto"
+        },
+        {
+          "id": "f13-absence",
+          "tool": "runtime-evidence.mjs",
+          "property": "Deployment ausente antes y después",
+          "input": "consultas Kubernetes",
+          "output": "F13-before.assertion.json, F13-after.assertion.json",
+          "condition": "NotFound explícito; error API no sirve"
+        }
+      ],
+      "expected": "deny",
+      "scenario": "F13",
+      "attempt": "attempt-2",
+      "boundary": "Admisión CREATE; recuperación pendiente",
+      "dependsOn": [
+        "preparation",
+        "attempt-1"
+      ]
+    },
+    "authorize": {
+      "adapter": "authorize",
+      "title": "Emitir autorización válida",
+      "stages": [
+        "results",
+        "delivery-gate"
+      ],
+      "controls": [
+        {
+          "id": "results-authorization",
+          "tool": "attestations_authorize_results",
+          "property": "Relectura, gates, predicado determinista, firma y verificación",
+          "input": "mismo digest y políticas",
+          "output": "CI-authorization.result.json, results.bundle.json, CI-authorized.result.json",
+          "condition": "VERIFIED; cuatro predicados"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "attempt-3",
+      "boundary": "Recuperación de F13, emisión única",
+      "dependsOn": [
+        "attempt-2"
+      ]
+    },
+    "accept": {
+      "adapter": "accept",
+      "title": "DEMO_VALID_ACCEPT · mismo digest",
+      "stages": [
+        "admission",
+        "deployment"
+      ],
+      "controls": [
+        {
+          "id": "valid-admission",
+          "tool": "scenario_l01_accept",
+          "property": "Misma imagen aceptada con resultados",
+          "input": "tfm-golden.json",
+          "output": "L01-admission.log",
+          "condition": "admisión real; no L01 completo"
+        },
+        {
+          "id": "valid-rollout",
+          "tool": "check-image-rollout --same-image / HTTP",
+          "property": "Pods Ready, digest real y HTTP igual a R",
+          "input": "Deployment y Pods",
+          "output": "DEMO_VALID_ACCEPT.json, deployment.json, pods.json, tfm-golden-*.json",
+          "condition": "rollout + oráculo funcional"
+        },
+        {
+          "id": "policy-stability",
+          "tool": "kubectl / jq / cmp",
+          "property": "Las cinco políticas Ready conservan UID, generación y spec; el clúster y el actor siguen siendo los preparados.",
+          "input": "prepared-policy-identity.json y observación actual del clúster",
+          "output": "accepted-policies.json, accepted-policy-identity.json y comprobación de identidad del clúster",
+          "condition": "Igualdad exacta de políticas, mismo UID de kube-system y permisos restringidos."
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "attempt-3",
+      "boundary": "Observación positiva vinculada a F13; sin sustitución L01",
+      "dependsOn": [
+        "authorize"
+      ]
+    },
+    "f11-admission": {
+      "adapter": "f11-admission",
+      "title": "F11 · barrera independiente",
+      "stages": [
+        "admission",
+        "deployment"
+      ],
+      "controls": [
+        {
+          "id": "f11-kyverno",
+          "tool": "scenario_f11_admission",
+          "property": "UPDATE privilegiado denegado exclusivamente por runtime",
+          "input": "imagen ya autorizada",
+          "output": "F11-admission.log.attribution.json",
+          "condition": "tfm-runtime / restricted-containers"
+        },
+        {
+          "id": "unchanged",
+          "tool": "runtime-evidence.mjs / HTTP",
+          "property": "UID, generación y spec iguales; servicio disponible",
+          "input": "Deployment antes/después",
+          "output": "F11-unchanged.json, F11-before.json, F11-after.json",
+          "condition": "rechazo no altera Deployment"
+        },
+        {
+          "id": "policy-stability",
+          "tool": "kubectl / jq / cmp",
+          "property": "Las cinco políticas Ready conservan UID, generación y spec; el clúster y el actor siguen siendo los preparados.",
+          "input": "prepared-policy-identity.json y observación actual del clúster",
+          "output": "final-policies.json, final-policy-identity.json y comprobación de identidad del clúster",
+          "condition": "Igualdad exacta de políticas, mismo UID de kube-system y permisos restringidos."
+        }
+      ],
+      "expected": "deny",
+      "scenario": "F11",
+      "attempt": "attempt-4",
+      "boundary": "Nueva solicitud UPDATE; no continuación del intento 1",
+      "dependsOn": [
+        "attempt-3"
+      ]
+    },
+    "cleanup": {
+      "adapter": "cleanup",
+      "title": "Conservar y retirar recursos propios",
+      "stages": [
+        "preservation"
+      ],
+      "controls": [
+        {
+          "id": "cleanup",
+          "tool": "packager / Docker / kind",
+          "property": "Empaquetado verificado antes de eliminación; ausencias comprobadas",
+          "input": "recursos identificados",
+          "output": "cleanup-absence.json",
+          "condition": "sin recursos ajenos ni borrado de DB/evidencia"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preservation",
+      "boundary": "Conservar y retirar recursos propios",
+      "dependsOn": []
+    }
+  },
+  "scenarios": [
+    {
+      "id": "F01",
+      "name": "Workflow privilegiado",
+      "guarantee": "Rechazar workflows privilegiados pull_request_target.",
+      "implemented": true,
+      "implementation": "[workflows.py](../../tests/scenarios/workflows.py); [test_workflow_scenarios.py](../../tests/policies/test_workflow_scenarios.py)",
+      "boundary": "Static workflow / PR CI",
+      "lane": "Static, lane-independent",
+      "limits": "Sólo datos estáticos; no ejecuta el workflow prohibido ni prueba rulesets.",
+      "adapters": [],
+      "coverage": "Static data within make test",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS (static); new human review pending; history: A3 NOT_EXECUTED (shared-tests); Exact event DENY recorded. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject privileged pull_request_target workflow",
+      "sourceLimits": "No workflow fixture executes; ruleset enforcement is external. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F02",
+      "name": "Action externa mutable",
+      "guarantee": "Rechazar Actions externas referenciadas por etiquetas mutables.",
+      "implemented": true,
+      "implementation": "[workflows.py](../../tests/scenarios/workflows.py); [test_workflow_scenarios.py](../../tests/policies/test_workflow_scenarios.py)",
+      "boundary": "Static workflow / PR CI",
+      "lane": "Static, lane-independent",
+      "limits": "Sólo datos estáticos; no ejecuta un ataque sobre etiquetas remotas.",
+      "adapters": [],
+      "coverage": "Static data within make test",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS (static); new human review pending; history: A3 NOT_EXECUTED (shared-tests); Exact ACTION_SHA DENY recorded. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject mutable external Action tag",
+      "sourceLimits": "No upstream-tag attack is executed. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F03",
+      "name": "Dependencia HIGH/CRITICAL reparable",
+      "guarantee": "Rechazar HIGH/CRITICAL reparable y comprobar la imagen corregida.",
+      "implemented": true,
+      "implementation": "[vulnerabilities.sh](../../tests/scenarios/vulnerabilities.sh); [vulnerabilities.test.mjs](../../tests/unit/vulnerabilities.test.mjs)",
+      "boundary": "Real SBOM scan / CI; repaired admission + HTTP",
+      "lane": "A; B fixture unsupported",
+      "limits": "Fixture local; detección acotada a la base conservada. Negativo B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); A1 PASS; AR both VALIDATED. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject fixable HIGH/CRITICAL dependency; repaired image passes",
+      "sourceLimits": "B negative NOT_EXECUTED; minimist finding bounded to frozen DB. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F04",
+      "name": "HIGH/CRITICAL sin reparación",
+      "guarantee": "Rechazar HIGH/CRITICAL aunque no tenga reparación en la DB seleccionada.",
+      "implemented": true,
+      "implementation": "[vulnerabilities.sh](../../tests/scenarios/vulnerabilities.sh); [vulnerabilities.test.mjs](../../tests/unit/vulnerabilities.test.mjs)",
+      "boundary": "Real SBOM scan / CI",
+      "lane": "A; B fixture unsupported",
+      "limits": "Sin reparación en esa instantánea; no afirmación universal. Negativo B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Attributable rejection PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject HIGH/CRITICAL with no fix in the selected snapshot",
+      "sourceLimits": "B negative NOT_EXECUTED; no universal absence-of-fix claim. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F05",
+      "name": "SBOM ausente",
+      "guarantee": "Exigir SBOM firmado para la imagen entregada.",
+      "implemented": true,
+      "implementation": "[sbom.sh](../../tests/scenarios/sbom.sh); [sbom-scenario.test.mjs](../../tests/unit/sbom-scenario.test.mjs)",
+      "boundary": "Fresh CI gate + directed admission",
+      "lane": "A; B negative unsupported",
+      "limits": "Negativo B sin ejecutar; un fallo de descarga no acredita ausencia.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); CI/admission rejection and restoration PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject absent SBOM; accept exact restoration",
+      "sourceLimits": "B negative NOT_EXECUTED; L03 counterpart is shared. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F06",
+      "name": "SBOM inválido",
+      "guarantee": "Rechazar el SBOM que incumple su contrato autenticado.",
+      "implemented": true,
+      "implementation": "[sbom.sh](../../tests/scenarios/sbom.sh); [f06-scenario.test.mjs](../../tests/unit/f06-scenario.test.mjs)",
+      "boundary": "Fresh CI gate + directed admission",
+      "lane": "A; B negative unsupported",
+      "limits": "No prueba completitud de inventario; negativo B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Subject rejection and restoration PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject SBOM bound to another digest",
+      "sourceLimits": "B negative NOT_EXECUTED; schema checks do not prove inventory completeness. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F07",
+      "name": "Firma de imagen ausente",
+      "guarantee": "Exigir el predicado independiente de firma de imagen.",
+      "implemented": true,
+      "implementation": "[f07.sh](../../tests/scenarios/f07.sh); [f07-ci-scenario.test.mjs](../../tests/unit/f07-ci-scenario.test.mjs)",
+      "boundary": "Fresh CI + admission; exact recovery",
+      "lane": "A; B negative unsupported",
+      "limits": "Ni SBOM ni resultados sustituyen la firma. Negativo B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Missing-signature rejection PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject missing independent image signature",
+      "sourceLimits": "B negative NOT_EXECUTED; GHCR mutation unproven. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F08",
+      "name": "Firma de imagen corrupta",
+      "guarantee": "Rechazar corrupción de la firma criptográfica.",
+      "implemented": true,
+      "implementation": "[f08.sh](../../tests/scenarios/f08.sh); [f08-scenario.test.mjs](../../tests/unit/f08-scenario.test.mjs)",
+      "boundary": "Fresh CI + directed admission",
+      "lane": "A; B negative unsupported",
+      "limits": "Fallos de transporte no son detección. Negativo B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Targeted cryptographic rejection PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject corrupted image signature",
+      "sourceLimits": "B negative NOT_EXECUTED; transport errors are not detection. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F09",
+      "name": "Procedencia ausente",
+      "guarantee": "Exigir procedencia autenticada.",
+      "implemented": true,
+      "implementation": "[provenance.sh](../../tests/scenarios/provenance.sh); [provenance-scenario.test.mjs](../../tests/unit/provenance-scenario.test.mjs)",
+      "boundary": "Fresh CI + directed admission",
+      "lane": "A; B negative unsupported",
+      "limits": "Fallos de recuperación no prueban ausencia; negativo B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Rejection and restoration PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject absent provenance",
+      "sourceLimits": "B negative NOT_EXECUTED; retrieval failure cannot prove absence. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F10",
+      "name": "Origen no autorizado",
+      "guarantee": "Rechazar procedencia auténtica de un repositorio no autorizado.",
+      "implemented": true,
+      "implementation": "[provenance.sh](../../tests/scenarios/provenance.sh); [provenance-scenario.test.mjs](../../tests/unit/provenance-scenario.test.mjs)",
+      "boundary": "Fresh CI + directed admission",
+      "lane": "A; B negative unsupported",
+      "limits": "La demo no altera este caso; negativo B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); A1 PASS; AR both VALIDATED. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject authentic provenance from unauthorized repository",
+      "sourceLimits": "B negative NOT_EXECUTED; AR selects authorized artifact without editing claims. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F11",
+      "name": "Contenedor privilegiado y escalada",
+      "guarantee": "Rechazar privileged=true y allowPrivilegeEscalation=true.",
+      "implemented": true,
+      "implementation": "[runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs)",
+      "boundary": "CI; Deployment CREATE/UPDATE + Pod admission",
+      "lane": "A/B runtime; AR A only",
+      "limits": "Dos cambios coordinados. Esta demo no cubre toda la familia CREATE/UPDATE/Pod.",
+      "adapters": [
+        "f11-early",
+        "f11-admission"
+      ],
+      "coverage": "Two directed barriers only; not the entire runtime family",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); A1 PASS; B1 supplied review; AR both VALIDATED. Historical automated review; human pending; B1 supplied."
+      },
+      "sourceGuarantee": "Reject privileged and escalation flags",
+      "sourceLimits": "Coordinated two-field fault; accepted guided rehearsals remain ineligible. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F12",
+      "name": "Etiqueta mutable",
+      "guarantee": "Exigir digest aunque una etiqueta resuelva a la imagen autorizada.",
+      "implemented": true,
+      "implementation": "[runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs)",
+      "boundary": "CI; Deployment CREATE/UPDATE + Pod admission",
+      "lane": "A/B runtime",
+      "limits": "Resolución de tag antes/después; no es un fallo de procedencia.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); A1 PASS; B1 supplied review. Historical automated review; human pending; B1 supplied."
+      },
+      "sourceGuarantee": "Reject mutable tag even when it resolves to authorized digest",
+      "sourceLimits": "Tag resolution checked on both sides; not a provenance fault. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F13",
+      "name": "Resultados firmados ausentes",
+      "guarantee": "Rechazar ausencia de resultados firmados y recuperar la entrega legítima.",
+      "implemented": true,
+      "implementation": "[results.sh](../../tests/scenarios/results.sh); [results-scenario.test.mjs](../../tests/unit/results-scenario.test.mjs)",
+      "boundary": "Preissuance admission; postissuance CI/admission",
+      "lane": "A both; B preissuance only",
+      "limits": "La demo cubre preemisión y recuperación; no la mutación postemisión ni su negativo B.",
+      "adapters": [
+        "f13"
+      ],
+      "coverage": "Preissuance plus linked DEMO_VALID_ACCEPT; not postissuance mutation",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Both A boundaries PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject missing signed results; restore legitimate delivery",
+      "sourceLimits": "B postissuance negative NOT_EXECUTED; preissuance is a separate observation of same ID. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "F14",
+      "name": "Repetición de resultados P0",
+      "guarantee": "Rechazar resultados auténticos P0 bajo la política de confianza P1.",
+      "implemented": true,
+      "implementation": "[results.sh](../../tests/scenarios/results.sh); [results-scenario.test.mjs](../../tests/unit/results-scenario.test.mjs)",
+      "boundary": "Authorized CI + fresh directed CREATE",
+      "lane": "A; B negative unsupported",
+      "limits": "P0 es una fixture etiquetada, no política histórica real. Negativo B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Corrected CREATE rejection PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Reject authenticated P0 replay under trusted P1 policy",
+      "sourceLimits": "B negative NOT_EXECUTED; P0 is labelled fixture, not real historic policy. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "L01",
+      "name": "Entrega y sustitución por otro digest",
+      "guarantee": "Admitir entrega legítima y una sustitución verificada por otro digest.",
+      "implemented": true,
+      "implementation": "[l01.sh](../../tests/scenarios/l01.sh); [l01-update.test.mjs](../../tests/unit/l01-update.test.mjs)",
+      "boundary": "CI + admission + rollout/HTTP",
+      "lane": "A/B",
+      "limits": "La aceptación inicial de esta demo no completa L01. Sustitución no es evolución funcional.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Shared L01/L03/L04 PASS; P 4/4 and C 10/10 timing pairs favorable. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Accept legitimate delivery and new verified replacement digest",
+      "sourceLimits": "P/C have no replacement trial; same-commit replacement is not L05 app evolution. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "L02",
+      "name": "Vulnerabilidades sólo MEDIUM",
+      "guarantee": "Admitir una imagen con vulnerabilidades sólo MEDIUM según la DB.",
+      "implemented": true,
+      "implementation": "[vulnerabilities.sh](../../tests/scenarios/vulnerabilities.sh); [vulnerabilities.test.mjs](../../tests/unit/vulnerabilities.test.mjs)",
+      "boundary": "CI threshold + signature/evidence + admission/HTTP",
+      "lane": "A; B fixture unsupported",
+      "limits": "Hallazgos específicos de la DB. Fixture B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Threshold and positive delivery PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Accept MEDIUM-only vulnerability fixture",
+      "sourceLimits": "B fixture NOT_EXECUTED; CVE-2026-2950 plus CVE-2025-13465 are snapshot-specific. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "L03",
+      "name": "Evolución de componentes",
+      "guarantee": "Admitir evolución de componentes con un SBOM nuevo.",
+      "implemented": true,
+      "implementation": "[l01.sh](../../tests/scenarios/l01.sh); [sbom-evidence.test.mjs](../../tests/unit/sbom-evidence.test.mjs)",
+      "boundary": "SBOM CI + admission + functionality",
+      "lane": "A/B positive path",
+      "limits": "Comparte entrega L01/L03/L04; no prueba completitud ni muestra independiente.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Shared L01/L03/L04 PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Accept legitimate component/inventory evolution with fresh SBOM",
+      "sourceLimits": "Known is-number addition; no completeness claim or independent sample. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "L04",
+      "name": "Firma independiente válida",
+      "guarantee": "Admitir firma independiente válida tras verificación fresca.",
+      "implemented": true,
+      "implementation": "[l01.sh](../../tests/scenarios/l01.sh); [ci-verification-gate.test.mjs](../../tests/unit/ci-verification-gate.test.mjs)",
+      "boundary": "CI gate + results + admission/HTTP",
+      "lane": "A/B positive path",
+      "limits": "Comparte observación positiva; no establece negativo F07 en B.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Shared L01/L03/L04 PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Accept valid independent image signature after fresh verification",
+      "sourceLimits": "Shared replacement/control; C supports original-image signature delivery only. Neither establishes B negative F07. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "L05",
+      "name": "Dos revisiones autorizadas",
+      "guarantee": "Admitir dos revisiones reales autorizadas de la aplicación.",
+      "implemented": true,
+      "implementation": "[l05.sh](../../tests/scenarios/l05.sh); [l05-scenario.test.mjs](../../tests/unit/l05-scenario.test.mjs)",
+      "boundary": "Source guard + CI + admission/HTTP for both",
+      "lane": "A explicit pair; B needs two separately authorized native runs",
+      "limits": "Dos fuentes autorizadas explícitas; warmup no cuenta. Par B sin ejecutar.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Both A source deliveries PASS. Historical automated review; human pending."
+      },
+      "sourceGuarantee": "Accept two authorized real application source revisions",
+      "sourceLimits": "B paired revision trial NOT_EXECUTED; warmup in timing pilot is not L05. Full catalogue on 895a3bd remains unestablished."
+    },
+    {
+      "id": "L06",
+      "name": "Actualización permitida con la misma imagen",
+      "guarantee": "Admitir una actualización permitida de plantilla con la misma imagen.",
+      "implemented": true,
+      "implementation": "[runtime.sh](../../tests/scenarios/runtime.sh); [runtime-scenario.test.mjs](../../tests/unit/runtime-scenario.test.mjs)",
+      "boundary": "CREATE/template UPDATE + rollout/HTTP + positive Pod",
+      "lane": "A/B",
+      "limits": "CREATE comparte L01; positivos y recuperación no añaden muestras independientes.",
+      "adapters": [],
+      "coverage": "Documentado; sin adaptador de demostración",
+      "history": {
+        "source": "implementacion/docs/EN/evaluation-readiness.md",
+        "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
+        "date": "2026-10-05",
+        "lane": "A",
+        "run": "37353632299",
+        "executedSource": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "verification": "Registro documental; originales no reautenticados en esta sesión",
+        "status": "A4 PASS; new human review pending; history: A3 NOT_EXECUTED (shared-tests); Generation 1→2, digest/HTTP PASS; B1 supplied review. Historical automated review; human pending; B1 supplied."
+      },
+      "sourceGuarantee": "Accept permitted same-image template update",
+      "sourceLimits": "CREATE shares L01; positive Pods and recovery do not add independent samples. Full catalogue on 895a3bd remains unestablished."
+    }
+  ]
+}

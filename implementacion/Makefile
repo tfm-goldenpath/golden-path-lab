@@ -20,7 +20,11 @@ test-policies:
 test-bundles:
 	bash tests/integration/bundle-crypto.sh
 
-test: test-env test-unit test-policies test-bundles test-workflows
+test: test-env test-unit test-policies test-bundles test-workflows test-defense
+
+.PHONY: test-defense
+test-defense:
+	python3 -m unittest discover -s tests/defense_demo -p 'test_*.py'
 
 demo:
 	bash scripts/demo.sh local

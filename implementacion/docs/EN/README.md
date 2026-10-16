@@ -10,6 +10,8 @@ English is the primary language for implementation and technical contribution. S
 | [Ten-pair campaign results](paired-rg-campaign-results.md) | Observed timings, original run/evidence references, checks and documented limitations. |
 | [Evaluation readiness](evaluation-readiness.md) | Twenty scenario rows, historical evidence, current scope and final execution handoff. |
 | [Environment and versions](environment.md) | Devcontainer setup, pinned tools and environment checks. |
+| [Local visual defense demo](defense-demo.md) | Prepared lane-A presentation, real F11/F13 receipts, read-only panel, offline export and owned cleanup. |
+| [Demo commands and changing machines](defense-demo-operations.md) | Present the prepared session, start another and preserve source, `.tmp`, evidence and Trivy databases before increasing resources. |
 | [Modular architecture](architecture.md) | Component responsibilities, interfaces and verification boundaries. |
 | [Delivery contracts](delivery-contracts.md) | Artifact identity, required evidence and authorization checks. |
 | [AI-assisted development](ai-assisted-development.md) | Scoped assistance, human responsibility, shared instructions, scenario skill and truthful attribution. |

@@ -10,6 +10,8 @@ Esta documentación ofrece apoyo en español. La implementación y la documentac
 | [Resultados de diez pares](paired-rg-campaign-results.md) | Tiempos observados, runs/evidencias originales, comprobaciones y limitaciones documentadas. |
 | [Preparación de la evaluación](evaluation-readiness.md) | Veinte escenarios, evidencia histórica, alcance actual y entrega para ejecución final. |
 | [Entorno y versiones](environment.md) | Preparación del devcontainer, versiones fijadas y comprobación del entorno. |
+| [Demo visual local de defensa](defense-demo.md) | Presentación preparada por vía A, recibos reales F11/F13, panel de lectura, exportación y limpieza propia. |
+| [Comandos de la demo y cambio de máquina](defense-demo-operations.md) | Presentar la sesión preparada, arrancar otra y guardar código, `.tmp`, evidencias y bases Trivy antes de ampliar recursos. |
 | [Arquitectura modular](architecture.md) | Responsabilidades, interfaces y límites de verificación de los componentes. |
 | [Contratos de entrega](delivery-contracts.md) | Identidad del artefacto, evidencias obligatorias y comprobaciones de autorización. |
 | [Desarrollo asistido por IA](ai-assisted-development.md) | Asistencia acotada, responsabilidad humana, instrucciones, skill de escenarios y atribución veraz. |

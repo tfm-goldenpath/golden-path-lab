@@ -152,7 +152,21 @@ class RecoveryTests(unittest.TestCase):
     def test_probe_cleanup_failure_is_not_connectivity_success(self):
         with tempfile.TemporaryDirectory() as tmp:
             r=network.Recovery(Path(tmp)/'result.json');r.image='synthetic:cached'
-            with patch.object(r,'command',side_effect=[(0,''),(1,'not removed'),(0,'still-present')]):
+            with patch.object(r,'command',side_effect=[(0,''),(1,'not removed')]+[(0,'still-present')]*20):
+                with self.assertRaisesRegex(ValueError,'cleanup'): r.probe('dns')
+
+    def test_probe_waits_for_own_asynchronous_removal_without_repeating_probe(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r=network.Recovery(Path(tmp)/'result.json');r.image='synthetic:cached'
+            with patch.object(r,'command',side_effect=[(124,''),(1,'removal in progress'),(0,'own-probe'),(0,'')]) as run:
+                self.assertEqual(r.probe('dns'),124)
+            self.assertEqual(sum(call.args[0][1]=='run' for call in run.call_args_list),1)
+            self.assertEqual(sum(call.args[0][1]=='rm' for call in run.call_args_list),1)
+
+    def test_probe_does_not_treat_listing_error_as_absence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r=network.Recovery(Path(tmp)/'result.json');r.image='synthetic:cached'
+            with patch.object(r,'command',side_effect=[(0,''),(0,''),(1,'API failed')]):
                 with self.assertRaisesRegex(ValueError,'cleanup'): r.probe('dns')
 
     def test_explicit_removal_needs_idle_network_and_is_repeatable(self):

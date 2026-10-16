@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Golden Path · evidencia en directo</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="mark">G</span><div><strong>GOLDEN PATH LAB</strong><span>Una entrega. Controles comprobables.</span></div></div>
+    <div class="connection"><span id="connection">Conectando…</span><small id="reading">Sin lectura del servidor</small></div>
+  </header>
+  <div id="saved" class="saved" hidden>Ejecución guardada; no en directo</div>
+  <nav aria-label="Vistas">
+    <button data-view="demonstration" class="selected">01 · Demostración</button>
+    <button data-view="technical">02 · Detalle técnico</button>
+    <button data-view="catalogue">03 · Catálogo y workflows</button>
+    <a id="html-export" href="/download/html" download>HTML guardado ↓</a>
+    <a id="package-export" href="/download/package" download>Evidencias ↓</a>
+  </nav>
+  <main>
+    <div class="identity"><span id="session">Sin sesión</span><span>Vía A · confianza local</span><span>G · referencia R preparada</span><span id="overall">Pendiente</span></div>
+    <div class="source"><span id="source">Fuente desconocida</span><span id="image">Digest desconocido</span></div>
+    <section id="demonstration" class="view">
+      <div class="intro"><div><p class="eyebrow">DEL CÓDIGO A LA AUTORIZACIÓN</p><h1>Una decisión necesita pruebas.</h1><p>La preparación conserva antecedentes reales. Cada intento en directo es una solicitud distinta.</p></div><div class="timing"><span id="live-time">—</span><small>medición técnica · objetivo con explicación ≤ 160 s</small><small id="prep-time">Preparación: —</small></div></div>
+      <div class="legend"><span>□ Sin ejecutar</span><span class="allow">● Entrega permitida</span><span class="deny">◆ Entrega bloqueada; control correcto</span><span class="error">× Error / interrupción</span></div>
+      <div id="pipeline" class="pipeline" aria-label="Mapa de etapas"></div>
+      <div id="attempts" class="attempts"></div>
+      <div class="explanation"><strong>F11 ≠ F13</strong><p>F11 cambia <code>privileged</code> y <code>allowPrivilegeEscalation</code> a <code>true</code>. Esto no concede el rol RBAC <code>cluster-admin</code>. F13 omite únicamente la atestación de resultados firmados. La aceptación inicial se registra como <code>DEMO_VALID_ACCEPT</code>; L01 completo requiere otro digest.</p></div>
+      <details id="running"><summary>Operación en curso · log provisional, sin hash final</summary><pre id="tail">Sin operación activa</pre></details>
+    </section>
+    <section id="technical" class="view" hidden>
+      <div class="intro"><div><p class="eyebrow">RECIBOS Y ORIGINALES</p><h1>Qué se comprobó y dónde.</h1><p>Un hash acredita integridad de bytes. La firma, el contrato y la revisión humana son comprobaciones distintas.</p></div></div>
+      <div id="technical-stages"></div>
+      <h2>Secuencia ejecutada</h2><div id="receipts"></div>
+    </section>
+    <section id="catalogue" class="view" hidden>
+      <div class="intro"><div><p class="eyebrow">ALCANCE Y LÍMITES</p><h1>Veinte casos. Una demo dirigida.</h1><p>Implementación, adaptador, ejecución de esta sesión y registro histórico permanecen separados.</p></div></div>
+      <div class="table-scroll"><table><thead><tr><th>Caso / garantía</th><th>Control</th><th>Adaptador</th><th>Esta sesión</th><th>Registro histórico</th></tr></thead><tbody id="cases"></tbody></table></div>
+      <h2>Workflows del checkout</h2><div id="workflows"></div>
+      <div class="explanation"><strong>Controles externos · no observados en esta sesión</strong><p>Rulesets, aprobación humana, Copilot review, CodeQL, Dependabot y secret scanning: su activación no se deduce de estos archivos. Fuente: CONTRIBUTING.md y workflows del checkout. No se consultó configuración remota.</p><p id="human">Revisión humana: No solicitada para esta demostración.</p></div>
+    </section>
+  </main>
+  <footer><span id="evidence-time">Última evidencia: —</span><span>API de sólo lectura · pausas y detención en terminal · sin métricas de campaña</span></footer>
+  <dialog id="artifact"><button id="close-artifact">Cerrar ×</button><h2 id="artifact-title">Evidencia</h2><p id="artifact-meta"></p><pre id="artifact-text"></pre></dialog>
+</body>
+</html>

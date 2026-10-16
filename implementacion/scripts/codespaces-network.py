@@ -12,6 +12,7 @@ import re
 import shlex
 import signal
 import subprocess
+import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -142,8 +143,15 @@ class Recovery:
         finally:
             # Only this diagnostic container, never a scenario or user's workload.
             self.command(['docker','rm','-f',name], required=False)
-            code, output = self.command(['docker','ps','-a','--filter','name=^' + name + '$','--format','{{.Names}}'], required=False)
-            if code or output.strip(): raise ValueError('Diagnostic container cleanup not established')
+            # Docker --rm and rm -f can race: the daemon may report removal
+            # already in progress. Observe only this owned diagnostic container
+            # until deletion converges; never repeat the network request.
+            for attempt in range(20):
+                code, output = self.command(['docker','ps','-a','--filter','name=^' + name + '$','--format','{{.Names}}'], required=False)
+                if code: raise ValueError('Diagnostic container cleanup observation failed')
+                if not output.strip(): break
+                if attempt == 19: raise ValueError('Diagnostic container cleanup not established')
+                time.sleep(0.25)
 
     def check_workloads(self):
         for container in self.identity['containers']:
