@@ -21,15 +21,23 @@
     <a id="package-export" href="/download/package" download>Evidencias ↓</a>
   </nav>
   <main>
-    <div class="identity"><span id="session">Sin sesión</span><span>Vía A · confianza local</span><span>G · referencia R preparada</span><span id="overall">Pendiente</span></div>
+    <div class="identity"><span id="session">Sin sesión</span><span>Vía A · confianza local</span><span>Comparación R / G</span><span id="overall">Pendiente</span><span id="resources">Recursos: sin lectura</span></div>
     <div class="source"><span id="source">Fuente desconocida</span><span id="image">Digest desconocido</span></div>
     <section id="demonstration" class="view">
-      <div class="intro"><div><p class="eyebrow">DEL CÓDIGO A LA AUTORIZACIÓN</p><h1>Una decisión necesita pruebas.</h1><p>La preparación conserva antecedentes reales. Cada intento en directo es una solicitud distinta.</p></div><div class="timing"><span id="live-time">—</span><small>medición técnica · objetivo con explicación ≤ 160 s</small><small id="prep-time">Preparación: —</small></div></div>
+      <div class="intro"><div><p class="eyebrow">DEL CÓDIGO A LA AUTORIZACIÓN</p><h1>F11 · el mismo riesgo, dos barreras.</h1><p>La preparación conserva antecedentes reales. Cada intento en directo es una solicitud distinta.</p></div><div class="timing"><span id="live-time">—</span><small>objetivo automático ≤ 90 s · guion 160 s + reserva 20 s</small><small id="prep-time">Preparación: —</small></div></div>
       <div class="legend"><span>□ Sin ejecutar</span><span class="allow">● Entrega permitida</span><span class="deny">◆ Entrega bloqueada; control correcto</span><span class="error">× Error / interrupción</span></div>
+      <div id="web-controls" hidden>
+        <button data-action="prepare" disabled>Preparar</button>
+        <button data-action="check">Comprobar entorno</button><button data-action="present">Ejecutar comparación</button>
+        <button data-action="step">Siguiente paso</button><button data-action="stop">Detener</button>
+        <button data-action="export">Exportar</button><button data-action="cleanup">Limpiar recursos propios</button>
+        <span id="action-status"></span></div>
+      <details id="prepared-summary"><summary id="preparation-label">Preparación · pendiente</summary><div id="preparation-receipts"></div></details>
+      <button id="scope-button">Qué demuestra y qué no · F11 / L06</button>
+      <label class="attempt-filter">Intento en detalle <select id="attempt-filter"><option value="all">Todos</option></select></label>
       <div id="pipeline" class="pipeline" aria-label="Mapa de etapas"></div>
       <div id="attempts" class="attempts"></div>
-      <div class="explanation"><strong>F11 ≠ F13</strong><p>F11 cambia <code>privileged</code> y <code>allowPrivilegeEscalation</code> a <code>true</code>. Esto no concede el rol RBAC <code>cluster-admin</code>. F13 omite únicamente la atestación de resultados firmados. La aceptación inicial se registra como <code>DEMO_VALID_ACCEPT</code>; L01 completo requiere otro digest.</p></div>
-      <details id="running"><summary>Operación en curso · log provisional, sin hash final</summary><pre id="tail">Sin operación activa</pre></details>
+      <details id="running"><summary>Consola · salida real conservada</summary><label>Control <select id="log-select"><option value="">Seleccionar salida</option></select></label><a id="console-full" hidden>Archivo completo ↓</a><p id="console-meta"></p><pre id="tail">Sin salida registrada</pre></details>
     </section>
     <section id="technical" class="view" hidden>
       <div class="intro"><div><p class="eyebrow">RECIBOS Y ORIGINALES</p><h1>Qué se comprobó y dónde.</h1><p>Un hash acredita integridad de bytes. La firma, el contrato y la revisión humana son comprobaciones distintas.</p></div></div>
@@ -43,7 +51,7 @@
       <div class="explanation"><strong>Controles externos · no observados en esta sesión</strong><p>Rulesets, aprobación humana, Copilot review, CodeQL, Dependabot y secret scanning: su activación no se deduce de estos archivos. Fuente: CONTRIBUTING.md y workflows del checkout. No se consultó configuración remota.</p><p id="human">Revisión humana: No solicitada para esta demostración.</p></div>
     </section>
   </main>
-  <footer><span id="evidence-time">Última evidencia: —</span><span>API de sólo lectura · pausas y detención en terminal · sin métricas de campaña</span></footer>
-  <dialog id="artifact"><button id="close-artifact">Cerrar ×</button><h2 id="artifact-title">Evidencia</h2><p id="artifact-meta"></p><pre id="artifact-text"></pre></dialog>
+  <footer><span id="evidence-time">Última evidencia: —</span><span>Privado · sólo lectura por defecto · sin métricas de campaña</span></footer>
+  <dialog id="artifact"><button id="close-artifact">Cerrar ×</button><h2 id="artifact-title">Evidencia</h2><p id="artifact-meta"></p><a id="artifact-full" hidden>Archivo completo ↓</a><pre id="artifact-text"></pre></dialog>
 </body>
 </html>

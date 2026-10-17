@@ -1,5 +1,7 @@
 # Run the demo and preserve it when changing machines
 
+For the bounded four-card F11/L06 local profile, use [F11 comparison](f11-comparison.md). Historical runs below retain their original scope and resources.
+
 [Español](../ES/defense-demo-operations.md) · [Full guide and presentation script](defense-demo.md) · [Real validation](../../registros/defense_demo_validation_EN.md)
 
 Run all commands from `/workspaces/golden-path-lab`. This is **lane A**, using kind, zot and local trust, including in Codespaces. This guide requires no publication or remote workflow execution.

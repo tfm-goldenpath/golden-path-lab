@@ -210,3 +210,8 @@ e integridad, sin reintentos, interrupciones ni intervención humana. El
 [registro de resultados](../../../../registros/automated-remediation-validation.md)
 conserva identificadores, tiempos y hashes. La aceptación humana sigue pendiente;
 esta ejecución local no cambia resultados alojados ni observaciones anteriores.
+
+
+## F11 comparison profile — 17 October 2026
+
+Un perfil local de defensa separado reutiliza únicamente los oráculos UPDATE. No completa F11/L06 ni ejecuta F12; no añade muestras. La primera preparación conserva su bloqueo por prerrequisitos. Una sesión posterior, `f11-20261017t193938z`, confirmó la comparación acotada R/F11 temprano/UPDATE dirigido/L06 en 19,01 s tras 423,02 s de preparación; no completa los contratos del catálogo. Consulta [Comparación F11](../../f11-comparison.md) y el [registro](../../../../registros/f11_comparison_validation_EN.md). Revisión humana pendiente.

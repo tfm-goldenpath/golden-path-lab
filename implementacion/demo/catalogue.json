@@ -777,6 +777,125 @@
       "attempt": "preservation",
       "boundary": "Conservar y retirar recursos propios",
       "dependsOn": []
+    },
+    "comparison-inputs": {
+      "adapter": "comparison-inputs",
+      "title": "Seal comparison inputs and verify warmed digest",
+      "stages": [
+        "delivery-gate",
+        "deployment"
+      ],
+      "controls": [
+        {
+          "id": "comparison-inputs",
+          "tool": "shared image verifier / node cache",
+          "property": "Retain authorized evidence and common manifest variants",
+          "input": "tfm-golden.json",
+          "output": "comparison/{diff.json,node-image-check.json}",
+          "condition": "Authorized digest cached and valid workload healthy"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Seal comparison inputs and verify warmed digest",
+      "dependsOn": []
+    },
+    "comparison-reference": {
+      "adapter": "comparison-reference",
+      "title": "R — risk configuration executed and withdrawn",
+      "stages": [
+        "deployment"
+      ],
+      "controls": [
+        {
+          "id": "reference-runtime",
+          "tool": "restricted actor / Kubernetes / HTTP",
+          "property": "Observe both forbidden privileges on Ready Pods of the authorized digest, then remove the workload",
+          "input": "comparison/reference/request.json",
+          "output": "comparison/reference/{response.log,pods.json,rollout.json,quote.json,cleanup.log,cleaned-check.json}",
+          "condition": "Actual UPDATE, rollout, Pod privilege fields, same digest, valid HTTP and verified removal"
+        }
+      ],
+      "expected": "allow",
+      "scenario": "F11",
+      "attempt": "comparison-r",
+      "boundary": "R — risk configuration executed and withdrawn",
+      "dependsOn": [
+        "preparation"
+      ]
+    },
+    "comparison-admission": {
+      "adapter": "comparison-admission",
+      "title": "G — independent directed UPDATE; F11 partial",
+      "stages": [
+        "admission"
+      ],
+      "controls": [
+        {
+          "id": "f11-directed",
+          "tool": "scenario_runtime_negative / scenario_f11_attribute",
+          "property": "Reject only tfm-runtime/restricted-containers; preserve UID, generation, spec and healthy service",
+          "input": "runtime/F11/Deployment-UPDATE/request.json",
+          "output": "runtime/F11/Deployment-UPDATE/{response.log,state-check.json,result.json}",
+          "condition": "Exclusive controlled privilege denial; no early filter on this request"
+        }
+      ],
+      "expected": "deny",
+      "scenario": "F11",
+      "attempt": "comparison-g",
+      "boundary": "G — independent directed UPDATE; F11 partial",
+      "dependsOn": [
+        "preparation"
+      ]
+    },
+    "comparison-legitimate": {
+      "adapter": "comparison-legitimate",
+      "title": "L06 — legitimate template update demonstrated; partial scope",
+      "stages": [
+        "manifest",
+        "admission",
+        "deployment"
+      ],
+      "controls": [
+        {
+          "id": "l06-update",
+          "tool": "scenario_l06_update",
+          "property": "Allow one template annotation; retain image and identity while generation increases",
+          "input": "runtime/L06/update-request.json",
+          "output": "runtime/L06/{update-response.log,update-change.json,update-controller-pods.json,update-rollout.json,update-quote.json}",
+          "condition": "Conftest, API, generation, rollout, matching Pods, same digest and HTTP; direct Pod omitted"
+        }
+      ],
+      "expected": "allow",
+      "scenario": "L06",
+      "attempt": "comparison-l06",
+      "boundary": "L06 — legitimate template update demonstrated; partial scope",
+      "dependsOn": [
+        "preparation"
+      ]
+    },
+    "comparison-ready": {
+      "adapter": "comparison-ready",
+      "title": "Prepare valid workload before presentation",
+      "stages": [
+        "deployment"
+      ],
+      "controls": [
+        {
+          "id": "comparison-ready",
+          "tool": "scenario_l01_accept",
+          "property": "Prepare same-digest valid workload; no replacement image",
+          "input": "tfm-golden.json",
+          "output": "L01-admission.log",
+          "condition": "Admission, rollout and HTTP; not full L01"
+        }
+      ],
+      "expected": "allow",
+      "scenario": null,
+      "attempt": "preparation",
+      "boundary": "Prepare valid workload before presentation",
+      "dependsOn": []
     }
   },
   "scenarios": [
@@ -1031,7 +1150,9 @@
       "limits": "Dos cambios coordinados. Esta demo no cubre toda la familia CREATE/UPDATE/Pod.",
       "adapters": [
         "f11-early",
-        "f11-admission"
+        "f11-admission",
+        "comparison-reference",
+        "comparison-admission"
       ],
       "coverage": "Two directed barriers only; not the entire runtime family",
       "history": {
@@ -1250,7 +1371,9 @@
       "boundary": "CREATE/template UPDATE + rollout/HTTP + positive Pod",
       "lane": "A/B",
       "limits": "CREATE comparte L01; positivos y recuperación no añaden muestras independientes.",
-      "adapters": [],
+      "adapters": [
+        "comparison-legitimate"
+      ],
       "coverage": "Documentado; sin adaptador de demostración",
       "history": {
         "source": "implementacion/docs/EN/evaluation-readiness.md",

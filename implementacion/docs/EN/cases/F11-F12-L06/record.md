@@ -252,3 +252,8 @@ Completion, owned cleanup and archive integrity passed without retries,
 interruptions or human intervention. See the [result record](../../../../registros/automated-remediation-validation.md)
 for exact task/run IDs, timings and hashes. Human acceptance remains pending;
 hosted results and earlier observations are not changed by this local execution.
+
+
+## F11 comparison profile — 17 October 2026
+
+A separate local defense profile reuses the UPDATE oracles only. It does not execute the full F11/L06 contract or F12, and adds no sample. The first preparation remains prerequisite-blocked. A later session, `f11-20261017t193938z`, confirmed the bounded R/early F11/directed UPDATE/L06 comparison in 19.01 s after 423.02 s preparation; this does not complete the catalogue contracts. See [F11 comparison](../../f11-comparison.md) and the [validation record](../../../../registros/f11_comparison_validation_EN.md). Human review pending.

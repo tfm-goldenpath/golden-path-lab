@@ -1,5 +1,7 @@
 # Demostración visual local para la defensa
 
+Para el perfil local acotado de cuatro tarjetas F11/L06, consulta [Comparación F11](f11-comparison.md). Los registros históricos siguientes conservan su alcance y recursos originales.
+
 [English](../EN/defense-demo.md) · [Arquitectura](architecture.md) · [Contratos](delivery-contracts.md) · [Matriz de cobertura](evaluation-readiness.md)
 
 Para los comandos de la sesión preparada y qué guardar antes de aumentar recursos o cambiar de Codespace, consulta [Ejecución y conservación al cambiar de máquina](defense-demo-operations.md).

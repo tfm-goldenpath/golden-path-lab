@@ -7,6 +7,7 @@ mode=local; phase=defense
 source versions.env
 for module in context lab delivery attestations workload; do source "$root/scripts/lib/$module.sh"; done
 for scenario in l01 f13 runtime f11; do source "$root/tests/scenarios/$scenario.sh"; done
+source "$root/tests/scenarios/f11-comparison.sh"
 context_init
 operation=${1:?}; session=${2:?}
 [[ "$session" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || fail 'Invalid session'
@@ -86,12 +87,25 @@ esac
 
 case "$operation" in
   environment|initialize) ;;
+  comparison-ready) scenario_l01_accept ;;
+  comparison-inputs) comparison_inputs ;;
+  comparison-reference) comparison_reference ;;
+  comparison-admission) comparison_admission ;;
+  comparison-legitimate) comparison_legitimate ;;
   ci)
     GP_BUNDLE_PROBE_EVIDENCE_DIR="$state_dir/bundle-probe" make test WORKFLOW_EVIDENCE="$state_dir/workflow-static"
     ;;
   preflight) delivery_preflight ;;
-  infrastructure) lab_create ;;
-  build) repository=$(get sourceRepository); commit=$(get sourceCommit); image_repo=$(get imageRepository); delivery_build ;;
+  infrastructure)
+    check_owned claim
+    trap 'code=$?; trap - EXIT; set +e; check_owned checkpoint; retention=$?; if (( code == 0 )); then code=$retention; fi; exit "$code"' EXIT
+    lab_create
+    ;;
+  build)
+    trap 'code=$?; trap - EXIT; set +e; check_owned checkpoint; retention=$?; if (( code == 0 )); then code=$retention; fi; exit "$code"' EXIT
+    repository=$(get sourceRepository); commit=$(get sourceCommit); image_repo=$(get imageRepository)
+    delivery_build
+    ;;
   namespaces) lab_prepare_namespaces ;;
   manifests) delivery_render_manifests ;;
   reference) workload_reference ;;
@@ -114,10 +128,20 @@ case "$operation" in
     resource_snapshot resume
     cmp "$state_dir/prepared-policy-identity.json" "$state_dir/resume-policy-identity.json"
     lab_wait_admission_controller
+    if [[ "$(jq -r .profile "$session_dir/session.json")" == f11-comparison ]]; then
+      attestations_ci_gate comparison-resume authorized
+      probe tfm-golden
+    fi
     node tests/scenarios/runtime-evidence.mjs resolve local "$(get buildTag)" "$image" "$state_dir/resume-tag.json" > "$state_dir/resume-tag-check.json"
     ;;
   f11-early)
-    scenario_f11_early
+    if [[ "$(jq -r .profile "$session_dir/session.json")" == f11-comparison ]]; then
+      # No API call in this early request; variants were sealed during preparation.
+      scenario_runtime_early "$state_dir/F11-privileged.json" F11 "$state_dir/F11-early"
+      cat "$state_dir/F11-early.json"
+    else
+      scenario_f11_early
+    fi
     python3 - "$state_dir" <<'PY'
 import difflib,json,sys
 from pathlib import Path
@@ -156,11 +180,8 @@ PY
     ;;
   cleanup)
     check_owned cleanup-check
-    # Python has already packaged and verified both the lab and session evidence.
-    # The shared helper retains diagnostics, removes only validated run resources.
-    check_owned package-check
-    [[ -e "$state_dir/.evidence-packaged" ]] || touch "$state_dir/.evidence-packaged"
-    cleanup
+    # Retire only recorded container IDs. Keep private material and all evidence.
+    check_owned retire
     check_owned absent
     ;;
   *) fail 'Unknown adapter' ;;

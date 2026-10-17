@@ -479,3 +479,13 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [x] The correction was merged through PR #38, followed by successful fresh development RG/GR and the four-pair pilot recorded in the [merged report](docs/EN/paired-rg-pilot-review.md). Preserve `36924958484` as its original preparation failure; it was not an external-failure retry or a pilot observation. OpenAI Codex / GPT-6 assistance; human acceptance remains pending.
 
 - [x] Fix PR #38 CI test setup after run `36926144447`: use isolated synthetic Git history for the export regression. Reproduce failure in a depth-1 clone; all 51 measurement tests pass after correction, and the original production bug still fails the regression. No checkout-depth or production-source changes. Logs stored locally; Codex / GPT-6 assistance, human review pending.
+
+
+### Local F11 comparison profile (17 October 2026)
+
+- [x] Add the bounded local A profile over the existing defense coordinator, R privilege trial, independent directed F11 UPDATE and extracted legitimate L06 template UPDATE. Both catalogue scopes remain partial.
+- [x] Add authenticated web controls, per-attempt evidence/console, provisional resource margins and owned cleanup with low-space export recovery; retain historical profiles.
+- [x] Run unit/policy/offline-crypto checks and real-browser/offline rendering. See the [validation record](registros/f11_comparison_validation_EN.md) for original failures, exact source, 948 unit tests and final defense regressions.
+- [x] Restore the base profile and align actual Docker CLI/engine to 29.8.0. Complete shared suite passes; session `f11-20261017t193938z` prepares in 423.02 s and confirms the partial R/F11/L06 comparison in 19.01 s. Earlier failures remain preserved. A subsequent CSS/browser-test correction is documented separately; delivery controls are unchanged.
+- [ ] Human-narrated 160-second rehearsal and full catalogue F11/L06 coverage; this bounded comparison does not establish either.
+- [ ] Human review and acceptance. OpenAI Codex assistance; new PR authorized separately, no new campaign sample. [EN guide](docs/EN/f11-comparison.md) / [ES guide](docs/ES/f11-comparison.md).

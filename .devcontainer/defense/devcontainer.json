@@ -1,0 +1,41 @@
+{
+  "name": "Golden Path - F11 defense",
+  "build": {
+    "dockerfile": "../../implementacion/.devcontainer/Dockerfile",
+    "context": "../../implementacion"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:4.1.0": {
+      "version": "29.8.0",
+      "moby": false,
+      "installDockerBuildx": false,
+      "dockerDashComposeVersion": "none",
+      "installDockerComposeSwitch": false
+    }
+  },
+  "remoteUser": "node",
+  "containerEnv": {
+    "KIND_EXPERIMENTAL_PROVIDER": "docker"
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [8765],
+  "portsAttributes": {
+    "8765": {
+      "label": "Golden Path - F11 comparison",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "npm ci --prefix implementacion/tooling --ignore-scripts --no-audit --no-fund && bash implementacion/scripts/check-environment.sh --tools-only",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.eol": "\n"
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 # Local visual defense demonstration
 
+For the bounded four-card F11/L06 local profile, use [F11 comparison](f11-comparison.md). Historical runs below retain their original scope and resources.
+
 [Español](../ES/defense-demo.md) · [Architecture](architecture.md) · [Delivery contracts](delivery-contracts.md) · [Readiness matrix](evaluation-readiness.md)
 
 For prepared-session commands and what to preserve before increasing resources or changing Codespaces, see [Run the demo and preserve it when changing machines](defense-demo-operations.md).

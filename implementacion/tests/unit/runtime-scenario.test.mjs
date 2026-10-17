@@ -81,17 +81,38 @@ k() { command node "$state_dir/sim.cjs" k "$@"; }
 actor() { command node "$state_dir/sim.cjs" actor "$@"; }
 get() { printf 'registry.example/quotes-node:run-test'; }
 attestations_ci_gate() { printf '%s\n' "$*" > "$state_dir/gate.log"; }
-scenario_runtime_early() { :; }
+scenario_runtime_early() { printf '%s\n' "$*" >> "$state_dir/early-called.log"; }
 scenario_runtime_tag() { [[ "$RUNTIME_FAULT" != tag-failure ]] || return 9; printf '{}' > "$1.json"; }
 probe() { [[ "$RUNTIME_FAULT" != http ]] || return 10; }
 if [[ "$RUNTIME_PHASE" == all ]]; then scenario_runtime_create; else scenario_runtime_snapshot "$state_dir/runtime/before"; fi
 cp "$state_dir/base.json" "$state_dir/deployment.json"
 printf 'created\n' > "$state_dir/L01-admission.log"
 for file in health version quote; do printf '{}' > "$state_dir/tfm-golden-$file.json"; done
-scenario_l06
+if [[ "$RUNTIME_PHASE" == directed ]]; then
+  scenario_runtime_negative F11 Deployment UPDATE directed
+elif [[ "$RUNTIME_PHASE" == legitimate ]]; then
+  cp "$state_dir/tfm-golden-quote.json" "$state_dir/runtime/L06/create-quote.json"
+  scenario_l06_update "$state_dir/runtime/L06" synthetic-l06
+else
+  scenario_l06
+fi
 `],{env:{...process.env,RUNTIME_ROOT:root,RUNTIME_STATE:dir,RUNTIME_IMAGE:image,RUNTIME_FAULT:fault,RUNTIME_PHASE:phase},encoding:'utf8',timeout:30000});
  assert.ifError(result.error);return {...result,dir};
 }
+test('directed comparison UPDATE sends a fresh request without calling the early filter',t=>{
+ const r=run(t,'','directed');assert.equal(r.status,0,r.stdout+r.stderr);
+ assert.equal(existsSync(join(r.dir,'early-called.log')),false);
+ const result=JSON.parse(readFileSync(join(r.dir,'runtime/F11/Deployment-UPDATE/result.json')));
+ assert.equal(result.early,null);assert.equal(result.operation,'UPDATE');
+ assert.equal(JSON.parse(readFileSync(join(r.dir,'runtime/F11/Deployment-UPDATE/state-check.json'))).status,'PASS');
+});
+test('standalone L06 helper executes one update and does not claim full catalogue completion',t=>{
+ const r=run(t,'','legitimate');assert.equal(r.status,0,r.stdout+r.stderr);
+ const calls=readFileSync(join(r.dir,'calls.log'),'utf8').trim().split('\n').map(JSON.parse);
+ assert.equal(calls.filter(c=>c[0]==='actor').length,1);
+ assert.equal(existsSync(join(r.dir,'L06-result.json')),false);
+ assert.equal(JSON.parse(readFileSync(join(r.dir,'runtime/L06/update-change.json'))).toGeneration,2);
+});
 test('actual family functions complete negative operations, same-image L06 change and isolated Pod cleanup',t=>{
  const r=run(t);assert.equal(r.status,0,r.stdout+r.stderr);
  for(const scenario of ['F11','F12']) assert.equal(JSON.parse(readFileSync(join(r.dir,scenario+'-completed.json'))).operations.length,3);

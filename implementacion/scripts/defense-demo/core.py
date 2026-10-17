@@ -20,9 +20,10 @@ MAX_ARTIFACT = 64 * 1024 * 1024
 PREPARE = ['environment', 'initialize', 'ci', 'preflight', 'infrastructure',
            'build', 'namespaces', 'manifests', 'reference', 'manifest-policy',
            'analysis', 'delivery-evidence', 'missing-results', 'admission-install', 'seal']
-LIVE = {'defense': ['f11-early', 'f13', 'authorize', 'accept', 'f11-admission'],
+F11_PREPARE = [op for op in PREPARE if op not in ('missing-results', 'seal')] + ['authorize', 'comparison-ready', 'comparison-inputs', 'seal']
+LIVE = {'f11-comparison': ['comparison-reference', 'f11-early', 'comparison-admission', 'comparison-legitimate'], 'defense': ['f11-early', 'f13', 'authorize', 'accept', 'f11-admission'],
         'defense-short': ['f11-early', 'f13', 'authorize', 'accept']}
-ADAPTERS = set(PREPARE + LIVE['defense'] + ['resume', 'cleanup'])
+ADAPTERS = set(PREPARE + F11_PREPARE + sum(LIVE.values(), []) + ['resume', 'cleanup'])
 _spec = importlib.util.spec_from_file_location('lab_packager', ROOT / 'scripts/package-evidence.py')
 packager = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(packager)
@@ -48,7 +49,7 @@ def valid_name(name):
 
 def atomic(path, value):
     path = Path(path)
-    if path.is_symlink():
+    if path.is_symlink() or path.parent.resolve() != path.parent.absolute():
         raise ValueError('Symlinked metadata is forbidden')
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(dir=path.parent)
@@ -64,7 +65,9 @@ def atomic(path, value):
 
 
 def read_json(path):
-    return json.loads(Path(path).read_text())
+    path = Path(path)
+    if path.resolve() != path.absolute(): raise ValueError('Symlinked JSON metadata is forbidden')
+    return json.loads(path.read_text())
 
 
 @contextmanager
@@ -92,12 +95,13 @@ def safe_path(root, relative):
 
 def file_record(root, path, producer, source):
     path = safe_path(root, path.relative_to(root))
-    if path.stat().st_size > MAX_ARTIFACT:
-        raise ValueError('Artifact exceeds the read limit')
-    data = path.read_bytes()
+    size = path.stat().st_size
+    checksum = hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''): checksum.update(block)
     relative = path.relative_to(root).as_posix()
-    return {'id': digest(relative.encode())[:24], 'path': relative, 'size': len(data),
-            'sha256': digest(data), 'format': path.suffix.lstrip('.'), 'producer': producer,
+    return {'id': digest(relative.encode())[:24], 'path': relative, 'size': size,
+            'sha256': checksum.hexdigest(), 'format': path.suffix.lstrip('.'), 'producer': producer,
             'source': source, 'integrity': 'sha256', 'authentication': 'see-verifier-receipts',
             'semanticValidation': 'see-control-receipts', 'humanReview': 'not-requested'}
 
@@ -182,6 +186,7 @@ def events(name):
 def public_session(name):
     state = read_json(session_path(name) / 'session.json')
     state.pop('sourceFiles', None)
+    state.pop('captureInventory', None)
     return state
 
 
@@ -189,7 +194,7 @@ def artifact_index(name):
     return {a['id']: a for e in events(name) for a in e.get('artifacts', [])}
 
 
-def capture_files(source, destination, producer):
+def capture_files(source, destination, producer, previous=None):
     """Close copies before a later helper overwrites aliases. Never copy state."""
     source, destination = Path(source), Path(destination)
     destination.mkdir(parents=True, exist_ok=False)
@@ -200,6 +205,7 @@ def capture_files(source, destination, producer):
             continue
         if p.stat().st_size > MAX_ARTIFACT or not packager.shareable(p): continue
         original = p.read_bytes()
+        if previous is not None and previous.get(p.relative_to(source).as_posix()) == digest(original): continue
         try: safe = sanitize(original.decode('utf-8')).encode('utf-8')
         except UnicodeError: continue
         relative = p.relative_to(source)

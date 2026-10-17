@@ -1,5 +1,7 @@
 # Ejecutar la demo y conservarla al cambiar de máquina
 
+Para el perfil local acotado de cuatro tarjetas F11/L06, consulta [Comparación F11](f11-comparison.md). Los registros históricos siguientes conservan su alcance y recursos originales.
+
 [English](../EN/defense-demo-operations.md) · [Guía completa y guion](defense-demo.md) · [Validación real](../../registros/defense_demo_validation_EN.md)
 
 Todos los comandos parten de `/workspaces/golden-path-lab`. La demo usa la **vía A**, con kind, zot y confianza local, también en Codespaces. Esta guía no requiere publicar cambios ni ejecutar workflows remotos.
