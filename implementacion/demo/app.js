@@ -13,6 +13,41 @@
   }
   function view(name){document.querySelectorAll('.view').forEach(n=>n.hidden=n.id!==name);document.querySelectorAll('nav button').forEach(n=>n.classList.toggle('selected',n.dataset.view===name));}
   function decision(e){if(!e)return 'Sin ejecutar';if(e.operational!=='COMPLETED')return states[e.operational]||e.operational;return e.decision==='deny'?'Entrega bloqueada; control correcto':'Comprobación confirmada';}
+  const titles={
+    'f11-early':'F11 · G temprano: privilegios prohibidos',
+    'f11-admission':'F11 · G admisión: segundo intento independiente',
+    'f13':'F13 · G admisión: faltan resultados autorizados',
+    'accept':'G · Entrega válida después de F13',
+    'authorize':'G · Autorizar resultados válidos',
+    'comparison-reference':'R · Ejecutar el riesgo y retirar la carga',
+    'comparison-admission':'F11 · G admisión: UPDATE independiente',
+    'comparison-legitimate':'L06 · G permite la actualización legítima',
+    'comparison-ready':'G · Preparar el servicio válido',
+    'comparison-inputs':'F11 / L06 · Comprobar la imagen y las variantes'
+  };
+  function titleFor(operation,data=current){return titles[operation]||data?.catalogue.operations[operation]?.title||operation;}
+  function visual(e,active=false){
+    if(active)return {tone:'running',label:'↻ En ejecución'};
+    if(!e)return {tone:'pending',label:'○ Sin ejecutar'};
+    if(e.operational==='NOT_REACHED')return {tone:'warning',label:'⚠ No alcanzado'};
+    if(e.operational==='ERROR')return {tone:'warning',label:'⚠ Error de integración'};
+    if(e.operational==='ABORTED')return {tone:'warning',label:'■ Interrumpido'};
+    if(e.operational!=='COMPLETED')return {tone:'pending',label:states[e.operational]||e.operational};
+    if(e.expectation!=='confirmed')return {tone:'warning',label:'⚠ Resultado sin confirmar'};
+    if(e.decision==='deny')return {tone:'blocked',label:'× Entrega bloqueada'};
+    if(e.operation==='comparison-reference')return {tone:'warning',label:'⚠ Riesgo admitido en R'};
+    return {tone:'accepted',label:'✓ Permitido / comprobado'};
+  }
+  function badge(e,active=false){const v=visual(e,active);return el('span',v.label,'outcome-badge '+v.tone);}
+  function expected(e){return e?.expectation==='confirmed'?(e.decision==='deny'?'✓ Detección esperada':'✓ Expectativa confirmada'):'Expectativa sin confirmar';}
+  function profileOperations(data){
+    if(data.profileOperations)return new Set([...data.profileOperations,...data.events.map(e=>e.operation)]);
+    // Compatibility with older recorded exports, without changing their receipts.
+    const comparison=data.session.profile==='f11-comparison';
+    return new Set(Object.keys(data.catalogue.operations).filter(op=>comparison?
+      !['missing-results','f13','accept','f11-admission'].includes(op):
+      !op.startsWith('comparison-')&&(data.session.profile!=='defense-short'||op!=='f11-admission')));
+  }
   function details(title){const d=el('details');d.append(el('summary',title));return d;}
   function artifact(a){const b=el('button',a.path.split('/').slice(-2).join('/'));b.title='SHA-256 '+a.sha256;b.onclick=()=>openArtifact(a);return b;}
   async function openArtifact(a){
@@ -27,7 +62,8 @@
   }
   function receipt(e){
     const d=details(`${e.sequence}. ${e.operation} · ${decision(e)} · ${seconds(e.durationSeconds)} · ${e.phase}`);
-    d.className='receipt';
+    d.className='receipt';d.dataset.tone=visual(e).tone;
+    d.children[0].replaceChildren(el('strong',`${e.sequence}. ${titleFor(e.operation)}`),badge(e),el('small',`${seconds(e.durationSeconds)} · ${e.phase==='live'?'En directo':e.phase==='preparation'?'Preparación':'Conservación'}`));
     d.append(el('p',`${e.observedBoundary||'Límite no alcanzado'} · exit=${e.exitCode??'desconocido'} · resultado esperado: ${e.expectation}`));
     d.append(el('p',`UTC ${e.startUTC??'—'} → ${e.endUTC??'—'} · arranque ${e.bootId}`, 'tag'));
     if(e.reason)d.append(el('p',e.reason,'error'));
@@ -40,6 +76,7 @@
   }
   function render(data){
     current=data;const s=data.session, ev=data.events;
+    $('demo-title').textContent=s.profile==='f11-comparison'?'F11 · el mismo riesgo, dos barreras.':'F11 y F13 · bloqueos y recuperación válida.';
     $('human').textContent='Revisión humana: '+s.humanReview;
     $('web-controls').hidden=data.recorded||!csrf;
     $('saved').hidden=!data.recorded;$('session').textContent=s.session+' · '+s.profile;$('overall').textContent=(states[s.operational]||s.operational)+(s.cleaned?' · recursos retirados':'');
@@ -52,24 +89,28 @@
     const r=s.lastResources;$('resources').textContent=r?`${r.cpuCount} CPU · libre ${(r.freeBytes/1024**3).toFixed(2)} GiB / reserva ${(r.reserveBytes/1024**3).toFixed(2)} GiB · RAM disponible ${(r.availableMemoryKiB/1024**2).toFixed(1)} GiB`: 'Recursos: sin lectura';
     $('pipeline').replaceChildren();
     for(const stage of data.catalogue.stages){const found=ev.filter(e=>e.stages.includes(stage.id)&&(selectedAttempt==='all'||e.attempt===selectedAttempt));const last=found.at(-1);const active=s.active&&data.catalogue.operations[s.active.operation]?.stages.includes(stage.id);
-      const b=el('button',undefined,'stage');b.dataset.state=active?'RUNNING':last?.operational||'NOT_EXECUTED';b.dataset.decision=last?.decision||'indeterminate';
+      const b=el('button',undefined,'stage');b.dataset.state=active?'RUNNING':last?.operational||'NOT_EXECUTED';b.dataset.decision=last?.decision||'indeterminate';b.dataset.tone=visual(last,active).tone;
       b.append(el('strong',stage.title),el('small',active?'En curso':last?`${states[last.operational]} · ${last.phase==='preparation'?'preparado':last.phase==='live'?'directo':'conservación'}`:'Sin ejecutar'));
       b.onclick=()=>{selectedStage=stage.id;view('technical');renderTechnical(data);};$('pipeline').append(b);
     }
-    const attempts=s.profile==='f11-comparison' ? [['comparison-r','R · riesgo admitido','Exige ejecución observada y retirada de la configuración de riesgo; sin explotación.'],['attempt-1','G temprano · Conftest','PRIVILEGED y ESCALATION; esta petición se detiene antes de Kubernetes.'],['comparison-g','G admisión · Kyverno','Petición independiente UPDATE; estado intacto. F11 parcial.'],['comparison-l06','L06 · actualización legítima; alcance parcial','Misma imagen; nueva plantilla, generation, rollout, Pods y HTTP.']] : [['attempt-1','F11 · Conftest','Dos campos prohibidos. Esta solicitud termina aquí.'],['attempt-2','F13 · resultados ausentes','Manifiesto válido, tres evidencias previas. CREATE bloqueado.'],['attempt-3','DEMO_VALID_ACCEPT','Emitir resultados; misma imagen y políticas. Recuperación de F13.'],['attempt-4','F11 · Kyverno','Nueva solicitud UPDATE. Deployment intacto y HTTP disponible.']];
+    const attempts=s.profile==='f11-comparison' ? [['comparison-r','R · riesgo admitido','Exige ejecución observada y retirada de la configuración de riesgo; sin explotación.'],['attempt-1','F11 · G temprano · Conftest','PRIVILEGED y ESCALATION; esta petición se detiene antes de Kubernetes.'],['comparison-g','F11 · G admisión · Kyverno','Petición independiente UPDATE; estado intacto. F11 parcial.'],['comparison-l06','L06 · G permite actualizar; alcance parcial','Misma imagen; nueva plantilla, generation, rollout, Pods y HTTP.']] : [['attempt-1','F11 · Conftest','Dos campos prohibidos. Esta solicitud termina aquí.'],['attempt-2','F13 · resultados ausentes','Manifiesto válido, tres evidencias previas. CREATE bloqueado.'],['attempt-3','DEMO_VALID_ACCEPT','Emitir resultados; misma imagen y políticas. Recuperación de F13.'],['attempt-4','F11 · Kyverno','Nueva solicitud UPDATE. Deployment intacto y HTTP disponible.']];
     $('attempt-filter').replaceChildren(el('option','Todos'));$('attempt-filter').children[0].value='all';for(const [id,title] of attempts){const o=el('option',title);o.value=id;$('attempt-filter').append(o);}$('attempt-filter').value=selectedAttempt;
     $('attempts').replaceChildren();
     for(const [id,title,description] of attempts){const found=ev.filter(e=>e.attempt===id&&e.phase==='live');const last=found.at(-1);const active=s.active&&data.catalogue.operations[s.active.operation]?.attempt===id;const box=el('article',undefined,'attempt');box.append(el('small',id.replace('attempt-','INTENTO '),'tag'),el('h3',title),el('p',description),el('p',active?(data.activeProcessObserved===false?'Proceso interrumpido; recibo sin cerrar':'En ejecución: '+s.active.operation):decision(last),'decision '+(last?.decision==='deny'?'deny':last?.operational==='ERROR'||last?.operational==='ABORTED'?'error':last?.operational!=='COMPLETED'?'empty':id==='comparison-r'?'error':'allow')));
       if(id==='attempt-2')box.append(el('small','Recuperación positiva: '+(s.f13Recovery==='confirmed'?'confirmada':'pendiente')));
-      if(last?.notReached?.length)box.append(el('small','NOT_REACHED: '+last.notReached.join(', ')));
+      if(last?.notReached?.length)box.append(el('small','Etapas no alcanzadas: '+last.notReached.map(x=>({admission:'admisión',deployment:'despliegue'}[x]||x)).join(', ')));
       if(id==='attempt-4'&&s.profile==='defense-short')box.append(el('small','Perfil corto: sin ejecutar. Respaldo previo sólo si está conservado.'));
       if(s.profile==='f11-comparison'){
         if(id==='comparison-r')box.append(el('strong','⚠ R conserva RBAC y Kubernetes; admitir riesgo no demuestra compromiso.','error'));
         if(id==='comparison-l06'&&last?.expectation==='confirmed')box.append(el('strong','L06 — actualización legítima demostrada; alcance parcial','allow'));
-        box.append(el('small',`Esperado: ${id==='attempt-1'||id==='comparison-g'?'bloqueo':'aceptación'} · real: ${last?.decision||'no ejecutado'} · ensayo: ${last?.expectation||'pendiente'} · ${seconds(last?.durationSeconds)} · vía A · ${id}`));
+        box.append(el('small',`Esperado: ${id==='attempt-1'||id==='comparison-g'?'bloqueo':'aceptación'} · real: ${({allow:'permitido',deny:'bloqueado',indeterminate:'sin confirmar'})[last?.decision]||'no ejecutado'} · expectativa: ${last?.expectation==='confirmed'?'confirmada':last?'sin confirmar':'pendiente'} · ${seconds(last?.durationSeconds)} · vía A · ${id}`));
         const suffix={ 'comparison-r':'reference/response.log','attempt-1':'F11-early.json','comparison-g':'Deployment-UPDATE/response.log','comparison-l06':'L06/update-response.log'}[id];
         const log=last?.artifacts?.find(a=>a.path.endsWith(suffix))||last?.artifacts?.find(a=>a.path.endsWith('/output.log'));if(log)box.append(artifact(log));
       }
+      box.dataset.tone=visual(last,active).tone;
+      const indicator=box.children[3];indicator.className+=' outcome-badge '+visual(last,active).tone;indicator.textContent=visual(last,active).label;
+      if(s.profile!=='f11-comparison'&&last?.expectation==='confirmed')box.append(el('small',expected(last),'expectation-note'));
+      if(last?.operational==='NOT_REACHED')box.append(el('small','La secuencia se detuvo antes de este paso; este control no se ha observado.','warning-note'));
       $('attempts').append(box);
     }
     $('pipeline').hidden=s.profile==='f11-comparison';
@@ -77,12 +118,28 @@
     renderTechnical(data);renderCatalogue(data);renderConsole(data);
   }
   function renderTechnical(data){
+    const eligible=profileOperations(data);
     data={...data,events:data.events.filter(e=>selectedAttempt==='all'||e.attempt===selectedAttempt)};
+    $('technical-context').textContent=`Perfil ${data.session.profile} · ${selectedAttempt==='all'?'Todos sus intentos':selectedAttempt}. Se muestran únicamente las operaciones de este perfil. Un bloqueo esperado confirma el control; un paso no alcanzado no aporta un resultado.`;
     $('technical-stages').replaceChildren();
-    for(const stage of data.catalogue.stages){const d=details(stage.title);d.open=stage.id===selectedStage;d.append(el('p',stage.description));
-      const specs=Object.values(data.catalogue.operations).filter(o=>o.stages.includes(stage.id)&&(selectedAttempt==='all'||o.attempt===selectedAttempt));
-      for(const spec of specs){const e=data.events.filter(e=>e.operation===spec.adapter).at(-1);d.append(el('p',`${spec.title} · ${decision(e)} · depende de: ${spec.dependsOn.join(', ')||'orden de preparación'}`));
-        if(!e)for(const c of spec.controls)d.append(el('p',`${c.tool}: ${c.property} · entrada ${c.input} · salida ${c.output} · condición ${c.condition}`,'empty'));}
+    for(const stage of data.catalogue.stages){
+      const specs=Object.values(data.catalogue.operations).filter(o=>eligible.has(o.adapter)&&o.stages.includes(stage.id)&&(selectedAttempt==='all'||o.attempt===selectedAttempt));
+      if(!specs.length)continue;
+      const d=details(stage.title);d.className='technical-stage';d.open=stage.id===selectedStage;d.append(el('p',stage.description,'stage-description'));
+      for(const spec of specs){
+        const e=data.events.filter(e=>e.operation===spec.adapter).at(-1);
+        const active=data.session.active?.operation===spec.adapter;
+        const row=el('article',undefined,'scenario-row');row.dataset.tone=visual(e,active).tone;
+        const heading=el('div',undefined,'scenario-heading');
+        heading.append(el('h3',titleFor(spec.adapter,data)),badge(e,active));row.append(heading);
+        if(e)row.append(el('p',expected(e)+(e.durationSeconds==null?'':' · '+seconds(e.durationSeconds)),'expectation-note'));
+        if(e?.operational==='NOT_REACHED')row.append(el('p','No se envió esta prueba: la secuencia se detuvo en un paso anterior. No equivale a un rechazo del control.','warning-note'));
+        if(e?.reason)row.append(el('p',e.reason,'diagnostic'));
+        const detail=details('Cómo se comprueba · detalles y archivos');
+        detail.append(el('p','Depende de: '+(spec.dependsOn.join(', ')||'preparación previa')));
+        for(const c of spec.controls)detail.append(el('p',`${c.tool}: ${c.property} · entrada ${c.input} · salida ${c.output} · condición ${c.condition}`));
+        row.append(detail);d.append(row);
+      }
       $('technical-stages').append(d);
     }
     $('receipts').replaceChildren();for(const e of data.events)$('receipts').append(receipt(e));

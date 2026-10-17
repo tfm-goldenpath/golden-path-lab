@@ -1,6 +1,7 @@
 # F11 comparison: local implementation and validation — 17 October 2026
 
-Status: **bounded local comparison CONFIRMED; human review pending**.
+Status: **bounded local comparison CONFIRMED; baseline review/acceptance confirmed
+by the user; subsequent usability changes pending review**.
 The successful later session and its exact source are recorded below; the original
 failed and interrupted attempts retain their outcomes.
 Human review and final decision are pending. This record is not a campaign sample,
@@ -285,3 +286,45 @@ under `/tmp/golden-path-defense-f11-20261017t193938z` occupy 3.1 GB on the separ
 Images, volumes, snapshots, keys/kubeconfigs, receipts and earlier observations were
 retained. Only the three identity-checked owned containers were retired. The final
 measurement JSON and cleanup inventory/receipts are in the alignment evidence folder.
+
+## User review and usability follow-up
+
+On 17 October 2026, Xylons explicitly confirmed in the conversation that the PR
+was reviewed and accepted. This records human acceptance of the bounded delivery
+at `e675325`; it does not infer a timed spoken rehearsal, full F11/L06 catalogue
+coverage or a new campaign sample. The subsequent viewer/port changes requested
+in the same message are a follow-up for review, not retroactively accepted work.
+Historical session metadata and earlier pending-review observations are preserved.
+
+The supplied screenshot and local session `rehearsal-01` establish execution of
+profile **defense**, not `f11-comparison`. Local receipts report 338.281 s preparation
+and 23.105 s automation, with F11 early, F13, authorization, valid acceptance and
+F11 admission completed. Those intervals do not include measured human speech.
+The attempted `defense-01` is PENDING/unprepared: its viewer could not bind to
+8765, already owned by the completed rehearsal's viewer. No receipt was converted
+into a successful preparation and no old session was overwritten.
+
+The follow-up adds `stop-server --session NAME`, using the existing PID/start/boot
+and command identity validation. It leaves the laboratory and evidence intact.
+`up` and `prepare --serve` now check port availability before creating a session;
+recognized owners produce exact reopen/stop commands, and unknown listeners are
+never killed. A real conflict with the existing 8765 viewer was rejected without
+creating a new session. An independently opened test viewer on 8766 was stopped
+through the new command, and rebinding verified that the port was released. The
+user's 8765 viewer and workload resources were left running.
+
+Technical detail now filters operations by profile and selected attempt, highlights
+scenario titles and presents separate outcome/expectation labels. Red means blocked,
+green allowed/checked, amber risk/error/not reached, and gray unexecuted. A not-reached
+operation explicitly states that its control was not observed. Dependency and file
+information is collapsed; stages use two columns when space permits. The historical
+`defense` profile no longer shows unrelated comparison/L06 operations as failures.
+Older offline exports retain a compatible profile filter when rendered by the new UI.
+
+Validation: **56 defense regressions PASS**, real-browser checks at 1366×768 for both
+profiles, computed title/color assertions, and labelled browser-only fixtures for
+an upstream failure versus an unexecuted step. The first browser assertion tried
+to read a collapsed row; the corrected check opens its containing stage. Both logs
+are preserved under `implementacion/evidence/raw/pr49-usability/`. These checks
+exercise rendering and viewer lifecycle, not a new Kubernetes scenario. No new
+cluster, build, scan or delivery was launched for this follow-up.

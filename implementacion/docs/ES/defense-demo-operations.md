@@ -208,3 +208,76 @@ La configuración actual declara mínimos de **2 CPU, 8 GB de RAM y 32 GB de alm
 En el mismo Codespace, `/workspaces` se conserva al detener/iniciar y reconstruir. **`/tmp` sobrevive a una reconstrucción, pero se vacía al detener el Codespace, incluso por inactividad**; por eso debes descargar las bases antes del cambio. Crear otro Codespace o eliminar el actual exige recuperar tus archivos desde una copia externa; un clon sólo trae contenido publicado. [Persistencia documentada por GitHub](https://docs.github.com/en/codespaces/developing-in-a-codespace/persisting-environment-variables-and-temporary-files).
 
 Con Docker/devcontainer en tu equipo, los recursos proceden del host o de la VM de Docker: aumentar CPU no aumenta el disco del host. Después del cambio vuelve a comprobar `df -h`, `df -i`, `docker system df`, `doctor` y `setup-validation`, y usa los comandos de sesión nueva de la sección 2. No copies un `session.json` antiguo para saltarte la validación de preparación.
+
+## Puerto ocupado: reabrir el visor sin repetir la entrega
+
+`up` prepara **y presenta**. Al terminar deja el visor abierto: cerrar la pestaña
+no libera el puerto. En el caso comunicado, `rehearsal-01` seguía usando 8765;
+`defense-01` no llegó a prepararse. Por eso `present` rechazó esa segunda sesión.
+`defense` incluye F13; para las cuatro tarjetas R/F11/L06 selecciona
+`f11-comparison`, no `defense`.
+
+Antes de la presentación, identifica el visor y consulta la sesión:
+
+```bash
+cd /workspaces/golden-path-lab
+ss -ltnp '( sport = :8765 )'
+curl -fsS http://127.0.0.1:8765/api/health | jq -r '.session'
+bash implementacion/scripts/defense-demo.sh status --session rehearsal-01
+```
+
+El filtro muestra solo el nombre de sesión, no el token de identidad. Si no es
+un visor reconocido, no mates el proceso: identifica su propietario o elige otro
+puerto. Para reabrir el visor de una sesión existente con controles web:
+
+```bash
+bash implementacion/scripts/defense-demo.sh serve \
+  --session rehearsal-01 --stop-server --enable-actions --port 8765
+```
+
+`serve --stop-server` reinicia **solo el visor verificado** para aplicar el puerto
+y modo solicitados. No repite build, clúster ni presentación. Para liberar el
+puerto sin limpiar el laboratorio, o trasladar ese mismo visor:
+
+```bash
+bash implementacion/scripts/defense-demo.sh stop-server --session rehearsal-01
+bash implementacion/scripts/defense-demo.sh serve \
+  --session rehearsal-01 --enable-actions --port 8766
+```
+
+Abre el puerto elegido desde Ports como **Private**. No uses `killall`, `pkill`
+ni `fuser -k` para liberar 8765. El comando `stop-server` comprueba la identidad
+del proceso y conserva estado y evidencias. No modifica la preparación ni permite
+repetir una presentación ya consumida.
+
+Para **otro ensayo**, prepara todo antes del intervalo en directo. Revisa y retira
+primero la infraestructura de la sesión anterior, conservando sus evidencias:
+
+```bash
+bash implementacion/scripts/defense-demo.sh cleanup-plan --session rehearsal-01
+bash implementacion/scripts/defense-demo.sh cleanup --session rehearsal-01 --stop-server
+export DEMO_SESSION="f11-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')"
+bash implementacion/scripts/defense-demo.sh prepare \
+  --profile f11-comparison --session "$DEMO_SESSION" \
+  --reserve-gib 3 --serve --enable-actions --port 8765
+# Solo cuando el estado sea PREPARED:
+bash implementacion/scripts/defense-demo.sh present \
+  --session "$DEMO_SESSION" --auto --budget-seconds 120
+```
+
+La preparación puede tardar minutos. No la ejecutes para resolver un puerto ocupado
+en mitad de la exposición. La sesión antigua `defense-01` se conserva como intento
+sin preparar: no borres su JSON ni lo marques preparado. Si se actualizó el código,
+usa un nombre nuevo. Ahora `prepare --serve` y `up` comprueban el puerto antes de
+crear la sesión; un conflicto no deja otra sesión pendiente. Una carrera posterior
+al chequeo sigue pudiendo fallar, con su diagnóstico conservado.
+
+## Lectura visual de resultados
+
+Los títulos resaltan escenario y vía de control. Verde significa permitido o
+comprobación satisfactoria; rojo, entrega bloqueada; ámbar, riesgo admitido en R,
+incidencia o paso no alcanzado. El distintivo «Detección esperada» indica por
+separado que el bloqueo confirmó el ensayo. Gris significa sin ejecutar; «No
+alcanzado» significa que la secuencia se detuvo antes, no que ese control rechazara
+la entrega. El detalle técnico solo muestra operaciones del perfil y del intento
+seleccionados. Dependencias y nombres de archivos quedan plegados.

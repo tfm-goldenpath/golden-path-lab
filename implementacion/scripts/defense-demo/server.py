@@ -1,4 +1,4 @@
-"""Loopback-only read-only viewer. No filesystem browser and no command API."""
+"""Loopback viewer; optional authenticated allowlisted actions, no arbitrary shell."""
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from datetime import datetime, timezone
 import json
@@ -16,9 +16,11 @@ import hashlib
 from urllib.parse import urlsplit
 from urllib.request import urlopen
 import uuid
+import socket
 
 from core import (ROOT, WEB, artifact_index, atomic, boot_id, events, evidence_root,
-                  public_session, read_artifact, read_json, safe_path, sanitize, session_path, utc)
+                  public_session, read_artifact, read_json, safe_path, sanitize, session_path, utc,
+                  PREPARE, F11_PREPARE, LIVE)
 
 _children = {}
 
@@ -41,6 +43,7 @@ def snapshot(name):
                     tail = sanitize(stream.read(8192).decode('utf-8', errors='replace'))
                 log_modified = datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat()
     return {'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
+            'profileOperations': (F11_PREPARE if state['profile'] == 'f11-comparison' else PREPARE) + LIVE[state['profile']] + ['resume', 'cleanup'],
             'workflows': read_json(raw / 'workflows.json'), 'readUTC': utc(), 'provisionalLog': tail,
             'recorded': False, 'provisionalLogModifiedUTC': log_modified, 'activeProcessObserved': active_observed}
 
@@ -59,6 +62,21 @@ def owned_server(record):
     return str(Path(__file__).resolve()).encode() in args and record['token'].encode() in args
 
 
+def check_viewer_port(name, port):
+    """Preflight only; the actual bind still handles concurrent port acquisition."""
+    try:
+        with socket.socket() as probe:
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            probe.bind(('127.0.0.1', port))
+    except OSError as error:
+        for record in session_path(name).parent.glob('*/server.json'):
+            saved = read_json(record)
+            if saved.get('port') == port and owned_server(saved):
+                owner = record.parent.name
+                raise RuntimeError(f'Port {port} belongs to viewer session {owner}. Reopen with serve --session {owner} --port {port}, or stop only its viewer with stop-server --session {owner}. No laboratory resources will be removed.') from error
+        raise RuntimeError(f'Port {port} is unavailable. Inspect ss -ltnp or choose --port {port + 1 if port < 65535 else port - 1}; no unrelated process will be stopped.') from error
+
+
 def start_server(name, port):
     file = session_path(name) / 'server.json'
     if file.exists():
@@ -68,6 +86,7 @@ def start_server(name, port):
             if saved.get('actionsEnabled', False) != (os.environ.get('GP_DEMO_ACTIONS') == '1'): raise RuntimeError('Viewer action mode differs; reopen with serve --stop-server and the desired --enable-actions option')
             print(f'Viewer: http://127.0.0.1:{port} (already running)', flush=True)
             return saved
+    check_viewer_port(name, port)
     token = uuid.uuid4().hex
     with (session_path(name) / 'server.log').open('ab') as stream:
         process = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), name, str(port), token],

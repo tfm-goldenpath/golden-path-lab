@@ -10,7 +10,8 @@ y ejecución viva de 19,01 s en el Codespace observado de 4 CPU / 16 GB. El
 [registro de validación](../../registros/f11_comparison_validation_EN.md) conserva
 fuente exacta, fallos anteriores y alcance parcial F11/L06. Este único ensayo no
 garantiza rendimiento. El ensayo hablado completo de 160 s y la revisión humana
-siguen pendientes. Una preparación fallida no permite afirmar ejecución viva.
+de los cambios posteriores siguen pendientes; el usuario aceptó el alcance de
+la PR en `e675325`. Una preparación fallida no permite afirmar ejecución viva.
 
 ## Preparar, abrir y ejecutar
 
@@ -166,4 +167,7 @@ bash implementacion/scripts/defense-demo/f11-static.sh
 
 Usa manifiesto sintético etiquetado y Conftest real. No prueba R, firma, Kyverno,
 L06 ni entrega viva. No añade muestras al catálogo/campaña ni conclusiones económicas
-o humanas. Revisión humana pendiente.
+o humanas. El usuario confirmó revisión y aceptación de `e675325`; los cambios
+posteriores de visor/puerto requieren su propia revisión.
+
+Para puerto ocupado y reapertura segura, consulta [la guía operativa](defense-demo-operations.md#puerto-ocupado-reabrir-el-visor-sin-repetir-la-entrega).

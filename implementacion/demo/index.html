@@ -24,7 +24,7 @@
     <div class="identity"><span id="session">Sin sesión</span><span>Vía A · confianza local</span><span>Comparación R / G</span><span id="overall">Pendiente</span><span id="resources">Recursos: sin lectura</span></div>
     <div class="source"><span id="source">Fuente desconocida</span><span id="image">Digest desconocido</span></div>
     <section id="demonstration" class="view">
-      <div class="intro"><div><p class="eyebrow">DEL CÓDIGO A LA AUTORIZACIÓN</p><h1>F11 · el mismo riesgo, dos barreras.</h1><p>La preparación conserva antecedentes reales. Cada intento en directo es una solicitud distinta.</p></div><div class="timing"><span id="live-time">—</span><small>objetivo automático ≤ 90 s · guion 160 s + reserva 20 s</small><small id="prep-time">Preparación: —</small></div></div>
+      <div class="intro"><div><p class="eyebrow">DEL CÓDIGO A LA AUTORIZACIÓN</p><h1 id="demo-title">F11 · el mismo riesgo, dos barreras.</h1><p>La preparación conserva antecedentes reales. Cada intento en directo es una solicitud distinta.</p></div><div class="timing"><span id="live-time">—</span><small>objetivo automático ≤ 90 s · guion 160 s + reserva 20 s</small><small id="prep-time">Preparación: —</small></div></div>
       <div class="legend"><span>□ Sin ejecutar</span><span class="allow">● Entrega permitida</span><span class="deny">◆ Entrega bloqueada; control correcto</span><span class="error">× Error / interrupción</span></div>
       <div id="web-controls" hidden>
         <button data-action="prepare" disabled>Preparar</button>
@@ -41,6 +41,8 @@
     </section>
     <section id="technical" class="view" hidden>
       <div class="intro"><div><p class="eyebrow">RECIBOS Y ORIGINALES</p><h1>Qué se comprobó y dónde.</h1><p>Un hash acredita integridad de bytes. La firma, el contrato y la revisión humana son comprobaciones distintas.</p></div></div>
+      <p id="technical-context" class="view-context"></p>
+      <div class="result-key"><span class="outcome-badge accepted">✓ Permitido / comprobado</span><span class="outcome-badge blocked">× Bloqueado</span><span class="outcome-badge warning">⚠ No alcanzado / incidencia</span><span class="outcome-badge pending">○ Sin ejecutar</span></div>
       <div id="technical-stages"></div>
       <h2>Secuencia ejecutada</h2><div id="receipts"></div>
     </section>

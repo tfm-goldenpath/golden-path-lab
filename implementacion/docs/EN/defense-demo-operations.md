@@ -208,3 +208,73 @@ The current configuration declares minimums of **2 CPUs, 8 GB RAM and 32 GB stor
 Within the same Codespace, `/workspaces` survives stop/start and rebuilding. **`/tmp` survives a rebuild but is cleared when the Codespace stops, including idle timeout**; download databases before the change. Creating another Codespace or deleting this one requires recovering files from an external copy; a clone only brings published content. [GitHub's documented persistence](https://docs.github.com/en/codespaces/developing-in-a-codespace/persisting-environment-variables-and-temporary-files).
 
 With Docker/devcontainers on your computer, resources come from the host or Docker VM: increasing CPU does not expand the host disk. After changing resources, recheck `df -h`, `df -i`, `docker system df`, `doctor` and `setup-validation`, then use the new-session commands in section 2. Do not copy an old `session.json` to bypass preparation validation.
+
+## Occupied port: reopen the viewer without repeating delivery
+
+`up` prepares **and presents**, then leaves its viewer running. Closing the browser
+does not release the port. In the reported case, `rehearsal-01` still owned 8765;
+`defense-01` never prepared, so its `present` request was correctly refused.
+`defense` includes F13; select `f11-comparison` for the four R/F11/L06 cards.
+
+Identify the listener and session before presenting:
+
+```bash
+cd /workspaces/golden-path-lab
+ss -ltnp '( sport = :8765 )'
+curl -fsS http://127.0.0.1:8765/api/health | jq -r '.session'
+bash implementacion/scripts/defense-demo.sh status --session rehearsal-01
+```
+
+The filter prints only the session, not the server identity token. If the listener
+is not a recognized viewer, identify its owner or select another port; do not kill
+an unrelated process. Reopen the existing session with web controls:
+
+```bash
+bash implementacion/scripts/defense-demo.sh serve \
+  --session rehearsal-01 --stop-server --enable-actions --port 8765
+```
+
+`serve --stop-server` restarts only the verified viewer to apply the requested
+port/mode. It does not rebuild, recreate the cluster or present. To release the
+port without retiring the laboratory, or move that same viewer:
+
+```bash
+bash implementacion/scripts/defense-demo.sh stop-server --session rehearsal-01
+bash implementacion/scripts/defense-demo.sh serve \
+  --session rehearsal-01 --enable-actions --port 8766
+```
+
+Open the selected port as **Private**. Do not use `killall`, `pkill` or `fuser -k`.
+The stop command verifies process identity and preserves session state/evidence.
+It does not alter preparation or authorize replay of a consumed presentation.
+
+For a **new rehearsal**, do all preparation before the live interval. Inspect and
+retire the previous session's owned infrastructure first, retaining its evidence:
+
+```bash
+bash implementacion/scripts/defense-demo.sh cleanup-plan --session rehearsal-01
+bash implementacion/scripts/defense-demo.sh cleanup --session rehearsal-01 --stop-server
+export DEMO_SESSION="f11-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')"
+bash implementacion/scripts/defense-demo.sh prepare \
+  --profile f11-comparison --session "$DEMO_SESSION" \
+  --reserve-gib 3 --serve --enable-actions --port 8765
+# Only after PREPARED:
+bash implementacion/scripts/defense-demo.sh present \
+  --session "$DEMO_SESSION" --auto --budget-seconds 120
+```
+
+Preparation may take minutes; do not prepare to resolve a viewer-port conflict
+mid-presentation. Preserve the old unprepared `defense-01` attempt: do not edit its
+JSON or mark it prepared. After a source change, use a new session name. `up` and
+`prepare --serve` now check the port before creating a session, so a conflict does
+not leave another pending session. A later bind race can still fail with its
+original diagnostic retained.
+
+## Reading the visual results
+
+Scenario/control titles are prominent. Green means allowed or successfully checked;
+red means delivery blocked; amber means admitted risk in R, an integration issue,
+or a step not reached. A separate expected-detection label distinguishes a correct
+block from a failed trial. Gray means unexecuted. Not reached means the sequence
+stopped earlier, not that this control rejected delivery. Technical detail includes
+only the selected profile/attempt; dependencies and filenames remain collapsed.

@@ -402,7 +402,7 @@ def present(state, budget, interactive=False, one=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, epilog='Lane A only. No shell commands from the catalogue or web. Every new rehearsal requires a new session.')
-    parser.add_argument('command', choices=['up', 'prepare', 'present', 'step', 'status', 'list', 'export', 'cleanup', 'serve', 'check', 'prepare-pending', 'cleanup-plan', 'verify'])
+    parser.add_argument('command', choices=['up', 'prepare', 'present', 'step', 'status', 'list', 'export', 'cleanup', 'serve', 'stop-server', 'check', 'prepare-pending', 'cleanup-plan', 'verify'])
     parser.add_argument('--session')
     parser.add_argument('--profile', choices=LIVE, default='defense')
     parser.add_argument('--auto', action='store_true', help='No notes or human declarations; run sequentially')
@@ -416,7 +416,7 @@ def main():
     parser.add_argument('--warning-free-gib', type=float, default=5)
     parser.add_argument('--live-growth-mib', type=float, default=256)
     parser.add_argument('--reserve-gib', type=float, default=None, help='Custody reserve; preparation also requires 2 GiB headroom')
-    parser.add_argument('--stop-server', action='store_true', help='With cleanup, stop only this session\'s verified server process')
+    parser.add_argument('--stop-server', action='store_true', help='With cleanup stop the verified viewer; with serve restart only that viewer')
     args = parser.parse_args()
     if args.reserve_gib is None: args.reserve_gib = 3 if args.profile == 'f11-comparison' else 1
     if not all(math.isfinite(x) for x in (args.budget_seconds, args.reserve_gib, args.prepare_free_gib, args.warning_free_gib, args.live_growth_mib)) or args.budget_seconds <= 0 or args.reserve_gib < 0.25 or not 1024 <= args.port <= 65535: parser.error('Invalid budget, reserve or port')
@@ -428,12 +428,19 @@ def main():
     if not args.session: parser.error('--session is required')
     if args.enable_actions: os.environ['GP_DEMO_ACTIONS'] = '1'
     name = valid_name(args.session)
-    from server import start_server, stop_server
+    from server import start_server, stop_server, check_viewer_port
     from exporting import export_session, ExportSpaceError, verify_export
     if args.command == 'status':
         print(json.dumps(public_session(name), ensure_ascii=False, indent=2)); return 0
     with locked(SESSIONS / ('.' + name + '.lock')):
+        if args.command == 'stop-server':
+            read_json(session_path(name) / 'session.json')
+            stop_server(name)
+            print('Verified session viewer stopped; laboratory and evidence retained.')
+            return 0
         with locked(SESSIONS / '.preparation.lock') if args.command in ('up', 'prepare', 'prepare-pending') else nullcontext():
+            if args.command == 'up' or (args.command == 'prepare' and args.serve) or (args.command == 'serve' and args.new):
+                check_viewer_port(name, args.port)
             state = create(name, args.profile, args.reserve_gib) if args.command in ('up', 'prepare') or (args.command == 'serve' and args.new) else read_json(session_path(name) / 'session.json')
             if args.command in ('prepare','up') or (args.command == 'serve' and args.new):
                 state['resourcePolicy'] = {'prepareFreeGiB': args.prepare_free_gib, 'warningFreeGiB': args.warning_free_gib, 'liveGrowthMiB': args.live_growth_mib}

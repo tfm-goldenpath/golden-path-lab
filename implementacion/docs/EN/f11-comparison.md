@@ -11,7 +11,8 @@ interval took 19.01 s on the observed 4 CPU / 16 GB Codespace. See the
 [validation record](../../registros/f11_comparison_validation_EN.md) for exact
 source, preserved earlier failures and partial F11/L06 coverage. This single run
 is not a performance guarantee. The full 160-second spoken presentation and human
-review remain pending; a failed preparation provides no live comparison.
+review of subsequent changes remain pending; the user accepted the bounded PR
+at `e675325`. A failed preparation provides no live comparison.
 
 ## Start and reopen
 
@@ -168,4 +169,6 @@ bash implementacion/scripts/defense-demo/f11-static.sh
 It uses a labelled synthetic manifest and real Conftest. It proves only the two
 static diagnostics, not R execution, signatures, Kyverno, L06 or a live delivery.
 No new economic, productivity, campaign or human-acceptance conclusion follows.
-Human review remains pending.
+The user confirmed review/acceptance at `e675325`; later viewer/port changes have their own pending review.
+
+For occupied ports and safe viewer reopening, see [the operations guide](defense-demo-operations.md#occupied-port-reopen-the-viewer-without-repeating-delivery).

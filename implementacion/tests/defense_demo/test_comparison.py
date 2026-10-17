@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import threading
+import socket
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
@@ -213,6 +214,32 @@ class ComparisonTests(unittest.TestCase):
         self.assertEqual((profile.parent/value['build']['dockerfile']).resolve(),fixtures.REAL_ROOT/'.devcontainer/Dockerfile')
         self.assertEqual((profile.parent/value['build']['context']).resolve(),fixtures.REAL_ROOT)
         self.assertEqual((profile.parent/'devcontainer-lock.json').read_bytes(),(repo/'.devcontainer/implementacion/devcontainer-lock.json').read_bytes())
+
+    def test_busy_port_does_not_create_pending_session(self):
+        with socket.socket() as listener:
+            listener.bind(('127.0.0.1',0));listener.listen()
+            port=listener.getsockname()[1]
+            with patch('sys.argv',['coordinator','prepare','--session','new-synthetic','--serve','--port',str(port)]):
+                with self.assertRaisesRegex(RuntimeError,'unavailable'):co.main()
+            self.assertFalse(core.session_path('new-synthetic').exists())
+            self.assertFalse(core.evidence_root('new-synthetic').exists())
+            self.assertEqual(listener.getsockname()[1],port)
+
+    def test_busy_owned_viewer_explains_safe_reopen_and_stop(self):
+        with socket.socket() as listener:
+            listener.bind(('127.0.0.1',0));listener.listen()
+            port=listener.getsockname()[1]
+            core.atomic(core.session_path('synthetic-01')/'server.json',{'port':port})
+            with patch.object(server,'owned_server',return_value=True):
+                with self.assertRaisesRegex(RuntimeError,'stop-server --session synthetic-01'):
+                    server.check_viewer_port('new-synthetic',port)
+
+    def test_stop_viewer_command_leaves_lab_and_state_unchanged(self):
+        path=core.session_path('synthetic-01')/'session.json';before=path.read_bytes()
+        with patch('sys.argv',['coordinator','stop-server','--session','synthetic-01']),patch.object(server,'stop_server') as stop,patch.object(co,'run_operation') as operation:
+            self.assertEqual(co.main(),0)
+            stop.assert_called_once_with('synthetic-01');operation.assert_not_called()
+        self.assertEqual(path.read_bytes(),before)
 
     def test_snapshot_export_binds_bytes_and_rejects_drift(self):
         import tempfile, exporting
