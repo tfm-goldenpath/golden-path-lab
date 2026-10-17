@@ -2,6 +2,12 @@
 # Trust configuration, cryptographic verification and signed authorization.
 # Sourced by demo.sh; definitions only. See docs/EN/architecture.md.
 
+# Optional receipt observer. The normal laboratory defines no gp_observe and
+# performs no additional I/O. Calls remain direct to preserve Bash errexit.
+attestations_observe() {
+  if declare -F gp_observe >/dev/null; then gp_observe "$@"; fi
+}
+
 attestations_verify_bundle() {
   local file=$1 type=$2 report=$3 content=$4 arg status
   local -a bundle_args=()
@@ -85,19 +91,29 @@ attestations_issue_delivery() {
   # Pinned Cosign 3.1.3 image signing emits a DSSE cosign/sign/v1 statement
   # in bundle mode; sign-blob's messageSignature is a different operation.
   # https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/sign/sign.go
+  attestations_observe begin image-signature
   attestations_sign_bundle image.bundle.json sign "${sign_args[@]}"
   attestations_verify_bundle image.bundle.json https://sigstore.dev/cosign/sign/v1 verified-image-bundle.txt verified-signature.json
+  attestations_observe end image-signature
+  attestations_observe begin sbom-attestation
   node scripts/validate-sbom-schema.mjs "$state_dir/sbom.cdx.json" "$state_dir/sbom-schema-presigning.json"
   attestations_sign_bundle sbom.bundle.json attest "${sign_args[@]}" --type cyclonedx --predicate "$state_dir/sbom.cdx.json"
   attestations_verify_bundle sbom.bundle.json https://cyclonedx.org/bom verified-sbom-bundle.txt verified-sbom.json
+  attestations_observe end sbom-attestation
   if [[ "$mode" == local ]]; then
+    attestations_observe begin provenance
     cosign attest "${sign_args[@]}" --bundle "$state_dir/provenance.bundle.json" --type slsaprovenance1 --predicate "$state_dir/provenance.json" "$image"
     attestations_verify_bundle provenance.bundle.json https://slsa.dev/provenance/v1 verified-provenance-bundle.txt verified-provenance.json
+    attestations_observe end provenance
   fi
 }
 
 attestations_ci_gate() {
-  node scripts/ci-verification-gate.mjs "$state_dir" "$1" "${2:-before-results}"
+  local status=0
+  attestations_observe begin "$1"
+  node scripts/ci-verification-gate.mjs "$state_dir" "$1" "${2:-before-results}" || status=$?
+  [[ "$status" == 0 ]] || return "$status"
+  attestations_observe end "$1"
 }
 
 attestations_verify_delivery() {
@@ -108,10 +124,12 @@ attestations_verify_delivery() {
 attestations_authorize_results() {
   # Re-read the registry immediately before issuance; no saved report grants it.
   attestations_ci_gate CI-authorization
+  attestations_observe begin results-issuance
   node scripts/vulnerability-evidence.mjs authorize "$state_dir" "$image" > "$state_dir/analysis-authorization.json"
   node "$contract" results "$state_dir" "$repository" "$commit" "$state_dir/results-predicate.json"
   attestations_sign_bundle results.bundle.json attest "${sign_args[@]}" --type "$results_type" --predicate "$state_dir/results-predicate.json"
   attestations_verify_bundle results.bundle.json "$results_type" verified-results-bundle.txt verified-results.json
+  attestations_observe end results-issuance
   node scripts/download-bundle-inventory.mjs "$mode" "$image" "$state_dir/registry-inventory-authorized.json" > "$state_dir/bundle-inventory-authorized.json"
   node scripts/check-bundle-profile.mjs "$state_dir/bundle-inventory-authorized.json" "$digest" authorized > "$state_dir/evidence-profile.json"
   attestations_ci_gate CI-authorized authorized

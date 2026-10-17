@@ -3,6 +3,7 @@
 scenario_runtime_early() {
   local file=$1 scenario=$2 prefix=$3 code=0
   conftest test --policy policies/conftest --namespace manifests --output json "$file" > "$prefix.json" 2> "$prefix.stderr.log" || code=$?
+  jq -n --arg file "$file" --argjson code "$code" --arg utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{command:["conftest","test","--policy","policies/conftest","--namespace","manifests","--output","json",$file],exitCode:$code,endUTC:$utc}' > "$prefix-command.json"
   node tests/scenarios/runtime-evidence.mjs early "$code" "$prefix.json" "$prefix.stderr.log" "$file" "$scenario" > "$prefix.attribution.json"
 }
 
@@ -86,8 +87,14 @@ scenario_runtime_negative() {
     fi
     request=replace
   fi
-  scenario_runtime_early "$folder/request.json" "$scenario" "$folder/early"
+  [[ "${4:-with-early}" == with-early || ( "${4:-}" == directed && "$scenario" == F11 && "$kind" == Deployment && "$operation" == UPDATE ) ]] || fail 'Unsupported directed runtime request'
+  if [[ "${4:-with-early}" == with-early ]]; then
+    scenario_runtime_early "$folder/request.json" "$scenario" "$folder/early"
+  fi
   if [[ "$scenario" == F12 ]]; then scenario_runtime_tag "$folder/tag-before"; fi
+  if [[ "$scenario" == F11 && "$operation" == UPDATE ]]; then
+    node tests/scenarios/runtime-evidence.mjs privilege-diff "$folder/before.json" "$folder/request.json" > "$folder/diff.json"
+  fi
   actor tfm-golden "$request" -f "$folder/request.json" > "$folder/response.log" 2>&1 || code=$?
   printf '%s\n' "$code" > "$folder/exit-status.txt"
   # Observe before classification, retaining unfavorable acceptance and any conversion.
@@ -104,8 +111,8 @@ scenario_runtime_negative() {
   fi
   [[ "$code" != 0 ]] || fail "$scenario $kind $operation unexpectedly accepted; retained unfavorable state."
   if [[ "$scenario" == F11 ]]; then scenario_f11_attribute "$folder/response.log" "$name"; else scenario_f12_attribute "$folder/response.log" "$name"; fi
-  jq -n --arg scenario "$scenario" --arg kind "$kind" --arg operation "$operation" --arg image "$image" \
-    '{status:"ATTRIBUTED_REJECTION",scenario:$scenario,kind:$kind,operation:$operation,image:$image,evidence:("runtime/"+$scenario+"/"+$kind+"-"+$operation),early:"early.attribution.json",admission:"response.log.attribution.json"}' > "$folder/result.json"
+  jq -n --arg scenario "$scenario" --arg kind "$kind" --arg operation "$operation" --arg image "$image" --arg early "${4:-with-early}" \
+    '{status:"ATTRIBUTED_REJECTION",scenario:$scenario,kind:$kind,operation:$operation,image:$image,evidence:("runtime/"+$scenario+"/"+$kind+"-"+$operation),early:(if $early=="directed" then null else "early.attribution.json" end),admission:"response.log.attribution.json"}' > "$folder/result.json"
 }
 
 scenario_runtime_create() {
@@ -133,19 +140,7 @@ scenario_l06() {
   for file in health version quote; do cp "$state_dir/tfm-golden-$file.json" "$folder/create-$file.json"; done
   scenario_runtime_negative F11 Deployment UPDATE
   scenario_runtime_negative F12 Deployment UPDATE
-  k -n tfm-golden get deployment quotes-node -o json > "$folder/update-before.json"
-  jq --arg annotation "$annotation" 'del(.status,.metadata.managedFields) | .spec.template.metadata.annotations["tfm.goldenpath/l06"]=$annotation' "$folder/update-before.json" > "$folder/update-request.json"
-  scenario_runtime_early "$folder/update-request.json" L06 "$folder/update-early"
-  actor tfm-golden replace -f "$folder/update-request.json" > "$folder/update-response.log" 2>&1
-  k -n tfm-golden get deployment quotes-node -o json > "$folder/update-after.json"
-  node tests/scenarios/runtime-evidence.mjs updated "$folder/update-before.json" "$folder/update-after.json" "$annotation" > "$folder/update-change.json"
-  probe tfm-golden > "$folder/update-probe.log" 2>&1
-  k -n tfm-golden get deployment quotes-node -o json > "$folder/update-deployment.json"
-  k -n tfm-golden get pods -l app=quotes-node -o json > "$folder/update-controller-pods.json"
-  jq -e --arg annotation "$annotation" '[.items[] | select(.metadata.deletionTimestamp == null)] | length > 0 and all(.metadata.annotations["tfm.goldenpath/l06"]==$annotation)' "$folder/update-controller-pods.json" > "$folder/update-pod-template-check.json"
-  node scripts/check-image-rollout.mjs --same-image "$image" "$folder/update-deployment.json" "$folder/update-controller-pods.json" > "$folder/update-rollout.json"
-  for file in health version quote; do cp "$state_dir/tfm-golden-$file.json" "$folder/update-$file.json"; done
-  cmp "$folder/create-quote.json" "$folder/update-quote.json"
+  scenario_l06_update "$folder" "$annotation"
   scenario_runtime_absent Pod runtime-l06 "$folder/pod-before"
   actor tfm-golden create -f "$folder/Pod.json" > "$folder/pod-response.log" 2>&1
   k -n tfm-golden get pod runtime-l06 -o json > "$folder/pod-after.json"
@@ -165,4 +160,22 @@ scenario_l06() {
       --slurpfile pod "$state_dir/runtime/$scenario/Pod-CREATE/result.json" \
       '{scenario:$scenario,status:"REJECTION_AND_L06_ACCEPTANCE_COMPLETE",lane:$mode,image:$image,operations:[$create[0],$update[0],$pod[0]],positiveControl:"L06-result.json"}' > "$state_dir/$scenario-completed.json"
   done
+}
+
+# Reusable legitimate template update; catalogue completion remains with scenario_l06.
+scenario_l06_update() {
+  local folder=$1 annotation=$2
+  k -n tfm-golden get deployment quotes-node -o json > "$folder/update-before.json"
+  jq --arg annotation "$annotation" 'del(.status,.metadata.managedFields) | .spec.template.metadata.annotations["tfm.goldenpath/l06"]=$annotation' "$folder/update-before.json" > "$folder/update-request.json"
+  scenario_runtime_early "$folder/update-request.json" L06 "$folder/update-early"
+  actor tfm-golden replace -f "$folder/update-request.json" > "$folder/update-response.log" 2>&1
+  k -n tfm-golden get deployment quotes-node -o json > "$folder/update-after.json"
+  node tests/scenarios/runtime-evidence.mjs updated "$folder/update-before.json" "$folder/update-after.json" "$annotation" > "$folder/update-change.json"
+  probe tfm-golden > "$folder/update-probe.log" 2>&1
+  k -n tfm-golden get deployment quotes-node -o json > "$folder/update-deployment.json"
+  k -n tfm-golden get pods -l app=quotes-node -o json > "$folder/update-controller-pods.json"
+  jq -e --arg annotation "$annotation" '[.items[] | select(.metadata.deletionTimestamp == null)] | length > 0 and all(.metadata.annotations["tfm.goldenpath/l06"]==$annotation)' "$folder/update-controller-pods.json" > "$folder/update-pod-template-check.json"
+  node scripts/check-image-rollout.mjs --same-image "$image" "$folder/update-deployment.json" "$folder/update-controller-pods.json" > "$folder/update-rollout.json"
+  for file in health version quote; do cp "$state_dir/tfm-golden-$file.json" "$folder/update-$file.json"; done
+  cmp "$folder/create-quote.json" "$folder/update-quote.json"
 }

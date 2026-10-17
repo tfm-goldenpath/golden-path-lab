@@ -85,7 +85,13 @@ delivery_database_prepare() {
   if jq -e '.vulnerabilityDatabase' "$state_dir/state.json" >/dev/null; then
     snapshot=$(get vulnerabilityDatabase)
   else
-    snapshot="$root/.tmp/vulnerability-db-$(basename "$state_dir")"
+    # Optional storage placement changes no database bytes or verification rules.
+    # Small Codespaces can retain the large snapshot on a separate filesystem.
+    local snapshot_root=${GP_VULNERABILITY_SNAPSHOT_ROOT:-$root/.tmp}
+    if [[ -n "${GP_VULNERABILITY_SNAPSHOT_ROOT:-}" ]]; then
+      [[ "$snapshot_root" == /* && -d "$snapshot_root" && "$(realpath -- "$snapshot_root")" == "$snapshot_root" ]] || fail 'Database snapshot root must be an existing canonical absolute directory.'
+    fi
+    snapshot="$snapshot_root/vulnerability-db-$(basename "$state_dir")"
     [[ ! -e "$snapshot" ]] || fail 'Database snapshot already exists; use a fresh run.'
     if [[ -n "${GP_VULNERABILITY_DB:-}" ]]; then
       cache=$(realpath -- "$GP_VULNERABILITY_DB")

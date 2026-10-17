@@ -40,6 +40,30 @@ export function updated(before,after,annotation) {
  check(equal(expected,after.spec),'L06 must change only the selected template annotation');
  return {...pass,uid:after.metadata.uid,fromGeneration:before.metadata.generation,toGeneration:after.metadata.generation,annotation};
 }
+// F11 comparison: normalize API bookkeeping, then allow only two fault fields
+// and explicitly recorded ownership labels in the isolated reference namespace.
+export function privilegeDiff(before, request, owner) {
+ const clean=value=>{const v=structuredClone(value);delete v.status;delete v.metadata.managedFields;return v;};
+ const expected=clean(before), actual=clean(request);
+ const image=before?.spec?.template?.spec?.containers?.[0]?.image;
+ check(before.kind==='Deployment' && before.metadata.name==='quotes-node' &&
+       ['tfm-golden','tfm-reference'].includes(before.metadata.namespace) &&
+       /@sha256:[a-f0-9]{64}$/.test(image), 'Invalid comparison base');
+ const context=expected.spec.template.spec.containers[0].securityContext;
+ check(context.privileged===false && context.allowPrivilegeEscalation===false, 'F11 requires a permitted starting context');
+ context.privileged=true;context.allowPrivilegeEscalation=true;
+ const identityChanges=[];
+ if(owner!==undefined) {
+  check(/^[a-z0-9][a-z0-9-]{0,63}$/.test(owner)&&before.metadata.namespace==='tfm-reference','Invalid reference owner');
+  expected.spec.template.metadata??={};
+  for(const [metadata,path] of [[expected.metadata,'/metadata/labels'],[expected.spec.template.metadata,'/spec/template/metadata/labels']]) {
+   metadata.labels??={};metadata.labels['tfm.goldenpath/comparison']=owner;
+   identityChanges.push({path:path+'/tfm.goldenpath~1comparison',value:owner});
+  }
+ }
+ check(equal(expected,actual),'F11 changed undeclared fields or image identity');
+ return {...pass,image,identityChanges,faultChanges:['privileged','allowPrivilegeEscalation'].map(field=>({path:'/spec/template/spec/containers/0/securityContext/'+field,from:false,to:true}))};
+}
 export function profile(policies,image) {
  const names=['tfm-runtime','tfm-signature','tfm-sbom','tfm-provenance','tfm-results'];
  check(Array.isArray(policies?.items)&&equal(policies.items.map(p=>p.metadata?.name).sort(),names.sort()),'Missing or additional runtime comparison policy');
@@ -82,6 +106,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href) {
  else if(command==='absent') result=absent(Number(a[0]),readFileSync(a[1],'utf8'),a[2],a[3]);
  else if(command==='unchanged') result=unchanged(json(a[0]),json(a[1]));
  else if(command==='updated') result=updated(json(a[0]),json(a[1]),a[2]);
+ else if(command==='privilege-diff') result=privilegeDiff(json(a[0]),json(a[1]),a[2]);
  else if(command==='profile') result=profile(json(a[0]),a[1]);
  else if(command==='resolve') {const evidence=await resolveTag(a[0],a[1],a[2]);writeFileSync(a[3],JSON.stringify(evidence,null,2)+'\n');result=sameTag(evidence);}
  else throw new Error('Unknown runtime evidence operation');

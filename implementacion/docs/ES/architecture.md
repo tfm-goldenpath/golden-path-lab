@@ -143,6 +143,18 @@ Para incorporar otro escenario:
 
 Las mutaciones pertenecen al escenario; las reglas pertenecen a los controles. Si un caso requiere una nueva capacidad del Golden Path, esa capacidad se implementa y revisa por separado, con su requisito y pruebas. La limpieza común sigue teniendo un único propietario.
 
+## Capa visual para la defensa
+
+La [demo visual opcional](defense-demo.md) utiliza una CLI fina y un coordinador
+Python de sesiones sobre los mismos módulos que sólo definen funciones. Gestiona
+preparación, presupuesto, recibos inmutables y visor de lectura; `demo.sh` conserva
+su trap de limpieza del laboratorio completo. No añade políticas de aceptación.
+El observador optativo de atestaciones conserva copias en límites reales de
+funciones y permanece inactivo en el uso normal. DEMO_VALID_ACCEPT no equivale
+a L01 completo ni a una observación de campaña. `GP_VULNERABILITY_SNAPSHOT_ROOT`
+sólo permite cambiar el destino de una nueva instantánea de base: conserva el
+comportamiento predeterminado, las comprobaciones de identidad y los umbrales.
+
 ## Límites y evolución de la modularidad
 
 La separación actual permite probar partes de forma aislada, pero mantiene dependencias deliberadas del laboratorio:

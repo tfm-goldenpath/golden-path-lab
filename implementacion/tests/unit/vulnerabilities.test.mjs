@@ -68,6 +68,23 @@ test('database metadata and content drift fail closed',t=>{
  const identify=spawnSync('python3',['scripts/vulnerability-database.py','identify',f.d],{cwd:root,encoding:'utf8'});assert.equal(identify.status,0,identify.stderr);writeFileSync(join(f.d,'identity.json'),identify.stdout);
  for(const changed of [false,true]) {if(changed) writeFileSync(join(f.d,'db/trivy.db'),'changed');const r=spawnSync('python3',['scripts/vulnerability-database.py','check',f.d,join(f.d,'identity.json')],{cwd:root,encoding:'utf8'});assert.equal(r.status===0,!changed);}
 });
+for (const custom of [false,true]) test(`synthetic database snapshot storage preserves identity; custom=${custom}`,t=>{
+ const f=setup(t);f.put('state.json',{});
+ mkdirSync(join(f.d,'cache/db'),{recursive:true});
+ writeFileSync(join(f.d,'cache/db/trivy.db'),'synthetic retained database');
+ f.put('cache/db/metadata.json',{Version:2,UpdatedAt:'2026-10-16T00:00:00Z'});
+ mkdirSync(join(f.d,'source'));mkdirSync(join(f.d,'storage'));
+ const r=shell(f.d,`root="$state_dir/source"\ndelivery_database_prepare\ndelivery_database_prepare`,{
+  GP_VULNERABILITY_DB:join(f.d,'cache'),GP_VULNERABILITY_SNAPSHOT_ROOT:custom?join(f.d,'storage'):''
+ });
+ assert.equal(r.status,0,r.stderr);
+ const snapshot=read(join(f.d,'state.json')).vulnerabilityDatabase;
+ assert.ok(snapshot.startsWith(join(f.d,custom?'storage':'source/.tmp')+'/vulnerability-db-'));
+ assert.equal(readFileSync(join(snapshot,'db/trivy.db'),'utf8'),'synthetic retained database');
+ assert.equal(read(join(f.d,'database-identity.json')).retrieval.directory,snapshot);
+ writeFileSync(join(snapshot,'db/trivy.db'),'drift');
+ const check=shell(f.d,'delivery_database_prepare');assert.notEqual(check.status,0);
+});
 test('stale image-specific evidence cannot authorize another image',t=>{const f=setup(t);assert.throws(()=>authorize(f.d,image.replace(/a{64}/,'b'.repeat(64))),/another image/);f.put('vulnerability-policy.json',[]);assert.throws(()=>authorize(f.d,image),/changed/);});
 for(const fault of ['', 'verify', 'authorize', 'admission', 'probe', 'rollout']) test(`actual positive scenario with fresh evidence; failure=${fault}`,t=>{
  const parent=mkdtempSync(join(tmpdir(),'vulnerability-accept-'));t.after(()=>rmSync(parent,{recursive:true,force:true}));
