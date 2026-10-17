@@ -323,3 +323,18 @@ changes lane B timing nor establishes hosted negative coverage or human results.
 The [automated runner](automated-remediation.md) imports the existing task controller's preparation, guarded operations, completion, recovery and cleanup. It adds only six-position sequencing and verified continuation. `automated_repairs.py` owns the three predefined input transformations; `automated_assessment.py` checks retained detection, completion, integrity and timing evidence. No second delivery pipeline or runtime AI is introduced. `demo.sh` remains the resource owner.
 
 Explicit scripted identity is part of task records, operation receipts and archives; manual schemas remain compatible. Calibration selection, measurement preparation and frozen review reuse reject automation even after a later human review. Original inputs and repair receipts travel through existing safe packaging. Scripted operations use bounded safety timeouts and sequential canonical DB reuse with unchanged before/after identity checks. Human-effort evaluation is deferred; these provisional technical observations cannot close overall pilot acceptance or authorize the separate hosted campaign.
+
+
+The [presentation workspace](demo-workspace.md) separates a pure display model
+(`demo/model.js`) from DOM interaction (`demo/app.js`). It never decides policy
+acceptance: confirmed receipts and fixed operation metadata supply its labels.
+The existing server supplies action capabilities from the same gates used by POST;
+the coordinator still checks sealed readiness. Bounded local inventory reads only
+allowlisted metadata and never retargets a server. Workflow facts derive from
+captured YAML, including older snapshots. Export embeds/hashes both renderer
+modules separately from the evidence source; original observations stay immutable.
+
+The same renderer now uses allowlisted hash routes for demonstration, attempt
+detail and catalogue/workflow/session views. Detail replaces comparison content;
+route-local reading state is retained independently from polling and coordinator
+actions. No route can select another server-bound session or execute a command.

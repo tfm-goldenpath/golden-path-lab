@@ -20,7 +20,7 @@ import socket
 
 from core import (ROOT, WEB, artifact_index, atomic, boot_id, events, evidence_root,
                   public_session, read_artifact, read_json, safe_path, sanitize, session_path, utc,
-                  PREPARE, F11_PREPARE, LIVE)
+                  PREPARE, F11_PREPARE, LIVE, local_session_inventory, workflow_facts)
 
 _children = {}
 
@@ -43,8 +43,12 @@ def snapshot(name):
                     tail = sanitize(stream.read(8192).decode('utf-8', errors='replace'))
                 log_modified = datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat()
     return {'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
+            'liveOperations': LIVE[state['profile']],
             'profileOperations': (F11_PREPARE if state['profile'] == 'f11-comparison' else PREPARE) + LIVE[state['profile']] + ['resume', 'cleanup'],
-            'workflows': read_json(raw / 'workflows.json'), 'readUTC': utc(), 'provisionalLog': tail,
+            'workflows': [{**w, 'jobs': w.get('jobs', workflow_facts(w.get('yaml', '')))} for w in read_json(raw / 'workflows.json')],
+            'renderer': {file: hashlib.sha256((WEB/file).read_bytes()).hexdigest() for file in ('index.html','style.css','model.js','app.js')},
+            'actionsEnabled': os.environ.get('GP_DEMO_ACTIONS') == '1',
+            'readUTC': utc(), 'provisionalLog': tail,
             'recorded': False, 'provisionalLogModifiedUTC': log_modified, 'activeProcessObserved': active_observed}
 
 
@@ -126,6 +130,24 @@ def stop_server(name):
     atomic(session_path(name) / 'server-stopped.json', {'timeUTC': utc(), 'process': record['process']})
 
 
+def action_capabilities(state, has_events, running, source_error=None):
+    """Same state gate for UI and POST; the coordinator still checks sealed readiness."""
+    reasons = {key: None for key in ('prepare','check','present','step','stop','export','cleanup')}
+    for key in reasons:
+        if running and key != 'stop': reasons[key] = 'Otra operación sigue activa'
+    if not running: reasons['stop'] = 'No hay una operación activa'
+    if has_events or state.get('operational') != 'PENDING': reasons['prepare'] = 'Preparación ya intentada; usa una sesión nueva'
+    if not state.get('prepared') or state.get('operational') not in ('PREPARED','COMPLETED'):
+        for key in ('check','present','step'): reasons[key] = 'Se requiere una preparación íntegra'
+    elif source_error:
+        for key in ('check','present','step'): reasons[key] = source_error
+    if state.get('demoResult') == 'CONFIRMED':
+        for key in ('present','step'): reasons[key] = 'Presentación consumida; usa una sesión nueva'
+    if state.get('active') and not running:
+        for key in ('check','present','step','prepare'): reasons[key] = 'Proceso desaparecido; falta cerrar la interrupción'
+    return {key: {'enabled': reason is None, 'reason': reason or ''} for key, reason in reasons.items()}
+
+
 def make_server(name, port, token):
     # Independent action credentials; the health identity cannot authorize writes.
     credential, csrf = secrets.token_hex(32), secrets.token_hex(32)
@@ -140,6 +162,15 @@ def make_server(name, port, token):
     def controller():
         value = public_session(name).get('controller')
         return value if value and process_identity(value['pid']) == value else None
+
+    def capabilities(running):
+        state = public_session(name)
+        source_error = None
+        if state.get('prepared') and not running:
+            from coordinator import assert_source, Stopped
+            try: assert_source(state)
+            except (Stopped, OSError, ValueError): source_error = 'Fuente o arranque cambiados; prepara una sesión nueva'
+        return action_capabilities(state, bool(events(name)), running, source_error)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_): pass
@@ -199,7 +230,8 @@ def make_server(name, port, token):
                 if route.path == '/api/control':
                     if not actions or not self.authenticated():
                         self.send(b'{}', code=403); return
-                    self.send(json.dumps({'csrf': csrf, 'busy': controller() is not None or (worker[0] is not None and worker[0].poll() is None)}).encode())
+                    running = controller() is not None or (worker[0] is not None and worker[0].poll() is None)
+                    self.send(json.dumps({'csrf': csrf, 'busy': running, 'capabilities': capabilities(running), 'session': name}).encode())
                 elif route.path == '/api/health':
                     self.send(json.dumps({'session': name, 'token': token, 'readUTC': utc()}).encode())
                 elif route.path == '/api/cleanup-plan':
@@ -210,6 +242,8 @@ def make_server(name, port, token):
                     self.send(result)
                 elif route.path == '/api/session':
                     self.send(json.dumps(snapshot(name), ensure_ascii=False).encode())
+                elif route.path == '/api/sessions':
+                    self.send(json.dumps(local_session_inventory(name), ensure_ascii=False).encode())
                 elif route.path == '/api/events':
                     self.send(json.dumps(events(name), ensure_ascii=False).encode())
                 elif route.path == '/api/artifacts':
@@ -223,9 +257,9 @@ def make_server(name, port, token):
                     if not state['exports']: raise FileNotFoundError('No export')
                     record = state['exports'][-1]['html' if route.path.endswith('html') else 'package']
                     self.send_file(ROOT / 'evidence/packages', record)
-                elif route.path in ('/', '/app.js', '/style.css'):
-                    file = {'/': 'index.html', '/app.js': 'app.js', '/style.css': 'style.css'}[route.path]
-                    types = {'index.html': 'text/html', 'app.js': 'text/javascript', 'style.css': 'text/css'}
+                elif route.path in ('/', '/app.js', '/model.js', '/style.css'):
+                    file = {'/': 'index.html', '/app.js': 'app.js', '/model.js': 'model.js', '/style.css': 'style.css'}[route.path]
+                    types = {'index.html': 'text/html', 'app.js': 'text/javascript', 'model.js': 'text/javascript', 'style.css': 'text/css'}
                     self.send((WEB / file).read_bytes(), types[file] + '; charset=utf-8')
                 else: raise FileNotFoundError('Unknown route')
             except FileNotFoundError as error:
@@ -260,8 +294,10 @@ def make_server(name, port, token):
                         elif running:
                             from coordinator import terminate
                             terminate(worker[0])
-                        self.send(b'{"stopped":true}'); return
+                        self.send(b'{"stopRequested":true}'); return
                     if running: self.send(b'{"error":"operation active"}', code=409); return
+                    gate = capabilities(running)[action]
+                    if not gate['enabled']: raise ValueError(gate['reason'])
                     # Existing preparation is immutable; a new preparation uses CLI/new session.
                     if action == 'prepare' and (events(name) or public_session(name)['operational'] != 'PENDING'):
                         raise ValueError('Preparation already attempted; create a new session')

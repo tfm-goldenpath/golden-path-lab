@@ -1,5 +1,7 @@
 # Local F11 comparison on a prepared laboratory
 
+The current interface uses [internal navigation and full-height evidence detail](demo-workspace.md); see its controls, original log links and proposed narration route.
+
 This profile extends the existing defense coordinator, dashboard and five shared
 modules. It compares one authorized image in lane **A**: R executes the two
 privilege settings, G rejects them early, G rejects a separate directed UPDATE,
@@ -67,7 +69,7 @@ Do not edit internal JSON or reuse copied state after restart, rebuild or cleanu
 
 ## Four observations and their scope
 
-| Card | Actual operations required to confirm expectation | Scope |
+| Attempt | Actual operations required to confirm expectation | Scope |
 | --- | --- | --- |
 | R / warning | Restricted actor UPDATE in this run's reference namespace; Ready rollout, Pod privileges, digest, HTTP and withdrawal | Risk configuration executed, no exploitation or cluster-compromise claim. Kubernetes/RBAC remain. A PSA or other rejection fails this expectation and retains its original response. |
 | G early / red | Real Conftest, exactly PRIVILEGED and ESCALATION, exit 1 and no incidental diagnostics | Stops this request before any API submission; preparation's earlier build already occurred. |
@@ -81,7 +83,7 @@ two fault fields have separate structured differences. The positive helper is
 also called by the original complete runtime family; this profile does not run
 F12 or increment the twenty-scenario denominator.
 
-The four cards distinguish **delivery decision** from **expectation confirmed**.
+The four attempt rows distinguish **delivery decision** from **expectation confirmed**.
 Errors and interruptions never become detections. Gray distinguishes not executed
 from not reached. Exact logs are inert text, with bounded previews, complete-file
 downloads, hashes, original/copy/redaction identity and command receipts. The

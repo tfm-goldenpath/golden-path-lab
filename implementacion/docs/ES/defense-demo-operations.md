@@ -1,6 +1,8 @@
 # Ejecutar la demo y conservarla al cambiar de máquina
 
-Para el perfil local acotado de cuatro tarjetas F11/L06, consulta [Comparación F11](f11-comparison.md). Los registros históricos siguientes conservan su alcance y recursos originales.
+La interfaz actual usa [navegación interna y detalle amplio de evidencia](demo-workspace.md); consulta controles, acceso a logs originales y guion propuesto.
+
+Para el perfil local acotado de cuatro intentos F11/L06, consulta [Comparación F11](f11-comparison.md). Los registros históricos siguientes conservan su alcance y recursos originales.
 
 [English](../EN/defense-demo-operations.md) · [Guía completa y guion](defense-demo.md) · [Validación real](../../registros/defense_demo_validation_EN.md)
 
@@ -214,7 +216,7 @@ Con Docker/devcontainer en tu equipo, los recursos proceden del host o de la VM 
 `up` prepara **y presenta**. Al terminar deja el visor abierto: cerrar la pestaña
 no libera el puerto. En el caso comunicado, `rehearsal-01` seguía usando 8765;
 `defense-01` no llegó a prepararse. Por eso `present` rechazó esa segunda sesión.
-`defense` incluye F13; para las cuatro tarjetas R/F11/L06 selecciona
+`defense` incluye F13; para las cuatro intentos R/F11/L06 selecciona
 `f11-comparison`, no `defense`.
 
 Antes de la presentación, identifica el visor y consulta la sesión:
@@ -324,7 +326,7 @@ bash implementacion/scripts/defense-demo.sh serve \
 ```
 
 Esto reinicia el visor en el mismo puerto, no repite la demo ni convierte una
-sesión pendiente en preparada. Para las cuatro tarjetas R/F11/L06, sigue el bloque
+sesión pendiente en preparada. Para las cuatro intentos R/F11/L06, sigue el bloque
 anterior de preparación con `--profile f11-comparison`; `defense` es el recorrido
 F11/F13/entrega válida. Una sesión preparada con fuente o entorno modificados
 requiere nueva preparación, no edición de su estado interno.
@@ -350,13 +352,13 @@ Los títulos plegados del detalle técnico muestran F11/F13 en rojo únicamente
 en el control que produjo el bloqueo, indicando qué se rechazó. El prerrequisito
 de resultados de F13 no se muestra como otro rechazo, ni se traslada el rechazo
 de admisión al despliegue. El selector de intento también filtra estos marcadores.
-Los errores de integración y controles no alcanzados siguen en ámbar; no se
+Los errores de integración se distinguen de los controles no alcanzados en gris; no se
 convierten en detecciones confirmadas.
 
 Usa los accesos a evidencia bajo cada escenario o los nombres enlazados en
-«Entrada» / «Salida» para abrir el panel existente sin abandonar la vista. Por
+«Entrada» / «Salida» para abrir el detalle amplio del intento en la misma aplicación. Por
 ejemplo, F11 expone el JSON original de Conftest, la atribución JSON y el diff de
-seguridad. El panel muestra intento, UTC, salida de la operación (la salida del
+seguridad. El detalle muestra intento, UTC, salida de la operación (la salida del
 control permanece en su recibo), hash y estado de redacción. Presenta texto
 inerte acotado y enlace al archivo completo en el visor conectado; las
 exportaciones registradas usan extractos conservados e identifican el paquete

@@ -1374,7 +1374,7 @@
       "adapters": [
         "comparison-legitimate"
       ],
-      "coverage": "Documentado; sin adaptador de demostración",
+      "coverage": "Actualización legítima de plantilla disponible en f11-comparison; alcance parcial, no contrato completo L06",
       "history": {
         "source": "implementacion/docs/EN/evaluation-readiness.md",
         "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",

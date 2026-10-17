@@ -1,6 +1,8 @@
 # Demostración visual local para la defensa
 
-Para el perfil local acotado de cuatro tarjetas F11/L06, consulta [Comparación F11](f11-comparison.md). Los registros históricos siguientes conservan su alcance y recursos originales.
+La interfaz actual usa [navegación interna y detalle amplio de evidencia](demo-workspace.md); consulta controles, acceso a logs originales y guion propuesto.
+
+Para el perfil local acotado de cuatro intentos F11/L06, consulta [Comparación F11](f11-comparison.md). Los registros históricos siguientes conservan su alcance y recursos originales.
 
 [English](../EN/defense-demo.md) · [Arquitectura](architecture.md) · [Contratos](delivery-contracts.md) · [Matriz de cobertura](evaluation-readiness.md)
 
@@ -42,7 +44,7 @@ La reserva predeterminada es **1 GiB**, más **2 GiB de margen inicial** y 10.00
 
 Preparación ejecuta realmente `make test`: entorno, servicio/contratos, Python, Rego/Kyverno, Cosign criptográfico local y F01/F02 estáticos. Después ejecuta el preflight distinto de entrega, build nuevo, referencia HTTP, políticas tempranas, SBOM/Trivy reales, firmas/gates e instalación de admisión. Deja la imagen **sin resultados**. Esto no aprueba un PR de GitHub. Todo control obligatorio fallido detiene la preparación.
 
-Las tres vistas son **Demostración**, **Detalle técnico** y **Catálogo y workflows**. Selecciona una etapa para ver controles, decisiones, recibos y bytes de evidencia. Un adaptador con salida 0 ha confirmado su resultado esperado mediante el oráculo: no significa que la solicitud Kubernetes rechazada se aceptase. Los recibos de las solicitudes restringidas conservan su propio código real. La aceptación y el intento final conservan también comparaciones nuevas de identidad del clúster/políticas dentro del intervalo en directo. La lectura del servidor se distingue de la última evidencia cerrada. Durante operaciones largas el log es provisional, sin hash final. Una sesión completada sin cambios no significa desconexión.
+Demostración muestra pistas compactas por intento y controles válidos. Un clic en el bloqueo abre su consola original en la vista principal de detalle. Escenarios, Workflows y Sesiones sustituyen el área principal conservando contexto. Atrás/Adelante, selección y sondeo conservan identidad y lectura. Tiempo registrado y conexión del visor no equivalen a ejecución actual. Consulta la guía de navegación.
 
 1. **F11 temprano:** `privileged=true` y `allowPrivilegeEscalation=true`. Sólo los diagnósticos exactos PRIVILEGED y ESCALATION acreditan Conftest. Esta solicitud termina antes de admisión/despliegue protegido. El build y análisis previos siguen mostrados como antecedentes preparados.
 2. **F13 previo a emisión:** manifiesto válido, firma/SBOM/procedencia autenticados e inventarios completos, consistentes y sin resultados. CREATE debe rechazarse sólo por `tfm-results/require-results`. NotFound explícito antes/después confirma ausencia del Deployment. Certificados, registro, transporte, API o evaluación fallidos son errores, no detección. La recuperación sigue pendiente.
@@ -92,7 +94,7 @@ La limpieza verifica exportación con el empaquetador existente, comprueba propi
 
 ## Archivos, ampliación y alternativa estática
 
-Entrada: `scripts/defense-demo.sh`. Coordinación/presupuesto: `scripts/defense-demo/coordinator.py`; adaptadores: `adapters.sh`; evidencia: `core.py`, `observer.py`, `exporting.py`; servidor: `server.py`. Catálogo: `demo/catalogue.json`. Web sin build/CDN: `demo/index.html`, `style.css`, `app.js`. El observador optativo de `scripts/lib/attestations.sh` no actúa sin `gp_observe` y conserva invocaciones directas bajo errexit.
+Entrada: `scripts/defense-demo.sh`. Coordinación/presupuesto: `scripts/defense-demo/coordinator.py`; adaptadores: `adapters.sh`; evidencia: `core.py`, `observer.py`, `exporting.py`; servidor: `server.py`. Catálogo: `demo/catalogue.json`. Web sin build/CDN: `demo/index.html`, `style.css`, `model.js`, `app.js`. El observador optativo de `scripts/lib/attestations.sh` no actúa sin `gp_observe` y conserva invocaciones directas bajo errexit.
 
 Para ampliar: define ID/límite y oráculo aprobado; registra un adaptador fijo en la lista permitida y secuencia; implementa usando controles compartidos; añade metadatos, pruebas y ejecución real. El catálogo no admite comandos shell. No hace falta modificar servidor ni renderizador. DEMO_VALID_ACCEPT no añade un escenario académico.
 

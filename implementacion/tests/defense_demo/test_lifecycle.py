@@ -169,7 +169,9 @@ class SessionTests(unittest.TestCase):
         with patch.object(co.subprocess,'run',return_value=subprocess.CompletedProcess([],0)):
             output=Path(exporting.export_session(self.state))
         html=output.read_text()
-        self.assertIn('Ejecución guardada; no en directo',html)
+        self.assertIn('Ejecución registrada',html)
+        self.assertNotIn('src="/model.js"', html)
+        self.assertIn('globalThis.DemoModel',html)
         self.assertNotIn('</script><script>window.BAD=true',html)
         self.assertIn('\\u003c/script',html)
         self.assertNotIn('src="/app.js"',html)
