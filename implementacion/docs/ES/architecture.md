@@ -331,3 +331,19 @@ resultados humanos.
 El [runner automatizado](automated-remediation.md) importa preparación, operaciones protegidas, finalización, recuperación y limpieza del controlador existente. Solo añade secuencia de seis posiciones y continuación en fases verificadas. `automated_repairs.py` contiene las tres transformaciones predefinidas; `automated_assessment.py` comprueba detección, finalización, integridad y tiempos conservados. No introduce otra ruta de entrega ni IA en ejecución. `demo.sh` conserva la propiedad de los recursos.
 
 La identidad scripted figura en tareas, recibos y archivos; los esquemas manuales mantienen compatibilidad. Selección de calibración, preparación de mediciones y reutilización de límites rechazan automatización incluso después de una revisión humana. Originales y reparaciones usan el empaquetado seguro existente. Se añaden límites operativos y reutilización secuencial de la base canónica con comprobaciones de identidad intactas. Se aplaza la evaluación de esfuerzo humano; esta evidencia técnica provisional no cierra el piloto ni autoriza la campaña alojada separada.
+
+
+El [espacio de presentación](demo-workspace.md) separa el modelo de visualización
+(`demo/model.js`) de la interacción DOM (`demo/app.js`). No decide aceptación:
+las etiquetas proceden de recibos confirmados y metadatos fijos de operación.
+El servidor calcula capacidades con las mismas precondiciones que POST; el
+coordinador sigue comprobando la preparación sellada. El inventario local lee
+metadatos permitidos y acotados, sin cambiar la sesión vinculada. Los hechos de
+workflows se derivan del YAML capturado, también en snapshots antiguos. La
+exportación incluye y hashea ambos módulos de representación separados de la
+fuente de evidencia; las observaciones originales permanecen inmutables.
+
+El mismo renderizador usa rutas hash con identificadores conocidos para demostración,
+detalle y vistas de catálogo/workflows/sesiones. El detalle sustituye la comparación;
+el estado de lectura se conserva separado del sondeo y de las acciones del coordinador.
+Ninguna ruta cambia la sesión vinculada al servidor ni ejecuta comandos.

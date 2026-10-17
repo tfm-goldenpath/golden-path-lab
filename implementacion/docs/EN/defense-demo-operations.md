@@ -1,6 +1,8 @@
 # Run the demo and preserve it when changing machines
 
-For the bounded four-card F11/L06 local profile, use [F11 comparison](f11-comparison.md). Historical runs below retain their original scope and resources.
+The current interface uses [internal navigation and full-height evidence detail](demo-workspace.md); see its controls, original log links and proposed narration route.
+
+For the bounded four-attempt F11/L06 local profile, use [F11 comparison](f11-comparison.md). Historical runs below retain their original scope and resources.
 
 [Español](../ES/defense-demo-operations.md) · [Full guide and presentation script](defense-demo.md) · [Real validation](../../registros/defense_demo_validation_EN.md)
 
@@ -347,12 +349,11 @@ Folded technical phase headings show red F11/F13 markers only at the observed
 blocking control, including the rejected property. The F13 results prerequisite
 is not presented as a separate rejection, nor is an admission rejection copied
 to deployment. Attempt selection also filters these markers. Integration errors
-and unreached controls stay amber; they do not become confirmed detections.
+remain distinct from gray unreached controls; they do not become confirmed detections.
 
 Use the short evidence links under each scenario or the linked filenames in
-“Entrada” / “Salida” to open the existing evidence dialog without leaving the
-view. For example, F11 exposes the original Conftest JSON, attribution JSON and
-security diff. The dialog shows the selected attempt, UTC, operation exit status
+“Entrada” / “Salida” to open the full-height attempt detail within the same application. For example, F11 exposes the original Conftest JSON, attribution JSON and
+security diff. The detail shows the selected attempt, UTC, operation exit status
 (the control exit remains in its receipt), file hash and redaction status. It
 uses bounded inert text, with the full-file link for a live viewer; recorded
 exports use retained excerpts and identify the complete package. A reference

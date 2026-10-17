@@ -1,6 +1,8 @@
 # Local visual defense demonstration
 
-For the bounded four-card F11/L06 local profile, use [F11 comparison](f11-comparison.md). Historical runs below retain their original scope and resources.
+The current interface uses [internal navigation and full-height evidence detail](demo-workspace.md); see its controls, original log links and proposed narration route.
+
+For the bounded four-attempt F11/L06 local profile, use [F11 comparison](f11-comparison.md). Historical runs below retain their original scope and resources.
 
 [Español](../ES/defense-demo.md) · [Architecture](architecture.md) · [Delivery contracts](delivery-contracts.md) · [Readiness matrix](evaluation-readiness.md)
 
@@ -43,7 +45,7 @@ The default disk reserve is **1 GiB**, with **2 GiB additional headroom** before
 
 Open **Ports** in Codespaces, forward `8765`, keep visibility **Private**, and open the forwarded URL. Locally use `http://127.0.0.1:8765`. The server binds only loopback and remains running after success or failure. Its availability does not change the work's exit code. Use another port for another live viewer, or stop the old session's server explicitly during cleanup.
 
-The three views show the compact pipeline and separate attempts, technical controls/receipts and immutable evidence, and the twenty-case catalogue/workflow correspondence. Select a stage to open its receipts. An adapter exit 0 means its deterministic oracle confirmed the expected outcome; it does not mean a rejected Kubernetes request succeeded. The restricted-request receipts retain their own actual exit codes. Accepted and final runtime operations also retain fresh cluster/policy identity comparisons within the measured live interval. Live polling reports the last server read separately from the last closed evidence. Long-running output is provisional and has no final hash until closed. An unchanged completed run is not a disconnected viewer.
+Demostración shows compact attempt tracks and supported controls. Clicking a blocker opens its original console in the main detail view. Escenarios, Workflows and Sesiones replace the main area, preserving presentation context. Back/Forward, attempt selection and polling preserve evidence identity and reading position. Recorded time and viewer connection are distinct from current laboratory execution. See the navigation guide for exact semantics.
 
 1. **F11 early:** set both `privileged=true` and `allowPrivilegeEscalation=true`; Conftest must return exactly the existing PRIVILEGED and ESCALATION diagnostics. This request does not reach protected admission/deployment. The image was already built/scanned during preparation; no claim that this request prevented that earlier work is made.
 2. **F13 preissuance:** valid manifest, authenticated signature/SBOM/provenance, complete consistent inventories without results. Only `tfm-results/require-results` may reject CREATE; named NotFound observations before/after establish Deployment absence. A certificate, registry, API or evaluation error is not F13 detection. Recovery remains pending.
@@ -91,7 +93,7 @@ Cleanup first verifies exports using the existing laboratory packager and its ex
 
 ## Extension and verification
 
-`scripts/defense-demo.sh` is the thin entry point. `scripts/defense-demo/coordinator.py` owns lifecycle/budget; `adapters.sh` reuses modules and scenario oracles; `core.py`, `observer.py` and `exporting.py` own receipts and custody; `server.py` is read-only. `demo/catalogue.json` describes stages/controls/scenarios and workflow facts are extracted from the actual YAML. `demo/index.html`, `style.css`, `app.js` render without CDN/build. The optional hook in `scripts/lib/attestations.sh` is inactive without `gp_observe` and keeps direct errexit behavior.
+`scripts/defense-demo.sh` is the thin entry point. `scripts/defense-demo/coordinator.py` owns lifecycle/budget; `adapters.sh` reuses modules and scenario oracles; `core.py`, `observer.py` and `exporting.py` own receipts and custody; `server.py` is read-only. `demo/catalogue.json` describes stages/controls/scenarios and workflow facts are extracted from the actual YAML. `demo/index.html`, `style.css`, `model.js`, `app.js` render without CDN/build. The optional hook in `scripts/lib/attestations.sh` is inactive without `gp_observe` and keeps direct errexit behavior.
 
 To extend: define the existing academic ID/boundary and human-approved oracle; add a fixed adapter ID to the executable allowlist and sequencing, implement its adapter using shared controls, add declarative metadata and tests, then run real integration. Never store shell commands in the catalogue. The server and renderer need no scenario-specific code. Document unexecuted boundaries; no new academic scenario is implied by DEMO_VALID_ACCEPT.
 

@@ -7,7 +7,7 @@ import subprocess
 import tarfile
 
 from core import (ROOT, WEB, artifact_index, atomic, digest, evidence_root, file_record,
-                  packager, read_artifact, read_json, safe_path, session_path, utc)
+                  packager, local_session_inventory, read_artifact, read_json, safe_path, session_path, utc)
 
 
 def stream_hash(stream):
@@ -88,13 +88,15 @@ def export_session(state):
         verify_tar(lab_package)
     value = snapshot(name)
     value['recorded'] = True
+    value['localSessions'] = local_session_inventory(name)
+    value['actionsEnabled'] = False
     value['savedUTC'] = utc()
-    value['renderer'] = {file: digest((WEB / file).read_bytes()) for file in ('index.html', 'style.css', 'app.js')}
+    value['renderer'] = {file: digest((WEB / file).read_bytes()) for file in ('index.html', 'style.css', 'model.js', 'app.js')}
     value['provisionalLog'] = None
     artifacts = artifact_index(name)
     excerpts = {}
     excerpt_budget = 2 * 1024 * 1024
-    for key, record in artifacts.items():
+    for key, record in sorted(artifacts.items(), key=lambda item: (0 if any(term in item[1]['path'] for term in ('F11-early.', 'F11-security-diff', 'F11-admission.log', 'F13-admission.log', 'F13-attribution', '/response.log', '/result.json', '/update-response.log')) and '/closed/' in item[1]['path'] else 1, item[0])):
         path = raw / record['path']
         if file_record(raw, path, 'export', '')['sha256'] != record['sha256']: raise ValueError('Artifact changed')
         with path.open('rb') as stream: data = stream.read(min(12000, excerpt_budget))
@@ -105,6 +107,7 @@ def export_session(state):
     # JSON cannot terminate a script tag even if a captured diagnostic contains HTML.
     data = json.dumps(value, ensure_ascii=False).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
     html = (WEB / 'index.html').read_text().replace('<link rel="stylesheet" href="/style.css">', '<style>' + (WEB / 'style.css').read_text() + '</style>')
+    html = html.replace('<script src="/model.js" defer></script>', '<script>'+ (WEB/'model.js').read_text() + '</script>')
     html = html.replace('<script src="/app.js" defer></script>', '<script>window.SAVED_SESSION=' + data + ';</script><script>' + (WEB / 'app.js').read_text() + '</script>')
     output = directory / 'recorded.html'
     output.write_text(html)

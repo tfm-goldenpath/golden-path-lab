@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import stat
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -246,5 +247,64 @@ def workflow_metadata():
                        'timeoutsMinutes': re.findall(r'timeout-minutes: (\d+)', text),
                        'actions': re.findall(r'uses: ([^\n]+)', text),
                        'runners': re.findall(r'runs-on: ([^\n]+)', text), 'yaml': text,
-                       'observedRemote': False})
+                       'jobs': workflow_facts(text), 'observedRemote': False})
     return values
+
+
+def local_session_inventory(bound, limit=100, max_bytes=2*1024*1024):
+    """Bounded metadata only. Directory/file descriptors prohibit symlink races."""
+    result = {'entries': [], 'limit': limit, 'truncated': False, 'capturedUTC': utc(),
+              'scope': 'Local metadata only; actions remain bound to '+bound}
+    try:
+        if SESSIONS.resolve() != SESSIONS.absolute(): raise ValueError('Unsafe session root')
+        rootfd = os.open(SESSIONS, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    except (OSError, ValueError):
+        result['error'] = 'Session inventory unavailable'; return result
+    try:
+        with os.scandir(rootfd) as entries:
+            for index, entry in enumerate(entries):
+                if index >= limit:
+                    result['truncated'] = True; break
+                if entry.name.startswith('.'): continue
+                try: valid_name(entry.name)
+                except ValueError: continue
+                record = {'session': entry.name, 'bound': entry.name == bound}
+                try:
+                    directory = os.open(entry.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=rootfd)
+                    try:
+                        fd = os.open('session.json', os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+                        with os.fdopen(fd, 'rb') as stream:
+                            info = os.fstat(stream.fileno())
+                            if not stat.S_ISREG(info.st_mode) or info.st_size > max_bytes: raise ValueError('Invalid metadata size/type')
+                            data = stream.read(max_bytes+1)
+                            if len(data) > max_bytes: raise ValueError('Metadata too large')
+                            state = json.loads(data)
+                    finally: os.close(directory)
+                    if not isinstance(state, dict) or state.get('session') != entry.name: raise ValueError('Identity mismatch')
+                    for key in ('profile','createdUTC','operational'):
+                        value = state.get(key)
+                        record[key] = value[:200] if isinstance(value, str) else None
+                    source = state.get('source', {})
+                    record['source'] = {k: source[k][:128] for k in ('commit','contentHash') if isinstance(source, dict) and isinstance(source.get(k), str)}
+                    record['prepared'] = state.get('prepared') is True
+                    record['cleaned'] = state.get('cleaned') is True
+                except (OSError, ValueError, TypeError, RecursionError): record['error'] = 'Invalid, unsafe or unavailable session metadata'
+                result['entries'].append(record)
+    finally: os.close(rootfd)
+    result['entries'].sort(key=lambda x: x['session'])
+    return result
+
+
+def workflow_facts(text):
+    """Display facts from captured YAML, not validation or execution evidence."""
+    jobs = []
+    section = text.split('\njobs:', 1)
+    if len(section) < 2: return jobs
+    for match in re.finditer(r'^  ([A-Za-z0-9_-]+):\s*\n(.*?)(?=^  [A-Za-z0-9_-]+:|\Z)', section[1], re.M | re.S):
+        body = match[2]
+        field = lambda key: (re.search(r'^    '+key+r':([^\n]*)', body, re.M).group(1).strip() if re.search(r'^    '+key+r':', body, re.M) else None)
+        jobs.append({'id': match[1], 'runner': field('runs-on'), 'needs': field('needs'),
+                     'timeoutMinutes': field('timeout-minutes'),
+                     'steps': re.findall(r'^\s+- name: (.+)$', body, re.M),
+                     'permissions': re.findall(r'^      (contents|packages|id-token|attestations|actions): (read|write|none)', body, re.M)})
+    return jobs

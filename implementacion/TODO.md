@@ -1,5 +1,40 @@
 # Incremental implementation plan
 
+## Full-height demo evidence detail — local correction, October 2026
+
+- [x] Continue the uncommitted dashboard implementation on `fix/demo-evidence-layout`,
+  created from `feat/demo-navigation-and-catalogue` / `0f2d623`; preserve unrelated files.
+- [x] Supersede the bottom inspector with hash navigation: Demostración, Escenarios,
+  Workflows, Sesiones and dependent attempt detail with direct original consoles.
+- [x] Preserve scenario/blocker badges, independent attempts/recovery, source identity,
+  read-only isolation, server action gates and self-contained offline navigation.
+- [x] Adapt keyboard/reflow, reading-state preservation, console wrapping/copy and
+  compact operator controls; update the [EN](docs/EN/demo-workspace.md) /
+  [ES](docs/ES/demo-workspace.md) navigation guides.
+- [x] Final doctor, 61 defense regressions, shared suite and seven browser checks
+  pass on the corrected source; console visibility measured at 412.5 px online/offline.
+- [ ] Human review: see the [correction handoff](registros/demo_evidence_layout_handoff_EN.md).
+  No new runtime claim, narrated rehearsal, campaign sample or remote publication.
+
+## Demo presentation workspace — local branch, October 2026
+
+The bottom-inspector layout below is superseded by the full-height correction
+above; this checklist retains the preceding implementation history.
+
+- [x] Build on merged PR #49 (`0f2d623`), preserving its scenario identities,
+  source guards, trust, observations and historical human reviews.
+- [x] Replace primary multi-view navigation/cards with one presentation workspace,
+  independent attempt tracks and a single evidence inspector; retain blocker badges
+  and exact original log/attribution links.
+- [x] Add server-authoritative action capabilities, bounded read-only local inventory,
+  secondary searchable catalogue and captured workflow exploration; no remote actions.
+- [x] Validate defense regressions, shared checks, browser interaction and offline
+  rendering over retained evidence / labelled synthetic UI fixtures; see the
+  [handoff](registros/demo_navigation_handoff_EN.md).
+- [ ] Human review of this branch; narrated duration remains unmeasured. No new
+  Kubernetes scenario, campaign, GitHub import/dispatch or Pages publication.
+
+
 ## Current human acceptance — 4 October 2026
 
 - [x] Francisco accepted the ten-pair exploratory campaign and the functional observations, six automated repairs and pilot within their respective sources and execution boundaries. The experimental evaluation is closed within the documented reduced scope. See the [canonical Spanish declaration](registros/evaluation_acceptance_20261004_ES.md) and its [English translation](registros/evaluation_acceptance_20261004_EN.md): dossier `20261004T153508Z`, measured source `895a3bde79089b7544c1dad76a6cd8f48eede0a8`, reviewed documentation `ad7be26dc94a90c3a1c72245b2522ce344d2d0cb`.

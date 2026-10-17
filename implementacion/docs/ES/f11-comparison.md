@@ -1,5 +1,7 @@
 # Comparación F11 en un laboratorio local preparado
 
+La interfaz actual usa [navegación interna y detalle amplio de evidencia](demo-workspace.md); consulta controles, acceso a logs originales y guion propuesto.
+
 El perfil `f11-comparison` amplía el coordinador y dashboard existentes. Reutiliza
 los cinco módulos, el actor restringido, el oráculo F11 y la actualización positiva
 de L06. Una sola imagen autorizada por digest sirve para las cuatro observaciones.
@@ -64,7 +66,7 @@ reboot, rebuild o limpieza.
 
 ## Tarjetas y botones
 
-| Tarjeta | Expectativa que exige observaciones nuevas | Límite |
+| Intento | Expectativa que exige observaciones nuevas | Límite |
 | --- | --- | --- |
 | R, advertencia | Actor restringido actualiza, rollout/Pods Ready ejecutan ambos privilegios, digest coincide, HTTP es correcto y carga retirada | Configuración de riesgo ejecutada; sin explotación, escapes ni afirmación de compromiso. R conserva Kubernetes/RBAC. Un bloqueo PSA u otro error conserva el diagnóstico y no confirma la expectativa. |
 | G temprano, rojo | Conftest devuelve exclusivamente PRIVILEGED y ESCALATION | Esta petición no llega a Kubernetes. El build previo ya ocurrió. |

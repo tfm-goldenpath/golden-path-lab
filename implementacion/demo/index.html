@@ -1,60 +1,55 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Golden Path · evidencia en directo</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="/app.js" defer></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Golden Path · demostración y evidencia</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/model.js" defer></script>
+<script src="/app.js" defer></script>
 </head>
 <body>
-  <header>
-    <div class="brand"><span class="mark">G</span><div><strong>GOLDEN PATH LAB</strong><span>Una entrega. Controles comprobables.</span></div></div>
-    <div class="connection"><span id="connection">Conectando…</span><small id="reading">Sin lectura del servidor</small></div>
-  </header>
-  <div id="saved" class="saved" hidden>Ejecución guardada; no en directo</div>
-  <nav aria-label="Vistas">
-    <button data-view="demonstration" class="selected">01 · Demostración</button>
-    <button data-view="technical">02 · Detalle técnico</button>
-    <button data-view="catalogue">03 · Catálogo y workflows</button>
-    <a id="html-export" href="/download/html" download>HTML guardado ↓</a>
-    <a id="package-export" href="/download/package" download>Evidencias ↓</a>
-  </nav>
-  <main>
-    <div class="identity"><span id="session">Sin sesión</span><span>Vía A · confianza local</span><span>Comparación R / G</span><span id="overall">Pendiente</span><span id="resources">Recursos: sin lectura</span></div>
-    <div class="source"><span id="source">Fuente desconocida</span><span id="image">Digest desconocido</span></div>
-    <section id="demonstration" class="view">
-      <div class="intro"><div><p class="eyebrow">DEL CÓDIGO A LA AUTORIZACIÓN</p><h1 id="demo-title">F11 · el mismo riesgo, dos barreras.</h1><p>La preparación conserva antecedentes reales. Cada intento en directo es una solicitud distinta.</p></div><div class="timing"><span id="live-time">—</span><small>objetivo automático ≤ 90 s · guion 160 s + reserva 20 s</small><small id="prep-time">Preparación: —</small></div></div>
-      <div class="legend"><span>□ Sin ejecutar</span><span class="allow">● Entrega permitida</span><span class="deny">◆ Entrega bloqueada; control correcto</span><span class="error">× Error / interrupción</span></div>
-      <div id="web-controls" hidden>
-        <button data-action="prepare" disabled>Preparar</button>
-        <button data-action="check">Comprobar entorno</button><button data-action="present">Ejecutar comparación</button>
-        <button data-action="step">Siguiente paso</button><button data-action="stop">Detener</button>
-        <button data-action="export">Exportar</button><button data-action="cleanup">Limpiar recursos propios</button>
-        <span id="action-status"></span></div>
-      <details id="prepared-summary"><summary id="preparation-label">Preparación · pendiente</summary><div id="preparation-receipts"></div></details>
-      <button id="scope-button">Qué demuestra y qué no · F11 / L06</button>
-      <label class="attempt-filter">Intento en detalle <select id="attempt-filter"><option value="all">Todos</option></select></label>
-      <div id="pipeline" class="pipeline" aria-label="Mapa de etapas"></div>
-      <div id="reference-observation" class="reference-observation" hidden></div>
-      <div id="attempts" class="attempts"></div>
-      <details id="running"><summary>Consola · salida real conservada</summary><label>Control <select id="log-select"><option value="">Seleccionar salida</option></select></label><a id="console-full" hidden>Archivo completo ↓</a><p id="console-meta"></p><pre id="tail">Sin salida registrada</pre></details>
-    </section>
-    <section id="technical" class="view" hidden>
-      <div class="intro"><div><p class="eyebrow">RECIBOS Y ORIGINALES</p><h1>Qué se comprobó y dónde.</h1><p>Un hash acredita integridad de bytes. La firma, el contrato y la revisión humana son comprobaciones distintas.</p></div></div>
-      <p id="technical-context" class="view-context"></p>
-      <div class="result-key"><span class="outcome-badge accepted">✓ Permitido / comprobado</span><span class="outcome-badge blocked">× Bloqueado</span><span class="outcome-badge warning">⚠ No alcanzado / incidencia</span><span class="outcome-badge pending">○ Sin ejecutar</span></div>
-      <div id="technical-stages"></div>
-      <h2>Secuencia ejecutada</h2><div id="receipts"></div>
-    </section>
-    <section id="catalogue" class="view" hidden>
-      <div class="intro"><div><p class="eyebrow">ALCANCE Y LÍMITES</p><h1>Veinte casos. Una demo dirigida.</h1><p>Implementación, adaptador, ejecución de esta sesión y registro histórico permanecen separados.</p></div></div>
-      <div class="table-scroll"><table><thead><tr><th>Caso / garantía</th><th>Control</th><th>Adaptador</th><th>Esta sesión</th><th>Registro histórico</th></tr></thead><tbody id="cases"></tbody></table></div>
-      <h2>Workflows del checkout</h2><div id="workflows"></div>
-      <div class="explanation"><strong>Controles externos · no observados en esta sesión</strong><p>Rulesets, aprobación humana, Copilot review, CodeQL, Dependabot y secret scanning: su activación no se deduce de estos archivos. Fuente: CONTRIBUTING.md y workflows del checkout. No se consultó configuración remota.</p><p id="human">Revisión humana: No solicitada para esta demostración.</p></div>
-    </section>
-  </main>
-  <footer><span id="evidence-time">Última evidencia: —</span><span>Privado · sólo lectura por defecto · sin métricas de campaña</span></footer>
-  <dialog id="artifact"><button id="close-artifact">Cerrar ×</button><h2 id="artifact-title">Evidencia</h2><p id="artifact-meta"></p><a id="artifact-full" hidden>Archivo completo ↓</a><pre id="artifact-text"></pre></dialog>
-</body>
-</html>
+<header>
+ <strong>GOLDEN PATH <span class="lab">LAB</span></strong><span id="identity">Sin sesión</span>
+ <span id="connection" role="status">Conectando…</span>
+ <span id="active-operation"></span><button id="stop" class="stop" hidden disabled>Detener</button>
+ <details id="provenance"><summary>Identidad y procedencia</summary><div class="menu">
+ <p id="source"></p><p id="renderer"></p><p id="resources">Disco: sin lectura</p><p id="environment">Laboratorio: estado desconocido</p>
+ <button id="preparation">Preparación y tiempos</button><button data-explore="technical">Detalle técnico completo</button>
+ <a id="html-export" href="/download/html" hidden>HTML registrado ↓</a><a id="package-export" href="/download/package" hidden>Paquete de evidencia ↓</a>
+ </div></details>
+</header>
+<nav class="destinations" aria-label="Navegación principal">
+ <a href="#demo" data-destination="demo">Demostración</a><a href="#scenarios" data-destination="scenarios">Escenarios</a><a href="#workflows" data-destination="workflows">Workflows</a><a href="#sessions" data-destination="sessions">Sesiones</a>
+ <span id="viewer-mode">Solo lectura</span>
+</nav>
+<p id="action-status" role="status" class="status-line" hidden></p>
+<main>
+<section id="presentation" aria-label="Demostración">
+ <div class="demo-heading"><h1 id="profile-title">Comparación y controles</h1><p id="profile-description"></p></div>
+ <section class="operator" aria-label="Controles de la sesión vinculada" hidden>
+ <label>Modo <select id="mode"><option value="auto">Automático</option><option value="step">Paso a paso</option></select></label>
+ <button id="primary" class="primary" disabled>Conectando…</button>
+ <details id="more"><summary>Más acciones</summary><div class="menu">
+ <button data-action="check">Comprobar entorno</button><button data-action="export">Exportar HTML y evidencia</button><button data-action="cleanup">Limpiar recursos propios…</button>
+ </div></details>
+ </section>
+ <div class="overview-heading"><h2>Intentos independientes</h2><label id="follow-label"><input type="checkbox" id="follow"> Seguir ejecución en directo</label></div>
+ <div id="attempts" aria-label="Progreso por intento"></div>
+ <p id="timing"></p><p class="overview-note">Las etapas indican orden, no porcentajes. ↶ Preparación reutilizada. Pulsa un bloqueo para leer su salida original.</p>
+</section>
+<section id="exploration" hidden aria-label="Exploración"><div class="panel-heading"><h1 id="exploration-title"></h1><button id="close-exploration">Volver a demostración</button></div><p id="exploration-context"></p><div id="exploration-content"></div></section>
+<section id="inspector" hidden aria-label="Detalle del intento">
+ <div class="detail-toolbar"><button id="close-inspector">← Volver a demostración</button><button id="toggle-sidebar" aria-expanded="true">Ocultar lista de intentos</button><label id="mobile-attempt-label">Intento <select id="mobile-attempt"></select></label></div>
+ <section id="selected-result" aria-labelledby="result-title">
+ <div><p id="result-identity" class="eyebrow"></p><h1 id="result-title">Detalle del intento</h1><p id="result-expectation"></p></div><h2 id="result-outcome"></h2>
+ <p id="result-description" hidden></p>
+ <div class="result-actions"><button id="blocking-log">Ver log del bloqueo</button><button id="attribution">Ver atribución</button><button id="technical-evidence">Evidencia técnica</button><button id="scope">Alcance</button><button id="related" hidden>Ver recuperación relacionada</button></div>
+ </section>
+ <div class="detail-layout"><aside id="attempt-sidebar" aria-label="Cambiar de intento"></aside><div class="detail-main">
+ <div class="inspector-tabs" role="tablist" aria-label="Contenido del intento"><button role="tab" data-tab="result">Resultado</button><button role="tab" data-tab="console">Consola</button><button role="tab" data-tab="files">Evidencias</button><button role="tab" data-tab="technical">Detalle técnico</button><button role="tab" data-tab="scope">Alcance</button></div>
+ <p id="inspector-identity" class="sr-only"></p><p id="inspector-artifact" class="sr-only"></p>
+ <div id="inspector-content" tabindex="0" role="tabpanel"></div>
+ </div></div>
+</section>
+</main>
+</body></html>

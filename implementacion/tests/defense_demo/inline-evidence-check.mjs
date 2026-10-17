@@ -1,87 +1,30 @@
-// Read-only browser checks; synthetic fixtures test rendering, never delivery.
 import assert from 'node:assert/strict';
-import {createRequire} from 'node:module';
-import {resolve} from 'node:path';
-import {readFileSync,writeFileSync} from 'node:fs';
-const root=resolve(import.meta.dirname,'../..');
-const require=createRequire(root+'/.tmp/f11-browser-tools/package.json');
-const {chromium}=require('playwright');
-const [url,output]=process.argv.slice(2);
-if(!output)throw Error('Usage: inline-evidence-check.mjs PRIVATE_URL OUTPUT_PREFIX');
+import {chromium,loaded,choose,tab,pass,snap,wait,offlineHTML} from './browser-support.mjs';
+const [url,output]=process.argv.slice(2);if(!output)throw Error('Usage: inline-evidence-check.mjs DEFENSE_URL OUTPUT_PREFIX');
 const snapshot=await (await fetch(url+'/api/session')).json();
 const browser=await chromium.launch({headless:true});
 try{
- const page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];
- page.on('pageerror',e=>errors.push(e.message));
- // Serve current UI over an existing read-only session; never restart its viewer.
- for(const file of ['app.js','style.css'])await page.route('**/'+file,r=>r.fulfill({body:readFileSync(root+'/demo/'+file),contentType:file.endsWith('js')?'text/javascript':'text/css'}));
- await page.route(url+'/',r=>r.fulfill({body:readFileSync(root+'/demo/index.html'),contentType:'text/html'}));
- await page.route('**/api/control',r=>r.fulfill({json:{}}));
- await page.route('**/api/session',r=>r.fulfill({json:snapshot}));
- await page.goto(url);await page.waitForFunction(()=>document.querySelectorAll('#attempts article').length===4);
- assert.match(await page.locator('#attempts').innerText(),/G · Entrega bloqueada en Conftest/);
- assert.match(await page.locator('#reference-observation').innerText(),/R · Referencia válida/);
- assert.match(await page.locator('#reference-observation').innerText(),/No prueba privilegios/);
- await page.getByRole('button',{name:'02 · Detalle técnico'}).click();
- const manifest=page.locator('.technical-stage[data-stage="manifest"]');
- const admission=page.locator('.technical-stage[data-stage="admission"]');
- assert.match(await manifest.locator(':scope > summary').innerText(),/F11.*Conftest/);
- assert.match(await admission.locator(':scope > summary').innerText(),/F13.*Kyverno/);
- assert.match(await admission.locator(':scope > summary').innerText(),/F11.*Kyverno/);
- assert.equal(await page.locator('.technical-stage[data-stage="deployment"] > summary .blocked').count(),0,'No false deployment rejection');
- await manifest.locator(':scope > summary').click();
- const early=manifest.locator('.scenario-row').filter({hasText:'F11 · G temprano'});
- const attribution=early.getByRole('button',{name:'F11-early.attribution.json',exact:true}).first();
- await attribution.click();
- await page.waitForFunction(()=>!document.querySelector('#artifact-text').textContent.includes('Comprobando evidencia'));
- assert.match(await page.locator('#artifact-title').innerText(),/operations\/f11-early\/closed\/F11-early.attribution.json$/);
- assert.ok(!/no disponible/.test(await page.locator('#artifact-text').innerText()));
- assert.match(await page.locator('#artifact-meta').innerText(),/attempt-1.*exit=0/);
- await page.screenshot({path:output+'-artifact.png'});
- await page.getByRole('button',{name:'Cerrar ×'}).click();
- await early.locator('details > summary').click();
- assert.equal(await early.locator('.file-references').getByRole('button',{name:'F11-early.attribution.json',exact:true}).count(),1);
- await early.locator('details > summary').click();
- await early.getByRole('button',{name:'F11-security-diff.txt',exact:true}).first().click();
- await page.waitForFunction(()=>!document.querySelector('#artifact-text').textContent.includes('Comprobando evidencia'));
- assert.match(await page.locator('#artifact-text').innerText(),/privileged/);
- await page.getByRole('button',{name:'Cerrar ×'}).click();
- await manifest.locator(':scope > summary').click();
- await page.evaluate(()=>window.scrollTo(0,0));
- await page.screenshot({path:output+'-technical.png'});
- await page.getByRole('button',{name:'01 · Demostración'}).click();
- await page.locator('#attempt-filter').selectOption('attempt-2');
- await page.getByRole('button',{name:'02 · Detalle técnico'}).click();
- assert.equal(await page.locator('.stage-findings').getByText(/F11/).count(),0,'Attempt filter applies to summaries');
- // Missing own file must not link a later operation's inherited copy.
- const synthetic=structuredClone(snapshot);synthetic.session.session='synthetic-inline-only';
- synthetic.events.find(e=>e.operation==='f11-early').artifacts=[];
- await page.route('**/api/session',r=>r.fulfill({json:synthetic}));await page.reload();
- await page.getByRole('button',{name:'02 · Detalle técnico'}).click();
- await manifest.locator(':scope > summary').click();
- assert.equal(await early.getByRole('button',{name:'F11-early.attribution.json',exact:true}).count(),0);
- assert.match(await early.textContent(),/F11-early.attribution.json/);
- // An unconfirmed denial is an incident, not a red attributed block.
- synthetic.events.find(e=>e.operation==='f11-early').expectation='unconfirmed';
- synthetic.events.find(e=>e.operation==='f11-admission').operational='NOT_REACHED';
- await page.reload();await page.getByRole('button',{name:'02 · Detalle técnico'}).click();
- assert.equal(await manifest.locator(':scope > summary .blocked').count(),0);
- assert.match(await admission.locator(':scope > summary').innerText(),/No alcanzado/);
- // Offline exports reuse the dialog and render untrusted bytes as inert text.
- const offline=structuredClone(snapshot);offline.recorded=true;offline.savedUTC='synthetic offline UI test';
- const event=offline.events.find(e=>e.operation==='f11-early');
- const file=event.artifacts.find(a=>a.path==='operations/f11-early/closed/F11-early.attribution.json');
- const inert='<img src=x onerror="window.injected=true"> synthetic excerpt';
- offline.offlineArtifacts={[file.id]:{text:inert,truncated:true}};
- let apiCalls=0;page.on('request',r=>{if(r.url().includes('/api/'))apiCalls++;});
- await page.route(url+'/',r=>r.fulfill({contentType:'text/html',body:readFileSync(root+'/demo/index.html','utf8').replace('</head>','<script>window.SAVED_SESSION='+JSON.stringify(offline).replaceAll('<','\\u003c')+';</script></head>')}));
- await page.reload();await page.getByRole('button',{name:'02 · Detalle técnico'}).click();
- await manifest.locator(':scope > summary').click();await attribution.click();
- assert.match(await page.locator('#artifact-text').innerText(),/EXTRACTO ACOTADO/);
- assert.ok((await page.locator('#artifact-text').innerText()).includes(inert));
- assert.equal(await page.locator('#artifact-text img').count(),0);
- assert.equal(await page.locator('#artifact-full').isVisible(),false);
- assert.equal(apiCalls,0,'Recorded view must not request API actions or evidence');
- assert.equal(errors.length,0,errors.join('\n'));
- writeFileSync(output+'.json',JSON.stringify({status:'PASS',session:snapshot.session.session,viewport:'1366x768',boundary:'Read-only real evidence display plus labelled synthetic UI cases; no delivery',errors},null,2)+'\n');
+ const page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await loaded(page,url);await choose(page,'attempt-1');await page.locator('#attribution').click();await page.waitForFunction(()=>document.querySelector('.console-text')?.textContent.includes('PRIVILEGED'));
+ assert.match(await page.locator('#inspector-artifact').innerText(),/operations\/f11-early\/closed\/F11-early.attribution.json$/);
+ await tab(page,'technical');await page.locator('#inspector .technical-stage > summary').click();
+ const row=page.locator('#inspector .scenario-row').filter({hasText:'F11 · Control temprano'});await row.locator('details > summary').click();await row.getByRole('button',{name:'F11-security-diff.txt',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('.console-text')?.textContent.includes('privileged'));await snap(page,output,'diff');
+ // Pin a closed original while new provisional output arrives; preserve scroll/focus.
+ let fixture=structuredClone(snapshot);fixture.session.session='synthetic-poll-fixture';
+ await page.route('**/api/session',r=>r.fulfill({json:fixture}));
+ await page.locator('.console-text').evaluate(n=>n.scrollTop=80);const scroll=await page.locator('.console-text').evaluate(n=>n.scrollTop);
+ const before=await page.locator('.console-text').innerText();const wrap=page.getByRole('button',{name:'Desactivar ajuste de línea'});await wrap.evaluate(n=>n.focus({preventScroll:true}));
+ fixture.session.active={operation:'f13'};fixture.activeProcessObserved=true;fixture.provisionalLog='SYNTHETIC PROVISIONAL MUST NOT REPLACE CLOSED';
+ await wait(1900);assert.equal(await page.locator('.console-text').innerText(),before);assert.equal(await wrap.evaluate(n=>n===document.activeElement),true);assert.equal(await page.locator('.console-text').evaluate(n=>n.scrollTop),scroll);
+ // Missing own artifact never resolves to the inherited copy in a later event.
+ fixture=structuredClone(snapshot);fixture.events.find(e=>e.operation==='f11-early').artifacts=[];
+ await page.goto(url+'/#demo');await page.reload();await page.waitForSelector('.attempt-row');await choose(page,'attempt-1');assert.equal(await page.locator('#blocking-log').isDisabled(),true);await page.locator('#technical-evidence').click();await tab(page,'files');assert.match(await page.locator('#inspector-content').innerText(),/No hay archivos/);
+ // Offline excerpt + hostile-looking text: inert bytes, zero API requests.
+ const offline=structuredClone(snapshot);offline.recorded=true;offline.savedUTC='synthetic offline rendering fixture';const event=offline.events.find(e=>e.operation==='f11-early'),file=event.artifacts.find(a=>a.path==='operations/f11-early/closed/F11-early.json');
+ offline.offlineArtifacts={[file.id]:{text:'<img src=x onerror="window.injected=true"> SYNTHETIC PRIVILEGED',truncated:true}};
+ const context=await browser.newContext({viewport:{width:1366,height:768}}),saved=await context.newPage();let calls=0;saved.on('request',()=>calls++);await saved.setContent(offlineHTML(offline));await choose(saved,'attempt-1');await saved.locator('#blocking-log').click();
+ assert.match(await saved.locator('#inspector-content').innerText(),/EXTRACTO ACOTADO/);assert.equal(await saved.locator('.console-text img').count(),0);assert.match(await saved.locator('.console-text').innerText(),/<img/);
+ await tab(saved,'scope');assert.equal(calls,0);await snap(saved,output,'offline');
+ assert.equal(errors.length,0,errors.join('\n'));pass(output,{actualSession:snapshot.session.session,missingOwnFile:true,offlineRequests:calls,errors});
 }finally{await browser.close();}
