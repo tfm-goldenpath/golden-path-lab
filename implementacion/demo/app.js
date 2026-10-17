@@ -26,6 +26,15 @@
     'comparison-inputs':'F11 / L06 · Comprobar la imagen y las variantes'
   };
   function titleFor(operation,data=current){return titles[operation]||data?.catalogue.operations[operation]?.title||operation;}
+  // Presentation labels describe known observation boundaries, never infer a
+  // policy rejection from an exit code or from every stage touched by an operation.
+  const boundaries={
+    'f11-early':{stage:'manifest',control:'Conftest',property:'privilegios prohibidos'},
+    'f13':{stage:'admission',control:'Kyverno',property:'faltan resultados autorizados'},
+    'f11-admission':{stage:'admission',control:'Kyverno',property:'privilegios prohibidos'},
+    'comparison-admission':{stage:'admission',control:'Kyverno',property:'privilegios prohibidos'}
+  };
+  function routeFor(e){return ['reference','comparison-reference'].includes(e?.operation)?'R':e?.arm||'G';}
   function visual(e,active=false){
     if(active)return {tone:'running',label:'↻ En ejecución'};
     if(!e)return {tone:'pending',label:'○ Sin ejecutar'};
@@ -34,7 +43,7 @@
     if(e.operational==='ABORTED')return {tone:'warning',label:'■ Interrumpido'};
     if(e.operational!=='COMPLETED')return {tone:'pending',label:states[e.operational]||e.operational};
     if(e.expectation!=='confirmed')return {tone:'warning',label:'⚠ Resultado sin confirmar'};
-    if(e.decision==='deny')return {tone:'blocked',label:'× Entrega bloqueada'};
+    if(e.decision==='deny')return {tone:'blocked',label:`× ${routeFor(e)} · Entrega bloqueada${boundaries[e.operation]?' en '+boundaries[e.operation].control:''}`};
     if(e.operation==='comparison-reference')return {tone:'warning',label:'⚠ Riesgo admitido en R'};
     return {tone:'accepted',label:'✓ Permitido / comprobado'};
   }
@@ -49,10 +58,38 @@
       !op.startsWith('comparison-')&&(data.session.profile!=='defense-short'||op!=='f11-admission')));
   }
   function details(title){const d=el('details');d.append(el('summary',title));return d;}
-  function artifact(a){const b=el('button',a.path.split('/').slice(-2).join('/'));b.title='SHA-256 '+a.sha256;b.onclick=()=>openArtifact(a);return b;}
-  async function openArtifact(a){
+  function artifact(a,e=null,label=null){const b=el('button',label||a.path.split('/').slice(-2).join('/'));b.title='Abrir aquí · SHA-256 '+a.sha256;b.onclick=()=>openArtifact(a,e);return b;}
+  function ownArtifact(e,path){
+    // Resolve only the selected operation's closed copy. Later snapshots can
+    // contain inherited files; they cannot supply a missing earlier observation.
+    return e?.artifacts?.find(a=>a.path===`operations/${e.operation}/closed/${path}`&&a.producer===e.operation);
+  }
+  function fileReferences(text,e){
+    const p=el('p',undefined,'file-references');let cursor=0;
+    const pattern=/[A-Za-z0-9_./-]+\.(?:json|log|txt|ya?ml|csv)\b/g;
+    for(const match of text.matchAll(pattern)){
+      p.append(el('span',text.slice(cursor,match.index)));
+      const a=ownArtifact(e,match[0]);p.append(a?artifact(a,e,match[0]):el('span',match[0]));
+      cursor=match.index+match[0].length;
+    }
+    p.append(el('span',text.slice(cursor)));return p;
+  }
+  const keyFiles={
+    'f11-early':['F11-early.json','F11-early.attribution.json','F11-security-diff.txt'],
+    'f13':['F13-admission.log','F13-attribution.json'],
+    'f11-admission':['F11-admission.log','F11-admission.log.attribution.json','F11-unchanged.json'],
+    'comparison-admission':['runtime/F11/Deployment-UPDATE/response.log','runtime/F11/Deployment-UPDATE/result.json'],
+    'comparison-reference':['comparison/reference/response.log','comparison/reference/cleaned-check.json'],
+    'comparison-legitimate':['runtime/L06/update-response.log','runtime/L06/update-change.json']
+  };
+  function keyEvidence(e){
+    const links=el('div',undefined,'evidence-links key-evidence');
+    for(const path of keyFiles[e?.operation]||[]){const a=ownArtifact(e,path);if(a)links.append(artifact(a,e,path.split('/').at(-1)));}
+    return links;
+  }
+  async function openArtifact(a,e=null){
     $('artifact-title').textContent=a.path;
-    $('artifact-meta').textContent=`${a.size} bytes · SHA-256 ${a.sha256} · productor ${a.producer} · origen ${a.source} · ${a.sanitized?'vista saneada con hash propio':'copia íntegra o recibo original'} · integridad ≠ autenticidad ≠ semántica ≠ revisión humana`;
+    $('artifact-meta').textContent=`${e?e.attempt+' · '+(e.endUTC||'UTC desconocida')+' · operación exit='+(e.exitCode??'desconocido')+' · ':''}${a.size} bytes · SHA-256 ${a.sha256} · productor ${a.producer} · origen ${a.source} · ${a.sanitized?'vista saneada con hash propio':'copia íntegra o recibo original'} · integridad ≠ autenticidad ≠ semántica ≠ revisión humana`;
     $('artifact-full').hidden=!!current.recorded;$('artifact-full').href='/download/artifact/'+a.id;
     $('artifact-text').textContent='Comprobando evidencia…';$('artifact').showModal();
     try{
@@ -70,9 +107,9 @@
     if(e.notReached?.length)d.append(el('p','Esta solicitud no alcanza: '+e.notReached.join(', '),'deny'));
     d.append(el('p','Tiempo agregado real. Los intervalos anidados del observador se conservan en sus recibos; no se suman ni se reparten entre controles.'));
     const controls=el('div',undefined,'controls');
-    for(const c of e.controls||[]){const row=el('div',undefined,'control');row.append(el('strong',c.id+' · '+c.tool),el('p',c.property),el('p','Entrada: '+c.input),el('p','Salida: '+c.output),el('p','Condición: '+c.condition),el('p',e.operational==='COMPLETED'?'Resultado confirmado por la operación completa: '+e.decision+'; consultar recibos individuales del observador.':'Resultado individual no establecido por el recibo agregado; consultar originales.'));controls.append(row);}d.append(controls);
+    for(const c of e.controls||[]){const row=el('div',undefined,'control');row.append(el('strong',c.id+' · '+c.tool),el('p',c.property),fileReferences('Entrada: '+c.input,e),fileReferences('Salida: '+c.output,e),el('p','Condición: '+c.condition),el('p',e.operational==='COMPLETED'?'Resultado confirmado por la operación completa: '+e.decision+'; consultar recibos individuales del observador.':'Resultado individual no establecido por el recibo agregado; consultar originales.'));controls.append(row);}d.append(controls);
     const links=details(`Evidencias cerradas (${e.artifacts?.length||0}) · abrir bytes verificados`);
-    const list=el('div',undefined,'evidence-links');links.ontoggle=()=>{if(links.open&&!list.children.length)for(const a of e.artifacts||[])list.append(artifact(a));};links.append(list);d.append(links);return d;
+    const list=el('div',undefined,'evidence-links');links.ontoggle=()=>{if(links.open&&!list.children.length)for(const a of e.artifacts||[])list.append(artifact(a,e));};links.append(list);d.append(links);return d;
   }
   function render(data){
     current=data;const s=data.session, ev=data.events;
@@ -95,6 +132,14 @@
     }
     const attempts=s.profile==='f11-comparison' ? [['comparison-r','R · riesgo admitido','Exige ejecución observada y retirada de la configuración de riesgo; sin explotación.'],['attempt-1','F11 · G temprano · Conftest','PRIVILEGED y ESCALATION; esta petición se detiene antes de Kubernetes.'],['comparison-g','F11 · G admisión · Kyverno','Petición independiente UPDATE; estado intacto. F11 parcial.'],['comparison-l06','L06 · G permite actualizar; alcance parcial','Misma imagen; nueva plantilla, generation, rollout, Pods y HTTP.']] : [['attempt-1','F11 · Conftest','Dos campos prohibidos. Esta solicitud termina aquí.'],['attempt-2','F13 · resultados ausentes','Manifiesto válido, tres evidencias previas. CREATE bloqueado.'],['attempt-3','DEMO_VALID_ACCEPT','Emitir resultados; misma imagen y políticas. Recuperación de F13.'],['attempt-4','F11 · Kyverno','Nueva solicitud UPDATE. Deployment intacto y HTTP disponible.']];
     $('attempt-filter').replaceChildren(el('option','Todos'));$('attempt-filter').children[0].value='all';for(const [id,title] of attempts){const o=el('option',title);o.value=id;$('attempt-filter').append(o);}$('attempt-filter').value=selectedAttempt;
+    $('reference-observation').replaceChildren();
+    $('reference-observation').hidden=s.profile==='f11-comparison';
+    if(s.profile!=='f11-comparison'){
+      const reference=ev.filter(e=>e.operation==='reference').at(-1);
+      const panel=$('reference-observation');
+      panel.append(el('strong','R · Referencia válida'),badge(reference),el('span','Preparación previa · '+seconds(reference?.durationSeconds)+'. No prueba privilegios en R.'));
+      const a=ownArtifact(reference,'tfm-reference-quote.json');if(a)panel.append(artifact(a,reference,'Ver respuesta HTTP de R'));
+    }
     $('attempts').replaceChildren();
     for(const [id,title,description] of attempts){const found=ev.filter(e=>e.attempt===id&&e.phase==='live');const last=found.at(-1);const active=s.active&&data.catalogue.operations[s.active.operation]?.attempt===id;const box=el('article',undefined,'attempt');box.append(el('small',id.replace('attempt-','INTENTO '),'tag'),el('h3',title),el('p',description),el('p',active?(data.activeProcessObserved===false?'Proceso interrumpido; recibo sin cerrar':'En ejecución: '+s.active.operation):decision(last),'decision '+(last?.decision==='deny'?'deny':last?.operational==='ERROR'||last?.operational==='ABORTED'?'error':last?.operational!=='COMPLETED'?'empty':id==='comparison-r'?'error':'allow')));
       if(id==='attempt-2')box.append(el('small','Recuperación positiva: '+(s.f13Recovery==='confirmed'?'confirmada':'pendiente')));
@@ -105,9 +150,10 @@
         if(id==='comparison-l06'&&last?.expectation==='confirmed')box.append(el('strong','L06 — actualización legítima demostrada; alcance parcial','allow'));
         box.append(el('small',`Esperado: ${id==='attempt-1'||id==='comparison-g'?'bloqueo':'aceptación'} · real: ${({allow:'permitido',deny:'bloqueado',indeterminate:'sin confirmar'})[last?.decision]||'no ejecutado'} · expectativa: ${last?.expectation==='confirmed'?'confirmada':last?'sin confirmar':'pendiente'} · ${seconds(last?.durationSeconds)} · vía A · ${id}`));
         const suffix={ 'comparison-r':'reference/response.log','attempt-1':'F11-early.json','comparison-g':'Deployment-UPDATE/response.log','comparison-l06':'L06/update-response.log'}[id];
-        const log=last?.artifacts?.find(a=>a.path.endsWith(suffix))||last?.artifacts?.find(a=>a.path.endsWith('/output.log'));if(log)box.append(artifact(log));
+        const log=last?.artifacts?.find(a=>a.path.endsWith(suffix))||last?.artifacts?.find(a=>a.path.endsWith('/output.log'));if(log)box.append(artifact(log,last));
       }
       box.dataset.tone=visual(last,active).tone;
+      if(s.profile!=='f11-comparison')box.append(keyEvidence(last));
       const indicator=box.children[3];indicator.className+=' outcome-badge '+visual(last,active).tone;indicator.textContent=visual(last,active).label;
       if(s.profile!=='f11-comparison'&&last?.expectation==='confirmed')box.append(el('small',expected(last),'expectation-note'));
       if(last?.operational==='NOT_REACHED')box.append(el('small','La secuencia se detuvo antes de este paso; este control no se ha observado.','warning-note'));
@@ -125,19 +171,29 @@
     for(const stage of data.catalogue.stages){
       const specs=Object.values(data.catalogue.operations).filter(o=>eligible.has(o.adapter)&&o.stages.includes(stage.id)&&(selectedAttempt==='all'||o.attempt===selectedAttempt));
       if(!specs.length)continue;
-      const d=details(stage.title);d.className='technical-stage';d.open=stage.id===selectedStage;d.append(el('p',stage.description,'stage-description'));
+      const d=details(stage.title);d.className='technical-stage';d.dataset.stage=stage.id;d.open=stage.id===selectedStage;
+      const findings=el('span',undefined,'stage-findings');
+      for(const e of data.events){
+        const boundary=boundaries[e.operation];
+        if(boundary?.stage!==stage.id)continue;
+        const v=visual(e);if(!['blocked','warning'].includes(v.tone))continue;
+        const text=v.tone==='blocked'?`× ${e.scenario||'Control'} · ${boundary.property} · bloqueo en ${boundary.control}`:`${e.scenario||'Control'} · ${v.label}`;
+        const marker=el('span',text,'outcome-badge '+v.tone);marker.title=e.attempt+' · '+expected(e);findings.append(marker);
+      }
+      d.children[0].append(findings);d.append(el('p',stage.description,'stage-description'));
       for(const spec of specs){
         const e=data.events.filter(e=>e.operation===spec.adapter).at(-1);
         const active=data.session.active?.operation===spec.adapter;
         const row=el('article',undefined,'scenario-row');row.dataset.tone=visual(e,active).tone;
         const heading=el('div',undefined,'scenario-heading');
         heading.append(el('h3',titleFor(spec.adapter,data)),badge(e,active));row.append(heading);
+        if(e)row.append(el('p',`${routeFor(e)} · ${e.attempt} · ${e.phase==='live'?'En directo':'Preparación previa'}`,'observation-identity'),keyEvidence(e));
         if(e)row.append(el('p',expected(e)+(e.durationSeconds==null?'':' · '+seconds(e.durationSeconds)),'expectation-note'));
         if(e?.operational==='NOT_REACHED')row.append(el('p','No se envió esta prueba: la secuencia se detuvo en un paso anterior. No equivale a un rechazo del control.','warning-note'));
         if(e?.reason)row.append(el('p',e.reason,'diagnostic'));
         const detail=details('Cómo se comprueba · detalles y archivos');
         detail.append(el('p','Depende de: '+(spec.dependsOn.join(', ')||'preparación previa')));
-        for(const c of spec.controls)detail.append(el('p',`${c.tool}: ${c.property} · entrada ${c.input} · salida ${c.output} · condición ${c.condition}`));
+        for(const c of spec.controls){detail.append(el('p',`${c.tool}: ${c.property}`),fileReferences('Entrada: '+c.input,e),fileReferences('Salida: '+c.output,e),el('p','Condición: '+c.condition));}
         row.append(detail);d.append(row);
       }
       $('technical-stages').append(d);

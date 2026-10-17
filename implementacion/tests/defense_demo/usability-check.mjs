@@ -18,7 +18,7 @@ try{
  const titles=await page.locator('.scenario-heading h3').allTextContents();
  assert.ok(titles.some(t=>t.startsWith('F13')));
  assert.ok(!titles.some(t=>/L06|R · Ejecutar|UPDATE independiente/.test(t)),'Other profile operations must not appear as unexecuted');
- const admission=page.locator('.technical-stage').filter({has:page.locator('summary').filter({hasText:/^Admisión Kyverno$/})});
+ const admission=page.locator('.technical-stage[data-stage="admission"]');
  await admission.locator(':scope > summary').click();await admission.scrollIntoViewIfNeeded();
  await page.screenshot({path:output+'-defense.png',fullPage:false});
  assert.ok(await admission.locator('.outcome-badge.blocked').count()>=2);

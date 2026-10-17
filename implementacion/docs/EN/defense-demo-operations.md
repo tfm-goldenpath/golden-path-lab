@@ -335,3 +335,29 @@ or a step not reached. A separate expected-detection label distinguishes a corre
 block from a failed trial. Gray means unexecuted. Not reached means the sequence
 stopped earlier, not that this control rejected delivery. Technical detail includes
 only the selected profile/attempt; dependencies and filenames remain collapsed.
+
+
+Blocked attempt badges now identify the arm and boundary: “G · Entrega bloqueada
+en Conftest” or “G · Entrega bloqueada en Kyverno”. R has a separate reference
+strip in `defense`: this is the valid service observed during preparation, not
+a privileged R trial. The `f11-comparison` profile retains its dedicated live R
+card and its recorded scope.
+
+Folded technical phase headings show red F11/F13 markers only at the observed
+blocking control, including the rejected property. The F13 results prerequisite
+is not presented as a separate rejection, nor is an admission rejection copied
+to deployment. Attempt selection also filters these markers. Integration errors
+and unreached controls stay amber; they do not become confirmed detections.
+
+Use the short evidence links under each scenario or the linked filenames in
+“Entrada” / “Salida” to open the existing evidence dialog without leaving the
+view. For example, F11 exposes the original Conftest JSON, attribution JSON and
+security diff. The dialog shows the selected attempt, UTC, operation exit status
+(the control exit remains in its receipt), file hash and redaction status. It
+uses bounded inert text, with the full-file link for a live viewer; recorded
+exports use retained excerpts and identify the complete package. A reference
+without a matching closed artifact remains plain text; another attempt's file
+cannot fill the gap. No new laboratory requests are made by opening these links.
+
+Refresh the viewer to load these presentation changes. Existing receipts retain
+their original source identity; a UI refresh is not a new rehearsal.

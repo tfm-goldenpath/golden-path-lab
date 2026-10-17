@@ -30,3 +30,12 @@ header{padding:10px 32px}nav{padding:6px 32px}main{padding-top:12px}#demonstrati
 
 .legend .allow{color:var(--green)}.legend .error{color:var(--amber)}
 .attempt .decision{display:table;max-width:100%}.attempt>strong{display:block;font-size:12px;line-height:1.35;margin-top:5px}
+
+/* A closed phase still identifies the observed rejection and its control. */
+.stage-findings{display:inline-flex;gap:6px;flex-wrap:wrap;margin-left:12px;vertical-align:middle}
+.stage-findings:empty{display:none}.stage-findings .outcome-badge{font-size:11px}
+.reference-observation{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:9px 12px;background:white;border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px;font-size:12px;margin:10px 0}
+.reference-observation button{font-size:12px;padding:4px 8px}.reference-observation>span:not(.outcome-badge){color:var(--muted)}
+.file-references button{display:inline;padding:1px 3px;border:0;background:transparent;color:var(--blue);text-decoration:underline;text-underline-offset:3px;font:inherit;overflow-wrap:anywhere;text-align:left}
+.observation-identity{font-size:11px!important;color:var(--muted);margin:7px 0}.key-evidence{margin:7px 0}.key-evidence:empty{display:none}
+.key-evidence button{color:var(--blue);text-decoration:underline;text-underline-offset:3px;background:white}.attempt .key-evidence button{font-size:10px}

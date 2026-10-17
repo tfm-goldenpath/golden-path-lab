@@ -328,3 +328,35 @@ to read a collapsed row; the corrected check opens its containing stage. Both lo
 are preserved under `implementacion/evidence/raw/pr49-usability/`. These checks
 exercise rendering and viewer lifecycle, not a new Kubernetes scenario. No new
 cluster, build, scan or delivery was launched for this follow-up.
+
+## Blocking location and inline evidence follow-up — 17 October 2026
+
+On top of `4bd8304`, the viewer now names G and the actual Conftest/Kyverno
+blocking boundary in each denial badge. Folded technical headings identify
+F11/F13 and the rejected property only at the attributed boundary; a rejection
+is not replicated across every stage referenced by that operation. The `defense`
+view exposes its prepared valid R reference separately from the live G attempts;
+it does not claim that this R observation ran privileged. `f11-comparison` retains
+its dedicated R card. No policies, scenarios, receipts or expected outcomes changed.
+
+Existing per-operation closed artifacts now open from control input/output
+references and short evidence links in the same dialog. Attempt, UTC, operation
+exit, hash and redaction metadata remain visible. Missing own files never resolve
+to a later operation's inherited copy. Offline excerpts are labelled; all displayed
+bytes remain inert text and full live files use the existing verified endpoint.
+
+Validation: 56 defense regressions PASS; DOM/offline mapping PASS; browser checks
+for both profiles at 1366×768 PASS, including comparison-card fit. The new targeted
+browser test opens actual Conftest attribution and security diff bytes from
+`defense-20261017t203701z` without modifying that session. Separate synthetic UI
+fixtures check missing files, attempt filtering, unconfirmed denial, unreached
+steps, offline network isolation and inert HTML-like content. The initial browser
+launch lacked its existing browser-cache environment variable; after setting it,
+the pre-change test failed on the absent boundary label. Both failures and passing
+checks/screenshots are retained under `evidence/raw/pr49-inline-evidence/`.
+
+Only a read-only viewer for the retained comparison session was temporarily opened
+on 8766 and then stopped. The user's viewer on 8765 and laboratory resources were
+not stopped or rebuilt. These are rendering checks, not another delivery or timing
+measurement. The full shared suite was not repeated for this UI-only follow-up.
+Assistance: OpenAI Codex; human review of these subsequent changes remains pending.

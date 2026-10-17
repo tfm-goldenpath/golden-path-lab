@@ -338,3 +338,31 @@ separado que el bloqueo confirmó el ensayo. Gris significa sin ejecutar; «No
 alcanzado» significa que la secuencia se detuvo antes, no que ese control rechazara
 la entrega. El detalle técnico solo muestra operaciones del perfil y del intento
 seleccionados. Dependencias y nombres de archivos quedan plegados.
+
+
+Las etiquetas de los intentos bloqueados indican vía y punto de rechazo:
+«G · Entrega bloqueada en Conftest» o «G · Entrega bloqueada en Kyverno». R tiene
+una franja de referencia aparte en `defense`: es el servicio válido observado en
+preparación, no un ensayo de R con privilegios. `f11-comparison` conserva su
+tarjeta R en directo y su alcance registrado.
+
+Los títulos plegados del detalle técnico muestran F11/F13 en rojo únicamente
+en el control que produjo el bloqueo, indicando qué se rechazó. El prerrequisito
+de resultados de F13 no se muestra como otro rechazo, ni se traslada el rechazo
+de admisión al despliegue. El selector de intento también filtra estos marcadores.
+Los errores de integración y controles no alcanzados siguen en ámbar; no se
+convierten en detecciones confirmadas.
+
+Usa los accesos a evidencia bajo cada escenario o los nombres enlazados en
+«Entrada» / «Salida» para abrir el panel existente sin abandonar la vista. Por
+ejemplo, F11 expone el JSON original de Conftest, la atribución JSON y el diff de
+seguridad. El panel muestra intento, UTC, salida de la operación (la salida del
+control permanece en su recibo), hash y estado de redacción. Presenta texto
+inerte acotado y enlace al archivo completo en el visor conectado; las
+exportaciones registradas usan extractos conservados e identifican el paquete
+completo. Una referencia sin archivo cerrado correspondiente queda como texto;
+no se sustituye por un archivo de otro intento. Abrir estos enlaces no envía
+peticiones nuevas al laboratorio.
+
+Refresca el visor para cargar estos cambios de presentación. Los recibos
+conservan su identidad de fuente original; refrescar la interfaz no es otro ensayo.
