@@ -270,6 +270,63 @@ JSON or mark it prepared. After a source change, use a new session name. `up` an
 not leave another pending session. A later bind race can still fail with its
 original diagnostic retained.
 
+## Run the demo again on the same port
+
+If `present --session defense-01` reports `A complete, unfailed prepared session
+is required`, inspect its status instead of repeating `present`. In the observed
+case, `defense-01` has `operational=PENDING` and `prepared=false`: it never
+completed preparation. `rehearsal-01` has `demoResult=CONFIRMED`: it already
+completed presentation even though its viewer remains open. Neither permits a
+new presentation using `present` on the same session.
+
+**To run the `defense` profile again on 8765**, inspect the inventory and use this
+block from the repository root. Cleanup retires only `rehearsal-01` infrastructure,
+retains evidence and stops its viewer. The command chain stops on cleanup failure;
+it does not start another laboratory over the previous one.
+
+```bash
+bash implementacion/scripts/defense-demo.sh cleanup-plan --session rehearsal-01
+```
+
+```bash
+bash implementacion/scripts/defense-demo.sh cleanup \
+  --session rehearsal-01 --stop-server &&
+export DEMO_SESSION="defense-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')" &&
+printf 'New session: %s\n' "$DEMO_SESSION" &&
+bash implementacion/scripts/defense-demo.sh up \
+  --session "$DEMO_SESSION" --profile defense --auto \
+  --enable-actions --port 8765 --budget-seconds 180
+```
+
+`up` prepares again **and automatically presents**. It is not an instant restart:
+it includes tests, cluster creation, build, analysis and signing. The 180-second
+budget covers presentation, not all preparation. Do this outside the presentation;
+retain the printed session name and open/refresh 8765 as **Private**. For a later
+rehearsal, replace `rehearsal-01` in the cleanup commands with the session being
+retired. Do not delete or reuse `defense-01`.
+
+**To prepare now and present later**, replace `up` with `prepare` and replace
+`--auto --budget-seconds 180` with `--serve`. After preparation succeeds:
+
+```bash
+bash implementacion/scripts/defense-demo.sh status --session "$DEMO_SESSION"
+bash implementacion/scripts/defense-demo.sh present \
+  --session "$DEMO_SESSION" --auto --budget-seconds 180
+```
+
+**To view existing results without new requests**, use only:
+
+```bash
+bash implementacion/scripts/defense-demo.sh serve \
+  --session rehearsal-01 --stop-server --enable-actions --port 8765
+```
+
+This restarts the viewer on the same port, not the demo, and cannot turn a pending
+session into a prepared one. For the four R/F11/L06 cards, use the preceding
+preparation block with `--profile f11-comparison`; `defense` is the F11/F13/valid
+delivery sequence. A prepared session whose source/environment changed requires
+new preparation, never internal state edits.
+
 ## Reading the visual results
 
 Scenario/control titles are prominent. Green means allowed or successfully checked;

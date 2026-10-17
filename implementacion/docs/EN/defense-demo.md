@@ -102,3 +102,5 @@ bash implementacion/scripts/defense-demo/f11-static.sh
 ```
 
 The separate fallback runs real Conftest against a **labelled synthetic manifest and placeholder digest**. It needs Node/jq/Conftest, no cluster. It proves no image build, signature, F13 or admission. If Kubernetes is unavailable, F13 can only be shown as a clearly identified saved real execution, or as unexecuted. Unit substitutes are labelled and never count as live acceptance. See the [local validation record](../../registros/defense_demo_validation_EN.md) for actual outcomes and remaining review.
+
+To repeat a completed demo on 8765, see [run again on the same port](defense-demo-operations.md#run-the-demo-again-on-the-same-port): a new session is required; `serve` only reopens the viewer.

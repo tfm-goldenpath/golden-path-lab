@@ -103,3 +103,5 @@ bash implementacion/scripts/defense-demo/f11-static.sh
 ```
 
 El fallback separado ejecuta Conftest real sobre un **manifiesto sintético identificado y un digest de ejemplo**. Necesita Node/jq/Conftest, no Kubernetes; no acredita build, firma, F13 ni admisión. Si falla el clúster, F13 sólo puede mostrarse como ejecución real anterior claramente identificada, o sin ejecutar. Los sustitutos unitarios no acreditan integración. Consulta el [registro local de validación](../../registros/defense_demo_validation_EN.md) para resultados reales y revisión pendiente.
+
+Para repetir una demo ya terminada en 8765, consulta [volver a ejecutar en el mismo puerto](defense-demo-operations.md#volver-a-ejecutar-la-demo-en-el-mismo-puerto): requiere una sesión nueva; `serve` solo reabre el visor.

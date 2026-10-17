@@ -272,6 +272,63 @@ usa un nombre nuevo. Ahora `prepare --serve` y `up` comprueban el puerto antes d
 crear la sesión; un conflicto no deja otra sesión pendiente. Una carrera posterior
 al chequeo sigue pudiendo fallar, con su diagnóstico conservado.
 
+## Volver a ejecutar la demo en el mismo puerto
+
+Si `present --session defense-01` responde `A complete, unfailed prepared session
+is required`, no repitas `present`: primero consulta el estado. En el caso
+comprobado, `defense-01` tiene `operational=PENDING` y `prepared=false`; nunca
+completó la preparación. `rehearsal-01` tiene `demoResult=CONFIRMED`: ya terminó
+su ensayo, aunque su visor siga abierto. Ninguna de esas condiciones permite
+una nueva presentación con `present` sobre la misma sesión.
+
+**Para ejecutar de nuevo el perfil `defense` en 8765**, revisa el inventario y usa
+este bloque desde la raíz. La limpieza retira exclusivamente infraestructura
+propia de `rehearsal-01`, conserva sus evidencias y cierra su visor. El encadenado
+se detiene si falla la limpieza; no arranca otro laboratorio encima del anterior.
+
+```bash
+bash implementacion/scripts/defense-demo.sh cleanup-plan --session rehearsal-01
+```
+
+```bash
+bash implementacion/scripts/defense-demo.sh cleanup \
+  --session rehearsal-01 --stop-server &&
+export DEMO_SESSION="defense-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')" &&
+printf 'Nueva sesión: %s\n' "$DEMO_SESSION" &&
+bash implementacion/scripts/defense-demo.sh up \
+  --session "$DEMO_SESSION" --profile defense --auto \
+  --enable-actions --port 8765 --budget-seconds 180
+```
+
+`up` vuelve a preparar **y ejecuta automáticamente la presentación**. No es un
+reinicio instantáneo: incluye pruebas, clúster, build, análisis y firma. Su límite
+de 180 s corresponde a presentación, no a toda la preparación. Hazlo fuera de la
+exposición; conserva el nombre impreso y abre/refresca 8765 como **Private**.
+Para otro ensayo posterior, sustituye `rehearsal-01` en los comandos de limpieza
+por la sesión que estés retirando. No borres ni reutilices `defense-01`.
+
+**Para preparar ahora y presentar después**, sustituye `up` por `prepare` y
+`--auto --budget-seconds 180` por `--serve`. Una vez termine correctamente:
+
+```bash
+bash implementacion/scripts/defense-demo.sh status --session "$DEMO_SESSION"
+bash implementacion/scripts/defense-demo.sh present \
+  --session "$DEMO_SESSION" --auto --budget-seconds 180
+```
+
+**Para ver de nuevo los resultados sin ejecutar peticiones**, usa únicamente:
+
+```bash
+bash implementacion/scripts/defense-demo.sh serve \
+  --session rehearsal-01 --stop-server --enable-actions --port 8765
+```
+
+Esto reinicia el visor en el mismo puerto, no repite la demo ni convierte una
+sesión pendiente en preparada. Para las cuatro tarjetas R/F11/L06, sigue el bloque
+anterior de preparación con `--profile f11-comparison`; `defense` es el recorrido
+F11/F13/entrega válida. Una sesión preparada con fuente o entorno modificados
+requiere nueva preparación, no edición de su estado interno.
+
 ## Lectura visual de resultados
 
 Los títulos resaltan escenario y vía de control. Verde significa permitido o
