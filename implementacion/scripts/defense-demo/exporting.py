@@ -59,6 +59,17 @@ def verify_export(package):
         return {'status':'VERIFIED', 'boundary':'Archive integrity only; see original cryptographic verifier receipts', 'files':len(manifest['files'])}
 
 
+def observation_paths(captures):
+    from observations import STORE, artifact as observation_artifact
+    paths = {}
+    for capture in captures:
+        if capture.get('status') not in ('CAPTURED', 'INCOMPLETE'): continue
+        for record in capture.get('files', []):
+            observation_artifact(capture['id'], record['sha256'])
+            paths['github-observations/'+capture['id']+'/'+record['file']] = STORE/capture['id']/record['file']
+    return paths
+
+
 def export_session(state):
     from coordinator import lab_path, resources
     from server import snapshot
@@ -67,6 +78,8 @@ def export_session(state):
     database_paths = snapshot_paths(state, lab_path(name))
     estimate = sum(p.stat().st_size for folder in (raw, lab_path(name)) if folder for p in folder.rglob('*') if p.is_file() and not p.is_symlink())
     estimate += sum(p.stat().st_size for p in database_paths.values())
+    from observations import inventory
+    estimate += sum(f['size'] for capture in inventory() for f in capture.get('files', []))
     observation = resources(state['reserveGiB'], growth_gib=(estimate * 3 + 64*1024**2)/1024**3)
     checks = raw / 'export-checks'
     checks.mkdir(exist_ok=True)
@@ -119,6 +132,7 @@ def export_session(state):
              'catalogue.json': (raw / 'catalogue.json').read_bytes(), 'source.json': (raw / 'source.json').read_bytes(),
              'workflows.json': (raw / 'workflows.json').read_bytes(), 'recorded.html': output.read_bytes()}
     paths = {'artifacts/' + key + '/' + Path(record['path']).name: raw / record['path'] for key, record in artifacts.items()}
+    paths.update(observation_paths(value.get('githubObservations', [])))
     paths.update(database_paths)
     if lab_package: paths['laboratory/' + lab_package.name] = lab_package
     for path, data_bytes in files.items():

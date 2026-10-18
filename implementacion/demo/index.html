@@ -13,8 +13,9 @@
  <span id="connection" role="status">Conectando…</span>
  <span id="active-operation"></span><button id="stop" class="stop" hidden disabled>Detener</button>
  <details id="provenance"><summary>Identidad y procedencia</summary><div class="menu">
+ <p id="readonly-help" hidden>Solo lectura. Las acciones requieren iniciar el visor con --enable-actions; esta página no puede elevar permisos.</p>
  <p id="source"></p><p id="renderer"></p><p id="resources">Disco: sin lectura</p><p id="environment">Laboratorio: estado desconocido</p>
- <button id="preparation">Preparación y tiempos</button><button data-explore="technical">Detalle técnico completo</button>
+ <button id="preparation">Preparación y tiempos</button><button data-explore="technical">Detalle técnico completo</button><button data-explore="attestations">Atestaciones de la sesión</button>
  <a id="html-export" href="/download/html" hidden>HTML registrado ↓</a><a id="package-export" href="/download/package" hidden>Paquete de evidencia ↓</a>
  </div></details>
 </header>
@@ -33,14 +34,12 @@
  <button data-action="check">Comprobar entorno</button><button data-action="export">Exportar HTML y evidencia</button><button data-action="cleanup">Limpiar recursos propios…</button>
  </div></details>
  </section>
- <p id="readonly-help" hidden>Solo lectura. Las acciones requieren iniciar el visor con --enable-actions; esta página no puede elevar permisos.</p>
- <button id="open-live">Consola en directo</button>
  <div id="preparation-warning" class="preparation-warning" hidden></div>
- <div class="overview-heading"><h2>Intentos independientes</h2><a href="#journey/map" data-journey-link>Ver proceso completo</a><label id="follow-label"><input type="checkbox" id="follow"> Seguir ejecución en directo</label></div>
+ <div class="overview-heading"><h2>Intentos independientes</h2><button id="open-live">Consola en directo</button><a href="#journey/map" data-journey-link>Ver proceso completo</a><label id="follow-label"><input type="checkbox" id="follow"> Seguir ejecución en directo</label></div>
  <div id="attempts" aria-label="Progreso por intento"></div>
  <p id="timing"></p><p class="overview-note">Las etapas indican orden, no porcentajes. ↶ Preparación reutilizada. Pulsa un bloqueo para leer su salida original.</p>
 </section>
-<section id="live-console" hidden aria-label="Consola de la operación"><button id="close-live">← Volver a demostración</button><h1 id="live-title">Consola en directo</h1><p id="live-state" role="status"></p><p id="live-progress"></p><div class="inline-actions"><button id="live-follow">Pausar seguimiento</button><button id="live-bottom">Volver al final</button><button id="live-final" hidden>Ver recibo y salida final</button></div><p id="live-timestamp"></p><pre id="live-output" tabindex="0"></pre></section>
+<section id="live-console" hidden aria-label="Consola de la operación"><button id="close-live">← Volver a demostración</button><h1 id="live-title">Consola en directo</h1><p id="live-state" role="status"></p><p id="live-progress"></p><div class="inline-actions"><button id="live-follow">Pausar seguimiento</button><button id="live-bottom">Volver al final</button><button id="live-wrap">Desactivar ajuste de línea</button><button id="live-copy">Copiar extracto mostrado</button><span id="live-copy-status" role="status"></span><button id="live-final" hidden>Ver recibo y salida final</button></div><p id="live-timestamp"></p><pre id="live-output" tabindex="0"></pre></section>
 <section id="exploration" hidden aria-label="Exploración"><div class="panel-heading"><h1 id="exploration-title"></h1><button id="close-exploration">Volver a demostración</button></div><p id="exploration-context"></p><div id="exploration-content"></div></section>
 <section id="inspector" hidden aria-label="Detalle del intento">
  <div class="detail-toolbar"><button id="close-inspector">← Volver a demostración</button><button id="toggle-sidebar" aria-expanded="true">Ocultar lista de intentos</button><label id="mobile-attempt-label">Intento <select id="mobile-attempt"></select></label></div>

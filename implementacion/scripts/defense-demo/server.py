@@ -26,6 +26,7 @@ _children = {}
 
 
 def snapshot(name):
+    from observations import inventory
     raw = evidence_root(name)
     state = public_session(name)
     tail = None
@@ -42,7 +43,7 @@ def snapshot(name):
                     stream.seek(max(0, p.stat().st_size - 8192))
                     tail = sanitize(stream.read(8192).decode('utf-8', errors='replace'))
                 log_modified = datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat()
-    return {'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
+    return {'githubObservations': inventory(), 'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
             'liveOperations': LIVE[state['profile']],
             'profileOperations': (F11_PREPARE if state['profile'] == 'f11-comparison' else PREPARE) + LIVE[state['profile']] + ['resume', 'cleanup'],
             'workflows': [{**w, 'jobs': w.get('jobs', workflow_facts(w.get('yaml', '')))} for w in read_json(raw / 'workflows.json')],
@@ -242,6 +243,10 @@ def make_server(name, port, token):
                     self.send(result)
                 elif route.path == '/api/session':
                     self.send(json.dumps(snapshot(name), ensure_ascii=False).encode())
+                elif re.fullmatch(r'/observation/[0-9]+-[a-f0-9]{12}/[a-f0-9]{64}', route.path):
+                    from observations import artifact
+                    _, _, capture_id, checksum = route.path.split('/')
+                    self.send(artifact(capture_id, checksum), 'text/plain; charset=utf-8')
                 elif route.path == '/api/sessions':
                     self.send(json.dumps(local_session_inventory(name), ensure_ascii=False).encode())
                 elif route.path == '/api/events':

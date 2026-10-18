@@ -19,7 +19,7 @@ try{
  await wait(1800);assert.equal(await page.getByRole('searchbox').inputValue(),'L06');await snap(page,output,'catalogue');
  await page.locator('#close-exploration').click();assert.equal(await page.locator('#result-title').innerText(),previous);
  await explore(page,'workflows');assert.match(await page.locator('#exploration-content').innerText(),/Configuración capturada; ejecución remota no observada/);
- assert.equal(await page.locator('#exploration-content .catalogue-list button').count(),4);await page.locator('#exploration-content .catalogue-list button').first().click();await snap(page,output,'workflows');
+ assert.equal(await page.locator('#workflow-choice option').count(),4);await page.locator('[data-workflow-tab=configuration]').click();await snap(page,output,'workflows');
  await page.locator('#close-exploration').click();await explore(page,'sessions');await page.waitForSelector('#exploration-content details');assert.match(await page.locator('#exploration-content').innerText(),/sesión vinculada/);assert.equal(await page.locator('#result-title').innerText(),previous);
  await loaded(page,comparisonURL);assert.equal(await page.locator('.attempt-row').count(),4);await explore(page,'technical');assert.equal(await page.locator('#exploration-content').getByText(/F13 ·/).count(),0);
  assert.equal(errors.length,0,errors.join('\n'));pass(output,{profiles:['defense','f11-comparison'],catalogue:20,errors});
