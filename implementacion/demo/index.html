@@ -35,6 +35,11 @@
  <strong>Preparación</strong><button data-action="check">Comprobar entorno</button><strong>Conservación</strong><button data-action="export">Exportar HTML y evidencia</button><button data-action="cleanup">Limpiar recursos propios…</button>
  </div></details>
  </section>
+ <section id="repeat-controls" class="repeat-controls" aria-label="Repetir un caso compatible">
+ <label for="repeat-case">Caso a repetir</label><select id="repeat-case"><option value="case-f11-early">F11 · Control temprano / Conftest</option><option value="case-f11-admission">F11 · Admisión independiente / Kyverno</option></select>
+ <button id="repeat-case-run" disabled aria-describedby="repeat-case-status">Volver a ejecutar caso</button>
+ <p id="repeat-case-status">Esperando capacidades del servidor.</p>
+ </section>
  <div id="preparation-warning" class="preparation-warning" hidden></div>
  <div class="overview-heading"><h2>Intentos independientes</h2><button id="open-live">Consola en directo</button><a href="#journey/map" data-journey-link>Ver proceso completo</a><label id="follow-label"><input type="checkbox" id="follow"> Seguir ejecución en directo</label></div>
  <div id="attempts" aria-label="Progreso por intento"></div>

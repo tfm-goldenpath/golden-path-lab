@@ -41,7 +41,15 @@
    let row=result.find(r=>r.id===e.attempt);if(!row){row={id:e.attempt,ops:[e.operation],events:[]};result.push(row);}if(!row.ops.includes(e.operation))row.ops.push(e.operation);row.events.push(e);
   }
   const active=data.session.active;if(active?.attempt&&definitionOps(data).includes(active.operation)&&!result.some(r=>r.id===active.attempt))result.push({id:active.attempt,ops:[active.operation],events:[]});
+  const groups=new Map();
+  for(const row of result){const key=row.ops.includes('authorize')||row.ops.includes('accept')?'accept':row.ops.at(-1);const group=groups.get(key)||[];group.push(row);groups.set(key,group);}
+  for(const group of groups.values())if(group.length>1)group.forEach((row,index)=>{row.executionNumber=index+1;});
   return result;
+ }
+ function rowTitle(row,data,operation=null){
+  const m=meta(operation||row.ops.at(-1),data);
+  const title=!operation&&(row.ops.includes('accept')||row.ops.includes('authorize'))?'G · Recuperación de F13':(m.arm==='G'?'G · ':'')+m.title;
+  return title+(row.executionNumber?' · Ejecución '+row.executionNumber:'');
  }
  function latest(row,op){return row.events.filter(e=>!op||e.operation===op).at(-1);}
  function rowOutcome(row,data){
@@ -127,5 +135,5 @@
    (b.run.created_at||'').localeCompare(a.run.created_at||'')||Number(b.run.id)-Number(a.run.id)||
    (b.run.run_attempt||0)-(a.run.run_attempt||0)||(b.capturedUTC||'').localeCompare(a.capturedUTC||''));
  }
- root.DemoModel={workflowRuns,meta,outcome,confirmed,expectation,definitionOps,profileOps,rows,latest,rowOutcome,segments,ownArtifact,primaryArtifact,scope,family,scenarioOps,phaseLabel,sessionEvents,incompletePreparation,operationOutput,eventIdentity,artifactOrigin,journeyFilters,filteredEvents,journey};
+ root.DemoModel={workflowRuns,meta,outcome,confirmed,expectation,definitionOps,profileOps,rows,rowTitle,latest,rowOutcome,segments,ownArtifact,primaryArtifact,scope,family,scenarioOps,phaseLabel,sessionEvents,incompletePreparation,operationOutput,eventIdentity,artifactOrigin,journeyFilters,filteredEvents,journey};
 })(globalThis);

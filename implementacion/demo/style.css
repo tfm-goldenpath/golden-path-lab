@@ -67,3 +67,8 @@ body[data-view=detail] #action-status,body[data-view=detail] #command-result{dis
  body[data-view=detail] #command-console{padding:3px 10px}
  body[data-view=detail] main{padding-top:6px}
 }
+
+.repeat-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
+.repeat-controls label{font-weight:600}.repeat-controls select{min-width:0;max-width:100%}
+.repeat-controls button{border-color:var(--blue);color:var(--blue);font-weight:600}
+.repeat-controls p{flex-basis:100%;font-size:14px;color:var(--muted);margin:0}

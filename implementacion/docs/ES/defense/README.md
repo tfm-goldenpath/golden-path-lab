@@ -1,6 +1,7 @@
 # Demostración de defensa
 
-Los casos F11 compatibles admiten intentos independientes sobre preparación válida conservada; F13 requiere una fixture preparada por separado. Consulta [intentos y bundles auténticos de vía A](demo-workspace.md#intentos-independientes-y-bundles-de-vía-a). La presentación original no se reinicia.
+[Ensayo web real, guion de 160 segundos y respaldo offline](web-rehearsal.md).
+Los casos F11 compatibles admiten intentos independientes sobre preparación válida conservada. La secuencia inicial defense incluye F13; repetir F13 requiere una fixture preparada por separado. Consulta [intentos y bundles auténticos de vía A](demo-workspace.md#intentos-independientes-y-bundles-de-vía-a). La presentación original no se reinicia.
 
 [English](../../EN/defense/README.md) · [Índice documental](../README.md)
 
@@ -8,7 +9,9 @@ Usa `main` actualizado y el perfil opcional de Codespaces para defensa: **4 CPU,
 16 GB RAM y 32 GB de disco total**. Conserva cambios sin confirmar al actualizar.
 La preparación ocurre antes de los tres minutos de presentación. Reconstruir no
 redimensiona el Codespace. Comprueba bytes e inodos libres; conserva la reserva
-de custodia de 3 GiB y la salvaguarda de 8 GiB antes de preparar.
+de custodia de 3 GiB. Con esa reserva, los márgenes vigentes exigen 5 GiB para
+preparar defense y 8 GiB para f11-comparison o una fixture F13 independiente.
+Son márgenes operativos, no garantías de capacidad.
 
 | Objetivo | Guía canónica |
 |---|---|
@@ -49,19 +52,8 @@ sobre los recibos anteriores. Para repetir, crea otra sesión. No se implementa
 reutilización de infraestructura entre sesiones nuevas. Paso a paso registra
 segmentos separados y pausas del presentador; no inventa una duración continua.
 
-## Guion propuesto, sin ensayo humano cronometrado
+## Guion de tres minutos (propuesto, sin ensayo humano cronometrado)
 
-- 0–20 s: identificar sesión/perfil, preparación previa y confianza local A.
-- 20–80 s: iniciar Automático o el siguiente paso permitido; abrir Consola en
-  directo. Diferenciar salida provisional de recibo final. Detener sigue visible.
-- 80–115 s: leer el log exacto del bloqueo, separar Conftest de la petición
-  independiente a Kyverno y mostrar recuperación solo si está confirmada.
-- 115–140 s: Workflows → paired-rg.yml → ejecución histórica capturada. Explicar
-  intervalo primario R/G frente a duración GitHub, sin mezclarlo con la demo.
-- 140–160 s: mostrar una atestación local y su recibo histórico; volver a la
-  comparación y explicar límites. Reservar los últimos 20 s.
+Sigue el [guion único de 160 segundos y la ficha del presentador](web-rehearsal.md#guion-propuesto-160-segundos-y-20-de-reserva): F11/F13 y recuperación iniciales, logs originales y recorrido técnico. Deja Workflows para las preguntas; sus tiempos históricos pertenecen a otro conjunto de datos.
 
-Si las operaciones superan el tiempo disponible, usa un respaldo registrado
-identificado. El presupuesto web es de 120 segundos **por invocación**, no una
-garantía de tres minutos incluyendo explicación. Esta mejora de interfaz no
-acredita un ensayo humano ni una nueva ejecución del laboratorio.
+El [registro del ensayo real](../../../registros/demo_web_rehearsal_EN.md) separa preparación, ejecución automática y navegación medidas de la narración humana todavía pendiente. El presupuesto web de 120 segundos corresponde a cada invocación; no garantiza una exposición de tres minutos. Cambia explícitamente al respaldo verificado si la ejecución falla o no permite continuar la explicación.

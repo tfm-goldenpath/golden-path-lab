@@ -15,6 +15,10 @@ fuente de evidencia, hash del renderizador, recursos registrados, preparación y
 detalle técnico completo. Un visor conectado puede mostrar evidencia antigua de
 un laboratorio retirado. **Tiempo registrado de ejecución** no es un cronómetro.
 
+Los casos repetidos muestran «Ejecución 1», «Ejecución 2», etc., en la comparación, el título del detalle y el selector de intentos. La numeración corresponde a cada control dentro de la sesión, en el orden de los intentos registrados; no sustituye sus identificadores ni modifica sus evidencias. Conftest temprano y la petición independiente a Kyverno tienen numeraciones separadas.
+
+Usa **Volver a ejecutar caso**, arriba en Demostración, para elegir F11/Conftest o F11/Kyverno y crear un intento nuevo e independiente. Abre la consola de la acción y conserva los recibos anteriores. La disponibilidad depende del servidor vinculado; solo lectura, desconexión, operación activa o preparación incompatible dejan el botón deshabilitado con su motivo. No reinicia toda una presentación consumida. F13 conserva su flujo de preparación de fixture independiente.
+
 ## Abrir en Codespaces
 
 Consulta las sesiones y usa un puerto libre y privado. Se probaron estos comandos

@@ -1,13 +1,16 @@
 # Defense demonstration
 
-Supported F11 cases can now create independent attempts on valid retained preparation; F13 requires a separately prepared fixture. See [case attempts and authentic lane A bundles](demo-workspace.md#independent-case-attempts-and-lane-a-bundles). The original presentation is never reset.
+[Real web rehearsal, 160-second route and offline fallback](web-rehearsal.md).
+Supported F11 cases can create independent attempts on valid retained preparation. The initial defense sequence includes F13; repeating F13 requires a separately prepared fixture. See [case attempts and authentic lane A bundles](demo-workspace.md#independent-case-attempts-and-lane-a-bundles). The original presentation is never reset.
 
 [Español](../../ES/defense/README.md) · [Documentation index](../README.md)
 
 Use updated `main` and the optional defense Codespace profile: **4 CPUs, 16 GB RAM,
 32 GB total disk**. Preserve uncommitted work when updating. Preparation takes place
 before the three-minute talk. A rebuild does not resize a Codespace. Check actual
-free space/inodes; retain the 3 GiB custody reserve and 8 GiB preparation safeguard.
+free space/inodes and retain the 3 GiB custody reserve. With that reserve, current
+growth guards require 5 GiB for defense preparation and 8 GiB for f11-comparison
+or an independent F13 fixture. These are operational margins, not capacity guarantees.
 
 | Goal | Canonical guide |
 |---|---|
@@ -50,17 +53,6 @@ presenter pauses; it does not manufacture one continuous live duration.
 
 ## Three-minute route (proposed, not human-timed)
 
-- 0–20 s: identify the bound profile/session, prior preparation and trust lane A.
-- 20–80 s: start Automatic, or one supported next step; open Consola en directo.
-  Explain provisional output versus the final receipt. Stop remains in the header.
-- 80–115 s: open the exact blocking log, distinguish Conftest from the independent
-  Kyverno request, and show recovery only when its receipt confirms it.
-- 115–140 s: Workflows → paired-rg.yml → the captured historical run. Explain R/G
-  primary timing versus GitHub duration, without pooling it with the demo.
-- 140–160 s: show a local attestation and its historical verifier receipt; return
-  to the comparison and state scope. Keep 20 s reserve.
+Use the [single 160-second browser route and presenter worksheet](web-rehearsal.md#proposed-160-second-route): initial F11/F13/recovery, exact original logs, then the full technical journey. Keep workflow exploration for questions; historical GitHub timing is a separate dataset.
 
-If operations exceed the available time, use an explicitly labelled recorded
-fallback. The web budget is 120 seconds **per invocation**, not a guarantee about
-three minutes including narration. No human rehearsal or new lab execution is
-established by this UI change.
+The [real rehearsal record](../../../registros/demo_web_rehearsal_EN.md) separates measured preparation, automatic execution and browser navigation from the still-pending human narration. The 120-second web budget is per invocation; it does not guarantee a three-minute talk. Switch explicitly to the verified recorded fallback if the live sequence fails or cannot support the next explanation.
