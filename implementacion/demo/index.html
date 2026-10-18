@@ -27,17 +27,20 @@
 <section id="presentation" aria-label="Demostración">
  <div class="demo-heading"><h1 id="profile-title">Comparación y controles</h1><p id="profile-description"></p></div>
  <section class="operator" aria-label="Controles de la sesión vinculada" hidden>
- <label>Modo <select id="mode"><option value="auto">Automático</option><option value="step">Paso a paso</option></select></label>
+ <span id="control-state"></span><span id="next-operation"></span><label>Modo <select id="mode"><option value="auto">Automático</option><option value="step">Paso a paso</option></select></label>
  <button id="primary" class="primary" disabled>Conectando…</button>
  <details id="more"><summary>Más acciones</summary><div class="menu">
  <button data-action="check">Comprobar entorno</button><button data-action="export">Exportar HTML y evidencia</button><button data-action="cleanup">Limpiar recursos propios…</button>
  </div></details>
  </section>
+ <p id="readonly-help" hidden>Solo lectura. Las acciones requieren iniciar el visor con --enable-actions; esta página no puede elevar permisos.</p>
+ <button id="open-live">Consola en directo</button>
  <div id="preparation-warning" class="preparation-warning" hidden></div>
  <div class="overview-heading"><h2>Intentos independientes</h2><a href="#journey/map" data-journey-link>Ver proceso completo</a><label id="follow-label"><input type="checkbox" id="follow"> Seguir ejecución en directo</label></div>
  <div id="attempts" aria-label="Progreso por intento"></div>
  <p id="timing"></p><p class="overview-note">Las etapas indican orden, no porcentajes. ↶ Preparación reutilizada. Pulsa un bloqueo para leer su salida original.</p>
 </section>
+<section id="live-console" hidden aria-label="Consola de la operación"><button id="close-live">← Volver a demostración</button><h1 id="live-title">Consola en directo</h1><p id="live-state" role="status"></p><p id="live-progress"></p><div class="inline-actions"><button id="live-follow">Pausar seguimiento</button><button id="live-bottom">Volver al final</button><button id="live-final" hidden>Ver recibo y salida final</button></div><p id="live-timestamp"></p><pre id="live-output" tabindex="0"></pre></section>
 <section id="exploration" hidden aria-label="Exploración"><div class="panel-heading"><h1 id="exploration-title"></h1><button id="close-exploration">Volver a demostración</button></div><p id="exploration-context"></p><div id="exploration-content"></div></section>
 <section id="inspector" hidden aria-label="Detalle del intento">
  <div class="detail-toolbar"><button id="close-inspector">← Volver a demostración</button><button id="toggle-sidebar" aria-expanded="true">Ocultar lista de intentos</button><label id="mobile-attempt-label">Intento <select id="mobile-attempt"></select></label></div>

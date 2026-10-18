@@ -231,7 +231,7 @@ def make_server(name, port, token):
                     if not actions or not self.authenticated():
                         self.send(b'{}', code=403); return
                     running = controller() is not None or (worker[0] is not None and worker[0].poll() is None)
-                    self.send(json.dumps({'csrf': csrf, 'busy': running, 'capabilities': capabilities(running), 'session': name}).encode())
+                    self.send(json.dumps({'csrf': csrf, 'busy': running, 'capabilities': capabilities(running), 'session': name, 'nextOperation': next((op for op in LIVE[public_session(name)['profile']] if op not in public_session(name).get('completed', [])), None)}).encode())
                 elif route.path == '/api/health':
                     self.send(json.dumps({'session': name, 'token': token, 'readUTC': utc()}).encode())
                 elif route.path == '/api/cleanup-plan':
