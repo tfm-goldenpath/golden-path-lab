@@ -369,4 +369,47 @@ peticiones nuevas al laboratorio.
 Refresca el visor para cargar estos cambios de presentación. Los recibos
 conservan su identidad de fuente original; refrescar la interfaz no es otro ensayo.
 
+## Fallo de descarga de la base Trivy durante la preparación
+
+Si `analysis` falla antes de generar el SBOM, consulta los archivos conservados
+`database-download.log`, `database-download-request.txt` y
+`database-download-exit.txt` en `labEvidenceRoot` de la sesión (visible en `status`).
+Un HTTP 404 del registro es un error de preparación/integración, no un rechazo de
+la política de vulnerabilidades. El comando compartido ahora también muestra un
+extracto identificado (últimos 16 KiB) en el log de la operación cuando falla;
+el original completo se conserva separado y su código de salida detiene la fase.
+
+Las descargas nuevas usan explícitamente `ghcr.io/aquasecurity/trivy-db:2`, la
+[ubicación documentada por el proveedor](https://trivy.dev/docs/latest/configuration/db/),
+sin depender del fallback del mirror ante capas ausentes. Si el operador define
+`TRIVY_DB_REPOSITORY`, se respeta esa ubicación y queda en el recibo del comando.
+Se mantienen la versión fijada de Trivy, la comprobación de identidad de la base
+y el bloqueo HIGH/CRITICAL. Los snapshots ya identificados y las entradas
+`GP_VULNERABILITY_DB` se reutilizan sin descargarlos ni actualizarlos. No se
+sustituye un fallo por análisis históricos ni se reintenta incondicionalmente.
+
+Conserva el error y las evidencias de `rehearsal-06`: no está preparada y no puede
+continuarse con `present`. Fuera de la presentación, inspecciona y retira solo su
+infraestructura propia y prepara una **sesión nueva** con el código corregido
+(estos comandos no borran evidencias):
+
+```bash
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+bash implementacion/scripts/defense-demo.sh cleanup-plan --session rehearsal-06
+bash implementacion/scripts/defense-demo.sh cleanup --session rehearsal-06 --stop-server
+export DEMO_SESSION="defense-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')"
+printf 'Nueva sesión: %s\n' "$DEMO_SESSION"
+bash implementacion/scripts/defense-demo.sh prepare \
+  --session "$DEMO_SESSION" --profile defense --serve --enable-actions --port 8765
+# Solo cuando la preparación termine correctamente:
+bash implementacion/scripts/defense-demo.sh present \
+  --session "$DEMO_SESSION" --auto --budget-seconds 180
+```
+
+Revisa el plan antes de ejecutar la limpieza. Si otro visor ocupa el puerto,
+sigue la instrucción `stop-server --session <propietario>` que indique el error;
+no mates procesos arbitrarios. Conserva las salvaguardas de disco e inodos.
+Un análisis aislado satisfactorio valida descarga/análisis, no una demo completa
+ni un ensayo narrado.
+
 La entrada visible **Recorrido técnico** separa el mapa completo de controles de la secuencia registrada. Consulta [navegación del recorrido](demo-workspace.md#recorrido-técnico-completo) para filtros, originales, retorno y preparación incompleta.

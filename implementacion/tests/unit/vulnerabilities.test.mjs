@@ -149,3 +149,38 @@ echo forbidden`);assert.equal(r.status,37,r.stderr);assert.match(r.stderr,/datab
 for(const field of ['errors','warnings','exceptions']) test(`malformed evaluator ${field} cannot become a denial`,t=>{
  const f=setup(t,'F04'),rows=read(join(f.d,'vulnerability-policy.json'));rows[0][field]={};f.put('vulnerability-policy.json',rows);assert.throws(()=>decision(f.d,1),/diagnostics/);
 });
+
+for (const repository of ['', 'registry.example.invalid/approved-db:2']) test(`database download records explicit repository and preserves snapshot; override=${!!repository}`, t => {
+ const f=setup(t); f.put('state.json',{}); mkdirSync(join(f.d,'storage'));
+ const r=shell(f.d,`
+trivy() {
+  printf '%s\\n' "$@" > "$state_dir/download-args.txt"
+  mkdir -p "$TRIVY_CACHE_DIR/db"
+  printf 'synthetic database' > "$TRIVY_CACHE_DIR/db/trivy.db"
+  printf '{"Version":2,"UpdatedAt":"2026-10-18T00:00:00Z"}' > "$TRIVY_CACHE_DIR/db/metadata.json"
+}
+delivery_database_prepare
+trivy() { echo forbidden-download; return 99; }
+delivery_database_prepare`, {TRIVY_DB_REPOSITORY:repository,TRIVY_CACHE_DIR:join(f.d,'cache'),GP_VULNERABILITY_DB:'',GP_VULNERABILITY_SNAPSHOT_ROOT:join(f.d,'storage')});
+ assert.equal(r.status,0,r.stderr);
+ const args=readFileSync(join(f.d,'download-args.txt'),'utf8').trim().split('\n');
+ assert.equal(args[args.indexOf('--db-repository')+1],repository || 'ghcr.io/aquasecurity/trivy-db:2');
+ assert.match(readFileSync(join(f.d,'database-download-request.txt'),'utf8'),/--db-repository/);
+ assert.equal(readFileSync(join(f.d,'database-download-exit.txt'),'utf8'),'0\n');
+ assert.doesNotMatch(r.stdout,/forbidden-download/);
+});
+test('download failure keeps original and bounded visible diagnostic, exact exit, and stops before snapshot', t => {
+ const f=setup(t);f.put('state.json',{});mkdirSync(join(f.d,'storage'));
+ const r=shell(f.d,`
+trivy() { printf '%20000s' ''; printf 'SYNTHETIC HTTP 404 Not Found\\n' >&2; return 37; }
+delivery_database_prepare
+echo forbidden`,{TRIVY_CACHE_DIR:join(f.d,'cache'),GP_VULNERABILITY_DB:'',GP_VULNERABILITY_SNAPSHOT_ROOT:join(f.d,'storage')});
+ assert.equal(r.status,37,r.stderr);assert.doesNotMatch(r.stdout,/forbidden/);
+ assert.match(r.stderr,/database-download failed.*37/);
+ assert.match(r.stderr,/last 16384 bytes/);assert.match(r.stderr,/SYNTHETIC HTTP 404 Not Found/);
+ assert.ok(Buffer.byteLength(r.stderr)<17000);
+ assert.ok(readFileSync(join(f.d,'database-download.log')).length>20000);
+ assert.equal(readFileSync(join(f.d,'database-download-exit.txt'),'utf8'),'37\n');
+ assert.equal(read(join(f.d,'state.json')).vulnerabilityDatabase,undefined);
+ assert.ok(!existsSync(join(f.d,'storage',`vulnerability-db-${f.d.split('/').at(-1)}`)));
+});

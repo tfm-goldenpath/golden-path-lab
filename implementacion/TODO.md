@@ -9,6 +9,14 @@
 - [x] Human review of this navigation change completed, as confirmed by the requester on 18 October 2026; PR creation and closure authorized. This does not constitute a GitHub approval submitted by the assistant.
 - [ ] Narrated timing remains unmeasured; no new laboratory execution or campaign sample.
 
+## Preparation database retrieval correction — 18 October 2026
+
+- [x] Diagnose `rehearsal-06`: default Trivy mirror layer returned HTTP 404; no scan or policy rejection occurred. Preserve the failed session.
+- [x] Select the publisher database repository explicitly for fresh retrieval, retaining operator overrides and immutable snapshot checks. Surface a bounded original diagnostic on command failure without masking its exit status.
+- [x] Add regressions for repository selection, snapshot reuse and failure propagation; document recovery in EN/ES.
+- [x] `doctor`, `test-defense` (61), shared `test` and isolated real-image analysis pass; see the [validation record](registros/trivy_download_fix_20261018_EN.md).
+- [ ] Human review of this retrieval correction; no new complete demo or narrated rehearsal claimed.
+
 ## Full-height demo evidence detail — local correction, October 2026
 
 - [x] Continue the uncommitted dashboard implementation on `fix/demo-evidence-layout`,
