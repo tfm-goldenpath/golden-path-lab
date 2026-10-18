@@ -1,5 +1,7 @@
 # Demostración de defensa
 
+[Controles tempranos F02/F12/F03](early-security.md).
+
 [Ensayo web real, guion de 160 segundos y respaldo offline](web-rehearsal.md).
 Los casos F11 compatibles admiten intentos independientes sobre preparación válida conservada. La secuencia inicial defense incluye F13; repetir F13 requiere una fixture preparada por separado. Consulta [intentos y bundles auténticos de vía A](demo-workspace.md#intentos-independientes-y-bundles-de-vía-a). La presentación original no se reinicia.
 
@@ -57,3 +59,5 @@ segmentos separados y pausas del presentador; no inventa una duración continua.
 Sigue el [guion único de 160 segundos y la ficha del presentador](web-rehearsal.md#guion-propuesto-160-segundos-y-20-de-reserva): F11/F13 y recuperación iniciales, logs originales y recorrido técnico. Deja Workflows para las preguntas; sus tiempos históricos pertenecen a otro conjunto de datos.
 
 El [registro del ensayo real](../../../registros/demo_web_rehearsal_EN.md) separa preparación, ejecución automática y navegación medidas de la narración humana todavía pendiente. El presupuesto web de 120 segundos corresponde a cada invocación; no garantiza una exposición de tres minutos. Cambia explícitamente al respaldo verificado si la ejecución falla o no permite continuar la explicación.
+
+[Perfil combinado: todas las familias en una sesión](combined-profile.md).

@@ -1,5 +1,23 @@
 # Incremental implementation plan
 
+## Combined demo profile — 18 October 2026
+
+- [x] Add `defense-all`: unchanged defense ordering through F13 recovery, followed by authorized R/G comparison and partial L06; independently prepared early cases in the same bound viewer.
+- [x] Preserve existing profiles, per-case immutable evidence, source/resource checks and readable original logs.
+- [x] Shared suite (131 defense regressions), 19 model checks, real F02/F12 browser comparisons/repeat and 428-file zero-network offline backup verified for the combined profile.
+- [x] Unified selector and real browser rehearsal `all-20261018t194405z`: common preparation, F11/F13 recovery, controlled R, directed F11, partial L06, all three early comparisons and new F11 attempts; safe owned retirement restored capacity without reducing safeguards.
+- [ ] Prioritize all early-control logs in bounded combined HTML exports; originals are preserved in the verified full package (see follow-up validation).
+- [x] Human acceptance communicated by the requester on 18 October 2026; see [acceptance record](registros/demo_combined_profile_EN.md#human-acceptance-and-pr-handoff).
+- [ ] Human-narrated rehearsal remains pending; acceptance does not establish its duration.
+
+## Early security dashboard — 18 October 2026
+
+- [x] Separate early-security profile using existing workflow/manifest/vulnerability oracles, per-case preparation, linked immutable observations and the current web supervisor. No Kubernetes requirement for early gates.
+- [x] Audience wording uses informe instead of recibo; original formats and historical records remain unchanged.
+- [x] Real F02/F12/F03 browser comparisons, immutable repeats, active-scan cancellation/recovery and a verified 610-file offline package. Final shared suite and 123 defense regressions pass; existing browser-layout/import assumptions remain separately documented in [validation](registros/demo_early_security_EN.md).
+- [x] Human acceptance communicated by the requester on 18 October 2026; see the current handoff in [validation](registros/demo_early_security_EN.md#human-acceptance-and-pr-handoff).
+- [ ] Narrated rehearsal remains pending; no new campaign sample or full-scenario coverage claimed.
+
 ## Real browser rehearsal — 18 October 2026
 
 - [x] Number duplicate case executions and expose a capability-gated F11 repeat selector. A later compatible dirty-source session was prepared and checked from the browser, with its presentation left pending; see the follow-up in the validation record. Publication changes the bound SHA and requires a new preparation.
