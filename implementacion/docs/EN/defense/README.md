@@ -1,5 +1,7 @@
 # Defense demonstration
 
+Supported F11 cases can now create independent attempts on valid retained preparation; F13 requires a separately prepared fixture. See [case attempts and authentic lane A bundles](demo-workspace.md#independent-case-attempts-and-lane-a-bundles). The original presentation is never reset.
+
 [Español](../../ES/defense/README.md) · [Documentation index](../README.md)
 
 Use updated `main` and the optional defense Codespace profile: **4 CPUs, 16 GB RAM,

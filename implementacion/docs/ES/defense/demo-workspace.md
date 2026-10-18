@@ -178,7 +178,7 @@ permanece hasta que el backend establece el resultado; se bloquean dobles lanzam
 
 **Más acciones** en Demostración contiene comprobación de entorno, exportación
 y limpieza propia. La preparación está en **Identidad y procedencia**. El modo
-solo lectura oculta los controles operativos y su selector; conserva navegación,
+solo lectura muestra deshabilitados los controles operativos y su selector, con explicación; conserva navegación,
 evidencias y descargas disponibles. Con acciones autorizadas aparece la barra de
 ejecución y **Detener** permanece en la cabecera global durante una operación.
 La cabecera y la navegación se redistribuyen con zoom elevado. La limpieza conserva su vista previa de alcance y confirmación. El servidor
@@ -406,3 +406,111 @@ no se inventa un `provenance.bundle.json`. Las cuatro tarjetas distinguen presen
 integridad, verificación criptográfica histórica y autorización agregada histórica.
 No se vuelve a verificar criptografía ni se interpreta un JSON visible como prueba
 actual. El brazo R indica «No aplicado»; las atestaciones locales A siguen separadas.
+
+## Intentos independientes y bundles de vía A
+
+La presentación original sigue siendo de un solo uso. **Ejecutar siguiente paso**
+y **Iniciar comparación** consumen su secuencia pendiente; **Nuevo intento** crea
+un caso independiente, con ID, directorio, comandos, salidas, atribución y tiempos
+propios. No reinicia `completed`, `demoResult` ni mediciones históricas. Consultar
+un intento no cambia la sesión que controlan los botones. En solo lectura se ven
+controles deshabilitados y la explicación de `--enable-actions`; el navegador no
+puede elevar permisos.
+
+| Caso | Qué reutiliza | Qué se observa de nuevo |
+|---|---|---|
+| F11 / Conftest | Manifiesto, fuente y preparación sellada | Copia aislada identificada, comando, salida y atribución nuevos |
+| F11 / Kyverno | Digest autorizado, políticas, actor y Deployment saludable | Disponibilidad y confianza, UPDATE real restringido, estado intacto y HTTP |
+| F13 | Coordinador y escenarios, no la imagen ya autorizada | Preparación hija `defense-short`, laboratorio y referencia de imagen propios sin resultados |
+| Recuperación F13 | Solo imagen y confianza de esa fixture | Autorización y aceptación vinculadas a su rechazo |
+
+Antes de F11 se comprueban fuente/configuración, arranque, propiedad y recursos.
+La copia contiene entradas enumeradas y referencias; no modifica el laboratorio
+original. El tiempo continuo original no incorpora repeticiones ni pausas: cada
+invocación conserva su intervalo separado.
+
+En **Preparación y recursos del nuevo caso F13** puedes preparar, ejecutar,
+recuperar y retirar la fixture. Sin una válida se explica “Requiere preparación
+de un nuevo caso F13”. Su preparación es completa y ocurre **antes de la charla**:
+reutiliza la implementación de pruebas/build/análisis/firma, pero crea un
+laboratorio independiente. No elimina referrers ni reaplica una imagen que ya
+tenga resultados. Consume recursos adicionales y no es un relanzamiento inmediato.
+Exige el margen inicial configurado de 8 GiB, conserva 3 GiB y sondea cada 10 s.
+Si no cabe, se detiene sin declarar la fixture preparada. Antes de preparar otra,
+retira explícitamente la actual. Se previsualizan IDs propios; se conservan
+recibos, evidencia, claves privadas y snapshots. Retira la fixture antes de la
+sesión principal. No se ejecuta ningún workflow remoto.
+
+Con la fuente finalizada, crea una sesión nueva antes de presentar:
+
+```bash
+cd /workspaces/golden-path-lab
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+export DEMO_SESSION="defense-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')"
+printf '%s\n' "$DEMO_SESSION"
+bash implementacion/scripts/defense-demo.sh serve --new \
+  --session "$DEMO_SESSION" --profile defense --reserve-gib 3 \
+  --enable-actions --port 8765
+```
+
+Mantén 8765 **Private**. Pulsa **Preparar entorno**, espera su finalización y usa
+**Más → Comprobar entorno**. Prepara también la fixture F13 antes de la charla si
+necesitas otro caso F13. Durante la presentación, elige Automático o Paso a paso,
+inspecciona el resultado y pulsa **Nuevo intento** en una fila F11 compatible.
+La solicitud de ejecución abre la consola amplia. Detener sigue siendo una
+solicitud hasta el recibo final; HTTP 202, desconexión o proceso desaparecido no
+acreditan resultado. Un original fijado para lectura no sigue otra operación.
+Preparación fallida, fuente cambiada o recursos retirados no se reparan habilitando
+acciones: requieren preparación válida nueva.
+
+Reabre con `serve --session "$DEMO_SESSION" --enable-actions --port 8765`. Si el
+visor de esa sesión ya está en solo lectura, `stop-server --session
+"$DEMO_SESSION"` detiene únicamente ese visor verificado; después reábrelo con
+acciones. No mates al propietario ajeno de un puerto. Cambiar la fuente invalida
+la preparación ejecutable, pero permite consultar los resultados conservados.
+
+### Importar el ejemplo auténtico de vía A
+
+El run `37353632299`, intento 1, fuente
+`91a33e910ee2ba9ded5391393b06ca70005de4d4`, estaba disponible el 18-10-2026:
+
+```bash
+df -h /workspaces /tmp
+df -i /workspaces /tmp
+python3 implementacion/scripts/defense-demo/observations.py --run 37353632299 \
+  --lane-a-artifact 11363314552 --lane-a-artifact 11363283724
+```
+
+Se descargan explícitamente demo (4.176.767 bytes) y vulnerabilidades (639.212
+bytes), **sin bases de datos**. Sus paquetes contienen 24 bundles finales canónicos,
+en seis grupos de suite/contexto/digest: principal, L01-update, L05-from, L05-to,
+F03-repaired y L02. Las capturas anteriores de solo metadatos siguen disponibles.
+
+Se comprueban asociación repositorio/run/intento/fuente, SHA-256 del ZIP registrado
+por GitHub, hashes exteriores seleccionados, auditoría del paquete y todos sus
+hashes internos (1.963 y 349). Límites por artifact: ZIP 16 MiB; 2.048 entradas y
+32 MiB expandidos exteriores; paquete anidado comprimido 8 MiB, 4.096 archivos,
+32 MiB expandidos, profundidad 8 y documento 2 MiB. Se rechazan rutas inseguras,
+enlaces, duplicados y discrepancias. Se conservan rutas originales; no se importan
+claves privadas ni bases. La captura mantiene el límite de 8 MiB y admite hasta
+128 documentos. El HTML contiene extractos acotados y el paquete exportado los
+originales capturados; no se reescriben exports anteriores.
+
+En **Workflows → lane-a-validation.yml → Atestaciones**, selecciona run e imagen.
+Las cuatro tarjetas separan firma de imagen, SBOM, procedencia y resultados.
+Pestaña seleccionada azul, foco visible, flechas/Home/End y contador contextual
+permiten reconocer la navegación sin usar los colores de resultados. El recibo
+criptográfico histórico debe corresponder al documento exacto del mismo contexto;
+la autorización semántica exige además digest/predicado coincidentes en su gate.
+No se transfieren recibos entre imágenes L01/L05. Si no se registró fecha exacta de
+verificación, permanece desconocida. Es **vía A con clave pública local incluso
+en GitHub**, no OIDC B ni reverificación actual. Se conservan por separado gates
+previos a resultados; la captura final no incluye todos los snapshots negativos.
+
+Guion propuesto de 160 s, sin ensayo humano cronometrado: 0–20, identificar sesión
+preparada y alcance; 20–80, ejecutar pasos y abrir el bloqueo original; 80–115,
+crear otro intento F11 compatible y contrastar IDs/resultados; 115–145, mostrar
+atestaciones de vía A y sus cuatro niveles de comprobación; 145–160, volver a la
+comparación y señalar el export registrado. Reserva de 20 s. Si disponibilidad,
+recursos o duración lo impiden, usa un respaldo expresamente registrado. No se
+establece una garantía nueva de ejecución completa en tres minutos.

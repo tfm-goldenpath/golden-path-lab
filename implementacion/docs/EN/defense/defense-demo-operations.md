@@ -1,5 +1,7 @@
 # Run the demo and preserve it when changing machines
 
+Supported F11 cases can now create independent attempts on valid retained preparation; F13 requires a separately prepared fixture. See [case attempts and authentic lane A bundles](demo-workspace.md#independent-case-attempts-and-lane-a-bundles). The original presentation is never reset.
+
 [Current defense guide](README.md) · [Browser controls and captured runs](demo-workspace.md#browser-controls-and-live-console)
 The current interface uses [internal navigation and full-height evidence detail](demo-workspace.md); see its controls, original log links and proposed narration route.
 

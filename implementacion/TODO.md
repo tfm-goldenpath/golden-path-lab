@@ -1,5 +1,13 @@
 # Incremental implementation plan
 
+## Independent demo cases and authentic lane A bundles — 18 October 2026
+
+- [x] Enumerated F11 repeat actions with isolated inputs/new receipts, sealed-readiness checks and immutable original timing; isolated F13 fixture preparation/recovery/retirement through the existing coordinator.
+- [x] Explicit disabled read-only controls, full-height live console, accessible blue workflow tabs and digest/context grouping.
+- [x] Import real run 37353632299 demo/vulnerabilities artifacts: 24 canonical bundles, exact associated historical receipts, checked nested hashes; no databases or remote dispatch.
+- [ ] Full new Kubernetes repeat/fixture rehearsal: current free workspace is below the unchanged 8 GiB cold-preparation safeguard; actual authenticated web request was stopped and retained.
+- [ ] Human review and narrated rehearsal; no acceptance inferred from earlier reviews. See [validation and proposed PR](registros/demo_repeatable_cases_EN.md).
+
 ## Latest workflow captures and paired attestations — 18 October 2026
 
 - [x] Import the latest CI, hosted Golden Path and lane A validation metadata without running workflows; retain source and capture dates.

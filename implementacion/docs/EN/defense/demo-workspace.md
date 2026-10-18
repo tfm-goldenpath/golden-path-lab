@@ -177,8 +177,8 @@ A 202 response means accepted, not completed. Stop remains **Detención solicita
 until the backend establishes the outcome; double-click starts are suppressed.
 
 **Más acciones** on Demostración contains environment check, export and owned
-cleanup. Preparation is under **Identidad y procedencia**. Read-only viewers hide
-execution/mode controls, retaining navigation, evidence and available downloads.
+cleanup. Preparation is under **Identidad y procedencia**. Read-only viewers show disabled
+execution/mode controls with an explanation, retaining navigation, evidence and available downloads.
 Authorized sessions show their execution strip; active **Detener** stays in the
 global header across views. Header and navigation reflow at high zoom.
 The cleanup preview still lists its scope and requires confirmation. The server
@@ -402,3 +402,112 @@ Native provenance retains its actual `CI-authorized-2.bundle.json` filename; no
 historically recorded cryptography and historical aggregate authorization. No
 current cryptographic verification is performed, and visible JSON is not proof
 of authenticity. R is labelled not applied; local lane A examples remain separate.
+
+## Independent case attempts and lane A bundles
+
+The original presentation remains single-use. **Ejecutar siguiente paso** and
+**Iniciar comparación** consume its pending sequence; **Nuevo intento** creates a
+separate case receipt and directory. It never resets `completed`, `demoResult` or
+historical timing. Inspection selection does not change the bound execution
+session. Read-only viewers show disabled controls and the `--enable-actions`
+explanation; no browser setting grants permission.
+
+| Case | What is reused | What is newly observed |
+|---|---|---|
+| F11 / Conftest | Sealed manifest, source and owned preparation | Isolated input copy, fresh command, output and attribution |
+| F11 / Kyverno | Authorized digest, policies, actor and healthy Deployment | Readiness and trust checks, new restricted-actor UPDATE, unchanged-state and HTTP checks |
+| F13 | Coordinator and scenario implementation, not the authorized image | Dedicated child `defense-short` preparation with its own laboratory/image reference, no results yet |
+| F13 recovery | Only that child's image and trust state | Authorization and acceptance for the corresponding rejected attempt |
+
+Before F11, the existing boot/source/configuration, ownership and resource checks
+must pass. Copies contain only allowlisted inputs and references; original run
+files stay unchanged. New operation directories and IDs retain predecessor and
+preparation association. The original continuous presentation time is never
+extended with repeats or presenter pauses; each invocation records its own time.
+
+**Preparación y recursos del nuevo caso F13** exposes preparation, execution,
+recovery and owned-resource retirement. Without a valid independent fixture,
+**Ejecutar fixture F13** explains “Requiere preparación de un nuevo caso F13”.
+Preparing it is a cold preparation outside the talk: it uses the existing shared
+checks/build/analysis/signing pipeline and an independent laboratory, not a hidden
+referrer deletion or image reuse. This consumes additional resources; it is not
+instant replay. Prepare sequentially with at least the configured 8 GiB starting
+margin, retain 3 GiB, and monitor every 10 seconds. If it cannot fit, preparation
+stops; no fixture is claimed. The current fixture must be retired explicitly
+before another can be prepared. Cleanup previews immutable owned resource IDs;
+evidence, private signing state and snapshots are preserved. Retire a linked
+fixture before the parent session. No remote workflow is launched.
+
+Start from a finalized source and a **new** session, before presenting:
+
+```bash
+cd /workspaces/golden-path-lab
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+export DEMO_SESSION="defense-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')"
+printf '%s\n' "$DEMO_SESSION"
+bash implementacion/scripts/defense-demo.sh serve --new \
+  --session "$DEMO_SESSION" --profile defense --reserve-gib 3 \
+  --enable-actions --port 8765
+```
+
+Keep port 8765 Private. Click **Preparar entorno**, wait for completion, and
+**Más → Comprobar entorno**. For an additional F13 demonstration, prepare its
+independent fixture before the talk. During the talk choose automatic or step
+mode; inspect a result, then use **Nuevo intento** on a supported F11 row.
+The wide live console opens on an explicit execution request. Stop remains a
+request until the coordinator closes its receipt. A vanished worker, disconnect
+or HTTP 202 is never a confirmed result. Reading a fixed original does not follow
+another operation. A source change, removed resources or failed preparation
+requires valid new preparation; enabling actions alone cannot repair that state.
+
+For reopening, use `serve --session "$DEMO_SESSION" --enable-actions --port 8765`.
+If a read-only viewer already owns the port, `stop-server --session
+"$DEMO_SESSION"` stops only that verified viewer; then reopen with actions.
+Do not terminate another port owner. Source changes invalidate executable
+preparation, while retained results remain readable.
+
+### Import the authentic lane A example
+
+Run `37353632299`, attempt 1, source `91a33e910ee2ba9ded5391393b06ca70005de4d4`
+was available on 2026-10-18. Explicitly download only its two small artifacts:
+
+```bash
+df -h /workspaces /tmp
+df -i /workspaces /tmp
+python3 implementacion/scripts/defense-demo/observations.py --run 37353632299 \
+  --lane-a-artifact 11363314552 --lane-a-artifact 11363283724
+```
+
+The demo ZIP was 4,176,767 bytes; vulnerabilities was 639,212 bytes. Their nested
+packages supplied 24 canonical final bundles in six suite/context/digest groups:
+principal, L01-update, L05-from, L05-to, F03-repaired and L02. Database artifacts
+are not downloaded. Earlier metadata-only captures remain selectable.
+
+The importer validates artifact/run/attempt/repository/source association,
+GitHub ZIP SHA-256, selected outer manifest hashes, archive audit and every
+internal package hash (1,963 and 349 respectively). Limits per artifact: 16 MiB
+ZIP, 2,048 outer entries/32 MiB expanded; one 8 MiB compressed nested package,
+4,096 files/32 MiB expanded, depth 8, 2 MiB per document. Traversal, links,
+duplicates and mismatches fail. Public documents retain original package paths;
+private keys and databases are not captured. A capture still has the existing
+8 MiB bound and at most 128 files. HTML uses bounded excerpts; the export package
+contains captured originals. New captures do not rewrite old exports.
+
+Under **Workflows → lane-a-validation.yml → Atestaciones**, select the run and
+image/context. Four contracts remain separate. Blue selected tabs, keyboard
+arrows/Home/End, visible focus and the context counter distinguish navigation
+from red/green outcomes. A bundle's historical cryptographic receipt must have
+its exact same-context statement; semantic authorization additionally requires
+the matching digest/predicate in its gate. Neither receipt is transferred across
+L01/L05 images. Verification time is unknown where not recorded. These are
+historical local-public-key checks, **lane A even on GitHub**, not OIDC B and not
+current reverification. Pre-results gates remain separate files; canonical final
+capture does not claim to include every negative snapshot.
+
+A proposed 160-second route (not a measured human rehearsal): 0–20 identify the
+prepared session and scope; 20–80 run pending steps and open the exact blocking
+console; 80–115 create one compatible new F11 attempt and compare IDs/results;
+115–145 open lane A attestations and explain the four evidence levels;
+145–160 return to comparison and show recorded export. Keep 20 seconds reserve.
+If readiness, resource limits or execution time prevent this, use an explicitly
+recorded fallback. No new three-minute runtime guarantee is established.

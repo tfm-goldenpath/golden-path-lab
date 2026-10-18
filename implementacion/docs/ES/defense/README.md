@@ -1,5 +1,7 @@
 # Demostración de defensa
 
+Los casos F11 compatibles admiten intentos independientes sobre preparación válida conservada; F13 requiere una fixture preparada por separado. Consulta [intentos y bundles auténticos de vía A](demo-workspace.md#intentos-independientes-y-bundles-de-vía-a). La presentación original no se reinicia.
+
 [English](../../EN/defense/README.md) · [Índice documental](../README.md)
 
 Usa `main` actualizado y el perfil opcional de Codespaces para defensa: **4 CPU,

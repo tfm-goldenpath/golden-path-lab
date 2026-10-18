@@ -1,5 +1,7 @@
 # Demostración visual local para la defensa
 
+Los casos F11 compatibles admiten intentos independientes sobre preparación válida conservada; F13 requiere una fixture preparada por separado. Consulta [intentos y bundles auténticos de vía A](demo-workspace.md#intentos-independientes-y-bundles-de-vía-a). La presentación original no se reinicia.
+
 [Guía vigente de defensa](README.md) · [Controles web y capturas](demo-workspace.md#browser-controls-and-live-console)
 La interfaz actual usa [navegación interna y detalle amplio de evidencia](demo-workspace.md); consulta controles, acceso a logs originales y guion propuesto.
 
