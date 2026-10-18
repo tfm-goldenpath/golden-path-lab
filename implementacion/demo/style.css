@@ -72,3 +72,6 @@ body[data-view=detail] #action-status,body[data-view=detail] #command-result{dis
 .repeat-controls label{font-weight:600}.repeat-controls select{min-width:0;max-width:100%}
 .repeat-controls button{border-color:var(--blue);color:var(--blue);font-weight:600}
 .repeat-controls p{flex-basis:100%;font-size:14px;color:var(--muted);margin:0}
+/* Early comparisons keep an unmistakable primary action inside the case strip. */
+.repeat-controls button.primary{color:white;background:var(--blue)}
+.repeat-controls button.primary:hover:not(:disabled){background:#084f78}

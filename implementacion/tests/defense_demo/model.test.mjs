@@ -126,3 +126,51 @@ test('fixture preparation never replaces the original attempt origin',()=>{
  assert.ok(M.journey(d,'attempt-1').flatMap(s=>s.entries).every(x=>x.event?.fixtureSession!=='fixture-1'));
  assert.equal(M.journey(d,'attempt-1').find(s=>s.id==='manifest').entries.find(x=>x.event===early).state.tone,'blocked');
 });
+
+test('early profile has independent counterparts, exact gate links and no Kubernetes success',()=>{
+ const d=data('early-security',[event('early-f02-prepare',{phase:'preparation'}),event('early-f02-negative',{operationInstance:'early-f02-negative-1',artifacts:[{id:'exact',producer:'early-f02-negative',path:'operations/early-f02-negative-1/control.stdout.log'}]}),event('early-f02-positive')]);
+ const rows=M.rows(d);assert.equal(rows.length,6);assert.ok(rows.every(r=>!r.reference));
+ assert.match(M.outcome(d.events[1]).label,/workflow \/ Conftest/);
+ assert.equal(M.primaryArtifact(d.events[1],d).id,'exact');
+ const segments=M.segments(rows[0],d);assert.equal(segments[0].state.tone,'reused');assert.equal(segments[1].state.tone,'blocked');
+ assert.equal(M.journey(d).find(s=>s.id==='admission').entries.length,0);
+ assert.equal(M.incompletePreparation({...d,events:[event('early-f03-prepare',{phase:'preparation',operational:'ERROR'})]}),null);
+ assert.match(M.scope('early-security'),/no es L02/);
+});
+
+test('combined profile retains distinct defense, comparison and early observations',()=>{
+ const d=data('defense-all',[event('f13'),event('accept',{linkedAttempt:'attempt-2'}),event('comparison-reference'),event('comparison-legitimate'),event('early-f02-negative',{attempt:'early-f02-negative-1'})]);
+ const rows=M.rows(d);
+ for(const op of ['f11-early','f13','accept','f11-admission','comparison-reference','comparison-admission','comparison-legitimate','early-f02-negative','early-f12-negative','early-f03-negative'])assert.ok(rows.some(r=>r.ops.includes(op)),op);
+ assert.notEqual(rows.find(r=>r.ops.includes('f13')).id,rows.find(r=>r.ops.includes('accept')).id);
+ assert.notEqual(M.meta('f11-admission',d).title,M.meta('comparison-admission',d).title);
+ assert.equal(M.outcome(M.latest(rows.find(r=>r.ops.includes('comparison-reference')))).tone,'risk');
+ assert.match(M.scope('defense-all','comparison-legitimate'),/L06.*parcial/);
+ assert.match(M.scope('defense-all','early-f03-negative'),/No firma/);
+ assert.equal(M.segments(rows.find(r=>r.ops.includes('early-f02-negative')),d)[0].operation,'early-f02-prepare');
+ assert.equal(rows.find(r=>r.ops.includes('comparison-inputs')).id,'comparison-setup');
+});
+test('failed common preparation does not label independently ready early controls as unreached',()=>{
+ const d=data('defense-all',[event('analysis',{phase:'preparation',operational:'ERROR',expectation:'unconfirmed'})]);d.session.operational='ERROR';
+ const rows=M.rows(d);assert.equal(M.rowOutcome(rows.find(r=>r.ops.includes('f13')),d).tone,'unreached');
+ assert.equal(M.rowOutcome(rows.find(r=>r.ops.includes('early-f02-negative')),d).tone,'idle');
+});
+test('combined preparation reuse stays inside the selected family',()=>{
+ const d=data('defense-all',[event('seal',{phase:'preparation'}),event('early-f02-prepare',{phase:'preparation'}),event('early-f03-prepare',{phase:'preparation'})]);
+ const early=M.journey(d,'early-f02-negative-1').flatMap(x=>x.entries).filter(x=>x.reused);
+ assert.ok(early.every(x=>x.event.operation==='early-f02-prepare'));
+ const runtime=M.journey(d,'attempt-2').flatMap(x=>x.entries).filter(x=>x.reused);
+ assert.ok(runtime.every(x=>!x.event.operation.startsWith('early-')));
+});
+test('combined case controls enumerate every family without skipping initial preconditions',()=>{
+ const d=data('defense-all');d.session.completed=[];
+ assert.deepEqual(M.combinedCases.filter(([id])=>['f02','f03','f12','f13','f11-early','f11-admission','comparison-reference','comparison-legitimate'].includes(id)).length,8);
+ assert.equal(M.combinedControl(d,{nextOperation:'f13'},'f13').action,'step');
+ assert.equal(M.combinedControl(d,{nextOperation:'f13'},'comparison-legitimate').action,null);
+ assert.equal(M.combinedControl(d,{},'f12').action,'case-early-f12');
+ d.session.completed=['f13','f11-early','comparison-legitimate'];
+ assert.equal(M.combinedControl(d,{},'f11-early').action,'case-f11-early');
+ assert.equal(M.combinedControl(d,{},'f13').action,null);
+ assert.match(M.combinedControl(d,{},'f13').note,/fixture independiente/);
+ assert.equal(M.combinedControl(d,{},'comparison-legitimate').action,null);
+});

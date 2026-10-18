@@ -20,7 +20,7 @@ import socket
 
 from core import (ROOT, WEB, artifact_index, atomic, boot_id, events, evidence_root,
                   public_session, read_artifact, read_json, safe_path, sanitize, session_path, utc,
-                  PREPARE, F11_PREPARE, LIVE, local_session_inventory, workflow_facts)
+                  PREPARE, F11_PREPARE, EARLY_PREPARE, LIVE, preparation_operations, display_operations, local_session_inventory, workflow_facts)
 
 _children = {}
 
@@ -54,8 +54,8 @@ def snapshot(name):
                 log_modified = datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat()
     from actions import public_records, records
     return {'commands': public_records(name), 'stopRequests': records(name,'stop-requests')[-100:], 'githubObservations': inventory(), 'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
-            'liveOperations': LIVE[state['profile']],
-            'profileOperations': (F11_PREPARE if state['profile'] == 'f11-comparison' else PREPARE) + LIVE[state['profile']] + ['resume', 'cleanup'],
+            'liveOperations': display_operations(state['profile']),
+            'profileOperations': preparation_operations(state['profile']) + (EARLY_PREPARE if state['profile']=='defense-all' else []) + display_operations(state['profile']) + (['cleanup'] if state['profile']=='early-security' else ['resume', 'cleanup']),
             'workflows': [{**w, 'jobs': w.get('jobs', workflow_facts(w.get('yaml', '')))} for w in read_json(raw / 'workflows.json')],
             'renderer': {file: hashlib.sha256((WEB/file).read_bytes()).hexdigest() for file in ('index.html','style.css','model.js','app.js')},
             'actionsEnabled': os.environ.get('GP_DEMO_ACTIONS') == '1',
@@ -160,7 +160,10 @@ def action_capabilities(state, has_events, running, source_error=None):
         if running and key != 'stop': reasons[key] = 'Otra operación sigue activa'
     if not running: reasons['stop'] = 'No hay una operación activa'
     if source_error: reasons['prepare'] = source_error
-    if has_events or state.get('operational') != 'PENDING': reasons['prepare'] = 'Preparación ya intentada; usa una sesión nueva'
+    if state.get('profile')=='defense-all':
+        attempted=bool(state.get('labEvidenceRoot')) or any(op in state.get('completed',[]) for op in PREPARE) or bool(state.get('preparationDurationSeconds') is not None) or state.get('cleaned')
+    else: attempted=has_events or state.get('operational') != 'PENDING'
+    if attempted: reasons['prepare'] = 'Preparación ya intentada; usa una sesión nueva'
     # A cancelled readiness check may be checked again. This does not restore
     # preparation or permit presentation: the coordinator still observes it.
     if not state.get('prepared') or state.get('cleaned'): reasons['check']='Se requiere preparación conservada; no se reconstruye al comprobar'
@@ -173,6 +176,8 @@ def action_capabilities(state, has_events, running, source_error=None):
         for key in ('present','step'): reasons[key] = 'Presentación consumida; usa una sesión nueva'
     if state.get('active') and not running:
         for key in ('check','present','step','prepare'): reasons[key] = 'Proceso desaparecido; falta cerrar la interrupción'
+    if state.get('profile')=='early-security':
+        for key in ('prepare','check','present','step'): reasons[key]='Usa la preparación y comparación del caso seleccionado'
     from cases import capabilities as case_capabilities, fixture
     child=fixture(state)
     if child and not child.get('cleaned'): reasons['cleanup']='Retira primero los recursos de la fixture F13 vinculada'

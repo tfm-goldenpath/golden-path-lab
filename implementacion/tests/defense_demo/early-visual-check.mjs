@@ -1,0 +1,32 @@
+// Read-only visual/navigation acceptance over actual early-profile evidence.
+import assert from 'node:assert/strict';
+import {mkdirSync,writeFileSync,mkdtempSync} from 'node:fs';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+import {tmpdir} from 'node:os';
+import {chromium,wait} from './browser-support.mjs';
+const [url,html,out]=process.argv.slice(2);if(!out)throw Error('Usage: early-visual-check.mjs LOOPBACK_URL RECORDED_HTML OUTPUT_DIRECTORY');mkdirSync(out,{recursive:true});
+const b=await chromium.launch({headless:true}),p=await b.newPage({viewport:{width:1366,height:768}}),metrics=[],errors=[];let posts=0;
+p.on('request',r=>{if(r.method()==='POST')posts++;});p.on('pageerror',e=>errors.push(String(e)));
+async function opened(page,c){await page.goto(url+`/#demo/attempt/early-${c}-negative-1/console?op=early-${c}-negative`);await page.waitForFunction(()=>document.querySelector('.console-text')?.textContent.length>100&&!document.querySelector('.console-text').textContent.includes('Cargando salida'));}
+async function geometry(page,label){const m=await page.evaluate(()=>{const n=document.querySelector('.console-text'),r=n?.getBoundingClientRect();return {width:innerWidth,height:innerHeight,pageWidth:document.documentElement.scrollWidth,consoleVisible:r?Math.max(0,Math.min(innerHeight,r.bottom)-Math.max(0,r.top)):null,font:n?getComputedStyle(n).fontSize:null};});metrics.push({label,...m});assert.ok(m.pageWidth<=m.width,JSON.stringify(m));return m;}
+try{
+ for(const c of ['f02','f12','f03']){
+  await p.goto(url+'/#demo');await p.waitForSelector('#early-case');await p.locator('#early-case').selectOption(c);await wait(200);const colors=await p.locator('#early-run').evaluate(n=>({text:getComputedStyle(n).color,bg:getComputedStyle(n).backgroundColor}));assert.notEqual(colors.text,colors.bg);await p.screenshot({path:out+'/'+c+'-overview.png'});
+  await opened(p,c);const m=await geometry(p,c);assert.ok(m.consoleVisible>=400,JSON.stringify(m));assert.ok(parseFloat(m.font)>=14);await p.screenshot({path:out+'/'+c+'-console.png'});
+  await p.locator('.console-text').focus();const text=await p.locator('.console-text').innerText();await wait(1800);assert.equal(await p.locator('.console-text').innerText(),text);assert.equal(await p.locator('.console-text').evaluate(n=>n===document.activeElement),true);
+  await p.locator('[data-tab=result]').click();await wait(100);assert.match(await p.locator('#related').innerText(),/contraparte/);if(c==='f03'){assert.match(await p.locator('#inspector-content').innerText(),/CVE-2021-44906/);await p.screenshot({path:out+'/f03-result.png'});}
+  await p.goBack();await p.waitForFunction(text=>document.querySelector('.console-text')?.textContent===text,text);assert.equal(await p.locator('.console-text').innerText(),text);
+ }
+ await p.goto(url+'/#journey/map');await p.waitForSelector('.journey-stage');assert.equal(await p.locator('.journey-stage').count(),15);await p.screenshot({path:out+'/journey.png',fullPage:true});
+ for(const [width,height] of [[1920,1080],[390,844]]){await p.setViewportSize({width,height});await opened(p,'f03');await geometry(p,String(width));await p.screenshot({path:out+'/console-'+width+'.png'});if(width<800){await p.locator('.console-text').focus();await p.locator('.console-text').evaluate(n=>n.scrollIntoView({block:'start'}));await geometry(p,'narrow-reading');await p.screenshot({path:out+'/narrow-reading.png'});}}
+ const offline=await b.newPage({viewport:{width:1366,height:768}});let network=0;offline.on('request',r=>{if(/^https?:/.test(r.url()))network++;});const file=pathToFileURL(resolve(html)).href;await offline.goto(file+'#demo');await offline.waitForSelector('.attempt-row');assert.match(await offline.locator('#connection').innerText(),/registrad/i);assert.equal(await offline.locator('#early-run').isEnabled(),false);assert.equal(await offline.locator('#early-prepare').isEnabled(),false);
+ for(const [c,diagnostic] of [['f02','ACTION_SHA'],['f12','DIGEST'],['f03','CVE-2021-44906']]){await offline.goto(file+`#demo/attempt/early-${c}-negative-1/console?op=early-${c}-negative`);await offline.waitForFunction(value=>document.querySelector('.console-text')?.textContent.includes(value),diagnostic);assert.match(await offline.locator('.console-text').innerText(),new RegExp(diagnostic));}
+ await geometry(offline,'offline');await offline.screenshot({path:out+'/offline.png'});await offline.locator('[data-destination=journey]').click();await offline.waitForSelector('.journey-stage');assert.equal(await offline.locator('.journey-stage').count(),15);assert.equal(network,0);assert.equal(posts,0);assert.deepEqual(errors,[]);
+ writeFileSync(out+'/geometry.json',JSON.stringify({boundary:'Read-only browser checks over real local evidence',metrics,offlineNetworkRequests:network,posts,errors},null,2));
+}finally{await b.close();}
+// Native tab zoom, no package or browser downloads.
+const dir=mkdtempSync(tmpdir()+'/gp-early-zoom-'),extension=dir+'/extension';mkdirSync(extension);writeFileSync(extension+'/manifest.json',JSON.stringify({manifest_version:3,name:'Local early layout check',version:'1.0',permissions:['tabs'],background:{service_worker:'worker.js'}}));writeFileSync(extension+'/worker.js','chrome.runtime.onInstalled.addListener(()=>{});');
+const context=await chromium.launchPersistentContext(dir+'/profile',{channel:'chromium',headless:true,viewport:{width:1366,height:768},args:['--disable-extensions-except='+extension,'--load-extension='+extension]});
+try{const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker');const page=await context.newPage();await opened(page,'f03');const zoom=await worker.evaluate(async origin=>{const tabs=await chrome.tabs.query({url:origin+'/*'});await chrome.tabs.setZoom(tabs[0].id,2);return chrome.tabs.getZoom(tabs[0].id);},url);assert.equal(zoom,2);await page.waitForFunction(()=>innerWidth<700);await geometry(page,'native-200-percent');await page.locator('.console-text').focus();await page.locator('.console-text').evaluate(n=>n.scrollIntoView({block:'start'}));await geometry(page,'native-200-percent-reading');await page.screenshot({path:out+'/zoom-200.png'});writeFileSync(out+'/zoom.json',JSON.stringify({zoom,metrics:metrics.at(-1),temporaryProfile:dir},null,2));}finally{await context.close();}
+console.log('PASS: actual early evidence, readable consoles, navigation, native zoom and zero-network export');

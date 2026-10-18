@@ -86,7 +86,7 @@ def export_session(state):
     number = len(list(checks.glob('*.json'))) + 1
     atomic(checks / f'{number:04}.json', observation)
     with (checks / f'{number:04}.log').open('x') as stream:
-        for command in (['df', '-h', str(ROOT)], ['df', '-i', str(ROOT)], ['docker', 'system', 'df']):
+        for command in (['df', '-h', str(ROOT)], ['df', '-i', str(ROOT)], *([] if state['profile']=='early-security' else [['docker', 'system', 'df']])):
             subprocess.run(command, stdout=stream, stderr=subprocess.STDOUT, check=True)
     if not observation['sufficient']: raise ExportSpaceError('Insufficient evidence reserve; export stopped, originals retained')
     directory = ROOT / 'evidence/packages' / ('defense-' + name) / f'export-{number:04}'
