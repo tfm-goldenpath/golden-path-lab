@@ -133,7 +133,7 @@ case "$operation" in
     resource_snapshot resume
     cmp "$state_dir/prepared-policy-identity.json" "$state_dir/resume-policy-identity.json"
     lab_wait_admission_controller
-    if [[ "$(jq -r .profile "$session_dir/session.json")" == f11-comparison ]]; then
+    if [[ "$(jq -r .profile "$session_dir/session.json")" == f11-comparison ]] || jq -e '.profile=="defense-all" and (.completed|index("accept")!=null)' "$session_dir/session.json" >/dev/null; then
       attestations_ci_gate comparison-resume authorized
       probe tfm-golden
     fi

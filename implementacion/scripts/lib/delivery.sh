@@ -132,6 +132,16 @@ delivery_scan() {
     --format cyclonedx --output "$state_dir/sbom.cdx.json" "$image"
   node scripts/validate-sbom-schema.mjs "$state_dir/sbom.cdx.json" "$state_dir/sbom-schema-generation.json"
   sbom_version=$(node "$contract" sbom "$state_dir/sbom.cdx.json"); put sbomVersion "$sbom_version"
+  delivery_scan_original_sbom
+}
+
+# Re-scan an already generated inventory; never rebuild or regenerate it here.
+delivery_scan_original_sbom() {
+  local snapshot
+  delivery_database_prepare
+  snapshot=$(get vulnerabilityDatabase)
+  trivy --version > "$state_dir/trivy-version.txt"
+  cp "$snapshot/db/metadata.json" "$state_dir/trivy-db.json"
   delivery_analysis_command vulnerability-scan trivy sbom --timeout 15m --cache-dir "$snapshot" --skip-db-update --skip-java-db-update \
     --offline-scan --scanners vuln --ignore-unfixed=false --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
     --pkg-types os,library --ignorefile /dev/null --format json \

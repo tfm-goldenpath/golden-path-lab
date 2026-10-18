@@ -8,7 +8,9 @@ import time
 from core import (ROOT, LIVE, atomic, events, evidence_root, file_record, locked, read_json,
                   session_path, utc, publish_event)
 
-ACTIONS=('case-f11-early','case-f11-admission','prepare-f13-case','case-f13','recover-f13-case','cleanup-f13-case')
+from early import ACTIONS as EARLY_ACTIONS
+
+ACTIONS=EARLY_ACTIONS+('case-f11-early','case-f11-admission','prepare-f13-case','case-f13','recover-f13-case','cleanup-f13-case')
 INPUTS=('state.json','build-metadata.json','tfm-golden.json','F11-privileged.json',
         'local-trusted-root.json','local-signing-config.json','development-public-key.pem','prepared-cluster.json',
         'prepared-policy-identity.json','tfm-reference-quote.json')
@@ -26,6 +28,8 @@ def fixture(state):
 
 def capabilities(state, running=False, source_error=None):
     from coordinator import assert_source
+    from early import capabilities as early_capabilities
+    if state.get("profile")=="early-security": return {**{a:{"enabled":False,"reason":"Caso ajeno al perfil de controles tempranos"} for a in ACTIONS}, **early_capabilities(state,running,source_error)}
     reasons={a:None for a in ACTIONS}
     base=source_error or ('Otra operación sigue activa' if running else None)
     ready=state.get('prepared') and not state.get('cleaned') and state.get('operational') in ('PREPARED','COMPLETED')
@@ -46,7 +50,10 @@ def capabilities(state, running=False, source_error=None):
     reasons['cleanup-f13-case']=('Otra operación sigue activa' if running else None) or (None if child and not child.get('cleaned') else 'No hay fixture propia pendiente de retirada')
     if state.get('profile','unknown')=='f11-comparison':
         for a in ('prepare-f13-case','case-f13','recover-f13-case'): reasons[a]='F13 no pertenece al perfil F11 comparativo'
-    return {a:{'enabled':v is None,'reason':v or ''} for a,v in reasons.items()}
+    for a in EARLY_ACTIONS: reasons[a]='Requiere el perfil early-security'
+    result={a:{'enabled':v is None,'reason':v or ''} for a,v in reasons.items()}
+    if state.get('profile')=='defense-all': result.update(early_capabilities(state,running,source_error))
+    return result
 
 
 def make_inputs(state, attempt):
@@ -97,6 +104,9 @@ def relay(parent, child, attempt, linked=None):
 
 def execute(state, action, budget):
     import coordinator as co
+    if action in EARLY_ACTIONS:
+        from early import execute as execute_early
+        return execute_early(state,action,budget)
     if action not in ACTIONS: raise co.Stopped('Unsupported case action')
     if action!='cleanup-f13-case': co.assert_source(state)
     gate=capabilities(state)[action]

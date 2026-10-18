@@ -63,6 +63,30 @@ lab_check_environment() {
   docker info >/dev/null
 }
 
+# Registry and builder only; callers own absence checks and retirement.
+# The early scanner profile needs no Kubernetes cluster.
+lab_create_registry_builder() {
+  local network=${1:-kind} registry_host attempt
+  printf '{"distSpecVersion":"1.1.1","storage":{"rootDirectory":"/var/lib/registry"},"http":{"address":"0.0.0.0","port":"5000"},"log":{"level":"warn"}}\n' > "$private/zot.json"
+  # docker cp also works when the daemon is reached through a socket from a devcontainer.
+  docker create --name "$registry" --network "$network" --label tfm.lab="$cluster" \
+    "$(jq -r '.images.zot.reference' "$lock")" serve /etc/zot/config.json >/dev/null
+  docker cp "$private/zot.json" "$registry:/etc/zot/config.json"
+  docker start "$registry" >/dev/null
+  registry_host="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$network\").IPAddress}}" "$registry"):5000"
+  image_repo="$registry_host/quotes-node-$id"
+  for attempt in {1..120}; do
+    if curl -fsS --max-time 2 "http://$registry_host/v2/" >/dev/null 2>&1; then break; fi
+    [[ "$(docker inspect -f '{{.State.Running}}' "$registry")" == true ]] || { docker logs "$registry"; fail 'The zot registry stopped running.'; }
+    sleep 1
+  done
+  curl -fsS --max-time 5 "http://$registry_host/v2/" >/dev/null
+  printf '[registry."%s"]\n  http = true\n  insecure = true\n' "$registry_host" > "$private/buildkitd.toml"
+  docker buildx create --name "$builder" --driver docker-container --driver-opt "network=$network" --driver-opt "image=$(jq -r '.images.buildkit.reference' "$lock")" --buildkitd-config "$private/buildkitd.toml" >/dev/null
+  put imageRepository "$image_repo"
+  put registryNetwork "$network"
+}
+
 lab_create() {
   local registry_host kind_node attempt; local -a kind_args=()
   record 'Create an isolated kind cluster'
@@ -77,27 +101,14 @@ lab_create() {
     if [[ "${CODESPACES:-}" == true ]]; then
       python3 scripts/codespaces-network.py ensure --cluster "$cluster" --output "$state_dir/codespaces-network.json"
     fi
-    printf '{"distSpecVersion":"1.1.1","storage":{"rootDirectory":"/var/lib/registry"},"http":{"address":"0.0.0.0","port":"5000"},"log":{"level":"warn"}}\n' > "$private/zot.json"
-    # docker cp also works when the daemon is reached through a socket from a devcontainer.
-    docker create --name "$registry" --network kind --label tfm.lab="$cluster" \
-      "$(jq -r '.images.zot.reference' "$lock")" serve /etc/zot/config.json >/dev/null
-    docker cp "$private/zot.json" "$registry:/etc/zot/config.json"
-    docker start "$registry" >/dev/null
-    registry_host="$(docker inspect -f '{{(index .NetworkSettings.Networks "kind").IPAddress}}' "$registry"):5000"
-    image_repo="$registry_host/quotes-node-$id"
-    for attempt in {1..120}; do
-      if curl -fsS --max-time 2 "http://$registry_host/v2/" >/dev/null 2>&1; then break; fi
-      [[ "$(docker inspect -f '{{.State.Running}}' "$registry")" == true ]] || { docker logs "$registry"; fail 'The zot registry stopped running.'; }
-      sleep 1
-    done
-    curl -fsS --max-time 5 "http://$registry_host/v2/" >/dev/null
+    lab_create_registry_builder kind
+    registry_host=${image_repo%%/*}
     printf 'server = "http://%s"\n[host."http://%s"]\n  capabilities = ["pull", "resolve"]\n' "$registry_host" "$registry_host" > "$private/hosts.toml"
     while read -r kind_node; do
       docker exec "$kind_node" mkdir -p "/etc/containerd/certs.d/$registry_host"
       docker cp "$private/hosts.toml" "$kind_node:/etc/containerd/certs.d/$registry_host/hosts.toml"
     done < <(kind get nodes --name "$cluster")
-    printf '[registry."%s"]\n  http = true\n  insecure = true\n' "$registry_host" > "$private/buildkitd.toml"
-    docker buildx create --name "$builder" --driver docker-container --driver-opt network=kind --driver-opt "image=$(jq -r '.images.buildkit.reference' "$lock")" --buildkitd-config "$private/buildkitd.toml" >/dev/null
+
   else
     docker buildx create --name "$builder" --driver docker-container --driver-opt "image=$(jq -r '.images.buildkit.reference' "$lock")" >/dev/null
   fi

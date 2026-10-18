@@ -1,5 +1,7 @@
 # Demostración visual local para la defensa
 
+El perfil independiente [early-security](early-security.md) permite comparar F02 / F12 / F03 desde la web sin alargar la secuencia F11/F13 de esta guía. F02/F12 son estáticos y no necesitan Docker; F03 prepara y analiza imágenes sin Kubernetes. No acredita los controles posteriores ni un despliegue.
+
 Ruta principal del presentador: [preparar y ejecutar desde el navegador](web-rehearsal.md). Los ejemplos CLI siguientes siguen siendo alternativas compatibles.
 Los casos F11 compatibles admiten intentos independientes sobre preparación válida conservada; F13 requiere una fixture preparada por separado. Consulta [intentos y bundles auténticos de vía A](demo-workspace.md#intentos-independientes-y-bundles-de-vía-a). La presentación original no se reinicia.
 
@@ -111,3 +113,5 @@ bash implementacion/scripts/defense-demo/f11-static.sh
 El fallback separado ejecuta Conftest real sobre un **manifiesto sintético identificado y un digest de ejemplo**. Necesita Node/jq/Conftest, no Kubernetes; no acredita build, firma, F13 ni admisión. Si falla el clúster, F13 sólo puede mostrarse como ejecución real anterior claramente identificada, o sin ejecutar. Los sustitutos unitarios no acreditan integración. Consulta el [registro local de validación](../../../registros/defense_demo_validation_EN.md) para resultados reales y revisión pendiente.
 
 Para repetir una demo ya terminada en 8765, consulta [volver a ejecutar en el mismo puerto](defense-demo-operations.md#volver-a-ejecutar-la-demo-en-el-mismo-puerto): requiere una sesión nueva; `serve` solo reabre el visor.
+
+[Perfil combinado: todas las familias en una sesión](combined-profile.md).

@@ -896,6 +896,206 @@
       "attempt": "preparation",
       "boundary": "Prepare valid workload before presentation",
       "dependsOn": []
+    },
+    "early-f02-prepare": {
+      "adapter": "early-f02-prepare",
+      "title": "Preparar F02 · entradas estáticas",
+      "stages": [
+        "source"
+      ],
+      "controls": [
+        {
+          "id": "early-f02-prepare",
+          "tool": "Python / Node / Conftest --version",
+          "property": "Preparación específica del caso",
+          "input": "Fuente, fixtures y políticas de producción",
+          "output": "input-seal.json, identidades y originales preparados",
+          "condition": "Fuente y herramientas compatibles; F03 además exige esquema, asociación y ambos oráculos preliminares"
+        }
+      ],
+      "scenario": null,
+      "attempt": null,
+      "expected": "allow",
+      "boundary": "Preparación de inputs identificados; no es la comparación en directo",
+      "dependsOn": "source"
+    },
+    "early-f02-negative": {
+      "adapter": "early-f02-negative",
+      "title": "F02 · Action con referencia mutable",
+      "stages": [
+        "ci"
+      ],
+      "controls": [
+        {
+          "id": "early-f02-negative",
+          "tool": "Conftest",
+          "property": "ACTION_SHA",
+          "input": "Fixture estática identificada y política de producción",
+          "output": "output.log, result.json, attribution.json",
+          "condition": "Oráculo existente confirmado; errores de herramienta o evaluación no cuentan como detección"
+        }
+      ],
+      "scenario": "F02",
+      "attempt": "early-f02-negative-1",
+      "expected": "deny",
+      "boundary": "Solo evaluación estática del workflow; sin ejecución de Actions",
+      "dependsOn": "preparation"
+    },
+    "early-f02-positive": {
+      "adapter": "early-f02-positive",
+      "title": "F02 · Workflow con SHA completo",
+      "stages": [
+        "ci"
+      ],
+      "controls": [
+        {
+          "id": "early-f02-positive",
+          "tool": "Conftest",
+          "property": "ACTION_SHA",
+          "input": "Fixture estática identificada y política de producción",
+          "output": "output.log, result.json, attribution.json",
+          "condition": "Oráculo existente confirmado; errores de herramienta o evaluación no cuentan como detección"
+        }
+      ],
+      "scenario": null,
+      "attempt": "early-f02-positive-1",
+      "expected": "allow",
+      "boundary": "Solo evaluación estática del workflow; sin ejecución de Actions",
+      "dependsOn": "preparation"
+    },
+    "early-f12-prepare": {
+      "adapter": "early-f12-prepare",
+      "title": "Preparar F12 · entradas estáticas",
+      "stages": [
+        "source"
+      ],
+      "controls": [
+        {
+          "id": "early-f12-prepare",
+          "tool": "Python / Node / Conftest --version",
+          "property": "Preparación específica del caso",
+          "input": "Fuente, fixtures y políticas de producción",
+          "output": "input-seal.json, identidades y originales preparados",
+          "condition": "Fuente y herramientas compatibles; F03 además exige esquema, asociación y ambos oráculos preliminares"
+        }
+      ],
+      "scenario": null,
+      "attempt": null,
+      "expected": "allow",
+      "boundary": "Preparación de inputs identificados; no es la comparación en directo",
+      "dependsOn": "source"
+    },
+    "early-f12-negative": {
+      "adapter": "early-f12-negative",
+      "title": "F12 · Imagen referenciada por etiqueta",
+      "stages": [
+        "manifest"
+      ],
+      "controls": [
+        {
+          "id": "early-f12-negative",
+          "tool": "Conftest",
+          "property": "DIGEST",
+          "input": "Fixture estática identificada y política de producción",
+          "output": "control.json, control.attribution.json",
+          "condition": "Oráculo existente confirmado; errores de herramienta o evaluación no cuentan como detección"
+        }
+      ],
+      "scenario": "F12",
+      "attempt": "early-f12-negative-1",
+      "expected": "deny",
+      "boundary": "Solo barrera temprana del manifiesto; no comprueba existencia de imagen ni admisión",
+      "dependsOn": "preparation"
+    },
+    "early-f12-positive": {
+      "adapter": "early-f12-positive",
+      "title": "F12 · Manifiesto con digest",
+      "stages": [
+        "manifest"
+      ],
+      "controls": [
+        {
+          "id": "early-f12-positive",
+          "tool": "Conftest",
+          "property": "DIGEST",
+          "input": "Fixture estática identificada y política de producción",
+          "output": "control.json, control.attribution.json",
+          "condition": "Oráculo existente confirmado; errores de herramienta o evaluación no cuentan como detección"
+        }
+      ],
+      "scenario": null,
+      "attempt": "early-f12-positive-1",
+      "expected": "allow",
+      "boundary": "Solo barrera temprana del manifiesto; no comprueba existencia de imagen ni admisión",
+      "dependsOn": "preparation"
+    },
+    "early-f03-prepare": {
+      "adapter": "early-f03-prepare",
+      "title": "Preparar F03 · imágenes y SBOM",
+      "stages": [
+        "build",
+        "sbom",
+        "vulnerabilities"
+      ],
+      "controls": [
+        {
+          "id": "early-f03-prepare",
+          "tool": "Docker / Buildx / Trivy / Conftest",
+          "property": "Preparación específica del caso",
+          "input": "Fuente, fixtures y políticas de producción",
+          "output": "input-seal.json, identidades y originales preparados",
+          "condition": "Fuente y herramientas compatibles; F03 además exige esquema, asociación y ambos oráculos preliminares"
+        }
+      ],
+      "scenario": null,
+      "attempt": null,
+      "expected": "allow",
+      "boundary": "Preparación de inputs identificados; no es la comparación en directo",
+      "dependsOn": "source"
+    },
+    "early-f03-negative": {
+      "adapter": "early-f03-negative",
+      "title": "F03 · Dependencia vulnerable",
+      "stages": [
+        "vulnerabilities"
+      ],
+      "controls": [
+        {
+          "id": "early-f03-negative",
+          "tool": "Trivy / Conftest",
+          "property": "CVE-2021-44906; global HIGH/CRITICAL threshold",
+          "input": "SBOM original preparado e imagen por digest; base congelada",
+          "output": "vulnerabilities.json, analysis.json, target-attribution.json",
+          "condition": "Oráculo existente confirmado; errores de herramienta o evaluación no cuentan como detección"
+        }
+      ],
+      "scenario": "F03",
+      "attempt": "early-f03-negative-1",
+      "expected": "deny",
+      "boundary": "Análisis Trivy nuevo del SBOM original preparado; sin despliegue",
+      "dependsOn": "preparation"
+    },
+    "early-f03-positive": {
+      "adapter": "early-f03-positive",
+      "title": "F03 reparado · Gate de vulnerabilidades",
+      "stages": [
+        "vulnerabilities"
+      ],
+      "controls": [
+        {
+          "id": "early-f03-positive",
+          "tool": "Trivy / Conftest",
+          "property": "CVE-2021-44906; global HIGH/CRITICAL threshold",
+          "input": "SBOM original preparado e imagen por digest; base congelada",
+          "output": "vulnerabilities.json, analysis.json, target-attribution.json",
+          "condition": "Oráculo existente confirmado; errores de herramienta o evaluación no cuentan como detección"
+        }
+      ],
+      "scenario": null,
+      "attempt": "early-f03-positive-1",
+      "expected": "allow",
+      "boundary": "Análisis Trivy nuevo del SBOM original preparado; sin despliegue",
+      "dependsOn": "preparation"
     }
   },
   "scenarios": [
@@ -932,8 +1132,10 @@
       "boundary": "Static workflow / PR CI",
       "lane": "Static, lane-independent",
       "limits": "Sólo datos estáticos; no ejecuta un ataque sobre etiquetas remotas.",
-      "adapters": [],
-      "coverage": "Static data within make test",
+      "adapters": [
+        "early-f02-negative"
+      ],
+      "coverage": "Workflow estático; alcance de demostración acotado",
       "history": {
         "source": "implementacion/docs/EN/evaluation-readiness.md",
         "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
@@ -956,8 +1158,10 @@
       "boundary": "Real SBOM scan / CI; repaired admission + HTTP",
       "lane": "A; B fixture unsupported",
       "limits": "Fixture local; detección acotada a la base conservada. Negativo B sin ejecutar.",
-      "adapters": [],
-      "coverage": "Documentado; sin adaptador de demostración",
+      "adapters": [
+        "early-f03-negative"
+      ],
+      "coverage": "Nuevo análisis del SBOM preparado; sin despliegue, alcance parcial",
       "history": {
         "source": "implementacion/docs/EN/evaluation-readiness.md",
         "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",
@@ -1177,8 +1381,10 @@
       "boundary": "CI; Deployment CREATE/UPDATE + Pod admission",
       "lane": "A/B runtime",
       "limits": "Resolución de tag antes/después; no es un fallo de procedencia.",
-      "adapters": [],
-      "coverage": "Documentado; sin adaptador de demostración",
+      "adapters": [
+        "early-f12-negative"
+      ],
+      "coverage": "Barrera temprana; no demuestra la admisión del contrato completo",
       "history": {
         "source": "implementacion/docs/EN/evaluation-readiness.md",
         "revision": "1ec4cb9e89fce412df90510b7f3b3f3ca03bb50f",

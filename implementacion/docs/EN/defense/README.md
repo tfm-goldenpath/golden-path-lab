@@ -1,5 +1,7 @@
 # Defense demonstration
 
+[Early security F02/F12/F03](early-security.md).
+
 [Real web rehearsal, 160-second route and offline fallback](web-rehearsal.md).
 Supported F11 cases can create independent attempts on valid retained preparation. The initial defense sequence includes F13; repeating F13 requires a separately prepared fixture. See [case attempts and authentic lane A bundles](demo-workspace.md#independent-case-attempts-and-lane-a-bundles). The original presentation is never reset.
 
@@ -56,3 +58,5 @@ presenter pauses; it does not manufacture one continuous live duration.
 Use the [single 160-second browser route and presenter worksheet](web-rehearsal.md#proposed-160-second-route): initial F11/F13/recovery, exact original logs, then the full technical journey. Keep workflow exploration for questions; historical GitHub timing is a separate dataset.
 
 The [real rehearsal record](../../../registros/demo_web_rehearsal_EN.md) separates measured preparation, automatic execution and browser navigation from the still-pending human narration. The 120-second web budget is per invocation; it does not guarantee a three-minute talk. Switch explicitly to the verified recorded fallback if the live sequence fails or cannot support the next explanation.
+
+[Combined profile: all demo families in one session](combined-profile.md).

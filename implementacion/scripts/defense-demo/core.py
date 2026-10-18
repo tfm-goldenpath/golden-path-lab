@@ -24,10 +24,33 @@ PREPARE = ['environment', 'initialize', 'ci', 'preflight', 'infrastructure',
 F11_PREPARE = [op for op in PREPARE if op not in ('missing-results', 'seal')] + ['authorize', 'comparison-ready', 'comparison-inputs', 'seal']
 LIVE = {'f11-comparison': ['comparison-reference', 'f11-early', 'comparison-admission', 'comparison-legitimate'], 'defense': ['f11-early', 'f13', 'authorize', 'accept', 'f11-admission'],
         'defense-short': ['f11-early', 'f13', 'authorize', 'accept']}
-ADAPTERS = set(PREPARE + F11_PREPARE + sum(LIVE.values(), []) + ['resume', 'cleanup'])
+EARLY_PREPARE = [f'early-{case}-prepare' for case in ('f02','f12','f03')]
+LIVE['early-security'] = [f'early-{case}-{side}' for case in ('f02','f12','f03') for side in ('negative','positive')]
+LIVE['defense-all'] = LIVE['defense'] + ['comparison-inputs', 'comparison-reference', 'comparison-admission', 'comparison-legitimate']
+ADAPTERS = set(EARLY_PREPARE + PREPARE + F11_PREPARE + sum(LIVE.values(), []) + ['resume', 'cleanup'])
 _spec = importlib.util.spec_from_file_location('lab_packager', ROOT / 'scripts/package-evidence.py')
 packager = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(packager)
+
+
+def preparation_operations(profile):
+    return EARLY_PREPARE if profile == 'early-security' else F11_PREPARE if profile == 'f11-comparison' else PREPARE
+
+
+def display_operations(profile):
+    # Optional early comparisons have their own preparation and timing, never
+    # silently appended to the automatic Kubernetes presentation.
+    return LIVE[profile] + (LIVE['early-security'] if profile == 'defense-all' else [])
+
+
+def profile_catalogue(profile):
+    value = catalogue()
+    if profile == 'defense-all':
+        setup = value['operations']['comparison-inputs']
+        setup.update(attempt='comparison-setup', title='Preparar comparación R/G tras recuperar F13',
+                     boundary='Live validation of authorized comparison inputs; no build or scan',
+                     dependsOn=['accept'])
+    return value
 
 
 def utc():

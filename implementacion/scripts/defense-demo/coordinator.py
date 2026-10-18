@@ -17,7 +17,7 @@ import time
 # Case helpers must share this exact exception/lifecycle module when invoked as CLI.
 if __name__ == "__main__": sys.modules["coordinator"] = sys.modules[__name__]
 
-from core import (ADAPTERS, LIVE, PREPARE, F11_PREPARE, ROOT, SCHEMA, SESSIONS, atomic, artifact_index,
+from core import (ADAPTERS, LIVE, PREPARE, F11_PREPARE, preparation_operations, profile_catalogue, ROOT, SCHEMA, SESSIONS, atomic, artifact_index,
                   boot_id, capture_files, catalogue, digest, events, evidence_root, file_record,
                   locked, outcome, public_session, publish_event, read_json, sanitize,
                   session_path, source_identity, utc, valid_name, workflow_metadata)
@@ -39,7 +39,7 @@ def resources(reserve_gib, preparation=False, profile=None, growth_gib=None, pol
     if preparation and profile == 'f11-comparison': needed = max(needed, int(policy.get('prepareFreeGiB', 8) * 1024**3))
     mounts = []
     seen = set()
-    for path in (str(ROOT), *(['/tmp'] if profile == 'f11-comparison' else []), *([docker_root] if docker_root else [])):
+    for path in (str(ROOT), *(['/tmp'] if profile in ('f11-comparison','early-security','defense-all') else []), *([docker_root] if docker_root else [])):
         fs, dev = os.statvfs(path), os.stat(path).st_dev
         if dev in seen:
             next(m for m in mounts if m['device'] == dev)['aliases'].append(path)
@@ -77,15 +77,15 @@ def create(name, profile, reserve):
     (raw / 'operations').mkdir()
     identity = source_identity()
     atomic(raw / 'source.json', identity)
-    atomic(raw / 'catalogue.json', catalogue())
+    atomic(raw / 'catalogue.json', profile_catalogue(profile))
     atomic(raw / 'workflows.json', workflow_metadata())
     state = {'schema': SCHEMA, 'session': name, 'profile': profile, 'lane': 'A', 'arm': 'G',
-             'referenceArm': 'R (live privilege UPDATE and withdrawal)' if profile == 'f11-comparison' else 'R (prepared HTTP oracle)', 'createdUTC': utc(), 'bootId': boot_id(),
+             'referenceArm': 'R (live privilege UPDATE and withdrawal)' if profile in ('f11-comparison','defense-all') else 'Not applied: early gates only' if profile == 'early-security' else 'R (prepared HTTP oracle)', 'createdUTC': utc(), 'bootId': boot_id(),
              'source': {k: v for k, v in identity.items() if k != 'files'},
              'reserveGiB': reserve, 'prepared': False, 'operational': 'PENDING', 'lastExitCode': None,
              'active': None, 'completed': [], 'digest': None, 'image': None, 'liveDurationSeconds': None,
-             'preparationDurationSeconds': None, 'f13Recovery': 'not-applicable' if profile == 'f11-comparison' else 'pending', 'exports': [],
-             'humanReview': 'Pendiente; no realizada' if profile == 'f11-comparison' else 'No solicitada para esta demostración', 'campaign': 'Not a campaign sample',
+             'preparationDurationSeconds': None, 'f13Recovery': 'not-applicable' if profile in ('f11-comparison','early-security','defense-all') else 'pending', 'exports': [],
+             'humanReview': 'Pendiente; no realizada' if profile in ('f11-comparison','early-security','defense-all') else 'No solicitada para esta demostración', 'campaign': 'Not a campaign sample',
              'evidenceRoot': raw.relative_to(ROOT).as_posix(), 'lastEvidenceUTC': None}
     atomic(path / 'session.json', state)
     # Owned emergency metadata margin; never evidence. Released only on ENOSPC.
@@ -222,13 +222,13 @@ def run_operation(state, operation, phase, deadline=None, instance=None, case_co
     print(f'[{phase}] {operation}: {spec["title"]}', flush=True)
     code, aborted, reason = 1, False, None
     monitor = None
-    guarded_profile = 'f11-comparison' if state.get('fixtureParent') else state['profile']
+    guarded_profile = 'f11-comparison' if state.get('fixtureParent') or state['profile']=='defense-all' and not operation.startswith('early-') else state['profile']
     reserve = max(3, state['reserveGiB']) if case_context or state.get('fixtureParent') else state['reserveGiB']
-    command = ['bash', str(ROOT / 'scripts/defense-demo/adapters.sh'), operation, name] + ([case_context['attempt'],instance] if case_context else [])
+    command = ([sys.executable,str(ROOT / 'scripts/defense-demo/early-adapter.py'),operation,name,instance] if operation.startswith('early-') else ['bash', str(ROOT / 'scripts/defense-demo/adapters.sh'), operation, name] + ([case_context['attempt'],instance] if case_context else []))
     try:
         with (opdir / 'output-original.log').open('x') as stream:
             if case_context or operation in ('environment', 'build', 'analysis', 'admission-install') or (guarded_profile == 'f11-comparison' and operation != 'cleanup'):
-                if operation == 'environment' and guarded_profile == 'f11-comparison':
+                if operation == 'environment' and guarded_profile == 'f11-comparison' or operation=='early-f03-prepare':
                     docker_root = subprocess.check_output(['docker','info','--format','{{.DockerRootDir}}'], text=True).strip()
                     local = not os.environ.get('DOCKER_HOST') or os.environ['DOCKER_HOST'].startswith('unix://')
                     state['dockerStorageRoot'] = docker_root if local and Path(docker_root).is_dir() else None
@@ -242,7 +242,7 @@ def run_operation(state, operation, phase, deadline=None, instance=None, case_co
                     observation['sufficient'] = observation['sufficient'] and storage.f_bavail * storage.f_frsize >= 4 * 1024**3 and storage.f_favail >= 10000
                 atomic(opdir / 'resources.json', observation)
                 # Keep actual df and Docker reports, including their command statuses.
-                for cmd in ((['df', '-h', str(ROOT), '/tmp'], ['df', '-i', str(ROOT), '/tmp'], ['docker', 'system', 'df']) if phase == 'preparation' else ()):
+                for cmd in ((['df', '-h', str(ROOT), '/tmp'], ['df', '-i', str(ROOT), '/tmp']) if phase == 'preparation' and operation.startswith('early-') and operation!='early-f03-prepare' else (['df', '-h', str(ROOT), '/tmp'], ['df', '-i', str(ROOT), '/tmp'], ['docker', 'system', 'df']) if phase == 'preparation' else ()):
                     rc = subprocess.run(cmd, stdout=stream, stderr=subprocess.STDOUT).returncode
                     if rc: raise Stopped('Resource observation failed', rc)
                 if operation == 'analysis':
@@ -263,7 +263,6 @@ def run_operation(state, operation, phase, deadline=None, instance=None, case_co
                 return value['sufficient']
             monitor = sample if (case_context or guarded_profile == 'f11-comparison') and operation != 'cleanup' else None
             if monitor and not monitor(): raise Stopped('RESOURCE_EXHAUSTED before command')
-            command = ['bash', str(ROOT / 'scripts/defense-demo/adapters.sh'), operation, name] + ([case_context['attempt'],instance] if case_context else [])
             code, aborted, reason = run_process(command, stream, deadline, worker, **({'resource_check': monitor} if monitor else {}))
             if monitor and not monitor(): code, aborted, reason = 1, True, 'RESOURCE_EXHAUSTED'
     except (OSError, ValueError, Stopped) as error:
@@ -312,16 +311,22 @@ def run_operation(state, operation, phase, deadline=None, instance=None, case_co
                'startUTC': started, 'endUTC': ended, 'durationSeconds': elapsed, 'bootId': boot_id(),
                'exitCode': code, 'operational': operational, 'decision': decision, 'expectation': expected,
                'reason': reason, 'sourceCommit': state['source']['commit'], 'sourceHash': state['source']['contentHash'],
-               'lane': 'A', 'arm': 'R' if operation == 'comparison-reference' else 'G', 'digest': state['digest'], 'policyVersion': 'golden-path-v1',
+               'lane': 'A', 'arm': 'R' if operation == 'comparison-reference' else 'G', 'digest': None if operation.startswith('early-') else state['digest'], 'policyVersion': 'golden-path-v1',
                'command': ['bash', 'scripts/defense-demo/adapters.sh', operation, name],
                'artifacts': artifacts, 'timing': 'Actual aggregate wall interval; children not summed',
                'linkedAttempt': 'attempt-2' if state['profile'] != 'f11-comparison' and operation in ('authorize', 'accept') else None,
                'notReached': (['admission', 'deployment'] if operation == 'f11-early' and code == 0 else
                               ['deployment'] if operation == 'f13' and code == 0 else [])}
+    if operation.startswith('early-f03-') and operation!='early-f03-prepare' and code==0:
+        summary=read_json(opdir/'target-attribution.json')
+        analysis=read_json(opdir/'analysis.json')
+        receipt['earlySummary']={'image':summary['image'],'components':summary['component'],'findings':summary['target'],'additionalFindings':summary['additionalFindings'],'database':analysis['database'],'policyDecision':analysis['status']}
+        receipt['digest']=summary['image'].split('@')[1]
     receipt['operationInstance']=instance
     if case_context:
         receipt.update({k:case_context[k] for k in ('attempt','precedingAttempt','preparationSession')})
         receipt.update(repeat=True,command=command)
+        receipt.update({k:case_context[k] for k in ('comparisonId','comparisonCase','linkedAttempt') if k in case_context})
     publish_event(name, receipt)
     state.update(active=None, operational=operational, lastExitCode=code, lastEvidenceUTC=utc())
     if phase != 'preservation': state['workExitCode'] = code
@@ -338,7 +343,7 @@ def not_reached(state, operations, phase, cause):
     for operation in operations:
         if (evidence_root(state['session']) / 'operations' / operation).exists(): continue
         if any(e['operation'] == operation for e in events(state['session'])): continue
-        spec = catalogue()['operations'][operation]
+        spec = read_json(evidence_root(state['session']) / 'catalogue.json')['operations'][operation]
         publish_event(state['session'], {'operation': operation, 'attempt': spec['attempt'], 'scenario': spec['scenario'],
             'phase': phase, 'stages': spec['stages'], 'controls': spec['controls'], 'observedBoundary': None,
             'startUTC': None, 'endUTC': None, 'durationSeconds': None, 'bootId': boot_id(), 'exitCode': None,
@@ -350,14 +355,14 @@ def not_reached(state, operations, phase, cause):
 def prepare(state):
     start = time.monotonic()
     try:
-        for operation in (F11_PREPARE if state['profile'] == 'f11-comparison' else PREPARE): run_operation(state, operation, 'preparation')
+        for operation in preparation_operations(state['profile']): run_operation(state, operation, 'preparation')
         state['prepared'] = True
         state['operational'] = 'PREPARED'
     except (Stopped, KeyboardInterrupt) as error:
         if isinstance(error, KeyboardInterrupt): error = Stopped('Interrupted between preparation operations', 130)
         state.update(operational='ABORTED' if error.code in (124, 130, 143) else 'ERROR',
                      prepared=False, lastExitCode=error.code, workExitCode=error.code, failure=str(error))
-        not_reached(state, F11_PREPARE if state['profile'] == 'f11-comparison' else PREPARE, 'preparation', str(error))
+        not_reached(state, preparation_operations(state['profile']), 'preparation', str(error))
         not_reached(state, LIVE[state['profile']], 'live', str(error))
         raise error
     finally:
@@ -431,7 +436,7 @@ def main():
     parser.add_argument('--reserve-gib', type=float, default=None, help='Custody reserve; preparation also requires 2 GiB headroom')
     parser.add_argument('--stop-server', action='store_true', help='With cleanup stop the verified viewer; with serve restart only that viewer')
     args = parser.parse_args()
-    if args.reserve_gib is None: args.reserve_gib = 3 if args.profile == 'f11-comparison' else 1
+    if args.reserve_gib is None: args.reserve_gib = 3 if args.profile in ('f11-comparison','early-security','defense-all') else 1
     if not all(math.isfinite(x) for x in (args.budget_seconds, args.reserve_gib, args.prepare_free_gib, args.warning_free_gib, args.live_growth_mib)) or args.budget_seconds <= 0 or args.reserve_gib < 0.25 or not 1024 <= args.port <= 65535: parser.error('Invalid budget, reserve or port')
     if min(args.prepare_free_gib, args.warning_free_gib, args.live_growth_mib) <= 0: parser.error('Resource margins must be positive')
     if args.auto and args.interactive: parser.error('--auto and --interactive are exclusive')
@@ -451,7 +456,7 @@ def main():
             stop_server(name)
             print('Verified session viewer stopped; laboratory and evidence retained.')
             return 0
-        with locked(SESSIONS / '.preparation.lock') if args.command in ('up', 'prepare', 'prepare-pending') or args.command=='case' and args.case_action=='prepare-f13-case' else nullcontext():
+        with locked(SESSIONS / '.preparation.lock') if args.command in ('up', 'prepare', 'prepare-pending') or args.command=='case' and args.case_action in ('prepare-f13-case','prepare-early-f03') else nullcontext():
             if args.command == 'up' or (args.command == 'prepare' and args.serve) or (args.command == 'serve' and args.new):
                 check_viewer_port(name, args.port)
             state = create(name, args.profile, args.reserve_gib) if args.command in ('up', 'prepare') or (args.command == 'serve' and args.new) else read_json(session_path(name) / 'session.json')
@@ -466,8 +471,14 @@ def main():
             try:
                 if args.command == 'serve' and args.stop_server: stop_server(name)
                 if args.command == 'serve' or args.serve or args.command == 'up': start_server(name, args.port)
-                if args.command == 'prepare-pending' and (events(name) or lab_path(name) or state['operational'] != 'PENDING'):
+                if args.command == 'prepare-pending' and (
+                    state.get('cleaned') or state.get('preparationDurationSeconds') is not None
+                    or lab_path(name) or any(e['phase']=='preparation' and not e['operation'].startswith('early-') for e in events(name))
+                    or state['profile']!='defense-all' and (events(name) or state['operational'] != 'PENDING')
+                ):
                     raise Stopped('Preparation was already attempted; use a new session')
+                if state['profile']=='early-security' and args.command in ('up','prepare','prepare-pending','present','step','check'):
+                    raise Stopped('Use the per-case preparation and comparison actions for early-security')
                 if args.command in ('up', 'prepare', 'prepare-pending'): prepare(state)
                 if args.command in ('up', 'present', 'step'):
                     present(state, args.budget_seconds, args.interactive, args.command == 'step')

@@ -1,5 +1,7 @@
 # Local visual defense demonstration
 
+The independent [early-security profile](early-security.md) adds browser comparisons F02 / F12 / F03 without extending the F11/F13 sequence below. F02/F12 are static and do not require Docker; F03 builds/scans images without Kubernetes. No downstream trust or deployment is implied.
+
 Primary presenter route: [prepare and run from the browser](web-rehearsal.md). The CLI examples below remain supported alternatives.
 Supported F11 cases can now create independent attempts on valid retained preparation; F13 requires a separately prepared fixture. See [case attempts and authentic lane A bundles](demo-workspace.md#independent-case-attempts-and-lane-a-bundles). The original presentation is never reset.
 
@@ -110,3 +112,5 @@ bash implementacion/scripts/defense-demo/f11-static.sh
 The separate fallback runs real Conftest against a **labelled synthetic manifest and placeholder digest**. It needs Node/jq/Conftest, no cluster. It proves no image build, signature, F13 or admission. If Kubernetes is unavailable, F13 can only be shown as a clearly identified saved real execution, or as unexecuted. Unit substitutes are labelled and never count as live acceptance. See the [local validation record](../../../registros/defense_demo_validation_EN.md) for actual outcomes and remaining review.
 
 To repeat a completed demo on 8765, see [run again on the same port](defense-demo-operations.md#run-the-demo-again-on-the-same-port): a new session is required; `serve` only reopens the viewer.
+
+[Combined profile: all demo families in one session](combined-profile.md).

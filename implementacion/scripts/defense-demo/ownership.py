@@ -19,7 +19,7 @@ def inspect(name):
     return value
 
 
-def identity(state, lab, strict):
+def identity(state, lab, strict, profile=None):
     cluster, registry, builder = (state[k] for k in ('cluster', 'registry', 'builder'))
     registry_value = inspect(registry)
     node = inspect(cluster + '-control-plane')
@@ -51,7 +51,8 @@ def identity(state, lab, strict):
                      'analysis.json', 'analysis-association.json', 'database-identity.json', 'manifest-policy.json',
                      'workflow-policy.json', 'unit-tests.log', 'build-inputs.json', 'build-metadata.json',
                      'image.bundle.json', 'sbom.bundle.json', 'provenance.bundle.json', 'admission-policies.json')
-        if (lab / 'comparison').is_dir():
+        # In defense-all these inputs are captured after recovery, not at sealing.
+        if (lab / 'comparison').is_dir() and profile != 'defense-all':
             protected += ('results.bundle.json', 'results-predicate.json', 'F11-privileged.json', 'comparison/reference.json', 'comparison/diff.json')
         result['preparedEvidenceHashes'] = {name: digest((lab / name).read_bytes()) for name in protected}
         result['clusterUID'] = read_json(lab / 'prepared-cluster.json')['metadata']['uid']
@@ -122,9 +123,9 @@ def main(name, action):
     seal = session / 'ownership.json'
     if action == 'seal':
         if seal.exists(): raise ValueError('Preparation cannot be resealed')
-        atomic(seal, identity(state, lab, True))
+        atomic(seal, identity(state, lab, True, read_json(session / 'session.json').get('profile')))
     elif action == 'check':
-        if identity(state, lab, True) != read_json(seal): raise ValueError('Prepared identity changed')
+        if identity(state, lab, True, read_json(session / 'session.json').get('profile')) != read_json(seal): raise ValueError('Prepared identity changed')
     elif action == 'cleanup-check':
         actual = identity(state, lab, False)
         if seal.exists():
