@@ -347,3 +347,10 @@ El mismo renderizador usa rutas hash con identificadores conocidos para demostra
 detalle y vistas de catálogo/workflows/sesiones. El detalle sustituye la comparación;
 el estado de lectura se conserva separado del sondeo y de las acciones del coordinador.
 Ninguna ruta cambia la sesión vinculada al servidor ni ejecuta comandos.
+
+El recorrido técnico completo es un modelo de presentación en `demo/model.js`:
+la correspondencia de fases procede del catálogo capturado de la sesión y el
+orden de operaciones, de sus recibos. `app.js` gestiona rutas hash, detalles bajo
+demanda e inspección de archivos. Los recibos globales usan números de secuencia
+seguros, sin asignarles escenarios Fxx/Lxx. Las etiquetas de archivos heredados
+comparan fuente/hash capturados; no acreditan otra verificación ni modifican evidencia.

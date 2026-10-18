@@ -1,5 +1,14 @@
 # Incremental implementation plan
 
+## Technical journey navigation — 18 October 2026
+
+- [x] Start `feat/demo-technical-journey` from merged PR #50 on main (`b5d0a27`), preserving the separate uncommitted Trivy correction and unrelated files.
+- [x] Expose the fifteen-phase control map and recorded receipt sequence with context filters, global operation details and return navigation. Keep attribution, recovery and captured artifact origins distinct.
+- [x] Explain incomplete preparation without inventing a cause, execution time or successful rejection; update EN/ES usage.
+- [x] Shared suite, 61 defense regressions, 11 model tests and eight browser checks pass; visually reviewed at 1366×768, 1920×1080, 390 px and native 200% zoom. Console visible height: 412.5 px. See the [handoff](registros/demo_technical_journey_EN.md); no new laboratory execution.
+- [x] Human review of this navigation change completed, as confirmed by the requester on 18 October 2026; PR creation and closure authorized. This does not constitute a GitHub approval submitted by the assistant.
+- [ ] Narrated timing remains unmeasured; no new laboratory execution or campaign sample.
+
 ## Full-height demo evidence detail — local correction, October 2026
 
 - [x] Continue the uncommitted dashboard implementation on `fix/demo-evidence-layout`,

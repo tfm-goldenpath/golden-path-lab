@@ -338,3 +338,10 @@ The same renderer now uses allowlisted hash routes for demonstration, attempt
 detail and catalogue/workflow/session views. Detail replaces comparison content;
 route-local reading state is retained independently from polling and coordinator
 actions. No route can select another server-bound session or execute a command.
+
+The full technical journey is a presentation read model in `demo/model.js`: phase
+membership comes from the session’s captured catalogue, while operation order
+comes from its receipts. `app.js` owns hash navigation, lazy details and artifact
+inspection. Global preparation receipts use safe sequence identifiers, without
+assigning Fxx/Lxx scenarios. Inherited-file labels compare captured source/hash
+metadata; they do not establish a new verification or modify evidence.

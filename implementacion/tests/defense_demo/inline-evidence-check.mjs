@@ -11,7 +11,7 @@ try{
  const row=page.locator('#inspector .scenario-row').filter({hasText:'F11 · Control temprano'});await row.locator('details > summary').click();await row.getByRole('button',{name:'F11-security-diff.txt',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('.console-text')?.textContent.includes('privileged'));await snap(page,output,'diff');
  // Pin a closed original while new provisional output arrives; preserve scroll/focus.
- let fixture=structuredClone(snapshot);fixture.session.session='synthetic-poll-fixture';
+ let fixture=structuredClone(snapshot);fixture.session.session='synthetic-poll-fixture';fixture.events=fixture.events.map(e=>({...e,session:fixture.session.session}));
  await page.route('**/api/session',r=>r.fulfill({json:fixture}));
  await page.locator('.console-text').evaluate(n=>n.scrollTop=80);const scroll=await page.locator('.console-text').evaluate(n=>n.scrollTop);
  const before=await page.locator('.console-text').innerText();const wrap=page.getByRole('button',{name:'Desactivar ajuste de línea'});await wrap.evaluate(n=>n.focus({preventScroll:true}));

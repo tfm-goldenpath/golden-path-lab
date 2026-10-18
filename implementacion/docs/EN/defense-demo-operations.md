@@ -362,3 +362,5 @@ cannot fill the gap. No new laboratory requests are made by opening these links.
 
 Refresh the viewer to load these presentation changes. Existing receipts retain
 their original source identity; a UI refresh is not a new rehearsal.
+
+The visible **Recorrido técnico** destination separates the full control map from the recorded operation sequence. See [journey navigation](demo-workspace.md#full-technical-journey) for filters, original outputs, return context and incomplete preparation.
