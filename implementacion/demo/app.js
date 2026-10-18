@@ -301,7 +301,7 @@
  }
  function renderFiles(container,e){
   if(!e?.artifacts?.length){container.append(el('p','No hay archivos registrados para esta selección.','empty'));return;}
-  const preferred=[M.primaryArtifact(e,data),M.primaryArtifact(e,data,'attribution')].filter(Boolean);const used=new Set(preferred.map(a=>a.id));
+  const preferred=[M.primaryArtifact(e,data),M.primaryArtifact(e,data,'attribution'),...(M.meta(e.operation,data).support||[]).map(path=>M.ownArtifact(e,path))].filter(Boolean);const used=new Set(preferred.map(a=>a.id));
   const add=(target,a)=>{const row=el('div',undefined,'file-item');const embedded=data.offlineArtifacts?.[a.id];if(data.recorded)row.append(el('p',(embedded?.status||'NOT_EMBEDDED')+' · '+(embedded?.reason||'Original no seleccionado')));row.append(fileButton(a,e),el('p',a.path+' · '+a.size+' bytes · SHA-256 '+a.sha256+' · '+M.artifactOrigin(a,e,data).label,'metadata'));target.append(row);};
   container.append(el('h3','Evidencia relevante del intento'));preferred.forEach(a=>add(container,a));
   const groups=new Map();for(const a of e.artifacts){if(used.has(a.id))continue;const path=a.path;const key=/sbom/i.test(path)?'SBOM':/provenance/i.test(path)?'Procedencia':/result|authoriz/i.test(path)?'Resultados':/signature|bundle/i.test(path)?'Firmas y bundles':/log|command/i.test(path)?'Salidas y comandos':'Otros archivos';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(a);}
@@ -334,7 +334,7 @@
  function eventTechnical(e,container){
   container.append(el('p',`${e.attempt} · ${e.phase} · ${e.operation} · ${M.expectation(e)} · ${seconds(e.durationSeconds)}`,'metadata'));
   if(e.reason)container.append(el('pre',e.reason));
-  for(const a of [M.primaryArtifact(e,data),M.primaryArtifact(e,data,'attribution')].filter(Boolean))container.append(fileButton(a,e));
+  for(const a of [M.primaryArtifact(e,data),M.primaryArtifact(e,data,'attribution'),...(M.meta(e.operation,data).support||[]).map(path=>M.ownArtifact(e,path))].filter(Boolean))container.append(fileButton(a,e));
  }
  function renderTechnical(container,filter='all',operation=null){
   const events=M.sessionEvents(data).filter(e=>(filter==='all'||e.attempt===filter||filter==='reference-preparation'&&e.operation==='reference')&&(selection.event==null||e.sequence===selection.event));

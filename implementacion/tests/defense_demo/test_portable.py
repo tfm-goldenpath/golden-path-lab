@@ -48,6 +48,28 @@ class PortableTests(unittest.TestCase):
     def test_missing_essential_is_explicit_not_inherited(self):
         value={'session':{'profile':'defense'},'catalogue':{'operations':{}},'events':[{'operation':'f11-early','attempt':'a','operational':'COMPLETED','artifacts':[{'id':'wrong','producer':'prepare','path':'operations/other/closed/F11-early.json'}]}]}
         refs=portable.references(value);self.assertEqual(refs['essential'],[]);self.assertEqual({r['role'] for r in refs['missing']},{'log','attribution'})
+    def test_f13_inventories_are_required_and_bound_to_the_attempt(self):
+        paths=['attestation-inventory-before-results.json','registry-inventory-before-results.json','attestation-inventory-after-denial.json','registry-inventory-after-denial.json']
+        artifacts=[{'id':str(i),'producer':'f13','path':'operations/f13/closed/'+name} for i,name in enumerate(paths)]
+        value={'session':{'profile':'defense'},'catalogue':{'operations':{}},'events':[{'operation':'f13','operational':'COMPLETED','artifacts':artifacts}]}
+        refs=portable.references(value);self.assertEqual(set(refs['essential']),{'0','1','2','3'})
+        artifacts[0]['producer']='preparation'
+        refs=portable.references(value);self.assertNotIn('0',refs['essential']);self.assertTrue(any(x['role']=='support' and x['path']==paths[0] for x in refs['missing']))
+    def test_freeze_rejects_external_manifest_tampering_and_missing_hashes(self):
+        import io, tarfile
+        spec=importlib.util.spec_from_file_location('freeze_demo',Path(portable.__file__).with_name('freeze-demo.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+        with tempfile.TemporaryDirectory() as t:
+            root=Path(t);manifest=b'{"synthetic":true}'
+            (root/'manifest.json').write_bytes(manifest);(root/'recorded.html').write_text('synthetic')
+            with tarfile.open(root/'evidence.tar.gz','w:gz') as archive:
+                entry=tarfile.TarInfo('manifest.json');entry.size=len(manifest);archive.addfile(entry,io.BytesIO(manifest))
+            sums=''.join(m.checksum(root/name)+'  '+name+'\n' for name in ('evidence.tar.gz','recorded.html'))
+            (root/'SHA256SUMS.txt').write_text(sums)
+            self.assertEqual(m.export_identity(root)[0],{'synthetic':True})
+            (root/'manifest.json').write_text('{"synthetic":"altered"}')
+            with self.assertRaisesRegex(ValueError,'Manifest differs'):m.export_identity(root)
+            (root/'SHA256SUMS.txt').write_text(sums.splitlines()[0]+'\n')
+            with self.assertRaisesRegex(ValueError,'Incomplete'):m.export_identity(root)
     def test_portable_verify_fails_missing_altered_and_symlink(self):
         spec=importlib.util.spec_from_file_location('static_verify',Path(portable.__file__).with_name('verify-static.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
         with tempfile.TemporaryDirectory() as t:

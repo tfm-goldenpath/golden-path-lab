@@ -8,6 +8,7 @@ await import('../../demo/model.js');const M=globalThis.DemoModel;
 const browser=await chromium.launch({headless:true}),results=[],errors=[],requests=[];
 const route=(e,a)=>`#demo/operation/${e.sequence}/console?artifact=${a.id}`;
 const evidence=[];for(const e of data.events){if(e.phase!=='live'||e.operational!=='COMPLETED')continue;for(const kind of ['log','attribution']){const a=M.primaryArtifact(e,data,kind);if(a)evidence.push({e,a,kind});}}
+for(const e of data.events){if(e.operational==='COMPLETED')for(const path of M.meta(e.operation,data).support||[]){const a=M.ownArtifact(e,path);assert.ok(a,path);evidence.push({e,a,kind:'support'});}}
 async function inspect(page,url,portable){
  for(const {e,a,kind} of evidence){await page.goto(url+route(e,a));await page.waitForFunction(()=>document.querySelector('.console-status')?.textContent.includes('FULL'));
   const text=await page.locator('.console-text').textContent();assert.ok(text.length>0);assert.ok(!/NOT_EMBEDDED|Failed to fetch|Integridad fallida/.test(text));results.push({mode:portable?'portable':'file',operation:e.operation,kind,status:'PASS'});
