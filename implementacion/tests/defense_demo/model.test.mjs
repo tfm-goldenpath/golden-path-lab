@@ -98,6 +98,22 @@ test('new attempts retain exact original paths and recovery operations without r
  assert.equal(M.ownArtifact(fresh,'F11-early.json').id,'new');
 });
 
+test('duplicate case titles have stable per-control execution numbers, including active attempts',()=>{
+ const d=data('defense',[event('f11-early'),event('f11-admission'),event('f11-early',{attempt:'case-f11-early-1'}),event('f11-admission',{attempt:'case-f11-admission-1'})]);
+ d.session.active={operation:'f11-early',attempt:'case-f11-early-2'};
+ const before=JSON.stringify(d),titles=()=>Object.fromEntries(M.rows(d).map(r=>[r.id,M.rowTitle(r,d)]));
+ const initial=titles();
+ assert.equal(initial['attempt-1'],'G · F11 · Control temprano · Ejecución 1');
+ assert.equal(initial['case-f11-early-1'],'G · F11 · Control temprano · Ejecución 2');
+ assert.equal(initial['case-f11-early-2'],'G · F11 · Control temprano · Ejecución 3');
+ assert.equal(initial['attempt-4'],'G · F11 · Admisión independiente · Ejecución 1');
+ assert.equal(initial['case-f11-admission-1'],'G · F11 · Admisión independiente · Ejecución 2');
+ assert.equal(JSON.stringify(d),before);
+ d.events.push(event('f11-early',{attempt:'case-f11-early-2',operational:'ERROR'}));d.session.active=null;
+ assert.deepEqual(titles(),initial);
+ assert.doesNotMatch(M.rowTitle(M.rows(data('defense'))[1],data('defense')),/Ejecución/);
+});
+
 
 test('fixture preparation never replaces the original attempt origin',()=>{
  const first=event('seal',{phase:'preparation',decision:'allow',sequence:1});

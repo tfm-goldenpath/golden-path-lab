@@ -1,5 +1,17 @@
 # Incremental implementation plan
 
+## Real browser rehearsal — 18 October 2026
+
+- [x] Number duplicate case executions and expose a capability-gated F11 repeat selector. A later compatible dirty-source session was prepared and checked from the browser, with its presentation left pending; see the follow-up in the validation record. Publication changes the bound SHA and requires a new preparation.
+
+- [x] Create `test/demo-web-rehearsal` from main after PR #53; preserve unrelated npm files and all prior evidence. Fix the observed fixed-port CLI-test collision and console crowding, without changing policies or action semantics.
+- [x] Fresh source `41ce80a`: browser preparation, two independent environment checks, initial F11/F13/recovery sequence, both F11 repeats, real safe-check cancellation and a subsequent successful check. Original six live receipts and 2,603 closed artifact hashes are unchanged.
+- [x] Shared suite in preparation: 951 service/unit, 43 policy and 114 defense checks pass. Actual preparation 404.79 s and continuous automatic sequence 25.16 s are separate from navigation and unmeasured human narration.
+- [x] Verify the real 5,500-file offline package, full F11/F13 logs, original bundle documents and zero-network HTML navigation. Review desktop, narrow and native 200% zoom; closed-evidence console has 400 px visible at 1366×768.
+- [ ] Independent F13 fixture acceptance: authenticated resource refusal retained; fewer than the required 8 GiB free after the main laboratory. Initial F13 does not validate this repeat.
+- [ ] Remaining strict geometry check: completed live-action console with the action selector measures 395.17 px against the test's 400 px threshold; readable 15 px text, no execution failure.
+- [ ] Human review and narrated 160-second rehearsal remain pending. See the [validation matrix and limitations](registros/demo_web_rehearsal_EN.md), [EN procedure](docs/EN/defense/web-rehearsal.md) and [ES script](docs/ES/defense/web-rehearsal.md). Earlier pending records below retain their historical meaning.
+
 ## Independent demo cases and authentic lane A bundles — 18 October 2026
 
 - [x] Enumerated F11 repeat actions with isolated inputs/new receipts, sealed-readiness checks and immutable original timing; isolated F13 fixture preparation/recovery/retirement through the existing coordinator.

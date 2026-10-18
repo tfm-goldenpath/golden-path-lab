@@ -1,5 +1,6 @@
 # Demostración visual local para la defensa
 
+Ruta principal del presentador: [preparar y ejecutar desde el navegador](web-rehearsal.md). Los ejemplos CLI siguientes siguen siendo alternativas compatibles.
 Los casos F11 compatibles admiten intentos independientes sobre preparación válida conservada; F13 requiere una fixture preparada por separado. Consulta [intentos y bundles auténticos de vía A](demo-workspace.md#intentos-independientes-y-bundles-de-vía-a). La presentación original no se reinicia.
 
 [Guía vigente de defensa](README.md) · [Controles web y capturas](demo-workspace.md#browser-controls-and-live-console)

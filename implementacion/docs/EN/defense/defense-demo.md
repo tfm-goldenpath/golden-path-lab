@@ -1,5 +1,6 @@
 # Local visual defense demonstration
 
+Primary presenter route: [prepare and run from the browser](web-rehearsal.md). The CLI examples below remain supported alternatives.
 Supported F11 cases can now create independent attempts on valid retained preparation; F13 requires a separately prepared fixture. See [case attempts and authentic lane A bundles](demo-workspace.md#independent-case-attempts-and-lane-a-bundles). The original presentation is never reset.
 
 [Current defense guide](README.md) · [Browser controls and captured runs](demo-workspace.md#browser-controls-and-live-console)

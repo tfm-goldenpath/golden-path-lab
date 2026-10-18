@@ -55,17 +55,18 @@ restore preparation or enable a failed presentation.
 Use a new session on the final source. Keep Codespaces at 4 CPU / 16 GB RAM /
 32 GB total storage and the 3 GiB custody reserve. Check actual free space and
 inodes first; preparation additionally requires its configured growth margin.
-The following command prepares and opens the authenticated viewer; **it does not
-start the presentation**:
+The main presenter route creates an unprepared session and opens the authenticated
+viewer. **Preparation starts only when you click Preparar entorno**, before the talk.
+See the [web rehearsal procedure and offline fallback](web-rehearsal.md).
 
 ```bash
 cd /workspaces/golden-path-lab
 export PATH="$PWD/implementacion/.tools/bin:$PATH"
 export DEMO_SESSION="defense-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')"
 printf 'Session: %s\n' "$DEMO_SESSION"
-bash implementacion/scripts/defense-demo.sh prepare \
+bash implementacion/scripts/defense-demo.sh serve --new \
   --session "$DEMO_SESSION" --profile defense --reserve-gib 3 \
-  --serve --enable-actions --port 8765
+  --enable-actions --port 8765
 ```
 
 Open **Ports → 8765**, visibility **Private**. Reopen without execution with

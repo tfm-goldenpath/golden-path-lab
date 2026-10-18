@@ -15,6 +15,10 @@ evidence source, renderer hash, recorded resources, preparation and complete
 technical detail. A connected viewer can display old evidence from a cleaned lab.
 **Tiempo registrado de ejecución** is a recorded duration, not a current timer.
 
+Repeated cases display “Ejecución 1”, “Ejecución 2”, and so on in the comparison, detail title and attempt selector. Numbering is per control within the session, in recorded attempt order; it does not replace attempt IDs or alter their evidence. Early Conftest and independent Kyverno requests have separate numbering.
+
+Use **Volver a ejecutar caso** at the top of Demostración to select F11/Conftest or F11/Kyverno and create a new independent attempt. It opens the action console and preserves earlier receipts. Availability comes from the bound server; read-only, stale, busy or incompatible preparation states show a disabled button with a reason. This does not restart the entire consumed presentation. F13 keeps its separate fixture preparation flow.
+
 ## Open the viewer in Codespaces
 
 Inspect the available sessions and use a free private port. These read-only

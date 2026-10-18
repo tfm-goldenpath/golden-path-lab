@@ -56,16 +56,18 @@ habilita una presentación fallida.
 Crea una sesión nueva con la fuente definitiva. Mantén 4 CPU / 16 GB RAM / 32 GB
 de almacenamiento total y la reserva de custodia de 3 GiB. Comprueba espacio e
 inodos: la preparación exige además su margen de crecimiento configurado.
-Este comando prepara y abre el visor autenticado; **no inicia la presentación**:
+La ruta principal crea una sesión pendiente y abre el visor autenticado.
+**La preparación comienza al pulsar Preparar entorno**, antes de la exposición.
+Consulta el [procedimiento web y respaldo offline](web-rehearsal.md).
 
 ```bash
 cd /workspaces/golden-path-lab
 export PATH="$PWD/implementacion/.tools/bin:$PATH"
 export DEMO_SESSION="defense-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')"
 printf 'Sesión: %s\n' "$DEMO_SESSION"
-bash implementacion/scripts/defense-demo.sh prepare \
+bash implementacion/scripts/defense-demo.sh serve --new \
   --session "$DEMO_SESSION" --profile defense --reserve-gib 3 \
-  --serve --enable-actions --port 8765
+  --enable-actions --port 8765
 ```
 
 Abre **Ports → 8765**, visibilidad **Private**. Reabre sin ejecutar con

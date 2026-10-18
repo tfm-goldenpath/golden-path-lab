@@ -58,3 +58,17 @@ header{position:sticky;top:0;z-index:8}html{scroll-padding-top:64px}
 @media(max-width:800px){.live-heading #command-selector{max-width:100%;flex-basis:100%}.live-file-info{gap:4px}}
 
 .operator #control-state{flex:1 1 100%}.operator #next-operation{flex:1}.operator #more{margin-left:auto}.operator{gap:8px;margin-bottom:10px}
+
+/* Closed evidence keeps action identity/status, without repeating its diagnostic.
+   The action button opens that separate result; active Stop stays in the header. */
+body[data-view=detail] #action-status,body[data-view=detail] #command-result{display:none}
+@media(min-width:801px) and (min-height:601px){
+ body[data-view=detail] #command-card{padding:4px 24px}
+ body[data-view=detail] #command-console{padding:3px 10px}
+ body[data-view=detail] main{padding-top:6px}
+}
+
+.repeat-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
+.repeat-controls label{font-weight:600}.repeat-controls select{min-width:0;max-width:100%}
+.repeat-controls button{border-color:var(--blue);color:var(--blue);font-weight:600}
+.repeat-controls p{flex-basis:100%;font-size:14px;color:var(--muted);margin:0}
