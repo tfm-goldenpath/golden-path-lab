@@ -80,3 +80,33 @@ test('equal generated operation logs are not inherited from an unrelated produce
 test('missing phase on an old live receipt cannot become an unexecuted preparation claim',()=>{
  const old=event('f13');delete old.phase;const d=data('defense',[old]);Object.assign(d.session,{prepared:false,operational:'ERROR'});assert.equal(M.incompletePreparation(d),null);
 });
+
+test('workflow selection sorts execution time, attempt and capture without hiding failures',()=>{
+ const capture=(id,date,attempt,utc)=>({id:'capture-'+id+'-'+utc,workflow:'ci.yml',capturedUTC:utc,run:{id,created_at:date,run_attempt:attempt,conclusion:'failure'}});
+ const old=capture(100,'2026-10-01',1,'2026-10-18'),latest=capture(200,'2026-10-17',2,'2026-10-18'),earlier=capture(200,'2026-10-17',1,'2026-10-17');
+ assert.deepEqual(M.workflowRuns([old,earlier,latest], 'ci.yml'),[latest,earlier,old]);
+ assert.deepEqual(M.workflowRuns([old], 'golden-path.yml'),[]);
+});
+
+test('new attempts retain exact original paths and recovery operations without recoloring history',()=>{
+ const old=event('f11-early',{attempt:'attempt-1'}),fresh=event('f11-early',{attempt:'case-f11-early-1',operationInstance:'case-f11-early-1',artifacts:[{id:'new',producer:'f11-early',path:'operations/case-f11-early-1/closed/F11-early.json'}]});
+ const d=data('defense',[old,fresh,event('authorize',{attempt:'case-f13-1-recovery'}),event('accept',{attempt:'case-f13-1-recovery'})]);
+ d.session.active={operation:'f11-early',attempt:'case-f11-early-2'};d.activeProcessObserved=true;
+ assert.equal(M.rows(d).find(r=>r.id==='case-f13-1-recovery').ops.length,2);
+ assert.equal(M.rowOutcome(M.rows(d).find(r=>r.id==='attempt-1'),d).tone,'blocked');
+ assert.equal(M.rowOutcome(M.rows(d).find(r=>r.id==='case-f11-early-2'),d).tone,'running');
+ assert.equal(M.ownArtifact(fresh,'F11-early.json').id,'new');
+});
+
+
+test('fixture preparation never replaces the original attempt origin',()=>{
+ const first=event('seal',{phase:'preparation',decision:'allow',sequence:1});
+ const child=event('seal',{phase:'preparation',decision:'allow',fixtureSession:'fixture-1',sequence:3});
+ const early=event('f11-early',{attempt:'attempt-1',sequence:2});
+ const f13=event('f13',{attempt:'case-f13-1',fixtureSession:'fixture-1',preparationSession:'fixture-1',sequence:4});
+ const d=data('defense',[first,early,child,f13]);d.session.active={operation:'f11-early',attempt:'case-f11-early-2'};d.activeProcessObserved=true;
+ assert.equal(M.segments(M.rows(d).find(r=>r.id==='attempt-1'),d)[0].event.sequence,1);
+ assert.equal(M.segments(M.rows(d).find(r=>r.id==='case-f13-1'),d)[0].event.sequence,3);
+ assert.ok(M.journey(d,'attempt-1').flatMap(s=>s.entries).every(x=>x.event?.fixtureSession!=='fixture-1'));
+ assert.equal(M.journey(d,'attempt-1').find(s=>s.id==='manifest').entries.find(x=>x.event===early).state.tone,'blocked');
+});

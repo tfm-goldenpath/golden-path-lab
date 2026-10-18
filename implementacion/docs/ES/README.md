@@ -10,8 +10,8 @@ Esta documentación ofrece apoyo en español. La implementación y la documentac
 | [Resultados de diez pares](paired-rg-campaign-results.md) | Tiempos observados, runs/evidencias originales, comprobaciones y limitaciones documentadas. |
 | [Preparación de la evaluación](evaluation-readiness.md) | Veinte escenarios, evidencia histórica, alcance actual y entrega para ejecución final. |
 | [Entorno y versiones](environment.md) | Preparación del devcontainer, versiones fijadas y comprobación del entorno. |
-| [Demo visual local de defensa](defense-demo.md) | Presentación preparada por vía A, recibos reales F11/F13, panel de lectura, exportación y limpieza propia. |
-| [Comandos de la demo y cambio de máquina](defense-demo-operations.md) | Presentar la sesión preparada, arrancar otra y guardar código, `.tmp`, evidencias y bases Trivy antes de ampliar recursos. |
+| [Guía de defensa por objetivo](defense/README.md) | Presentación preparada por vía A, recibos reales F11/F13, panel de lectura, exportación y limpieza propia. |
+| [Comandos de la demo y cambio de máquina](defense/defense-demo-operations.md) | Presentar la sesión preparada, arrancar otra y guardar código, `.tmp`, evidencias y bases Trivy antes de ampliar recursos. |
 | [Arquitectura modular](architecture.md) | Responsabilidades, interfaces y límites de verificación de los componentes. |
 | [Contratos de entrega](delivery-contracts.md) | Identidad del artefacto, evidencias obligatorias y comprobaciones de autorización. |
 | [Desarrollo asistido por IA](ai-assisted-development.md) | Asistencia acotada, responsabilidad humana, instrucciones, skill de escenarios y atribución veraz. |
@@ -27,11 +27,11 @@ Esta documentación ofrece apoyo en español. La implementación y la documentac
 | [Migración a bundles de Cosign](cosign-bundle-migration.md) | Perfil bundle, observaciones históricas locales/alojadas, revisión de PR y aceptación pendiente. |
 | [Revisión de la propuesta externa](context/external-proposal-review.md) | Antecedente documental en español, separado de las instrucciones operativas. |
 
-El [README de implementación](../../README.md) contiene los comandos principales y el [TODO](../../TODO.md) recoge el avance. Los [registros originales](../../registros/) conservan su idioma y alcance para distinguir las comprobaciones realizadas de las integraciones pendientes.
+El [README de implementación](../../README.md) contiene los comandos principales y el [TODO](../../TODO.md) recoge el avance. Los [registros originales](../../registros) conservan su idioma y alcance para distinguir las comprobaciones realizadas de las integraciones pendientes.
 
 La [guía de contribución](../../../CONTRIBUTING.md) y la [plantilla de PR](../../../.github/pull_request_template.md), en inglés, se aplican tanto a contribuciones asistidas como sin IA.
 
-La carpeta `cases/L01-F13/` reúne la documentación del ensayo integrado, incluidas las comprobaciones dirigidas de F11. Sus pruebas se implementan una sola vez en [`tests/scenarios/`](../../tests/scenarios/); no se crean copias de código por idioma ni carpetas vacías para los veinte escenarios.
+La carpeta `cases/L01-F13/` reúne la documentación del ensayo integrado, incluidas las comprobaciones dirigidas de F11. Sus pruebas se implementan una sola vez en [`tests/scenarios/`](../../tests/scenarios); no se crean copias de código por idioma ni carpetas vacías para los veinte escenarios.
 
 - [Mediciones R/G pareadas — protocolo y prueba manual](paired-rg-measurements.md).
 - [Reparación automatizada F03/F10/F11 — validación técnica desatendida](automated-remediation.md).

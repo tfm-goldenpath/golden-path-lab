@@ -75,6 +75,11 @@ delivery_analysis_command() {
   printf '\n' >> "$state_dir/$prefix-request.txt"
   "$@" > "$state_dir/$prefix.log" 2>&1 || status=$?
   printf '%s\n' "$status" > "$state_dir/$prefix-exit.txt"
+  if (( status != 0 )); then
+    printf 'ERROR: %s failed (exit %s). Original output: %s\nDiagnostic excerpt (last 16384 bytes):\n' \
+      "$prefix" "$status" "$state_dir/$prefix.log" >&2
+    tail -c 16384 -- "$state_dir/$prefix.log" >&2 || true
+  fi
   return "$status"
 }
 
@@ -96,7 +101,10 @@ delivery_database_prepare() {
     if [[ -n "${GP_VULNERABILITY_DB:-}" ]]; then
       cache=$(realpath -- "$GP_VULNERABILITY_DB")
     else
-      delivery_analysis_command database-download trivy image --cache-dir "$cache" --download-db-only
+      # Fetch from the publisher directly: a mirror layer 404 can abort Trivy
+      # before its built-in fallback. Keep explicit operator overrides recorded.
+      delivery_analysis_command database-download trivy image --cache-dir "$cache" \
+        --db-repository "${TRIVY_DB_REPOSITORY:-ghcr.io/aquasecurity/trivy-db:2}" --download-db-only
     fi
     if [[ "${manual_execution_mode:-manual}" == scripted && "${GP_REUSE_VULNERABILITY_DB:-}" == 1 && -n "${GP_VULNERABILITY_DB:-}" ]]; then
       # Sequential scripted tasks retain the canonical DB; scans still check its

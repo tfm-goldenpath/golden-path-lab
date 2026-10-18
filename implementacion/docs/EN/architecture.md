@@ -76,8 +76,8 @@ The [initial plan](implementation-plan.md) retains earlier proposed directories;
 
 | Component | Inputs/outputs and verification |
 |---|---|
-| [Service](../../services/quotes-node/src/) | HTTP/JSON → health, version or quote. `index.js` starts, `server.js` adapts HTTP, `quote.js` calculates, `validation.js` validates. [Service tests](../../services/quotes-node/test/) check behavior and limits. |
-| [Orchestrator](../../scripts/demo.sh) and [workflows](../../../.github/workflows/) | Mode/phase/arguments → ordered module/scenario calls and ownership of infrastructure cleanup. [Orchestration tests](../../tests/unit/orchestration.test.mjs) substitute stages to check order, interruption and exit status; they do not establish real integration. |
+| [Service](../../services/quotes-node/src) | HTTP/JSON → health, version or quote. `index.js` starts, `server.js` adapts HTTP, `quote.js` calculates, `validation.js` validates. [Service tests](../../services/quotes-node/test) check behavior and limits. |
+| [Orchestrator](../../scripts/demo.sh) and [workflows](../../../.github/workflows) | Mode/phase/arguments → ordered module/scenario calls and ownership of infrastructure cleanup. [Orchestration tests](../../tests/unit/orchestration.test.mjs) substitute stages to check order, interruption and exit status; they do not establish real integration. |
 | [Context](../../scripts/lib/context.sh) | Parameters/persisted state → run identity, resources and traceability without mixing images or attempts. |
 | [Laboratory](../../scripts/lib/lab.sh) | Context/versions → kind, zot, builder, namespaces, Kyverno, diagnostics and cleanup. Real resource operations need integration. |
 | [Delivery](../../scripts/lib/delivery.sh) | Sources/context → tests, early checks, image, Trivy reports and manifests. Rule unit tests do not replace a real image scan. |
@@ -86,8 +86,8 @@ The [initial plan](implementation-plan.md) retains earlier proposed directories;
 | [Workload](../../scripts/lib/workload.sh) | Manifest/image → deployment request and HTTP check. Admission and functional response are distinct observations. |
 | [Image rollout check](../../scripts/check-image-rollout.mjs) | Original/replacement references + observed Deployment/Pods → proof that a distinct digest completed rollout and runs in ready Pods. It does not replace admission or signature verification. |
 | [Admission controller readiness](../../scripts/check-admission-controller.mjs) | Deployment, ReplicaSets, Pods and EndpointSlices → current Ready Pod targets. `lab.sh` then checks an actual server dry-run; snapshots alone do not establish responsiveness. |
-| [Scenarios](../../tests/scenarios/) | Delivery context → L01/F13/F11 preparation and expectations. Attribute a rejection to its intended condition. |
-| [Conftest policies](../../policies/conftest/) | Workflow, manifest or Trivy JSON → Rego decisions. [Policy fixtures](../../tests/policies/run_rego.py) and [real-file checks](../../scripts/check-policies.sh) exercise the rules. |
+| [Scenarios](../../tests/scenarios) | Delivery context → L01/F13/F11 preparation and expectations. Attribute a rejection to its intended condition. |
+| [Conftest policies](../../policies/conftest) | Workflow, manifest or Trivy JSON → Rego decisions. [Policy fixtures](../../tests/policies/run_rego.py) and [real-file checks](../../scripts/check-policies.sh) exercise the rules. |
 | [Contract helper](../../scripts/lab-contracts.mjs) | Parameters → manifests/predicates; verified documents → subject/type/content checks. [Contract tests](../../tests/unit/contracts.test.mjs) do not perform cryptography. |
 | [GitHub adapter](../../scripts/github-attestation.mjs) and [F13 inventory check](../../scripts/check-missing-results.mjs) | Previously verified GitHub CLI output or Cosign inventory → authorized-origin/absence checks. [GitHub](../../tests/unit/github-attestation.test.mjs) and [F13](../../tests/unit/missing-results.test.mjs) tests use synthetic inputs. |
 | [Kyverno generator](../../policies/kyverno/render.py) | Key/identity/repository/commit/formats → admission JSON. [Generator tests](../../tests/policies/test_render.py) and [Kyverno CLI tests](../../tests/policies/run_kyverno.py) cover configuration; retrieval/signatures need real integration. |
@@ -142,7 +142,7 @@ Mutations belong to scenarios; rules belong to controls. A scenario requiring a 
 
 ## Visual defense layer
 
-The optional [visual defense layer](defense-demo.md) uses a separate thin CLI and
+The optional [visual defense layer](defense/defense-demo.md) uses a separate thin CLI and
 Python session coordinator over the same function-only modules. It owns its
 prepared-session lifecycle, budget, immutable receipts and read-only viewer;
 `demo.sh` retains ownership of the full laboratory's existing cleanup trap.
@@ -325,7 +325,7 @@ The [automated runner](automated-remediation.md) imports the existing task contr
 Explicit scripted identity is part of task records, operation receipts and archives; manual schemas remain compatible. Calibration selection, measurement preparation and frozen review reuse reject automation even after a later human review. Original inputs and repair receipts travel through existing safe packaging. Scripted operations use bounded safety timeouts and sequential canonical DB reuse with unchanged before/after identity checks. Human-effort evaluation is deferred; these provisional technical observations cannot close overall pilot acceptance or authorize the separate hosted campaign.
 
 
-The [presentation workspace](demo-workspace.md) separates a pure display model
+The [presentation workspace](defense/demo-workspace.md) separates a pure display model
 (`demo/model.js`) from DOM interaction (`demo/app.js`). It never decides policy
 acceptance: confirmed receipts and fixed operation metadata supply its labels.
 The existing server supplies action capabilities from the same gates used by POST;
@@ -345,3 +345,5 @@ comes from its receipts. `app.js` owns hash navigation, lazy details and artifac
 inspection. Global preparation receipts use safe sequence identifiers, without
 assigning Fxx/Lxx scenarios. Inherited-file labels compare captured source/hash
 metadata; they do not establish a new verification or modify evidence.
+
+The defense viewer now adds a CLI-only `observations.py` capture module. It reads bounded GitHub metadata and hash-pinned publication summaries into a separate append-only public evidence store; it cannot dispatch workflows or alter session actions. The frontend separates remote observations, captured configuration and local attestation receipts. Export includes capture originals with existing integrity manifests. See the [canonical defense guide](defense/README.md).

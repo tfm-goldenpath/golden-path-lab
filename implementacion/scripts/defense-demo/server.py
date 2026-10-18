@@ -26,8 +26,18 @@ _children = {}
 
 
 def snapshot(name):
+    from observations import inventory
     raw = evidence_root(name)
     state = public_session(name)
+    log_root=raw
+    if state.get('activeFixture'):
+        from cases import fixture
+        child=fixture(state)
+        if child and child['session']==state['activeFixture']:
+            active=child.get('active')
+            if active: active={**active,'attempt':state['f13Fixture']['attempt']+('-recovery' if active['operation'] in ('authorize','accept') else '')}
+            state={**state,'active':active,'activeCaseSession':child['session']}
+            log_root=evidence_root(child['session'])
     tail = None
     log_modified = None
     active_observed = None
@@ -36,13 +46,13 @@ def snapshot(name):
         if worker: active_observed = process_identity(worker['pid']) == worker
         op = state['active'].get('instance', state['active']['operation'])
         if re.fullmatch(r'[a-z0-9-]+', op):
-            p = raw / 'operations' / op / 'output-original.log'
+            p = log_root / 'operations' / op / 'output-original.log'
             if p.is_file() and p.resolve() == p:
                 with p.open('rb') as stream:
                     stream.seek(max(0, p.stat().st_size - 8192))
                     tail = sanitize(stream.read(8192).decode('utf-8', errors='replace'))
                 log_modified = datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat()
-    return {'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
+    return {'githubObservations': inventory(), 'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
             'liveOperations': LIVE[state['profile']],
             'profileOperations': (F11_PREPARE if state['profile'] == 'f11-comparison' else PREPARE) + LIVE[state['profile']] + ['resume', 'cleanup'],
             'workflows': [{**w, 'jobs': w.get('jobs', workflow_facts(w.get('yaml', '')))} for w in read_json(raw / 'workflows.json')],
@@ -130,12 +140,29 @@ def stop_server(name):
     atomic(session_path(name) / 'server-stopped.json', {'timeUTC': utc(), 'process': record['process']})
 
 
+def owned_worker(state):
+    """A surviving recorded process group, including a bound fixture, never a name match."""
+    if state.get('activeFixture'):
+        from cases import fixture
+        child = fixture(state)
+        if not child or child['session'] != state['activeFixture']: return None
+        state = child
+    value = (state.get('active') or {}).get('worker')
+    if not value or process_identity(value['pid']) != value: return None
+    try:
+        return value if os.getpgid(value['pid']) == value['pid'] else None
+    except ProcessLookupError:
+        return None
+
+
 def action_capabilities(state, has_events, running, source_error=None):
     """Same state gate for UI and POST; the coordinator still checks sealed readiness."""
+    if state.get('activeFixture') and not running: source_error='Fixture interrumpida; consulta y retira sus recursos antes de continuar'
     reasons = {key: None for key in ('prepare','check','present','step','stop','export','cleanup')}
     for key in reasons:
         if running and key != 'stop': reasons[key] = 'Otra operación sigue activa'
     if not running: reasons['stop'] = 'No hay una operación activa'
+    if source_error: reasons['prepare'] = source_error
     if has_events or state.get('operational') != 'PENDING': reasons['prepare'] = 'Preparación ya intentada; usa una sesión nueva'
     if not state.get('prepared') or state.get('operational') not in ('PREPARED','COMPLETED'):
         for key in ('check','present','step'): reasons[key] = 'Se requiere una preparación íntegra'
@@ -145,7 +172,10 @@ def action_capabilities(state, has_events, running, source_error=None):
         for key in ('present','step'): reasons[key] = 'Presentación consumida; usa una sesión nueva'
     if state.get('active') and not running:
         for key in ('check','present','step','prepare'): reasons[key] = 'Proceso desaparecido; falta cerrar la interrupción'
-    return {key: {'enabled': reason is None, 'reason': reason or ''} for key, reason in reasons.items()}
+    from cases import capabilities as case_capabilities, fixture
+    child=fixture(state)
+    if child and not child.get('cleaned'): reasons['cleanup']='Retira primero los recursos de la fixture F13 vinculada'
+    return {**{key: {'enabled': reason is None, 'reason': reason or ''} for key, reason in reasons.items()}, **case_capabilities(state,running,source_error)}
 
 
 def make_server(name, port, token):
@@ -160,13 +190,14 @@ def make_server(name, port, token):
         allowed_hosts.add(os.environ['CODESPACE_NAME'] + '-' + str(port) + '.' + os.environ['GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN'])
 
     def controller():
-        value = public_session(name).get('controller')
-        return value if value and process_identity(value['pid']) == value else None
+        state = public_session(name)
+        value = state.get('controller')
+        return value if value and process_identity(value['pid']) == value else owned_worker(state)
 
     def capabilities(running):
         state = public_session(name)
         source_error = None
-        if state.get('prepared') and not running:
+        if not running:
             from coordinator import assert_source, Stopped
             try: assert_source(state)
             except (Stopped, OSError, ValueError): source_error = 'Fuente o arranque cambiados; prepara una sesión nueva'
@@ -231,17 +262,27 @@ def make_server(name, port, token):
                     if not actions or not self.authenticated():
                         self.send(b'{}', code=403); return
                     running = controller() is not None or (worker[0] is not None and worker[0].poll() is None)
-                    self.send(json.dumps({'csrf': csrf, 'busy': running, 'capabilities': capabilities(running), 'session': name}).encode())
+                    self.send(json.dumps({'csrf': csrf, 'busy': running, 'capabilities': capabilities(running), 'session': name, 'nextOperation': next((op for op in LIVE[public_session(name)['profile']] if op not in public_session(name).get('completed', [])), None)}).encode())
                 elif route.path == '/api/health':
                     self.send(json.dumps({'session': name, 'token': token, 'readUTC': utc()}).encode())
-                elif route.path == '/api/cleanup-plan':
+                elif route.path in ('/api/cleanup-plan','/api/fixture-cleanup-plan'):
                     if not actions or not self.authenticated(): self.send(b'{}', code=403); return
-                    if not (session_path(name)/'lab-path.txt').exists():
+                    plan_name=name
+                    if route.path=='/api/fixture-cleanup-plan':
+                        from cases import fixture
+                        child=fixture(public_session(name))
+                        if not child: raise ValueError('No owned fixture')
+                        plan_name=child['session']
+                    if not (session_path(plan_name)/'lab-path.txt').exists():
                         self.send(json.dumps({'plan':[], 'preserved':['all evidence and session state']}).encode()); return
-                    result = subprocess.check_output([sys.executable,str(ROOT/'scripts/defense-demo/ownership.py'),name,'plan'], stderr=subprocess.DEVNULL)
+                    result = subprocess.check_output([sys.executable,str(ROOT/'scripts/defense-demo/ownership.py'),plan_name,'plan'], stderr=subprocess.DEVNULL)
                     self.send(result)
                 elif route.path == '/api/session':
                     self.send(json.dumps(snapshot(name), ensure_ascii=False).encode())
+                elif re.fullmatch(r'/observation/[0-9]+-[a-f0-9]{12}/[a-f0-9]{64}', route.path):
+                    from observations import artifact
+                    _, _, capture_id, checksum = route.path.split('/')
+                    self.send(artifact(capture_id, checksum), 'text/plain; charset=utf-8')
                 elif route.path == '/api/sessions':
                     self.send(json.dumps(local_session_inventory(name), ensure_ascii=False).encode())
                 elif route.path == '/api/events':
@@ -284,13 +325,17 @@ def make_server(name, port, token):
                 body = json.loads(self.rfile.read(size))
                 if set(body) != {'action'}: raise ValueError('Only enumerated action accepted')
                 action = body['action']
-                if action not in ('prepare','check','present','step','stop','export','cleanup'): raise ValueError('Unknown action')
+                from cases import ACTIONS
+                if action not in ('prepare','check','present','step','stop','export','cleanup') + ACTIONS: raise ValueError('Unknown action')
                 with busy:
                     active_controller = controller()
                     running = active_controller is not None or (worker[0] is not None and worker[0].poll() is None)
                     if action == 'stop':
                         if active_controller:
-                            os.kill(active_controller['pid'], signal.SIGTERM)
+                            if owned_worker(public_session(name)) == active_controller:
+                                os.killpg(active_controller['pid'], signal.SIGTERM)
+                            else:
+                                os.kill(active_controller['pid'], signal.SIGTERM)
                         elif running:
                             from coordinator import terminate
                             terminate(worker[0])
@@ -304,10 +349,10 @@ def make_server(name, port, token):
                     state = public_session(name)
                     if action in ('present','step','check') and (not state['prepared'] or state['operational'] not in ('PREPARED','COMPLETED')): raise ValueError('An intact prepared session is required')
                     if action in ('present','step') and state.get('demoResult') == 'CONFIRMED': raise ValueError('Presentation already completed; prepare a new session')
-                    command = {'prepare':'prepare-pending','check':'check', 'present':'present','step':'step','export':'export','cleanup':'cleanup'}[action]
+                    command = 'case' if action in ACTIONS else {'prepare':'prepare-pending','check':'check', 'present':'present','step':'step','export':'export','cleanup':'cleanup'}[action]
                     with (session_path(name)/'web-actions.log').open('ab') as stream:
                         worker[0] = subprocess.Popen([sys.executable, str(ROOT/'scripts/defense-demo/coordinator.py'), command,
-                            '--session', name, '--auto', '--budget-seconds', '120'], cwd=ROOT,
+                            '--session', name, '--auto', '--budget-seconds', '120'] + (['--case-action',action] if action in ACTIONS else []), cwd=ROOT,
                             stdout=stream, stderr=stream, start_new_session=True)
                 self.send(b'{"accepted":true}', code=202)
             except (ValueError, OSError) as error:

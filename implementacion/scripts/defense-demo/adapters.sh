@@ -9,7 +9,7 @@ for module in context lab delivery attestations workload; do source "$root/scrip
 for scenario in l01 f13 runtime f11; do source "$root/tests/scenarios/$scenario.sh"; done
 source "$root/tests/scenarios/f11-comparison.sh"
 context_init
-operation=${1:?}; session=${2:?}
+operation=${1:?}; session=${2:?}; repeat_attempt=${3:-}; operation_instance=${4:-$operation}
 [[ "$session" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || fail 'Invalid session'
 session_dir="$root/.tmp/defense-demo/$session"
 [[ -d "$session_dir" && ! -L "$session_dir" ]] || fail 'Missing session'
@@ -21,7 +21,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 gp_observe() {
-  python3 scripts/defense-demo/observer.py "$session" "$operation" "$1" "$2" "$state_dir"
+  python3 scripts/defense-demo/observer.py "$session" "$operation_instance" "$1" "$2" "$state_dir"
 }
 
 # Observe the concrete external request; expected nonzero statuses are retained.
@@ -41,6 +41,11 @@ restore() {
   load_state
   id=$(basename "$state_dir" | tr '[:upper:]' '[:lower:]')
   if [[ -f "$state_dir/build-metadata.json" ]]; then load_delivery_context; fi
+  if [[ -n "$repeat_attempt" ]]; then
+    [[ "$repeat_attempt" =~ ^case-f11-(early|admission)-[0-9]+$ || "$repeat_attempt" =~ ^case-comparison-admission-[0-9]+$ ]] || fail 'Invalid repeat attempt'
+    state_dir="$root/evidence/raw/defense-$session/case-inputs/$repeat_attempt"
+    [[ "$(realpath -- "$state_dir")" == "$state_dir" && -f "$state_dir/input-references.json" ]] || fail 'Missing isolated attempt inputs'
+  fi
   # Restoring arguments must never issue, generate a key, or contact trust services.
   export COSIGN_PASSWORD=''
   sign_args=(--yes --key "$private/cosign.key" --signing-config "$state_dir/local-signing-config.json" --trusted-root "$state_dir/local-trusted-root.json" --allow-insecure-registry)
@@ -131,6 +136,13 @@ case "$operation" in
     if [[ "$(jq -r .profile "$session_dir/session.json")" == f11-comparison ]]; then
       attestations_ci_gate comparison-resume authorized
       probe tfm-golden
+    fi
+    if [[ -n "$repeat_attempt" && "$repeat_attempt" != case-f11-early-* ]]; then
+      attestations_ci_gate repeat-authorized authorized
+      probe tfm-golden
+      k -n tfm-golden get deployment quotes-node -o json > "$state_dir/repeat-ready-deployment.json"
+      k -n tfm-golden get pods -l app=quotes-node -o json > "$state_dir/repeat-ready-pods.json"
+      node scripts/check-image-rollout.mjs --same-image "$image" "$state_dir/repeat-ready-deployment.json" "$state_dir/repeat-ready-pods.json" > "$state_dir/repeat-ready-check.json"
     fi
     node tests/scenarios/runtime-evidence.mjs resolve local "$(get buildTag)" "$image" "$state_dir/resume-tag.json" > "$state_dir/resume-tag-check.json"
     ;;

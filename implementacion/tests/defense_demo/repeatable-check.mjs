@@ -1,0 +1,19 @@
+// Read-only actual lane A captures; explicit UI fixtures for enabled execution.
+import assert from 'node:assert/strict';
+import {chromium,loaded,snap,pass,offlineHTML,wait} from './browser-support.mjs';
+const [url='http://127.0.0.1:8791',out='/tmp/repeatable']=process.argv.slice(2);
+const snapshot=await(await fetch(url+'/api/session')).json();
+const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:1366,height:768}});let posts=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.method()==='POST')posts++;});
+try{
+ await loaded(page,url);assert.equal(await page.locator('.operator').isVisible(),true);assert.match(await page.locator('#action-status').innerText(),/Solo lectura/);assert.equal(await page.locator('[data-case-action="case-f11-early"]').isDisabled(),true);await snap(page,out,'readonly-controls');
+ await page.locator('[data-destination=workflows]').click();await page.locator('#workflow-choice').selectOption('lane-a-validation.yml');await page.getByRole('tab',{name:/Atestaciones/}).click();
+ assert.equal(await page.getByRole('tab',{selected:true}).innerText(),'Atestaciones · 24');assert.equal(await page.locator('.attestation-card').count(),4);
+ assert.equal(await page.locator('#attestation-group option').count(),6);assert.match(await page.locator('#workflow-panel').innerText(),/confianza local/);await snap(page,out,'lane-a-bundles');
+ const options=await page.locator('#attestation-group option').evaluateAll(ns=>ns.map(n=>n.value));for(const option of options){await page.locator('#attestation-group').selectOption(option);assert.equal(await page.locator('.attestation-card').count(),4);assert.equal(await page.locator('.workflow-tabs').count(),1);}
+ await page.getByRole('tab',{selected:true}).focus();await page.keyboard.press('ArrowRight');assert.equal(await page.getByRole('tab',{selected:true}).innerText(),'Configuración');assert.equal(await page.getByRole('tab',{selected:true}).evaluate(n=>n===document.activeElement),true);await page.keyboard.press('ArrowLeft');
+ for(const viewport of [{width:1920,height:1080},{width:390,height:844}]){await page.setViewportSize(viewport);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await snap(page,out,'width-'+viewport.width);}
+ const offline=await browser.newPage();let net=0;offline.on('request',()=>net++);await offline.setContent(offlineHTML(snapshot));await offline.locator('[data-destination=workflows]').click();await offline.locator('#workflow-choice').selectOption('lane-a-validation.yml');await offline.getByRole('tab',{name:/Atestaciones/}).click();assert.equal(await offline.locator('.attestation-card').count(),4);assert.equal(net,0);await snap(offline,out,'offline');
+ assert.equal(posts,0);
+ const enabled=await browser.newPage({viewport:{width:1366,height:768}}),fixture=structuredClone(snapshot);fixture.session.session='synthetic-enabled';fixture.session.cleaned=false;fixture.session.prepared=true;fixture.actionsEnabled=true;
+ let submitted=0;await enabled.route('**/api/session',r=>r.fulfill({json:fixture}));await enabled.route('**/api/control',r=>r.fulfill({json:{session:'synthetic-enabled',busy:false,csrf:'synthetic',capabilities:{'case-f11-early':{enabled:true}}}}));await enabled.route('**/api/action',r=>{submitted++;return r.fulfill({status:202,json:{accepted:true}});});await loaded(enabled,url);await snap(enabled,out,'enabled-synthetic');await enabled.locator('[data-case-action="case-f11-early"]').evaluate(n=>{n.click();n.click();});await wait(150);assert.equal(submitted,1);assert.equal(await enabled.locator('#live-console').isVisible(),true);assert.match(await enabled.locator('#live-state').innerText(),/Sin proceso/);assert.deepEqual(errors,[]);pass(out,{actualLaneBundles:24,groups:6,readonlyPosts:posts,syntheticSubmissions:submitted,offlineRequests:net});
+}finally{await browser.close();}
