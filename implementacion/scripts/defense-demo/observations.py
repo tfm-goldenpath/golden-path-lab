@@ -124,7 +124,7 @@ def capture(args):
         if b'PRIVATE KEY' in clean: raise ValueError('Private material refused')
         filename=sha(clean)+'.txt'; path=directory/filename
         if not path.exists(): path.write_bytes(clean)
-        record={'name':name,'file':filename,'sha256':sha(clean),'size':len(clean),'source':origin,'redacted':clean!=content,'text':clean[:12000].decode(errors='replace'),'truncated':len(clean)>12000}
+        record={'name':name,'file':filename,'sha256':sha(clean),'size':len(clean),'source':origin,'redacted':clean!=content,'text':clean[:2048 if getattr(args,'lane_a_artifact',None) else 12000].decode(errors='replace'),'truncated':len(clean)>(2048 if getattr(args,'lane_a_artifact',None) else 12000)}
         if name.endswith('.bundle.json'):
             try:
                 bundle=json.loads(clean);statement=json.loads(base64.b64decode(bundle['dsseEnvelope']['payload'],validate=True))
@@ -206,6 +206,20 @@ def capture(args):
             inputs, provenance=paired_documents(regular(paired_archive,128*1024**2),run,observation.get('artifacts',[]),getattr(args,'artifact_id',None))
             observation['packageInspection']=provenance
 
+        lane_proofs={}
+        for artifact_id in getattr(args,'lane_a_artifact',[]) or []:
+            if args.from_directory or workflow!='lane-a-validation.yml': raise ValueError('Lane A import requires its GitHub workflow metadata')
+            metadata=next((a for a in observation.get('artifacts',[]) if a.get('id')==artifact_id),None)
+            if not metadata or metadata.get('expired') or not 0<metadata.get('size_in_bytes',0)<=16*1024**2: raise ValueError('Lane A artifact unavailable/oversized')
+            if not re.fullmatch(r'lane-a-(demo|vulnerabilities)-'+str(run['id'])+'-'+str(run['run_attempt']),metadata.get('name','')): raise ValueError('Database or unrelated artifact refused')
+            from lane_a_observations import inspect
+            with tempfile.TemporaryDirectory(prefix='golden-path-lane-a-download-') as temp:
+                path=Path(temp)/'artifact.zip'
+                gh(f'repos/{REPOSITORY}/actions/artifacts/{artifact_id}/zip',maximum=metadata['size_in_bytes'],destination=path)
+                documents,inspection=inspect(path,run,metadata)
+            if set(inputs)&set(documents): raise ValueError('Duplicate lane A suite import')
+            inputs.update(documents);lane_proofs.update(inspection['attestations'])
+            observation.setdefault('laneAInspections',[]).append(inspection)
         if args.pair: inputs['pair.json']=regular(args.pair).read_bytes()
         if 'pair.json' in inputs:
             pair=associate(json.loads(inputs['pair.json']),run); observation['pair']=pair
@@ -217,9 +231,20 @@ def capture(args):
             except (ValueError,KeyError,TypeError) as e: observation['issues'].append('Pair contract validation incomplete: '+str(e))
         for name,raw in inputs.items():
             record=save(name,raw,'GitHub artifact / G package: '+provenance['paths'][name] if (paired_archive or download_id) else 'Operator-supplied local capture; association is not cryptographic verification')
+            lane_item=next((i for i in observation.get('laneAInspections',[]) if name in i['paths']),None)
+            if lane_item: record['source']='Lane A '+lane_item['suite']+' / '+lane_item['paths'][name]
+            if name in lane_proofs:
+                record['historicalEvidence']=lane_proofs[name]
+                item=next(i for i in observation['laneAInspections'] if name in i['paths'])
+                record['source']='Lane A '+item['suite']+' / '+item['paths'][name]
+                record['association']='Run/attempt/source and package integrity checked; local public-key trust A, not hosted OIDC B'
             if (paired_archive or download_id) and name in provenance['attestations']:
                 record['historicalEvidence']=provenance['attestations'][name]
                 record['association']='Artifact and G package hashes checked; run/source/subject association checked. No current cryptographic reverification.'
+        if observation.get('laneAInspections'):
+            observation['verification']='Lane A artifact association and nested package hashes checked; exact historical verifier/authorization receipts captured. No current cryptographic reverification.'
+        elif observation.get('packageInspection'):
+            observation['verification']='Paired G artifact association and package hashes checked; historical receipts captured. No current cryptographic reverification.'
         observation['status']='CAPTURED'
     except (ValueError,OSError,KeyError,TypeError,StopIteration,zipfile.BadZipFile,tarfile.TarError,RuntimeError) as e:
         observation['status']='INCOMPLETE';observation['issues'].append(str(e))
@@ -248,7 +273,7 @@ def inventory():
             budget-=p.stat().st_size
             value=json.loads(p.read_text())
             if value['id']!=folder.name or value['repository']!=REPOSITORY: raise ValueError('Capture identity changed')
-            if len(value.get('files',[]))>32: raise ValueError('Excessive captured files')
+            if len(value.get('files',[]))>128: raise ValueError('Excessive captured files')
             for f in value.get('files',[]):
                 if not re.fullmatch(r'[a-f0-9]{64}', f['sha256']) or f['file']!=f['sha256']+'.txt': raise ValueError('Unsafe captured artifact reference')
                 regular(folder/f['file'])
@@ -275,10 +300,12 @@ if __name__=='__main__':
     parser.add_argument('--publication-summary',action='store_true',help='Only hash-pinned small campaign summaries; never download campaign package')
     parser.add_argument('--pair',help='Local pair.json; must match run and source')
     parser.add_argument('--archive',help='Local bounded zip; safe inspection, no path extraction')
+    parser.add_argument('--lane-a-artifact',type=int,action='append',help='Explicit demo/vulnerabilities artifact; repeat option to capture both suites, never databases')
     parser.add_argument('--paired-artifact',type=int,help='Explicit bounded download of one paired artifact, <=128 MiB; metadata-only by default')
     parser.add_argument('--paired-archive',help='Previously downloaded paired ZIP, <=128 MiB; inspect only its bounded G package, never extract databases')
     parser.add_argument('--artifact-id',type=int,help='GitHub artifact ID belonging to this run; requires recorded SHA-256')
     args=parser.parse_args()
+    if args.lane_a_artifact and (len(args.lane_a_artifact)>2 or args.paired_artifact or args.paired_archive or args.archive or args.pair): parser.error('Capture at most two lane A suites, without mixed evidence modes')
     if args.latest:
         if args.from_directory: parser.error('--latest requires a GitHub query')
         args.run=latest_run(args.latest)
