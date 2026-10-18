@@ -14,6 +14,9 @@ import subprocess
 import sys
 import time
 
+# Case helpers must share this exact exception/lifecycle module when invoked as CLI.
+if __name__ == "__main__": sys.modules["coordinator"] = sys.modules[__name__]
+
 from core import (ADAPTERS, LIVE, PREPARE, F11_PREPARE, ROOT, SCHEMA, SESSIONS, atomic, artifact_index,
                   boot_id, capture_files, catalogue, digest, events, evidence_root, file_record,
                   locked, outcome, public_session, publish_event, read_json, sanitize,
@@ -200,7 +203,7 @@ def register_operation_files(name, opdir, operation):
     return records
 
 
-def run_operation(state, operation, phase, deadline=None, instance=None):
+def run_operation(state, operation, phase, deadline=None, instance=None, case_context=None):
     if operation not in ADAPTERS: raise Stopped('Unknown adapter')
     name = state['session']
     if operation != 'cleanup': assert_source(state)
@@ -214,19 +217,22 @@ def run_operation(state, operation, phase, deadline=None, instance=None):
     opdir.mkdir()
     spec = read_json(root / 'catalogue.json')['operations'][operation]
     started, mono = utc(), time.monotonic()
-    state.update(active={'operation': operation, 'instance': instance, 'startUTC': started, 'phase': phase}, operational='RUNNING')
+    state.update(active={'operation': operation, 'instance': instance, 'startUTC': started, 'phase': phase, 'attempt': (case_context or {}).get('attempt',spec['attempt'])}, operational='RUNNING')
     atomic(session_path(name) / 'session.json', state)
     print(f'[{phase}] {operation}: {spec["title"]}', flush=True)
     code, aborted, reason = 1, False, None
     monitor = None
+    guarded_profile = 'f11-comparison' if state.get('fixtureParent') else state['profile']
+    reserve = max(3, state['reserveGiB']) if case_context or state.get('fixtureParent') else state['reserveGiB']
+    command = ['bash', str(ROOT / 'scripts/defense-demo/adapters.sh'), operation, name] + ([case_context['attempt'],instance] if case_context else [])
     try:
         with (opdir / 'output-original.log').open('x') as stream:
-            if operation in ('environment', 'build', 'analysis', 'admission-install') or (state['profile'] == 'f11-comparison' and operation != 'cleanup'):
-                if operation == 'environment' and state['profile'] == 'f11-comparison':
+            if case_context or operation in ('environment', 'build', 'analysis', 'admission-install') or (guarded_profile == 'f11-comparison' and operation != 'cleanup'):
+                if operation == 'environment' and guarded_profile == 'f11-comparison':
                     docker_root = subprocess.check_output(['docker','info','--format','{{.DockerRootDir}}'], text=True).strip()
                     local = not os.environ.get('DOCKER_HOST') or os.environ['DOCKER_HOST'].startswith('unix://')
                     state['dockerStorageRoot'] = docker_root if local and Path(docker_root).is_dir() else None
-                observation = resources(state['reserveGiB'], (phase == 'preparation' if state['profile'] == 'f11-comparison' else operation == 'environment'), state['profile'], policy=state.get('resourcePolicy'), docker_root=state.get('dockerStorageRoot'))
+                observation = resources(reserve, (phase == 'preparation' if guarded_profile == 'f11-comparison' else operation == 'environment'), guarded_profile, policy=state.get('resourcePolicy'), docker_root=state.get('dockerStorageRoot'))
                 if operation == 'analysis':
                     storage = os.statvfs('/tmp')
                     observation['databaseStorage'] = {'root': '/tmp/golden-path-defense-' + name,
@@ -249,15 +255,16 @@ def run_operation(state, operation, phase, deadline=None, instance=None):
                 atomic(session_path(name) / 'session.json', state)
             samples = []
             def sample():
-                value = resources(state['reserveGiB'], profile=state['profile'], growth_gib=0, policy=state.get('resourcePolicy'), docker_root=state.get('dockerStorageRoot'))
+                value = resources(reserve, profile=guarded_profile, growth_gib=0, policy=state.get('resourcePolicy'), docker_root=state.get('dockerStorageRoot'))
                 state['lastResources'] = value
                 samples.append(value)
                 atomic(opdir / 'resource-samples.json', {'samples': samples, 'intervalSeconds': 10,
                     'minimumSampledFreeBytes': min(x['freeBytes'] for x in samples), 'exactPeak': False})
                 return value['sufficient']
-            monitor = sample if state['profile'] == 'f11-comparison' and operation != 'cleanup' else None
+            monitor = sample if (case_context or guarded_profile == 'f11-comparison') and operation != 'cleanup' else None
             if monitor and not monitor(): raise Stopped('RESOURCE_EXHAUSTED before command')
-            code, aborted, reason = run_process(['bash', str(ROOT / 'scripts/defense-demo/adapters.sh'), operation, name], stream, deadline, worker, **({'resource_check': monitor} if monitor else {}))
+            command = ['bash', str(ROOT / 'scripts/defense-demo/adapters.sh'), operation, name] + ([case_context['attempt'],instance] if case_context else [])
+            code, aborted, reason = run_process(command, stream, deadline, worker, **({'resource_check': monitor} if monitor else {}))
             if monitor and not monitor(): code, aborted, reason = 1, True, 'RESOURCE_EXHAUSTED'
     except (OSError, ValueError, Stopped) as error:
         if isinstance(error, OSError) and error.errno == errno.ENOSPC:
@@ -275,9 +282,9 @@ def run_operation(state, operation, phase, deadline=None, instance=None):
         if operation == 'initialize':
             for file in ('source.json', 'catalogue.json', 'workflows.json'):
                 (opdir / file).write_bytes((root / file).read_bytes())
-        lab = lab_path(name)
+        lab = case_context['lab'] if case_context else lab_path(name)
         if lab is not None:
-            if state['profile'] == 'f11-comparison':
+            if state['profile'] == 'f11-comparison' and not case_context:
                 inventory = state.setdefault('captureInventory', {})
                 copied = capture_files(lab, opdir / 'closed', operation, inventory)
                 inventory.update({key: value['originalSha256'] for key, value in copied.items()})
@@ -285,7 +292,7 @@ def run_operation(state, operation, phase, deadline=None, instance=None):
             saved = read_json(lab / 'state.json')
             state['digest'] = saved.get('digest')
             state['image'] = saved.get('imageRepository', '') + '@' + saved['digest'] if saved.get('digest') else None
-            state['labEvidenceRoot'] = lab.relative_to(ROOT).as_posix()
+            if not case_context: state['labEvidenceRoot'] = lab.relative_to(ROOT).as_posix()
         if monitor and not monitor(): code, aborted, reason = 1, True, 'RESOURCE_EXHAUSTED during evidence closure'
         artifacts = register_operation_files(name, opdir, operation)
     except (OSError, ValueError) as error:
@@ -311,11 +318,15 @@ def run_operation(state, operation, phase, deadline=None, instance=None):
                'linkedAttempt': 'attempt-2' if state['profile'] != 'f11-comparison' and operation in ('authorize', 'accept') else None,
                'notReached': (['admission', 'deployment'] if operation == 'f11-early' and code == 0 else
                               ['deployment'] if operation == 'f13' and code == 0 else [])}
+    receipt['operationInstance']=instance
+    if case_context:
+        receipt.update({k:case_context[k] for k in ('attempt','precedingAttempt','preparationSession')})
+        receipt.update(repeat=True,command=command)
     publish_event(name, receipt)
     state.update(active=None, operational=operational, lastExitCode=code, lastEvidenceUTC=utc())
     if phase != 'preservation': state['workExitCode'] = code
     if code == 0 and not aborted:
-        if operation not in state['completed']: state['completed'].append(operation)
+        if not case_context and operation not in state['completed']: state['completed'].append(operation)
         if operation == 'accept' and state['profile'] != 'f11-comparison': state['f13Recovery'] = 'confirmed'
     atomic(session_path(name) / 'session.json', state)
     print(f'{operation}: {operational}; decision={decision}; exit={code}; {elapsed:.3f}s', flush=True)
@@ -402,8 +413,10 @@ def present(state, budget, interactive=False, one=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, epilog='Lane A only. No shell commands from the catalogue or web. Every new rehearsal requires a new session.')
-    parser.add_argument('command', choices=['up', 'prepare', 'present', 'step', 'status', 'list', 'export', 'cleanup', 'serve', 'stop-server', 'check', 'prepare-pending', 'cleanup-plan', 'verify'])
+    parser.add_argument('command', choices=['up', 'prepare', 'present', 'step', 'status', 'list', 'export', 'cleanup', 'serve', 'stop-server', 'check', 'prepare-pending', 'cleanup-plan', 'verify', 'case'])
     parser.add_argument('--session')
+    from cases import ACTIONS
+    parser.add_argument('--case-action', choices=ACTIONS)
     parser.add_argument('--profile', choices=LIVE, default='defense')
     parser.add_argument('--auto', action='store_true', help='No notes or human declarations; run sequentially')
     parser.add_argument('--interactive', action='store_true', help='Pause only between live operations')
@@ -438,7 +451,7 @@ def main():
             stop_server(name)
             print('Verified session viewer stopped; laboratory and evidence retained.')
             return 0
-        with locked(SESSIONS / '.preparation.lock') if args.command in ('up', 'prepare', 'prepare-pending') else nullcontext():
+        with locked(SESSIONS / '.preparation.lock') if args.command in ('up', 'prepare', 'prepare-pending') or args.command=='case' and args.case_action=='prepare-f13-case' else nullcontext():
             if args.command == 'up' or (args.command == 'prepare' and args.serve) or (args.command == 'serve' and args.new):
                 check_viewer_port(name, args.port)
             state = create(name, args.profile, args.reserve_gib) if args.command in ('up', 'prepare') or (args.command == 'serve' and args.new) else read_json(session_path(name) / 'session.json')
@@ -458,6 +471,9 @@ def main():
                 if args.command in ('up', 'prepare', 'prepare-pending'): prepare(state)
                 if args.command in ('up', 'present', 'step'):
                     present(state, args.budget_seconds, args.interactive, args.command == 'step')
+                if args.command == 'case':
+                    from cases import execute
+                    execute(state,args.case_action,args.budget_seconds)
                 if args.command == 'check':
                     if not state['prepared']: raise Stopped('Prepared session required for environment readiness')
                     assert_source(state)
@@ -474,6 +490,9 @@ def main():
                     print(json.dumps(verify_export(path)))
                 if args.command == 'export': print(export_session(state))
                 if args.command == 'cleanup':
+                    from cases import fixture
+                    child=fixture(state)
+                    if child and not child.get('cleaned'): raise Stopped('Retire the linked F13 fixture first using cleanup-f13-case')
                     from server import process_identity
                     active_worker = (state.get('active') or {}).get('worker')
                     if active_worker and process_identity(active_worker['pid']) == active_worker:

@@ -146,6 +146,7 @@ def export_session(state):
         for path, data_bytes in {**files, 'manifest.json': manifest_bytes}.items():
             info = tarfile.TarInfo(path); info.size = len(data_bytes); info.mode = 0o644
             archive.addfile(info, io.BytesIO(data_bytes))
+        archive.dereference = True  # immutable fixture hardlinks are stored as independent regular files
         for name_in_tar, path in paths.items(): archive.add(path, arcname=name_in_tar, recursive=False)
     with tarfile.open(package) as archive:
         for record in manifest['files']:

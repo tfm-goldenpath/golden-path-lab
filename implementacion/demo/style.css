@@ -32,3 +32,18 @@ header{position:sticky;top:0;z-index:8}html{scroll-padding-top:64px}
 #workflow-choice,#workflow-run{max-width:100%;min-width:0;font-size:16px}.import-output{white-space:pre-wrap;overflow-wrap:anywhere;font:15px/1.5 monospace}.attestation-card{border-bottom:1px solid #ccd9df;padding:16px 0}.attestation-card h2{font-size:23px}.table-scroll{max-width:100%;overflow-x:auto}.table-scroll td,.table-scroll th{padding:10px;text-align:left}#exploration pre{overflow-wrap:anywhere;white-space:pre-wrap}
 
 #live-console h1{margin:8px 0}#live-console p{margin:6px 0}#live-output.nowrap{white-space:pre;overflow-wrap:normal}
+
+/* Workflow navigation: selection is blue, separate from result colors. */
+.workflow-tabs {display:flex;flex-wrap:wrap;gap:.4rem;padding:.6rem 0;border-bottom:2px solid #c4d3df;margin:.7rem 0 1rem}
+.workflow-tabs [role=tab] {font-size:1rem;padding:.7rem 1rem;border:1px solid #b4c8d8;border-radius:.4rem;background:#f0f5f9;color:#193c54;font-weight:600}
+.workflow-tabs [role=tab][aria-selected=true] {background:#174f76;color:white;border-color:#174f76;box-shadow:inset 0 -4px #7fc7ed}
+.workflow-tabs [role=tab]:hover {outline:2px solid #5c8faf;outline-offset:1px}
+.workflow-tabs [role=tab]:focus-visible {outline:3px solid #0076bd;outline-offset:3px}
+#case-controls {display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 1rem}
+#case-controls>div {max-width:19rem;display:flex;flex-direction:column;gap:.2rem}
+#case-controls small {font-size:.85rem;color:#526675}
+#case-controls button {font-size:.9rem;padding:.45rem .7rem}
+#case-controls {display:block}
+#case-controls>div {display:flex;flex-wrap:wrap;max-width:none;gap:.75rem}
+#case-controls>div>div {display:flex;flex-direction:column;gap:.2rem;max-width:17rem}
+#attestation-group {max-width:100%;font-size:.95rem}

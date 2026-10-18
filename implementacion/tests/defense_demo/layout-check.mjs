@@ -6,7 +6,7 @@ const browser=await chromium.launch({headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  let posts=0;page.on('request',r=>{if(r.method()==='POST')posts++;});
- await loaded(page,url);assert.equal(await page.locator('.operator').isVisible(),false);assert.equal(await page.locator('#mode').isVisible(),false);
+ await loaded(page,url);assert.equal(await page.locator('.operator').isVisible(),true);assert.equal(await page.locator('#mode').isDisabled(),true);
  assert.match(await page.locator('#timing').innerText(),/Tiempo registrado de ejecución/);await snap(page,output,'summary');
  await page.locator('.attempt-row[data-attempt="attempt-1"] .segment.blocked').click();
  await page.waitForFunction(()=>document.querySelector('.console-text')?.textContent.includes('ESCALATION'));
