@@ -201,10 +201,16 @@ sys.exit(actions.execute({self.state['session']!r},{argv[-1]!r}))
         self.assertEqual(result['status'],'TIMED_OUT');self.assertEqual(result['operations'],[])
         self.assertIn('BUDGET_EXCEEDED',result['diagnostic'])
     def test_fresh_prepare_serve_enables_actions_without_presenting(self):
-        args=['coordinator.py','prepare','--session','synthetic-browser-ready','--profile','defense','--reserve-gib','3','--serve','--enable-actions','--port','8776']
-        with patch.dict(os.environ,{}),patch.object(sys,'argv',args),patch.object(co,'prepare') as prepare,patch.object(co,'present') as present,patch.object(server,'start_server') as serve:
+        # This is an argument/ordering test with a substituted viewer. Do not
+        # probe a fixed host port: the real demo can be serving there during CI.
+        # Deliberately use our occupied test API port to protect that isolation;
+        # separate viewer tests exercise real collision/ownership enforcement.
+        port=self.api.server_port
+        args=['coordinator.py','prepare','--session','synthetic-browser-ready','--profile','defense','--reserve-gib','3','--serve','--enable-actions','--port',str(port)]
+        with patch.dict(os.environ,{}),patch.object(sys,'argv',args),patch.object(co,'prepare') as prepare,patch.object(co,'present') as present,patch.object(server,'start_server') as serve,patch.object(server,'check_viewer_port') as probe:
             self.assertEqual(co.main(),0)
-            prepare.assert_called_once();present.assert_not_called();serve.assert_called_once_with('synthetic-browser-ready',8776)
+            prepare.assert_called_once();present.assert_not_called();serve.assert_called_once_with('synthetic-browser-ready',port)
+            probe.assert_called_once_with('synthetic-browser-ready',port)
             self.assertEqual(os.environ['GP_DEMO_ACTIONS'],'1')
             self.assertEqual(prepare.call_args.args[0]['reserveGiB'],3)
     def test_restarted_supervisor_recovers_live_command_then_terminal_receipt(self):
