@@ -117,5 +117,10 @@
    return {...stage,title:({admission:'Admisión / Kyverno',preservation:'Conservación de evidencias'})[stage.id]||stage.title,number:String(index+1).padStart(2,'0'),tool:phaseTools[stage.id]||'Consultar definición',entries};
   });
  }
- root.DemoModel={meta,outcome,confirmed,expectation,definitionOps,profileOps,rows,latest,rowOutcome,segments,ownArtifact,primaryArtifact,scope,family,scenarioOps,phaseLabel,sessionEvents,incompletePreparation,operationOutput,eventIdentity,artifactOrigin,journeyFilters,filteredEvents,journey};
+ function workflowRuns(observations,workflow){
+  return observations.filter(o=>o.workflow===workflow&&o.run).sort((a,b)=>
+   (b.run.created_at||'').localeCompare(a.run.created_at||'')||Number(b.run.id)-Number(a.run.id)||
+   (b.run.run_attempt||0)-(a.run.run_attempt||0)||(b.capturedUTC||'').localeCompare(a.capturedUTC||''));
+ }
+ root.DemoModel={workflowRuns,meta,outcome,confirmed,expectation,definitionOps,profileOps,rows,latest,rowOutcome,segments,ownArtifact,primaryArtifact,scope,family,scenarioOps,phaseLabel,sessionEvents,incompletePreparation,operationOutput,eventIdentity,artifactOrigin,journeyFilters,filteredEvents,journey};
 })(globalThis);

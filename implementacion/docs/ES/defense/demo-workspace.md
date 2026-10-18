@@ -324,7 +324,7 @@ los contratos de análisis existentes; un fallo permanece visible. Cada captura
 crea un directorio nuevo en `implementacion/evidence/raw/github-observations/`,
 fuera de Git.
 
-**Atestaciones** muestra los documentos aportados con la captura; subject/tipo son declaraciones sin verificar, no una asociación autenticada al run.
+**Atestaciones** distingue documentos aportados sin paquete comprobado (subject/tipo sin verificar) del paquete G asociado que se describe más abajo.
 No se descargaron bundles alojados B para el ejemplo inicial de resúmenes. Usa
 **Consultar atestaciones de la sesión local vinculada**, o **Identidad y procedencia
 → Atestaciones de la sesión**, para ejemplos auténticos locales A conservados.
@@ -351,3 +351,58 @@ bash implementacion/scripts/defense-demo.sh cleanup --session "$DEMO_SESSION" --
 
 No se implementa dispatch, rerun, publicación, cambios a revisiones históricas ni
 otra campaña. Revisión humana y ensayo narrado de este cambio permanecen pendientes.
+
+### Actualizar los últimos datos de Workflows
+
+Desde la raíz del repositorio, importa la última ejecución disponible de cada
+workflow (incluye fallos o ejecuciones en curso; no busca solo éxitos):
+
+```bash
+for workflow in ci.yml golden-path.yml lane-a-validation.yml; do
+  python3 implementacion/scripts/defense-demo/observations.py --latest "$workflow" || break
+done
+```
+
+Después recarga el visor y abre **Workflows**. Se ordena por fecha de ejecución,
+intento y captura; una importación tardía de un run antiguo no desplaza al nuevo.
+La selección manual permanece fijada durante el polling. «Última» significa la
+última observada al consultar GitHub, no una sincronización continua. Cada captura
+es nueva: conserva las anteriores, incluidas las incompletas. `--latest paired-rg.yml`
+también está disponible; si el último run solo publica un plan no se inventa una pareja.
+
+Comprobado el 18-10-2026: CI `39119782917` (`b056423…`), Golden Path `38762578664`
+(`1ec4cb9…`) y validación A `37353632299` (`91a33e9…`). No son tres ejecuciones de
+main actual. Capturar estado/jobs no descarga sus paquetes ni verifica sus firmas.
+
+La pareja histórica `37202413477` sí conserva las cuatro evidencias del brazo G.
+Para importar sus originales y recibos históricos de forma reproducible:
+
+```bash
+# Comprueba margen e inodos; se conserva la reserva de 3 GiB.
+df -h /workspaces /tmp
+df -i /workspaces /tmp
+python3 implementacion/scripts/defense-demo/observations.py \
+  --run 37202413477 --publication-summary --paired-artifact 11303646242
+```
+
+La descarga **explícita** de este ZIP mide 116 999 171 bytes e incluye una base
+comprimida que no se extrae. El límite de descarga es 128 MiB y se consulta primero
+su tamaño, pertenencia y disponibilidad. Se exige el SHA-256 registrado por GitHub.
+Solo se descomprime el paquete G señalado por `pair.json`: máximo 8 MiB comprimidos,
+32 MiB expandidos, 512 archivos y 2 MiB por documento. Se rechazan enlaces,
+traversal y duplicados. El verificador común comprueba los hashes internos; se
+contrasta la medición con la pareja, el run, la fuente y los subjects. El inventario
+ZIP admite como máximo 2048 entradas y 512 MiB declarados, sin descomprimir las bases.
+No se auditan los paquetes R/infraestructura ni toda la campaña.
+
+Para reutilizar un ZIP ya descargado, sustituye `--paired-artifact 11303646242`
+por `--paired-archive /ruta/paired.zip --artifact-id 11303646242`. La asociación y
+el hash siguen consultándose en GitHub. No se reutiliza el modo de ZIP pequeño
+`--archive`, que mantiene su límite histórico de 32 MiB expandidos.
+
+En **Atestaciones**, abre el bundle, su declaración o la salida original del
+verificador. La procedencia nativa mantiene el nombre `CI-authorized-2.bundle.json`;
+no se inventa un `provenance.bundle.json`. Las cuatro tarjetas distinguen presencia,
+integridad, verificación criptográfica histórica y autorización agregada histórica.
+No se vuelve a verificar criptografía ni se interpreta un JSON visible como prueba
+actual. El brazo R indica «No aplicado»; las atestaciones locales A siguen separadas.

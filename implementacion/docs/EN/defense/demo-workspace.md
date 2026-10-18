@@ -319,7 +319,7 @@ run is not a pair. Full local pair inputs use existing analysis contracts when
 complete; failures remain visible. Capture directories are append-only under
 `implementacion/evidence/raw/github-observations/`, excluded from Git.
 
-**Atestaciones** shows documents supplied with the selected capture; their subject/type are unverified claims, not authenticated run association.
+**Atestaciones** distinguishes documents supplied without a checked package (unverified subject/type claims) from the associated paired G package described below.
 No hosted B bundles were downloaded for the initial summary example. Use
 **Consultar atestaciones de la sesión local vinculada**, or **Identidad y procedencia
 → Atestaciones de la sesión**, for authentic retained local A examples. These belong
@@ -346,3 +346,59 @@ bash implementacion/scripts/defense-demo.sh cleanup --session "$DEMO_SESSION" --
 
 No workflow dispatch, rerun, publication, historical review changes or new campaign
 is implemented. Human review and narrated timing of this change remain pending.
+
+### Refresh the latest workflow observations
+
+From the repository root, capture the latest available execution of each workflow
+(including failures or in-progress runs, without filtering for success):
+
+```bash
+for workflow in ci.yml golden-path.yml lane-a-validation.yml; do
+  python3 implementacion/scripts/defense-demo/observations.py --latest "$workflow" || break
+done
+```
+
+Reload the viewer and open **Workflows**. Executions sort by creation time, attempt
+and capture time; importing an older run later does not displace a newer run.
+Manual selection stays pinned during polling. Latest means observed at query time,
+not continuous synchronization. Each capture is new and preserves earlier captures,
+including incomplete ones. `--latest paired-rg.yml` is also supported; a plan-only
+run never becomes an executed pair.
+
+Observed on 2026-10-18: CI `39119782917` (`b056423…`), Golden Path `38762578664`
+(`1ec4cb9…`) and lane A validation `37353632299` (`91a33e9…`). They are not three
+executions of current main. Metadata/jobs capture does not download their packages
+or verify their signatures.
+
+Historical pair `37202413477` does retain all four G evidence contracts. Import
+its original documents and historical verifier receipts reproducibly:
+
+```bash
+# Check free space/inodes; the 3 GiB reserve is retained.
+df -h /workspaces /tmp
+df -i /workspaces /tmp
+python3 implementacion/scripts/defense-demo/observations.py \
+  --run 37202413477 --publication-summary --paired-artifact 11303646242
+```
+
+This **explicit** ZIP download is 116,999,171 bytes and contains a compressed database
+that is never extracted. The download cap is 128 MiB; size, run membership and
+availability are checked first. GitHub's recorded SHA-256 is required. Only the G
+package identified by `pair.json` is decompressed: at most 8 MiB compressed, 32 MiB
+expanded, 512 files and 2 MiB per document. Links, traversal and duplicates are
+rejected. The shared package verifier checks internal hashes; the measurement is
+associated with the pair/run/source and subjects. The ZIP inventory permits at most
+2048 entries and 512 MiB declared size, without decompressing databases. This is
+not an audit of R/infrastructure packages or the full campaign.
+
+For an already downloaded ZIP, replace `--paired-artifact 11303646242` with
+`--paired-archive /path/paired.zip --artifact-id 11303646242`. Association and hash
+are still checked against GitHub. The small ZIP `--archive` mode retains its
+original 32 MiB expanded limit.
+
+Under **Atestaciones**, open the bundle, statement or original verifier output.
+Native provenance retains its actual `CI-authorized-2.bundle.json` filename; no
+`provenance.bundle.json` is invented. Four cards distinguish presence, integrity,
+historically recorded cryptography and historical aggregate authorization. No
+current cryptographic verification is performed, and visible JSON is not proof
+of authenticity. R is labelled not applied; local lane A examples remain separate.

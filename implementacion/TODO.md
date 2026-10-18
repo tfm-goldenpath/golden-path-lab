@@ -1,5 +1,13 @@
 # Incremental implementation plan
 
+## Latest workflow captures and paired attestations — 18 October 2026
+
+- [x] Import the latest CI, hosted Golden Path and lane A validation metadata without running workflows; retain source and capture dates.
+- [x] Add explicit bounded paired-artifact inspection and original G bundles/verifier outputs; keep historical verification separate from current integrity checks.
+- [x] Order captures by execution/attempt/date; document EN/ES refresh commands. Preserve partial imports and the 3 GiB reserve.
+- [x] Doctor, shared suite, 82 defense regressions, browser/zoom checks and real offline export pass; see the [follow-up record](registros/workflow_refresh_20261018_EN.md).
+- [ ] Human review of this follow-up; no new cryptographic verification or laboratory execution claimed.
+
 ## Browser control and observed evidence — 18 October 2026
 
 - [x] Preserve the pending Trivy correction on the new branch; keep unrelated root npm files.

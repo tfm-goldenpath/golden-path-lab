@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import tempfile
+import tarfile
 import time
 import uuid
 import zipfile
@@ -41,7 +42,7 @@ def margin(growth=MAX_CAPTURE*3):
             raise ValueError('Insufficient disk/inode reserve for capture')
 
 
-def gh(endpoint, maximum=MAX_FILE, binary=False):
+def gh(endpoint, maximum=MAX_FILE, binary=False, destination=None):
     """No shell, pagination or arbitrary host; bounded bytes/time on disk, no token output."""
     margin(maximum)
     with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as error:
@@ -58,7 +59,12 @@ def gh(endpoint, maximum=MAX_FILE, binary=False):
             error.seek(0); diagnostic = error.read(65536).decode(errors='replace')
             status = re.search(r'HTTP (\d{3})', diagnostic)
             raise ValueError('GitHub retrieval unavailable: '+(status.group(1) if status else 'transport/authentication error'))
-        output.seek(0); return output.read(maximum+1)
+        output.seek(0)
+        if destination is not None:
+            import shutil
+            with Path(destination).open('xb') as target: shutil.copyfileobj(output,target,1024*1024)
+            return None
+        return output.read(maximum+1)
 
 
 def archive_files(path, maximum=32*1024**2):
@@ -92,6 +98,20 @@ def associate(pair, run):
         if arm not in ('R','G') or any(receipt.get(k)!=pair.get(k) for k in ('runId','source','planIdentity','dataset','attempt','order','pair')):
             raise ValueError('Arm association mismatch')
     return pair
+
+
+def latest_run(workflow):
+    if workflow not in WORKFLOWS:
+        raise ValueError('Unsupported workflow')
+    response=json.loads(gh(f'repos/{REPOSITORY}/actions/workflows/{workflow}/runs?per_page=1'))
+    runs=response.get('workflow_runs',[])
+    if not runs: raise ValueError('No GitHub execution available for '+workflow)
+    run=runs[0]
+    if (run.get('repository',{}).get('full_name')!=REPOSITORY
+            or Path(run.get('path','').split('@')[0]).name!=workflow
+            or type(run.get('id')) is not int or run['id']<=0):
+        raise ValueError('Latest execution identity mismatch')
+    return run['id']
 
 
 def capture(args):
@@ -164,6 +184,28 @@ def capture(args):
             observation['publication']={'dataset':index['dataset'],'source':index['source'],'planIdentity':index['plan']['planIdentity'],'database':index['database'],'order':match['order'],'pair':match['position'],'boundary':'Published summary integrity and run association; full pair package not audited'}
         inputs={}
         if args.archive: inputs.update(archive_files(args.archive))
+        paired_archive=getattr(args,'paired_archive',None)
+        download_id=getattr(args,'paired_artifact',None)
+        if download_id:
+            if args.from_directory or workflow!='paired-rg.yml': raise ValueError('Artifact retrieval requires GitHub paired run metadata')
+            metadata=next((a for a in observation.get('artifacts',[]) if a.get('id')==download_id),None)
+            if not metadata or metadata.get('expired'): raise ValueError('Requested artifact absent or expired')
+            size=metadata.get('size_in_bytes')
+            if type(size) is not int or not 0<size<=128*1024**2: raise ValueError('Artifact download size exceeds limit')
+            margin(2*size+MAX_CAPTURE*3)
+            from observation_packages import paired_documents
+            with tempfile.TemporaryDirectory(prefix='golden-path-observation-download-') as temporary:
+                downloaded=Path(temporary)/'artifact.zip'
+                gh(f'repos/{REPOSITORY}/actions/artifacts/{download_id}/zip',maximum=size,destination=downloaded)
+                inputs,provenance=paired_documents(downloaded,run,observation['artifacts'],download_id)
+            observation['packageInspection']=provenance
+
+        if paired_archive:
+            if args.from_directory or workflow!='paired-rg.yml': raise ValueError('Paired archive requires GitHub paired run metadata')
+            from observation_packages import paired_documents
+            inputs, provenance=paired_documents(regular(paired_archive,128*1024**2),run,observation.get('artifacts',[]),getattr(args,'artifact_id',None))
+            observation['packageInspection']=provenance
+
         if args.pair: inputs['pair.json']=regular(args.pair).read_bytes()
         if 'pair.json' in inputs:
             pair=associate(json.loads(inputs['pair.json']),run); observation['pair']=pair
@@ -173,9 +215,13 @@ def capture(args):
             import paired_measurements
             try: observation['pairAnalysis']=paired_measurements.summarize([pair])
             except (ValueError,KeyError,TypeError) as e: observation['issues'].append('Pair contract validation incomplete: '+str(e))
-        for name,raw in inputs.items(): save(name,raw,'Operator-supplied local capture; association is not cryptographic verification')
+        for name,raw in inputs.items():
+            record=save(name,raw,'GitHub artifact / G package: '+provenance['paths'][name] if (paired_archive or download_id) else 'Operator-supplied local capture; association is not cryptographic verification')
+            if (paired_archive or download_id) and name in provenance['attestations']:
+                record['historicalEvidence']=provenance['attestations'][name]
+                record['association']='Artifact and G package hashes checked; run/source/subject association checked. No current cryptographic reverification.'
         observation['status']='CAPTURED'
-    except (ValueError,OSError,KeyError,TypeError,StopIteration,zipfile.BadZipFile,RuntimeError) as e:
+    except (ValueError,OSError,KeyError,TypeError,StopIteration,zipfile.BadZipFile,tarfile.TarError,RuntimeError) as e:
         observation['status']='INCOMPLETE';observation['issues'].append(str(e))
     # Keep the inventory itself bounded even for operator-supplied oversized metadata.
     if len(json.dumps(observation).encode()) > 512*1024:
@@ -222,9 +268,21 @@ def artifact(capture_id, checksum):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--run',required=True,type=int)
+    selection=parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument('--run',type=int)
+    selection.add_argument('--latest',choices=sorted(WORKFLOWS),help='Capture the latest execution at query time, including failures/in-progress runs')
     parser.add_argument('--from-directory',help='Already downloaded run.json, jobs.json and workflow YAML; explicit local capture')
     parser.add_argument('--publication-summary',action='store_true',help='Only hash-pinned small campaign summaries; never download campaign package')
     parser.add_argument('--pair',help='Local pair.json; must match run and source')
     parser.add_argument('--archive',help='Local bounded zip; safe inspection, no path extraction')
-    raise SystemExit(capture(parser.parse_args()))
+    parser.add_argument('--paired-artifact',type=int,help='Explicit bounded download of one paired artifact, <=128 MiB; metadata-only by default')
+    parser.add_argument('--paired-archive',help='Previously downloaded paired ZIP, <=128 MiB; inspect only its bounded G package, never extract databases')
+    parser.add_argument('--artifact-id',type=int,help='GitHub artifact ID belonging to this run; requires recorded SHA-256')
+    args=parser.parse_args()
+    if args.latest:
+        if args.from_directory: parser.error('--latest requires a GitHub query')
+        args.run=latest_run(args.latest)
+    if args.paired_artifact and (args.archive or args.paired_archive or args.pair): parser.error('--paired-artifact cannot be combined with local evidence inputs')
+    if args.paired_archive and (args.archive or args.pair): parser.error('--paired-archive cannot be combined with other local evidence inputs')
+    if bool(args.paired_archive)!=bool(args.artifact_id): parser.error('--paired-archive and --artifact-id must be provided together')
+    raise SystemExit(capture(args))

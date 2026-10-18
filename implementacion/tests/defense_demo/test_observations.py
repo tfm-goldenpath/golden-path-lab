@@ -102,6 +102,29 @@ class ObservationTests(unittest.TestCase):
         code,o=self.capture(run=run)
         self.assertEqual(code,1);self.assertEqual(o['status'],'INCOMPLETE');self.assertLess(len(json.dumps(o)),512*1024);self.assertTrue(obs.inventory()[0]['files'])
 
+    def test_latest_preserves_failure_and_checks_workflow_identity(self):
+        run={'id':999,'repository':{'full_name':obs.REPOSITORY},'path':'.github/workflows/ci.yml','conclusion':'failure'}
+        with patch.object(obs,'gh',return_value=json.dumps({'workflow_runs':[run]}).encode()) as query:
+            self.assertEqual(obs.latest_run('ci.yml'),999)
+            self.assertIn('per_page=1',query.call_args.args[0])
+            with self.assertRaisesRegex(ValueError,'identity'):obs.latest_run('golden-path.yml')
+            with self.assertRaisesRegex(ValueError,'Unsupported'):obs.latest_run('../../secret')
+        with patch.object(obs,'gh',return_value=b'{"workflow_runs":[]}'):
+            with self.assertRaisesRegex(ValueError,'No GitHub'):obs.latest_run('ci.yml')
+
+    def test_expired_or_oversized_artifact_preserves_metadata_without_download(self):
+        run={'id':123,'repository':{'full_name':obs.REPOSITORY},'run_attempt':1,'head_sha':'a'*40,'path':'.github/workflows/paired-rg.yml','status':'completed','conclusion':'success'}
+        for oversized in (False,True):
+            def response(path,**kwargs):
+                if path.endswith('/runs/123'): return json.dumps(run).encode()
+                if '/artifacts?' in path: return json.dumps({'artifacts':[{'id':12,'expired':not oversized,'size_in_bytes':200*1024**2}]}).encode()
+                if path.endswith('/zip'): self.fail('Unsafe artifact must not be downloaded')
+                raise ValueError('GitHub retrieval unavailable: 403')
+            args=SimpleNamespace(run=123,from_directory=None,publication_summary=False,archive=None,pair=None,paired_artifact=12)
+            with patch.object(obs,'gh',side_effect=response),contextlib.redirect_stdout(io.StringIO()):code=obs.capture(args)
+            self.assertEqual(code,1)
+        self.assertTrue(all(o['status']=='INCOMPLETE' and o['run']['id']==123 for o in obs.inventory()))
+
     def test_low_space_prevents_capture(self):
         # Exercise the real safeguard separately from the filesystem fixture.
         self.patches[-1].stop()

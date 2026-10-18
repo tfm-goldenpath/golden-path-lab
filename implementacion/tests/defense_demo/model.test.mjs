@@ -80,3 +80,10 @@ test('equal generated operation logs are not inherited from an unrelated produce
 test('missing phase on an old live receipt cannot become an unexecuted preparation claim',()=>{
  const old=event('f13');delete old.phase;const d=data('defense',[old]);Object.assign(d.session,{prepared:false,operational:'ERROR'});assert.equal(M.incompletePreparation(d),null);
 });
+
+test('workflow selection sorts execution time, attempt and capture without hiding failures',()=>{
+ const capture=(id,date,attempt,utc)=>({id:'capture-'+id+'-'+utc,workflow:'ci.yml',capturedUTC:utc,run:{id,created_at:date,run_attempt:attempt,conclusion:'failure'}});
+ const old=capture(100,'2026-10-01',1,'2026-10-18'),latest=capture(200,'2026-10-17',2,'2026-10-18'),earlier=capture(200,'2026-10-17',1,'2026-10-17');
+ assert.deepEqual(M.workflowRuns([old,earlier,latest], 'ci.yml'),[latest,earlier,old]);
+ assert.deepEqual(M.workflowRuns([old], 'golden-path.yml'),[]);
+});
