@@ -216,15 +216,16 @@ navegador ni otro clúster. El disco mostrado es una lectura registrada, no una
 promesa de espacio actual. La preparación comprueba montajes reales, inodos y
 reservas. No rebajes márgenes ni borres evidencias para conseguir un pase.
 
-Exporta explícitamente después de la exposición. Los hashes del renderizador son
-distintos de la fuente de evidencia. Las exportaciones nuevas incluyen todos los
-assets, contexto capturado y extractos acotados: se mantiene el límite total de
-2 MiB, priorizando salidas principales. La página registrada no hace peticiones
-API/red ni ejecuta acciones; conserva navegación hash, detalle amplio, pistas,
-filtros y bloqueos. El
-paquete verificado contiene los archivos completos. Los exports existentes son
-inmutables y conservan su renderizador anterior. El inventario local exportado
-se etiqueta como capturado, no actual.
+Exporta explícitamente después de la exposición. Los hashes del renderizador se
+separan de la fuente ejecutada. La [guía de congelación portable](static-freeze.md)
+explica selección explícita de intentos y observaciones, estados
+FULL/EXCERPT/NOT_EMBEDDED y prioridad determinista de originales esenciales dentro
+de los 2 MiB de texto HTML. No se añaden automáticamente otras sesiones ni capturas
+GitHub globales. El HTML funciona con file:// sin API/red; la carpeta portable usa
+originales relativos bajo cualquier prefijo HTTP estático y comprueba sus hashes.
+Ambos conservan detalle amplio, navegación, filtros y etiquetas sin acciones
+ejecutables. Los originales seleccionados permanecen en paquete/carpeta portable.
+Las exportaciones anteriores y sus renderizadores siguen inmutables.
 
 ```bash
 bash implementacion/scripts/defense-demo.sh export --session "$DEMO_SESSION"
