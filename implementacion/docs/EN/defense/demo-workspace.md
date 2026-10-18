@@ -217,13 +217,16 @@ installation or additional cluster. Disk shown in the header is a recorded sampl
 not a promise of current free space. Preparing checks real filesystems, inodes and
 reserves. Never lower safeguards or delete retained evidence to make a check pass.
 
-Export runs explicitly after the talk. Renderer asset hashes are separate from
-evidence-source identity. New exports embed all renderer assets, captured context
-and bounded excerpts (existing 2 MiB total excerpt budget; main control files
-prioritized). The recorded page makes no API/network calls, cannot execute actions,
-and retains hash navigation, full-height detail, tracks, filtering and badges. Full evidence remains in the
-verified adjacent package. Existing exports remain immutable and retain their old
-renderer. Local inventory is labelled as captured at export time.
+Export runs explicitly after the talk. Renderer hashes remain separate from the
+execution source. The [portable freeze guide](static-freeze.md) defines explicit
+attempt and imported-observation selection, FULL/EXCERPT/NOT_EMBEDDED status and
+deterministic priority for essential originals within the 2 MiB HTML text budget.
+No other local sessions or global GitHub captures are included automatically.
+The single HTML works through file:// without API/network calls; the portable
+folder uses relative originals under any static HTTP prefix and verifies hashes.
+Both retain wide detail, navigation, filters and badges without executable actions.
+Complete selected originals remain in the verified archive/portable folder.
+Existing exports remain immutable, including their original renderer.
 
 ```bash
 bash implementacion/scripts/defense-demo.sh export --session "$DEMO_SESSION"

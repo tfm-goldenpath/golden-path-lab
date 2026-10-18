@@ -70,16 +70,17 @@ def observation_paths(captures):
     return paths
 
 
-def export_session(state):
-    from coordinator import lab_path, resources
+def export_session(state, attempts=None, observations=None):
+    from coordinator import lab_path, resources, source_identity
     from server import snapshot
     name = state['session']
     raw = evidence_root(name)
-    database_paths = snapshot_paths(state, lab_path(name))
+    from portable import selection, references, embed, html, write_portable
+    value = selection(snapshot(name), attempts, observations)
+    database_paths = snapshot_paths(state, lab_path(name)) if not attempts else {}
     estimate = sum(p.stat().st_size for folder in (raw, lab_path(name)) if folder for p in folder.rglob('*') if p.is_file() and not p.is_symlink())
     estimate += sum(p.stat().st_size for p in database_paths.values())
-    from observations import inventory
-    estimate += sum(f['size'] for capture in inventory() for f in capture.get('files', []))
+    estimate += sum(f['size'] for capture in value['githubObservations'] for f in capture.get('files', []))
     observation = resources(state['reserveGiB'], growth_gib=(estimate * 3 + 64*1024**2)/1024**3)
     checks = raw / 'export-checks'
     checks.mkdir(exist_ok=True)
@@ -91,42 +92,44 @@ def export_session(state):
     if not observation['sufficient']: raise ExportSpaceError('Insufficient evidence reserve; export stopped, originals retained')
     directory = ROOT / 'evidence/packages' / ('defense-' + name) / f'export-{number:04}'
     directory.mkdir(parents=True, exist_ok=False)
-    lab = lab_path(name)
-    lab_package = None
-    if lab is not None:
-        atomic(lab / 'defense-demo.json', {'scope': 'Directed presentation; not complete L01 or a campaign',
-                                          'session': name, 'status': state['operational'], 'humanReview': 'not-requested'})
-        packager.package(lab, directory, state['operational'])
-        lab_package = directory / (lab.name + '.tar.gz')
-        verify_tar(lab_package)
-    value = snapshot(name)
-    value['recorded'] = True
-    value['localSessions'] = local_session_inventory(name)
-    value['actionsEnabled'] = False
     value['savedUTC'] = utc()
+    value['rendererSource'] = source_identity()
     value['renderer'] = {file: digest((WEB / file).read_bytes()) for file in ('index.html', 'style.css', 'model.js', 'app.js')}
-    value['provisionalLog'] = None
-    artifacts = artifact_index(name)
-    excerpts = {}
-    excerpt_budget = 2 * 1024 * 1024
-    for key, record in sorted(artifacts.items(), key=lambda item: (0 if any(term in item[1]['path'] for term in ('F11-early.', 'F11-security-diff', 'F11-admission.log', 'F13-admission.log', 'F13-attribution', '/response.log', '/result.json', '/update-response.log')) and '/closed/' in item[1]['path'] else 1, item[0])):
-        path = raw / record['path']
-        if file_record(raw, path, 'export', '')['sha256'] != record['sha256']: raise ValueError('Artifact changed')
-        with path.open('rb') as stream: data = stream.read(min(12000, excerpt_budget))
-        excerpt_budget -= len(data)
-        excerpts[key] = {'text': data.decode('utf-8', errors='replace'), 'truncated': record['size'] > len(data)}
-    value['offlineArtifacts'] = excerpts
+    indexed = artifact_index(name)
+    selected = {a['id'] for e in value['events'] for a in e.get('artifacts', [])}
+    selected.update(a['id'] for c in value.get('commands', []) for a in c.get('artifacts', []))
+    artifacts = {k:v for k,v in indexed.items() if k in selected}
+    for r in value.get('stopRequests',[]):
+        for a in r.get('artifacts',[]):
+            if a['id'] in indexed: artifacts[a['id']]=indexed[a['id']]
+    value['artifacts'] = list(artifacts.values())
+    refs = references(value)
+    paths_by_id = {k:safe_path(raw,r['path']) for k,r in artifacts.items()}
+    embed_records = dict(artifacts)
+    # Captures are opt-in, including the exact historical bundles/verification files.
+    from observations import STORE, artifact as observed_artifact
+    for capture in value['githubObservations']:
+        for f in capture.get('files', []):
+            observed_artifact(capture['id'],f['sha256'])
+            key='observation:'+capture['id']+':'+f['sha256']
+            f['offlineId']=key
+            path=STORE/capture['id']/f['file']
+            embed_records[key]={'path':'github-observations/'+capture['id']+'/'+f['name'], 'size':path.stat().st_size, 'sha256':f['sha256']}
+            paths_by_id[key]=path
+            refs['essential'].append(key)
+    value['offlineArtifacts'] = embed(embed_records,paths_by_id,set(refs['essential']))
+    for capture in value['githubObservations']:
+        for f in capture.get('files', []):
+            item=value['offlineArtifacts'][f['offlineId']]
+            f.update(text=item['text'],truncated=item['truncated'],embedding=item['status'])
+    value['exportCompleteness']={'status':'INCOMPLETE' if refs['missing'] else 'COMPLETE_REFERENCES', 'missing':refs['missing'], 'boundary':'Referenced originals, not new cryptographic verification'}
     value['packageName'] = 'evidence.tar.gz'
-    # JSON cannot terminate a script tag even if a captured diagnostic contains HTML.
-    data = json.dumps(value, ensure_ascii=False).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
-    html = (WEB / 'index.html').read_text().replace('<link rel="stylesheet" href="/style.css">', '<style>' + (WEB / 'style.css').read_text() + '</style>')
-    html = html.replace('<script src="/model.js" defer></script>', '<script>'+ (WEB/'model.js').read_text() + '</script>')
-    html = html.replace('<script src="/app.js" defer></script>', '<script>window.SAVED_SESSION=' + data + ';</script><script>' + (WEB / 'app.js').read_text() + '</script>')
     output = directory / 'recorded.html'
-    output.write_text(html)
+    output.write_text(html(value))
+    folder = write_portable(directory,value,embed_records,paths_by_id)
     manifest = {'schema': 'defense-export/v1', 'session': name, 'savedUTC': utc(),
-                'source': state['source'], 'result': state.get('demoResult'), 'humanReview': state.get('humanReview', 'pending'),
-                'artifacts': list(artifacts.values()), 'renderer': value['renderer'], 'files': []}
+                'source': state['source'], 'rendererSource':value['rendererSource'], 'result': state.get('demoResult'), 'humanReview': state.get('humanReview', 'pending'),
+                'selection': value['exportSelection'], 'completeness':value['exportCompleteness'], 'artifacts': list(artifacts.values()), 'renderer': value['renderer'], 'files': []}
     files = {'session.json': json.dumps(state, ensure_ascii=False, indent=2).encode(),
              'events.json': json.dumps(value['events'], ensure_ascii=False, indent=2).encode(),
              'catalogue.json': (raw / 'catalogue.json').read_bytes(), 'source.json': (raw / 'source.json').read_bytes(),
@@ -134,7 +137,7 @@ def export_session(state):
     paths = {'artifacts/' + key + '/' + Path(record['path']).name: raw / record['path'] for key, record in artifacts.items()}
     paths.update(observation_paths(value.get('githubObservations', [])))
     paths.update(database_paths)
-    if lab_package: paths['laboratory/' + lab_package.name] = lab_package
+    paths.update({'portable/'+p.relative_to(folder).as_posix():p for p in folder.rglob('*') if p.is_file()})
     for path, data_bytes in files.items():
         manifest['files'].append({'path': path, 'size': len(data_bytes), 'sha256': digest(data_bytes)})
     for name_in_tar, path in paths.items():
@@ -155,6 +158,8 @@ def export_session(state):
     package_hash = file_record(directory, package, 'export', '')['sha256']
     (directory / 'SHA256SUMS.txt').write_text(f'{package_hash}  evidence.tar.gz\n{digest(output.read_bytes())}  recorded.html\n')
     record = {'number': number, 'timeUTC': utc(), 'verified': True, 'eventCount': len(value['events']),
+              'selection':value['exportSelection'], 'completeness':value['exportCompleteness'],
+              'portable':str(folder.relative_to(ROOT / 'evidence/packages')),
               'html': file_record(ROOT / 'evidence/packages', output, 'export', 'self-contained recorded view'),
               'package': file_record(ROOT / 'evidence/packages', package, 'export', 'verified evidence archive')}
     state['exports'].append(record)

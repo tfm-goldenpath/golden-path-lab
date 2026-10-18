@@ -1,5 +1,7 @@
 # Defense demonstration
 
+[Portable defense, selected offline originals and freeze](static-freeze.md).
+
 [Early security F02/F12/F03](early-security.md).
 
 [Real web rehearsal, 160-second route and offline fallback](web-rehearsal.md).

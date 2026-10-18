@@ -1,5 +1,7 @@
 # Demostración de defensa
 
+[Defensa portable, originales offline seleccionados y congelación](static-freeze.md).
+
 [Controles tempranos F02/F12/F03](early-security.md).
 
 [Ensayo web real, guion de 160 segundos y respaldo offline](web-rehearsal.md).

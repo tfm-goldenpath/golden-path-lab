@@ -1,5 +1,7 @@
 # Ensayo desde el navegador y respaldo registrado
 
+[Defensa portable, originales offline seleccionados y congelación](static-freeze.md).
+
 [Índice de defensa](README.md) · [English](../../EN/defense/web-rehearsal.md)
 
 Usa una sesión `defense` nueva sobre la fuente definitiva. La vía A utiliza una

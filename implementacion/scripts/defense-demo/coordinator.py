@@ -420,6 +420,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, epilog='Lane A only. No shell commands from the catalogue or web. Every new rehearsal requires a new session.')
     parser.add_argument('command', choices=['up', 'prepare', 'present', 'step', 'status', 'list', 'export', 'cleanup', 'serve', 'stop-server', 'check', 'prepare-pending', 'cleanup-plan', 'verify', 'case'])
     parser.add_argument('--session')
+    parser.add_argument('--export-attempt', action='append', help='Export only these recorded attempt IDs plus preparation; repeatable')
+    parser.add_argument('--export-observation', action='append', help='Opt-in captured GitHub observation ID; repeatable')
     from cases import ACTIONS
     parser.add_argument('--case-action', choices=ACTIONS)
     parser.add_argument('--profile', choices=LIVE, default='defense')
@@ -499,7 +501,7 @@ def main():
                     path = ROOT / 'evidence/packages' / record['path']
                     if file_record(ROOT / 'evidence/packages', path, 'verify', '')['sha256'] != record['sha256']: raise Stopped('Export hash differs')
                     print(json.dumps(verify_export(path)))
-                if args.command == 'export': print(export_session(state))
+                if args.command == 'export': print(export_session(state, args.export_attempt, args.export_observation))
                 if args.command == 'cleanup':
                     from cases import fixture
                     child=fixture(state)

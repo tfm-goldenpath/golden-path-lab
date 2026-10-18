@@ -1,12 +1,22 @@
 # Incremental implementation plan
 
+## Portable static freeze — 18 October 2026
+
+- [x] Deterministic selected references, complete small F02/F12/F03/F11/F13 logs and four F13 inventories; FULL/EXCERPT/NOT_EMBEDDED, bounded HTML and relative static originals. No automatic global imports/session inventory.
+- [x] New real browser session `freeze-20261018t205939z`: common preparation 409.381 s, main sequence 43.853 s; optional early comparisons measured separately. Runtime source 38e7228, static follow-ups e54eb91; no source guard bypass.
+- [x] Shared suite in preparation, final 140 defense / 20 model tests, real file:// zero-network and prefixed static HTTP, original hashes/downloads, missing/corrupt detection, historical L01 digest separation, desktop/narrow/native-200% review.
+- [x] Continuous recorded-evidence video 159.92 s, H.264 full decode, original WebM retained; consolidated freeze has 546 verified files. [Validation, exact paths and limits](registros/demo_static_freeze_EN.md); [EN](docs/EN/defense/static-freeze.md) / [ES](docs/ES/defense/static-freeze.md) runbook.
+- [ ] Human-narrated rehearsal and review; verify playback on the presentation computer. Installed test Chromium lacks H.264 decoding; local ffplay and WebM browser playback were checked.
+- [ ] A new live presentation on the final/merged revision needs new compatible preparation; the measured original sequence is consumed. No full L01/F11/L06 or independent-F13 acceptance is inferred.
+
+
 ## Combined demo profile — 18 October 2026
 
 - [x] Add `defense-all`: unchanged defense ordering through F13 recovery, followed by authorized R/G comparison and partial L06; independently prepared early cases in the same bound viewer.
 - [x] Preserve existing profiles, per-case immutable evidence, source/resource checks and readable original logs.
 - [x] Shared suite (131 defense regressions), 19 model checks, real F02/F12 browser comparisons/repeat and 428-file zero-network offline backup verified for the combined profile.
 - [x] Unified selector and real browser rehearsal `all-20261018t194405z`: common preparation, F11/F13 recovery, controlled R, directed F11, partial L06, all three early comparisons and new F11 attempts; safe owned retirement restored capacity without reducing safeguards.
-- [ ] Prioritize all early-control logs in bounded combined HTML exports; originals are preserved in the verified full package (see follow-up validation).
+- [x] Prioritize all early-control logs in bounded combined HTML exports; closed by the static-freeze validation below, without rewriting the historical export.
 - [x] Human acceptance communicated by the requester on 18 October 2026; see [acceptance record](registros/demo_combined_profile_EN.md#human-acceptance-and-pr-handoff).
 - [ ] Human-narrated rehearsal remains pending; acceptance does not establish its duration.
 

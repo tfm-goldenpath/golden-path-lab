@@ -1,5 +1,7 @@
 # Browser rehearsal and recorded fallback
 
+[Portable defense, selected offline originals and freeze](static-freeze.md).
+
 [Defense index](README.md) · [Español](../../ES/defense/web-rehearsal.md)
 
 Use one new `defense` session on the final source. Lane A uses a local trusted key;
