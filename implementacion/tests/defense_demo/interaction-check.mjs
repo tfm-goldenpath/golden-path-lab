@@ -6,20 +6,20 @@ const original=await (await fetch(url+'/api/session')).json(),browser=await chro
 try{
  const page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  let fixture=structuredClone(original),busy=false,offline=false,postCount=0,stopCount=0,authFailure=false;
- fixture.session={...fixture.session,session:'synthetic-controls-ui-only',operational:'PREPARED',prepared:true,cleaned:false,demoResult:null,active:null};fixture.actionsEnabled=true;
+ fixture.session={...fixture.session,session:'synthetic-controls-ui-only',operational:'PREPARED',prepared:true,cleaned:false,demoResult:null,active:null};fixture.actionsEnabled=true;fixture.commands=[];
  fixture.events=fixture.events.filter(e=>e.phase==='preparation').map(e=>({...e,session:fixture.session.session}));
  const caps=()=>Object.fromEntries(['prepare','check','present','step','stop','export','cleanup'].map(a=>[a,{enabled:a==='stop'?busy:!busy&&a!=='prepare',reason:'Synthetic state gate'}]));
  await page.route('**/api/session',r=>offline?r.abort():r.fulfill({json:fixture}));
- await page.route('**/api/control',r=>authFailure?r.fulfill({status:403,json:{}}):r.fulfill({json:{session:fixture.session.session,csrf:'synthetic-token',busy,capabilities:caps()}}));
- await page.route('**/api/action',async r=>{const body=r.request().postDataJSON();assert.deepEqual(Object.keys(body),['action']);postCount++;if(body.action==='stop'){stopCount++;await r.fulfill({json:{stopRequested:true}});return;}await wait(250);await r.fulfill({status:202,json:{accepted:true}});});
+ await page.route('**/api/control',r=>authFailure?r.fulfill({status:403,json:{}}):r.fulfill({json:{session:fixture.session.session,csrf:'synthetic-token',busy,command:fixture.commands?.at(-1),capabilities:caps()}}));
+ await page.route('**/api/action',async r=>{const body=r.request().postDataJSON();assert.deepEqual(Object.keys(body),['action']);postCount++;if(body.action==='stop'){stopCount++;await r.fulfill({json:{stopRequested:true,stopState:'REQUESTED'}});return;}await wait(250);const commandId='a'.repeat(32);fixture.commands=[{commandId,session:fixture.session.session,action:body.action,status:'ACCEPTED',acceptedUTC:new Date().toISOString(),operations:[],artifacts:[]}];await r.fulfill({status:202,json:{accepted:true,commandId}});});
  await loaded(page,url);assert.equal(await page.locator('#primary').innerText(),'Iniciar comparación');await snap(page,output,'ready-synthetic');
  await page.locator('#mode').selectOption('step');assert.equal(postCount,0);assert.equal(await page.locator('#primary').innerText(),'Ejecutar siguiente paso');
  await page.locator('#primary').evaluate(b=>{b.click();b.click();});await wait(400);assert.equal(postCount,1);assert.equal(await page.locator('#primary').isDisabled(),true);assert.match(await page.locator('#action-status').innerText(),/aceptada|esperando/);
- busy=true;fixture.session.active={operation:'f11-early'};fixture.activeProcessObserved=true;fixture.session.operational='RUNNING';fixture.provisionalLog='Synthetic running output';await wait(1800);
+ busy=true;fixture.commands[0].status='RUNNING';fixture.commands[0].processObserved=true;fixture.session.active={operation:'f11-early'};fixture.activeProcessObserved=true;fixture.session.operational='RUNNING';fixture.provisionalLog='Synthetic running output';await wait(1800);
  assert.equal(await page.locator('#stop').isDisabled(),false);await snap(page,output,'running-synthetic');
  await page.locator('#stop').click();await wait(100);assert.equal(stopCount,1);assert.match(await page.locator('#stop').innerText(),/Detención solicitada/);await wait(1700);assert.match(await page.locator('#stop').innerText(),/Detención solicitada/);
  fixture.activeProcessObserved=false;await wait(1700);assert.match(await page.locator('.attempt-row[data-attempt="attempt-1"]').innerText(),/Proceso interrumpido/);
- busy=false;fixture.session.active=null;fixture.session.operational='ABORTED';fixture.session.prepared=false;await wait(1700);assert.equal(await page.locator('#stop').innerText(),'Detener');
+ busy=false;fixture.commands[0].status='CANCELLED';fixture.commands[0].processObserved=false;fixture.session.active=null;fixture.session.operational='ABORTED';fixture.session.prepared=false;await wait(1700);assert.equal(await page.locator('#stop').innerText(),'Detener');
  offline=true;await wait(1700);assert.match(await page.locator('#connection').innerText(),/desactualizados/);assert.equal(await page.locator('[data-action="export"]').isDisabled(),true);
  offline=false;fixture.session.operational='PREPARED';fixture.session.prepared=true;authFailure=true;await wait(1700);assert.equal(await page.locator('[data-action="export"]').isDisabled(),true);assert.equal(await page.locator('#primary').innerText(),'Ver resultado');
  authFailure=false;await wait(1700);assert.equal(await page.locator('#primary').isDisabled(),false);

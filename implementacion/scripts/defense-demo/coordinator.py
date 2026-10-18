@@ -217,7 +217,7 @@ def run_operation(state, operation, phase, deadline=None, instance=None, case_co
     opdir.mkdir()
     spec = read_json(root / 'catalogue.json')['operations'][operation]
     started, mono = utc(), time.monotonic()
-    state.update(active={'operation': operation, 'instance': instance, 'startUTC': started, 'phase': phase, 'attempt': (case_context or {}).get('attempt',spec['attempt'])}, operational='RUNNING')
+    state.update(active={'operation': operation, 'instance': instance, 'startUTC': started, 'phase': phase, 'attempt': (case_context or {}).get('attempt',spec['attempt']), 'commandId':os.environ.get('GP_DEMO_COMMAND_ID')}, operational='RUNNING')
     atomic(session_path(name) / 'session.json', state)
     print(f'[{phase}] {operation}: {spec["title"]}', flush=True)
     code, aborted, reason = 1, False, None
@@ -478,7 +478,7 @@ def main():
                     if not state['prepared']: raise Stopped('Prepared session required for environment readiness')
                     assert_source(state)
                     count = sum(e['operation'] == 'resume' for e in events(name))
-                    run_operation(state, 'resume', 'readiness', instance=f'resume-check-{count+1}')
+                    run_operation(state, 'resume', 'readiness', time.monotonic()+args.budget_seconds, instance=f'resume-check-{count+1}')
                 if args.command == 'cleanup-plan':
                     if lab_path(name): subprocess.run(['python3', str(ROOT / 'scripts/defense-demo/ownership.py'), name, 'plan'], check=True)
                     else: print(json.dumps({'plan': [], 'preserved': ['all evidence and session state'], 'reason': 'No laboratory was initialized'}))
@@ -528,17 +528,25 @@ def main():
                             atomic(session_path(name) / 'session.json', state)
                         else: print(export_session(state))
                     if args.stop_server: stop_server(name)
-                state['lastCommand'] = {'command': args.command, 'exitCode': 0, 'endUTC': utc()}
+                state['lastCommand'] = {'command': args.command, 'commandId':os.environ.get('GP_DEMO_COMMAND_ID'), 'exitCode': 0, 'endUTC': utc()}
                 atomic(session_path(name) / 'session.json', state)
                 return 0
             except KeyboardInterrupt:
-                state['lastCommand'] = {'command': args.command, 'exitCode': 130, 'endUTC': utc(), 'error': 'INTERRUPTED; partial artifacts retained'}
+                state['lastCommand'] = {'command': args.command, 'commandId':os.environ.get('GP_DEMO_COMMAND_ID'), 'exitCode': 130, 'endUTC': utc(), 'error': 'INTERRUPTED; partial artifacts retained'}
                 atomic(session_path(name) / 'session.json', state)
                 raise Stopped('Interrupted; partial artifacts retained', 130)
             except Stopped as error:
-                state['lastCommand'] = {'command': args.command, 'exitCode': error.code, 'endUTC': utc(), 'error': str(error)}
+                state['lastCommand'] = {'command': args.command, 'commandId':os.environ.get('GP_DEMO_COMMAND_ID'), 'exitCode': error.code, 'endUTC': utc(), 'error': str(error)}
                 atomic(session_path(name) / 'session.json', state)
                 raise
+            finally:
+                # Still under the session lock: release only this process's ownership.
+                from server import process_identity
+                owned = process_identity(os.getpid())
+                latest = read_json(session_path(name) / 'session.json')
+                if owned and latest.get('controller') == owned:
+                    latest.pop('controller', None)
+                    atomic(session_path(name) / 'session.json', latest)
 
 
 if __name__ == '__main__':

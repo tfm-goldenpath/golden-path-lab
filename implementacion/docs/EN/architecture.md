@@ -152,6 +152,14 @@ Directed DEMO_VALID_ACCEPT is not complete L01 or a campaign observation. The
 optional `GP_VULNERABILITY_SNAPSHOT_ROOT` only changes storage placement for a
 new retained database; default callers, identity checks and thresholds are unchanged.
 
+Optional authenticated web actions are supervised by `scripts/defense-demo/actions.py`.
+It admits only the existing action names, invokes the coordinator, reaps owned
+children and closes per-command receipts. It does not implement scenario or policy
+decisions. `server.py` retains session binding and Origin/cookie/CSRF checks;
+`coordinator.py` retains preparation, source guards, deadlines and operation receipts.
+Command IDs link control-plane requests to operations independently of the original
+presentation result; closed command files join the existing evidence index/export.
+
 ## Limitations and architectural alternatives
 
 Modules deliberately share context and central order. `lab-contracts.mjs` groups generation, validation and file access; predicate URIs, required checks and policy versions also appear in producers/consumers. A change needs coordinated review. If duplication becomes costly, introduce versioned shared configuration and explicit consistency checks; current tests do not prove all such consistency.

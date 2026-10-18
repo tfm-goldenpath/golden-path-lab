@@ -155,6 +155,14 @@ a L01 completo ni a una observación de campaña. `GP_VULNERABILITY_SNAPSHOT_ROO
 sólo permite cambiar el destino de una nueva instantánea de base: conserva el
 comportamiento predeterminado, las comprobaciones de identidad y los umbrales.
 
+Las acciones web autenticadas opcionales se supervisan en
+`scripts/defense-demo/actions.py`: admite solo los nombres existentes, invoca al
+coordinador, recoge hijos propios y cierra recibos por comando; no decide políticas
+ni escenarios. `server.py` conserva sesión vinculada y comprobaciones de origen,
+cookie y CSRF. `coordinator.py` conserva preparación, fuente, plazos y recibos de
+operación. Los IDs enlazan solicitudes con operaciones separadamente del resultado
+de la presentación original; los archivos cerrados entran en el índice/export existente.
+
 ## Límites y evolución de la modularidad
 
 La separación actual permite probar partes de forma aislada, pero mantiene dependencias deliberadas del laboratorio:

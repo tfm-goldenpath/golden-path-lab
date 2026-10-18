@@ -33,7 +33,9 @@ def identity(state, lab, strict):
         if strict and value and not value['State']['Running']: raise ValueError('Prepared resource stopped')
     if build and build['Config'].get('Image') != read_json(ROOT / 'tools.lock.json')['images']['buildkit']['reference']:
         raise ValueError('Builder image differs from the pinned laboratory resource')
-    if registry_value and 'imageRepository' in state:
+    # Readiness requires the prepared address; retirement uses immutable IDs
+    # and labels in cleanup_plan. A stopped registry can have no assigned IP.
+    if strict and registry_value and 'imageRepository' in state:
         ip = registry_value['NetworkSettings']['Networks']['kind']['IPAddress']
         if not state['imageRepository'].startswith(ip + ':5000/quotes-node-run-'):
             raise ValueError('Registry identity or address changed')

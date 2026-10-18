@@ -1,5 +1,7 @@
 # Navegación de la demo y detalle amplio de evidencia
 
+Tarjeta de acción persistente, recibos exactos, comprobación/detención y recuperación segura: [ciclo de vida web](defense-demo-operations.md#ciclo-de-vida-de-acciones-web-y-recuperación). La consola sigue una identidad de comando; no cambios ajenos de `lastCommand`.
+
 [English](../../EN/defense/demo-workspace.md) · [Perfil F11](f11-comparison.md) · [Operación](defense-demo-operations.md)
 
 Una aplicación ofrece cinco destinos visibles: **Demostración**, **Recorrido técnico**, **Escenarios**,

@@ -1,5 +1,7 @@
 # Demo navigation and full-height evidence detail
 
+Persistent action card, exact command receipts, check/stop semantics and safe recovery: [web lifecycle](defense-demo-operations.md#web-action-lifecycle-and-recovery). The console uses a command identity, not unrelated changes to `lastCommand`.
+
 [Español](../../ES/defense/demo-workspace.md) · [F11 profile](f11-comparison.md) · [Operations](defense-demo-operations.md)
 
 One application has five visible destinations: **Demostración**, **Recorrido técnico**, **Escenarios**,

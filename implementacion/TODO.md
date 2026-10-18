@@ -570,3 +570,11 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [x] Human review and acceptance of the bounded PR scope at `e675325`, explicitly confirmed by Xylons in the conversation on 17 October 2026. OpenAI Codex assistance; no new campaign sample. [EN guide](docs/EN/defense/f11-comparison.md) / [ES guide](docs/ES/defense/f11-comparison.md).
 
 - [x] Add safe viewer-only stop and preflight port checks; explain the reported rehearsal-01/defense-01 conflict. Improve scenario/result hierarchy and hide unrelated profile operations. These follow-up changes require their own review; earlier acceptance is not reassigned to them.
+
+### Web action lifecycle (18 October 2026)
+
+- [x] Reproduce the retained check/zombie incident and a harmless real-subprocess regression; reap owned children before trusting persisted controller identity.
+- [x] Add independent command IDs, terminal receipts, correlated readiness operations, bounded check deadlines and a persistent action/console view; retain existing trust, action allowlist and source guards.
+- [x] On operator request, retire three obsolete owned laboratories and six exclusively associated volumes, preserving verified exports, raw evidence and private material; recover about 5 GiB (8.99 GiB free at closure). Fix retirement of a stopped registry without weakening readiness or immutable-ID checks.
+- [ ] Complete a new-source Kubernetes rehearsal of check → check → F11 → cancellation. It was blocked by disk margin during the initial validation; subsequent recovery does not constitute that rehearsal. Recheck available space before preparation.
+- [ ] Human review of this correction. Earlier PR review is not reassigned. See [validation](registros/demo_action_lifecycle_EN.md).

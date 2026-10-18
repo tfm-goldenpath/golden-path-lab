@@ -1,5 +1,122 @@
 # Ejecutar la demo y conservarla al cambiar de máquina
 
+## Margen de disco y laboratorios retirados
+
+Crear una sesión no libera espacio. Preparar un caso F13 independiente exige el
+margen configurado de preparación (inicialmente 8 GiB: 3 GiB de reserva más 5 GiB
+de crecimiento estimado). Un rechazo `RESOURCE_EXHAUSTED` antes de iniciar trabajo
+no es un bloqueo de política F13. Comprueba el espacio real antes de reintentar.
+Para la primera presentación, la secuencia preparada de `defense` ya incluye F13:
+usa **Iniciar comparación** o el siguiente paso. **Preparar nuevo caso F13** prepara
+una repetición independiente adicional; no es necesario para iniciar esa primera
+secuencia. El espacio recuperado antes de preparar puede dejar de cumplir el
+umbral de 8 GiB de la repetición después de crear el primer laboratorio.
+
+Para un laboratorio obsoleto, consulta `cleanup-plan --session NOMBRE` y utiliza
+`cleanup --session NOMBRE` para conservar evidencias y retirar sus contenedores.
+La retirada comprueba IDs registrados y etiquetas aunque el registro parado haya
+perdido su IP; la comprobación de disponibilidad sigue exigiendo la dirección
+preparada. La limpieza estándar conserva volúmenes Docker y cachés de imágenes.
+Recuperar más espacio requiere un inventario explícito que demuestre montajes
+exclusivos en esos contenedores, retirada verificada y ausencia de consumidores
+u otras sesiones propietarias. No deduzcas propiedad por el nombre ni uses podas
+globales. Conserva evidencias, snapshots y material privado. Una preparación
+retirada o incompatible con la fuente requiere una sesión nueva; no reinicies
+su estado para reutilizarla.
+
+## Ciclo de vida de acciones web y recuperación
+
+Cada comando web aceptado recibe un `commandId` del servidor, salida saneada y
+recibo propios. La tarjeta de acción distingue el resultado de la presentación
+original, la preparación conservada y la acción actual. **Abrir consola / recibo**
+abre esa solicitud, aunque termine entre dos consultas. Recargar o abrir otra
+pestaña recupera la misma identidad. Consultar una salida anterior no cambia el
+destino de los controles. HTTP 202 confirma la aceptación, no la finalización.
+
+**Comprobar entorno** ejecuta `resume-check-N` con el presupuesto web de 120 segundos
+propagado a la operación. El recibo se asocia por identidad de comando. Si acaba
+correctamente sin stdout: “Comprobación completada; consulta el informe de
+disponibilidad”. Los errores anteriores a una operación también tienen recibo y
+salida saneada propios: nunca se ofrece el log privado acumulado como su salida.
+La consola es provisional hasta cerrar evidencia. Detener tiene un `requestId`
+propio y señala el comando objetivo; su acuse no acredita cancelación. Se distinguen
+“Detención en curso”, “Cerrando evidencia”, “Detenida” y “Ya había finalizado”. Un
+controlador desaparecido sin recibo final queda sin confirmar, nunca como PASS.
+
+El visor recoge siempre a sus hijos terminados antes de consultar la identidad
+persistida. Deben coincidir PID, inicio y boot; un zombi no mantiene ocupado el
+visor. El coordinador libera únicamente su propio controlador bajo el bloqueo de
+sesión. Las fixtures mantienen sus comprobaciones de pertenencia. No se necesita
+forzar desbloqueos ni editar JSON. Una comprobación cancelada puede repetirse si
+se conserva la preparación; esto no restaura automáticamente la preparación ni
+habilita una presentación fallida.
+
+### Preparar antes de presentar; iniciar los casos desde la web
+
+Crea una sesión nueva con la fuente definitiva. Mantén 4 CPU / 16 GB RAM / 32 GB
+de almacenamiento total y la reserva de custodia de 3 GiB. Comprueba espacio e
+inodos: la preparación exige además su margen de crecimiento configurado.
+Este comando prepara y abre el visor autenticado; **no inicia la presentación**:
+
+```bash
+cd /workspaces/golden-path-lab
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+export DEMO_SESSION="defense-$(date -u +%Y%m%dT%H%M%SZ | tr '[:upper:]' '[:lower:]')"
+printf 'Sesión: %s\n' "$DEMO_SESSION"
+bash implementacion/scripts/defense-demo.sh prepare \
+  --session "$DEMO_SESSION" --profile defense --reserve-gib 3 \
+  --serve --enable-actions --port 8765
+```
+
+Abre **Ports → 8765**, visibilidad **Private**. Reabre sin ejecutar con
+`bash implementacion/scripts/defense-demo.sh serve --session "$DEMO_SESSION" --enable-actions --port 8765`.
+En cambio, `up --auto` prepara **y ejecuta** la presentación original; cuando termina,
+no deja los casos originales pendientes de su primera ejecución web.
+
+Antes de presentar, usa **Más acciones → Preparación → Comprobar entorno** y consulta
+el informe final. Durante la presentación elige Automático o Paso a paso, ejecuta
+la secuencia pendiente o el siguiente paso y abre la consola de esa acción. Después
+usa **Nuevo intento** en F11 cuando esté disponible: genera evidencia nueva. F13
+necesita una fixture independiente preparada antes de la presentación, que puede
+crear otro laboratorio; no es repetición instantánea del digest autorizado.
+**Conservación** agrupa exportación y retirada propia, con la vista previa y
+confirmación de limpieza existentes.
+
+Guion propuesto, sin ensayo narrado medido: 0–20 s explica perfil, preparación previa
+y conexión; 20–100 s ejecuta los pasos y lee un rechazo exacto; 100–140 s consulta
+aceptación/recuperación y recorrido técnico; 140–160 s muestra recibo y alcance;
+reserva 20 s. La preparación fría queda fuera. El presupuesto por comando no
+garantiza la duración de toda la narración.
+
+### Recuperar el visor del incidente sin perder evidencia
+
+El diagnóstico conservado de `defense-20261018t141707z` encontró `check` terminado
+con exit 0 y un controlador zombi con PID/inicio/boot coincidentes. La operación
+había cerrado; el visor anterior impedía recoger el hijo. Es una observación
+concreta, no una causa atribuida automáticamente a cualquier sesión desactualizada.
+
+Primero consulta **status**, el último recibo y el estado del proceso. Un recibo
+cerrado y ausencia de controlador/worker propio vivo permiten reiniciar solamente
+el visor. No lo reinicies durante trabajo activo o cierre de evidencia:
+
+```bash
+bash implementacion/scripts/defense-demo.sh status --session defense-20261018t141707z
+# Solo tras comprobar que no hay operación viva:
+bash implementacion/scripts/defense-demo.sh stop-server --session defense-20261018t141707z
+bash implementacion/scripts/defense-demo.sh serve \
+  --session defense-20261018t141707z --enable-actions --port 8765
+```
+
+Estos comandos comprueban la propiedad del visor y conservan infraestructura y
+evidencia. No equivalen a `cleanup`, borrar `session.json`, matar un PID arbitrario
+ni podar Docker. Las comprobaciones de fuente/boot se mantienen: una preparación
+histórica incompatible con la corrección requiere **sesión nueva** y espacio
+suficiente. Los resultados conservados pueden consultarse en solo lectura. Esta
+corrección no reescribe los recibos históricos de la sesión.
+
+[Validación y límites](../../../registros/demo_action_lifecycle_EN.md).
+
+
 Los casos F11 compatibles admiten intentos independientes sobre preparación válida conservada; F13 requiere una fixture preparada por separado. Consulta [intentos y bundles auténticos de vía A](demo-workspace.md#intentos-independientes-y-bundles-de-vía-a). La presentación original no se reinicia.
 
 [Guía vigente de defensa](README.md) · [Controles web y capturas](demo-workspace.md#browser-controls-and-live-console)

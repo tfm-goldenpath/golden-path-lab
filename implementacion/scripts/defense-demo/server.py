@@ -52,7 +52,8 @@ def snapshot(name):
                     stream.seek(max(0, p.stat().st_size - 8192))
                     tail = sanitize(stream.read(8192).decode('utf-8', errors='replace'))
                 log_modified = datetime.fromtimestamp(p.stat().st_mtime, timezone.utc).isoformat()
-    return {'githubObservations': inventory(), 'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
+    from actions import public_records, records
+    return {'commands': public_records(name), 'stopRequests': records(name,'stop-requests')[-100:], 'githubObservations': inventory(), 'session': state, 'events': events(name), 'catalogue': read_json(raw / 'catalogue.json'),
             'liveOperations': LIVE[state['profile']],
             'profileOperations': (F11_PREPARE if state['profile'] == 'f11-comparison' else PREPARE) + LIVE[state['profile']] + ['resume', 'cleanup'],
             'workflows': [{**w, 'jobs': w.get('jobs', workflow_facts(w.get('yaml', '')))} for w in read_json(raw / 'workflows.json')],
@@ -62,11 +63,7 @@ def snapshot(name):
             'recorded': False, 'provisionalLogModifiedUTC': log_modified, 'activeProcessObserved': active_observed}
 
 
-def process_identity(pid):
-    try:
-        text = Path(f'/proc/{pid}/stat').read_text()
-        return {'pid': pid, 'start': text[text.rindex(')')+2:].split()[19], 'bootId': boot_id()}
-    except (OSError, ValueError): return None
+from actions import process_identity
 
 
 def owned_server(record):
@@ -164,8 +161,12 @@ def action_capabilities(state, has_events, running, source_error=None):
     if not running: reasons['stop'] = 'No hay una operación activa'
     if source_error: reasons['prepare'] = source_error
     if has_events or state.get('operational') != 'PENDING': reasons['prepare'] = 'Preparación ya intentada; usa una sesión nueva'
+    # A cancelled readiness check may be checked again. This does not restore
+    # preparation or permit presentation: the coordinator still observes it.
+    if not state.get('prepared') or state.get('cleaned'): reasons['check']='Se requiere preparación conservada; no se reconstruye al comprobar'
+    elif source_error: reasons['check']=source_error
     if not state.get('prepared') or state.get('operational') not in ('PREPARED','COMPLETED'):
-        for key in ('check','present','step'): reasons[key] = 'Se requiere una preparación íntegra'
+        for key in ('present','step'): reasons[key] = 'Se requiere una preparación íntegra'
     elif source_error:
         for key in ('check','present','step'): reasons[key] = source_error
     if state.get('demoResult') == 'CONFIRMED':
@@ -184,15 +185,11 @@ def make_server(name, port, token):
     actions = os.environ.get('GP_DEMO_ACTIONS') == '1'
     cookie_name = 'demo_action_' + name.replace('-', '_')
     busy = threading.Lock()
-    worker = [None]
+    from actions import Supervisor
+    supervisor = Supervisor(name)
     allowed_hosts = {'127.0.0.1', 'localhost'}
     if os.environ.get('CODESPACE_NAME') and os.environ.get('GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN'):
         allowed_hosts.add(os.environ['CODESPACE_NAME'] + '-' + str(port) + '.' + os.environ['GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN'])
-
-    def controller():
-        state = public_session(name)
-        value = state.get('controller')
-        return value if value and process_identity(value['pid']) == value else owned_worker(state)
 
     def capabilities(running):
         state = public_session(name)
@@ -261,8 +258,9 @@ def make_server(name, port, token):
                 if route.path == '/api/control':
                     if not actions or not self.authenticated():
                         self.send(b'{}', code=403); return
-                    running = controller() is not None or (worker[0] is not None and worker[0].poll() is None)
-                    self.send(json.dumps({'csrf': csrf, 'busy': running, 'capabilities': capabilities(running), 'session': name, 'nextOperation': next((op for op in LIVE[public_session(name)['profile']] if op not in public_session(name).get('completed', [])), None)}).encode())
+                    with busy:
+                        running, command = supervisor.reconcile()
+                    self.send(json.dumps({'csrf': csrf, 'busy': running, 'command': command, 'capabilities': capabilities(running), 'session': name, 'nextOperation': next((op for op in LIVE[public_session(name)['profile']] if op not in public_session(name).get('completed', [])), None)}).encode())
                 elif route.path == '/api/health':
                     self.send(json.dumps({'session': name, 'token': token, 'readUTC': utc()}).encode())
                 elif route.path in ('/api/cleanup-plan','/api/fixture-cleanup-plan'):
@@ -278,6 +276,7 @@ def make_server(name, port, token):
                     result = subprocess.check_output([sys.executable,str(ROOT/'scripts/defense-demo/ownership.py'),plan_name,'plan'], stderr=subprocess.DEVNULL)
                     self.send(result)
                 elif route.path == '/api/session':
+                    with busy: supervisor.reconcile()
                     self.send(json.dumps(snapshot(name), ensure_ascii=False).encode())
                 elif re.fullmatch(r'/observation/[0-9]+-[a-f0-9]{12}/[a-f0-9]{64}', route.path):
                     from observations import artifact
@@ -328,34 +327,13 @@ def make_server(name, port, token):
                 from cases import ACTIONS
                 if action not in ('prepare','check','present','step','stop','export','cleanup') + ACTIONS: raise ValueError('Unknown action')
                 with busy:
-                    active_controller = controller()
-                    running = active_controller is not None or (worker[0] is not None and worker[0].poll() is None)
+                    running, previous = supervisor.reconcile()
                     if action == 'stop':
-                        if active_controller:
-                            if owned_worker(public_session(name)) == active_controller:
-                                os.killpg(active_controller['pid'], signal.SIGTERM)
-                            else:
-                                os.kill(active_controller['pid'], signal.SIGTERM)
-                        elif running:
-                            from coordinator import terminate
-                            terminate(worker[0])
-                        self.send(b'{"stopRequested":true}'); return
+                        self.send(json.dumps(supervisor.stop()).encode()); return
                     if running: self.send(b'{"error":"operation active"}', code=409); return
-                    gate = capabilities(running)[action]
-                    if not gate['enabled']: raise ValueError(gate['reason'])
-                    # Existing preparation is immutable; a new preparation uses CLI/new session.
-                    if action == 'prepare' and (events(name) or public_session(name)['operational'] != 'PENDING'):
-                        raise ValueError('Preparation already attempted; create a new session')
-                    state = public_session(name)
-                    if action in ('present','step','check') and (not state['prepared'] or state['operational'] not in ('PREPARED','COMPLETED')): raise ValueError('An intact prepared session is required')
-                    if action in ('present','step') and state.get('demoResult') == 'CONFIRMED': raise ValueError('Presentation already completed; prepare a new session')
-                    command = 'case' if action in ACTIONS else {'prepare':'prepare-pending','check':'check', 'present':'present','step':'step','export':'export','cleanup':'cleanup'}[action]
-                    with (session_path(name)/'web-actions.log').open('ab') as stream:
-                        worker[0] = subprocess.Popen([sys.executable, str(ROOT/'scripts/defense-demo/coordinator.py'), command,
-                            '--session', name, '--auto', '--budget-seconds', '120'] + (['--case-action',action] if action in ACTIONS else []), cwd=ROOT,
-                            stdout=stream, stderr=stream, start_new_session=True)
-                self.send(b'{"accepted":true}', code=202)
-            except (ValueError, OSError) as error:
+                    record = supervisor.accept(action, capabilities(running)[action])
+                self.send(json.dumps({'accepted':True,'commandId':record['commandId'],'status':record['status']}).encode(),code=202)
+            except (ValueError, OSError, RuntimeError) as error:
                 self.send(json.dumps({'error':str(error)}).encode(), code=409)
 
         do_PUT = do_PATCH = do_DELETE = do_OPTIONS = reject
