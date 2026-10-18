@@ -76,8 +76,8 @@ Las rutas siguientes existen en la base actual. El [plan de la primera base inte
 
 | Componente y código | Entrada y salida principales | Comprobación separada |
 |---|---|---|
-| [Servicio](../../services/quotes-node/src/) | HTTP/JSON → cotización, salud o versión. `index.js` arranca el proceso; `server.js` adapta HTTP; `quote.js` calcula; `validation.js` valida. | [Pruebas del servicio](../../services/quotes-node/test/): cálculo, límites y comportamiento HTTP. |
-| [Orquestador](../../scripts/demo.sh) y [workflows](../../../.github/workflows/) | Modo A/B, fase y argumentos → llamadas ordenadas a módulos y escenarios; responsabilidad de retirar la infraestructura. | [Pruebas de orquestación](../../tests/unit/orchestration.test.mjs) con etapas simuladas: fases, interrupción y códigos de salida. La integración completa requiere el ensayo real. |
+| [Servicio](../../services/quotes-node/src) | HTTP/JSON → cotización, salud o versión. `index.js` arranca el proceso; `server.js` adapta HTTP; `quote.js` calcula; `validation.js` valida. | [Pruebas del servicio](../../services/quotes-node/test): cálculo, límites y comportamiento HTTP. |
+| [Orquestador](../../scripts/demo.sh) y [workflows](../../../.github/workflows) | Modo A/B, fase y argumentos → llamadas ordenadas a módulos y escenarios; responsabilidad de retirar la infraestructura. | [Pruebas de orquestación](../../tests/unit/orchestration.test.mjs) con etapas simuladas: fases, interrupción y códigos de salida. La integración completa requiere el ensayo real. |
 | [Contexto](../../scripts/lib/context.sh) | Parámetros y estado conservado → identidad, recursos e información de trazabilidad del intento. | Comprobar inicialización y recuperación de las fases sin mezclar imágenes o intentos. |
 | [Laboratorio](../../scripts/lib/lab.sh) | Contexto y versiones → kind, zot, builder, namespaces y admisión Kyverno; diagnóstico y retirada de recursos. | La creación, conectividad y limpieza requieren el entorno real. |
 | [Entrega](../../scripts/lib/delivery.sh) | Fuentes y contexto → pruebas, políticas tempranas, imagen construida, informes Trivy y manifiestos. | Las pruebas de reglas no sustituyen el análisis de la imagen real. |
@@ -85,8 +85,8 @@ Las rutas siguientes existen en la base actual. El [plan de la primera base inte
 | [Adaptador de cadena clásica](../../scripts/complete-classic-chain.mjs) | Compatibilidad histórica de v0.1.0: anotaciones Fulcio autenticadas e informes anteriores/posteriores de manifiestos OCI clásicos. | Se conservan código y pruebas hasta completar la aceptación alojada del [candidato bundle](cosign-bundle-migration.md); el recorrido activo no lo invoca ni modifica metadatos de bundles. |
 | [Carga](../../scripts/lib/workload.sh) | Manifiesto e imagen → solicitud de despliegue y comprobación HTTP. | La admisión y la respuesta funcional son observaciones diferentes. |
 | [Comprobación del cambio de imagen](../../scripts/check-image-rollout.mjs) | Referencias inicial y nueva, Deployment y Pods observados → prueba de despliegue completado con otro digest en los Pods preparados. | No sustituye la admisión ni la verificación de firmas. |
-| [Escenarios](../../tests/scenarios/) | Contexto de entrega → preparación específica, ejecución y expectativas de L01, F13 y F11. | Un rechazo debe atribuirse a la condición prevista; no cambiar el control para obtenerlo. |
-| [Políticas Conftest](../../policies/conftest/) | Workflows, manifiestos o informe Trivy → decisiones por namespace Rego (`workflow`, `manifests`, `trivy`). | [Casos de políticas](../../tests/policies/run_rego.py) y [comprobación de archivos reales](../../scripts/check-policies.sh). |
+| [Escenarios](../../tests/scenarios) | Contexto de entrega → preparación específica, ejecución y expectativas de L01, F13 y F11. | Un rechazo debe atribuirse a la condición prevista; no cambiar el control para obtenerlo. |
+| [Políticas Conftest](../../policies/conftest) | Workflows, manifiestos o informe Trivy → decisiones por namespace Rego (`workflow`, `manifests`, `trivy`). | [Casos de políticas](../../tests/policies/run_rego.py) y [comprobación de archivos reales](../../scripts/check-policies.sh). |
 | [Contratos](../../scripts/lab-contracts.mjs) | Digest y parámetros → manifiesto o predicado; documentos verificados → validación de sujeto, tipo y contenido. | [Pruebas de contratos](../../tests/unit/contracts.test.mjs). No realizan verificación criptográfica. |
 | [Adaptador GitHub](../../scripts/github-attestation.mjs) y [preparación F13](../../scripts/check-missing-results.mjs) | Salida de GitHub CLI previamente verificada o inventario Cosign → comprobación de origen autorizado o ausencia de resultados. | [Pruebas GitHub](../../tests/unit/github-attestation.test.mjs) y [F13](../../tests/unit/missing-results.test.mjs), con entradas sintéticas. |
 | [Generador Kyverno](../../policies/kyverno/render.py) | Identidad o clave pública, repositorio, commit y formatos → políticas de admisión en JSON. | [Pruebas del generador](../../tests/policies/test_render.py); [pruebas con Kyverno CLI](../../tests/policies/run_kyverno.py) para las reglas de configuración. Firmas y recuperación requieren integración real. |
@@ -145,7 +145,7 @@ Las mutaciones pertenecen al escenario; las reglas pertenecen a los controles. S
 
 ## Capa visual para la defensa
 
-La [demo visual opcional](defense-demo.md) utiliza una CLI fina y un coordinador
+La [demo visual opcional](defense/defense-demo.md) utiliza una CLI fina y un coordinador
 Python de sesiones sobre los mismos módulos que sólo definen funciones. Gestiona
 preparación, presupuesto, recibos inmutables y visor de lectura; `demo.sh` conserva
 su trap de limpieza del laboratorio completo. No añade políticas de aceptación.
@@ -333,7 +333,7 @@ El [runner automatizado](automated-remediation.md) importa preparación, operaci
 La identidad scripted figura en tareas, recibos y archivos; los esquemas manuales mantienen compatibilidad. Selección de calibración, preparación de mediciones y reutilización de límites rechazan automatización incluso después de una revisión humana. Originales y reparaciones usan el empaquetado seguro existente. Se añaden límites operativos y reutilización secuencial de la base canónica con comprobaciones de identidad intactas. Se aplaza la evaluación de esfuerzo humano; esta evidencia técnica provisional no cierra el piloto ni autoriza la campaña alojada separada.
 
 
-El [espacio de presentación](demo-workspace.md) separa el modelo de visualización
+El [espacio de presentación](defense/demo-workspace.md) separa el modelo de visualización
 (`demo/model.js`) de la interacción DOM (`demo/app.js`). No decide aceptación:
 las etiquetas proceden de recibos confirmados y metadatos fijos de operación.
 El servidor calcula capacidades con las mismas precondiciones que POST; el
@@ -354,3 +354,5 @@ orden de operaciones, de sus recibos. `app.js` gestiona rutas hash, detalles baj
 demanda e inspección de archivos. Los recibos globales usan números de secuencia
 seguros, sin asignarles escenarios Fxx/Lxx. Las etiquetas de archivos heredados
 comparan fuente/hash capturados; no acreditan otra verificación ni modifican evidencia.
+
+El visor añade `observations.py`, importador exclusivo de CLI: captura metadatos GitHub y resúmenes publicados con hashes, de forma acotada y en un almacén de evidencia pública separado. No despacha workflows ni cambia acciones de sesión. La interfaz separa observaciones remotas, configuración y recibos locales de atestaciones; la exportación incluye originales con el manifiesto de integridad existente. Consulta la [guía canónica de defensa](defense/README.md).

@@ -1,5 +1,15 @@
 # Incremental implementation plan
 
+## Browser control and observed evidence — 18 October 2026
+
+- [x] Preserve the pending Trivy correction on the new branch; keep unrelated root npm files.
+- [x] Extend existing bound controls with next-operation status and a full-height provisional console; retain source, state and action safeguards.
+- [x] Capture one GitHub run at a time, compare published summary hashes, and distinguish historical R/G timing and local attestation receipts. No remote execution.
+- [x] Organize the four defense guides under [EN](docs/EN/defense/README.md) / [ES](docs/ES/defense/README.md), preserving compatibility anchors.
+- [x] Shared suite, final 75 defense regressions, 11 model tests, ten browser checks, actual offline export and link/anchor checks pass; see the [handoff](registros/demo_control_and_evidence_EN.md). No new laboratory execution.
+- [ ] Human review and human-narrated rehearsal; no new laboratory run or acceptance inferred.
+
+
 ## Technical journey navigation — 18 October 2026
 
 - [x] Start `feat/demo-technical-journey` from merged PR #50 on main (`b5d0a27`), preserving the separate uncommitted Trivy correction and unrelated files.
@@ -26,8 +36,8 @@
 - [x] Preserve scenario/blocker badges, independent attempts/recovery, source identity,
   read-only isolation, server action gates and self-contained offline navigation.
 - [x] Adapt keyboard/reflow, reading-state preservation, console wrapping/copy and
-  compact operator controls; update the [EN](docs/EN/demo-workspace.md) /
-  [ES](docs/ES/demo-workspace.md) navigation guides.
+  compact operator controls; update the [EN](docs/EN/defense/demo-workspace.md) /
+  [ES](docs/ES/defense/demo-workspace.md) navigation guides.
 - [x] Final doctor, 61 defense regressions, shared suite and seven browser checks
   pass on the corrected source; console visibility measured at 412.5 px online/offline.
 - [ ] Human review: see the [correction handoff](registros/demo_evidence_layout_handoff_EN.md).
@@ -541,6 +551,6 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [x] Restore the base profile and align actual Docker CLI/engine to 29.8.0. Complete shared suite passes; session `f11-20261017t193938z` prepares in 423.02 s and confirms the partial R/F11/L06 comparison in 19.01 s. Earlier failures remain preserved. A subsequent CSS/browser-test correction is documented separately; delivery controls are unchanged.
 - [ ] Record the human-narrated rehearsal duration (target 160 s, maximum 180 s); the supplied automation log does not measure speech.
 - Full catalogue F11/L06 coverage is outside this iteration; preserve the explicit partial labels.
-- [x] Human review and acceptance of the bounded PR scope at `e675325`, explicitly confirmed by Xylons in the conversation on 17 October 2026. OpenAI Codex assistance; no new campaign sample. [EN guide](docs/EN/f11-comparison.md) / [ES guide](docs/ES/f11-comparison.md).
+- [x] Human review and acceptance of the bounded PR scope at `e675325`, explicitly confirmed by Xylons in the conversation on 17 October 2026. OpenAI Codex assistance; no new campaign sample. [EN guide](docs/EN/defense/f11-comparison.md) / [ES guide](docs/ES/defense/f11-comparison.md).
 
 - [x] Add safe viewer-only stop and preflight port checks; explain the reported rehearsal-01/defense-01 conflict. Improve scenario/result hierarchy and hide unrelated profile operations. These follow-up changes require their own review; earlier acceptance is not reassigned to them.
