@@ -47,3 +47,14 @@ header{position:sticky;top:0;z-index:8}html{scroll-padding-top:64px}
 #case-controls>div {display:flex;flex-wrap:wrap;max-width:none;gap:.75rem}
 #case-controls>div>div {display:flex;flex-direction:column;gap:.2rem;max-width:17rem}
 #attestation-group {max-width:100%;font-size:.95rem}
+
+/* Command ownership is distinct from the original presentation outcome. */
+#command-card{margin:0;padding:7px 24px;background:#edf4f8;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;font-size:14px}
+#command-card[hidden]{display:none}#command-card>div{flex:1}#command-state{margin-left:12px}#command-result{flex-basis:100%;font-size:13px;margin:0;overflow-wrap:anywhere}#command-card[data-state=FAILED],#command-card[data-state=UNKNOWN],#command-card[data-state=TIMED_OUT]{background:#fff2e1}
+#command-card[data-state=COMPLETED]{background:#edf6f0}#command-details{font-size:14px;margin:4px 0;border:0;padding:0}#command-metadata{overflow-wrap:anywhere}#command-selector{font-size:14px;float:right;max-width:60%}#command-choice{max-width:100%;padding:4px}#command-links{gap:8px}#command-links button{padding:3px 8px}body[data-view=live] #command-result{display:none}body[data-view=live] #action-status{display:none}#live-console{padding:8px 12px}#live-console h1{font-size:24px;margin:6px 0}#live-console p{font-size:14px;margin:3px 0}#live-output{margin:6px 0}
+@media(max-width:800px){#command-selector{float:none;display:block;max-width:100%}#command-card{padding:8px 12px}#command-state{display:block;margin-left:0}}
+
+.live-heading{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.live-heading h1{flex:1}.live-heading #command-selector{float:none;max-width:35%}.live-file-info{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}.live-file-info #command-details[open]{flex-basis:100%}body[data-view=live] main{padding-top:8px}
+@media(max-width:800px){.live-heading #command-selector{max-width:100%;flex-basis:100%}.live-file-info{gap:4px}}
+
+.operator #control-state{flex:1 1 100%}.operator #next-operation{flex:1}.operator #more{margin-left:auto}.operator{gap:8px;margin-bottom:10px}

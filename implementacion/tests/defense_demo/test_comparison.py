@@ -148,6 +148,20 @@ class ComparisonTests(unittest.TestCase):
         core.atomic(session/'ownership.json',{**actual,'clusterContainer':'old'})
         with self.assertRaises(ValueError):ownership.cleanup_plan('synthetic-01',session,self.root,state,actual)
 
+    def test_retirement_of_stopped_registry_does_not_require_its_old_ip(self):
+        state={'cluster':'c','registry':'r','builder':'b',
+               'imageRepository':'172.18.0.3:5000/quotes-node-run-synthetic'}
+        registry={'Id':'id-r','Config':{'Labels':{'tfm.lab':'c'}},
+                  'State':{'Running':False},'NetworkSettings':{'Networks':{'kind':{'IPAddress':''}}}}
+        node={'Id':'id-c','Config':{'Labels':{'io.x-k8s.kind.cluster':'c'}},'State':{'Running':True}}
+        with patch.object(ownership,'inspect',side_effect=[registry,node,None]):
+            self.assertEqual(ownership.identity(state,self.root,False)['registryContainer'],'id-r')
+        with patch.object(ownership,'inspect',side_effect=[registry,node,None]):
+            with self.assertRaisesRegex(ValueError,'stopped'): ownership.identity(state,self.root,True)
+        registry['State']['Running']=True
+        with patch.object(ownership,'inspect',side_effect=[registry,node,None]):
+            with self.assertRaisesRegex(ValueError,'address changed'): ownership.identity(state,self.root,True)
+
     def test_actions_require_cookie_origin_csrf_and_reject_duplicate_launch(self):
         self.comparison()
         with patch.dict(server.os.environ,{'GP_DEMO_ACTIONS':'1'}):api=server.make_server('synthetic-01',0,'public-health-token')

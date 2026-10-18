@@ -192,7 +192,8 @@ def public_session(name):
 
 
 def artifact_index(name):
-    return {a['id']: a for e in events(name) for a in e.get('artifacts', [])}
+    from actions import records
+    return {a['id']: a for e in [*events(name), *records(name), *records(name,'stop-requests')] for a in e.get('artifacts', [])}
 
 
 def capture_files(source, destination, producer, previous=None):
@@ -224,6 +225,7 @@ def publish_event(name, value):
     root = evidence_root(name)
     folder = root / 'events'
     folder.mkdir(exist_ok=True)
+    if os.environ.get('GP_DEMO_COMMAND_ID'): value = {**value, 'commandId':os.environ['GP_DEMO_COMMAND_ID'], 'commandSession':os.environ.get('GP_DEMO_COMMAND_SESSION')}
     value = {**value, 'schema': SCHEMA, 'session': name, 'sequence': len(list(folder.glob('*.json'))) + 1}
     path = folder / f"{value['sequence']:06}.json"
     if path.exists(): raise ValueError('Receipt already exists')

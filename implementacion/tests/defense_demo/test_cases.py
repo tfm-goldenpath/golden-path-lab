@@ -40,7 +40,10 @@ class CaseTests(unittest.TestCase):
                 with self.assertRaises(HTTPError):urlopen(Request(url+'/api/action',data=b'{"action":"case-f11-early"}',headers=headers))
                 self.assertEqual(launch.call_count,1);command=launch.call_args.args[0]
                 self.assertEqual(command[command.index('--session')+1],self.state['session'])
-                self.assertEqual(command[-2:],['--case-action','case-f11-early'])
+                from actions import current
+                record=current(self.state['session'])
+                self.assertEqual(record['action'],'case-f11-early')
+                self.assertEqual(command[-2:],['--command-id',record['commandId']])
         finally:api.shutdown();api.server_close();worker.join()
     def test_repeat_new_ids_files_preserve_original_timing_and_inputs(self):
         original=(self.lab/'tfm-golden.json').read_bytes()
