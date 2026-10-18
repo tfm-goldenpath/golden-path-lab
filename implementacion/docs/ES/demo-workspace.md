@@ -2,7 +2,7 @@
 
 [English](../EN/demo-workspace.md) · [Perfil F11](f11-comparison.md) · [Operación](defense-demo-operations.md)
 
-Una aplicación ofrece cuatro destinos visibles: **Demostración**, **Escenarios**,
+Una aplicación ofrece cinco destinos visibles: **Demostración**, **Recorrido técnico**, **Escenarios**,
 **Workflows** y **Sesiones**. Cada uno sustituye el área principal. El detalle de
 un intento depende de Demostración; no es un inspector inferior ni un modal.
 Navegar no inicia, repite ni detiene operaciones del laboratorio.
@@ -64,6 +64,65 @@ bash implementacion/scripts/defense-demo.sh step --session "$DEMO_SESSION"
 Automático y paso a paso son alternativas, no instrucciones para repetir un
 intento consumido. La API web conserva su límite de 120 s por invocación. Cada
 paso incluye comprobaciones nuevas; varios pasos no son un ensayo continuo medido.
+
+## Recorrido técnico completo
+
+Abre **Recorrido técnico** en la navegación principal o **Ver proceso completo**
+en Demostración. El recorrido sustituye la comparación; los logs siguen abriéndose
+en el detalle amplio. **Detalle técnico** dentro de un detalle corresponde a esa
+operación o intento y ofrece un enlace al recorrido completo.
+
+- **Mapa de controles** (`#journey/map`): quince fases del catálogo capturado,
+  en orden pedagógico de izquierda a derecha y de arriba abajo. No afirma el orden
+  cronológico de ejecución. Despliega una fase para consultar condiciones, entradas,
+  salidas, archivos de versiones si constan, log original, atribución y recibo.
+- **Secuencia ejecutada** (`#journey/sequence`): recibos en su orden registrado,
+  incluidas preparación global y conservación. Los avisos NOT_REACHED se conservan,
+  pero no son operaciones ejecutadas. Tiempos ausentes siguen desconocidos; no se
+  suman intervalos anidados de observadores a los tiempos de sus operaciones.
+- Filtra **Toda la sesión**, **Preparación**, un brazo/escenario/intento concreto,
+  o **Conservación / cierre** cuando existan recibos. Los resultados mixtos se
+  desglosan: una recuperación no vuelve verde un rechazo previo. La preparación
+  reutilizada enlaza su origen y no se representa como otra operación en directo.
+  Un recibo con varios controles sigue siendo agregado.
+
+**Ver salida original** abre el archivo de esa operación directamente, aunque no
+tenga escenario Fxx/Lxx. **Volver al recorrido técnico**, Atrás y Adelante restauran
+filtro, fase desplegada, foco y posición de lectura. El detalle global usa números
+de recibo seguros (`#demo/operation/<secuencia>/console`), no rutas arbitrarias.
+Los metadatos identifican productor de la captura y fuente. Un archivo con iguales
+bytes/fuente en un recibo anterior se etiqueta como copia heredada y enlaza ese
+origen; esto no demuestra qué operación creó originalmente su contenido. Un log
+de tests copiado no acredita un rechazo posterior de admisión.
+
+Una preparación incompleta muestra un aviso en ambas vistas y enlaza la operación
+fallida registrada si existe. Los logs de descarga/SBOM/análisis capturados también se enlazan cuando existen;
+su presencia no constituye un diagnóstico. La interfaz no deduce causas de disco/red/confianza
+a partir del código de salida. Preparar R correctamente no confirma G. Los datos
+conservados de `rehearsal-06` muestran cuatro filas G **No alcanzado**, preparación
+321,22 s y ejecución sin medición; estos valores no están codificados en la UI.
+
+Comandos de solo lectura comprobados para el recorrido (puertos loopback libres):
+
+```bash
+bash implementacion/scripts/defense-demo.sh serve --session rehearsal-01 --port 8771
+bash implementacion/scripts/defense-demo.sh serve --session rehearsal-06 --port 8772
+bash implementacion/scripts/defense-demo.sh serve --session f11-20261017t193938z --port 8773
+```
+
+Abre el puerto con visibilidad Private en Codespaces y pulsa Recorrido técnico, o
+añade `/#journey/map` / `/#journey/sequence` a la URL de ese visor. No se inicia
+trabajo del laboratorio. El HTML offline conserva rutas hash, filtros y referencias
+de origen, con los extractos incluidos, cero peticiones API y sin ejecución.
+Los archivos ausentes siguen ausentes. Abrir el mapa no descarga todos los logs.
+
+Guion propuesto, no ensayo humano medido: 0–25 s, explicar estado registrado/vivo,
+perfil y preparación previa fuera del intervalo; 25–65 s, abrir mapa y distinguir
+fases de operaciones; 65–110 s, filtrar F11 y abrir su original Conftest; 110–140 s,
+volver y mostrar Kyverno independiente/F13 y recuperación solo si pertenecen al
+perfil; 140–160 s, volver a comparación y explicar alcance; 20 s de reserva. Usa
+la preparación incompleta para explicar **No alcanzado**, nunca como prueba de
+bloqueo satisfactorio. Esta mejora visual no vuelve a ejecutar el laboratorio.
 
 ## Durante la presentación
 

@@ -7,7 +7,7 @@ try{
  const page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  let fixture=structuredClone(original),busy=false,offline=false,postCount=0,stopCount=0,authFailure=false;
  fixture.session={...fixture.session,session:'synthetic-controls-ui-only',operational:'PREPARED',prepared:true,cleaned:false,demoResult:null,active:null};fixture.actionsEnabled=true;
- fixture.events=fixture.events.filter(e=>e.phase==='preparation');
+ fixture.events=fixture.events.filter(e=>e.phase==='preparation').map(e=>({...e,session:fixture.session.session}));
  const caps=()=>Object.fromEntries(['prepare','check','present','step','stop','export','cleanup'].map(a=>[a,{enabled:a==='stop'?busy:!busy&&a!=='prepare',reason:'Synthetic state gate'}]));
  await page.route('**/api/session',r=>offline?r.abort():r.fulfill({json:fixture}));
  await page.route('**/api/control',r=>authFailure?r.fulfill({status:403,json:{}}):r.fulfill({json:{session:fixture.session.session,csrf:'synthetic-token',busy,capabilities:caps()}}));
@@ -27,7 +27,7 @@ try{
  await page.route('**/api/sessions',r=>r.fulfill({json:{entries:[{session:'other-synthetic',profile:'defense',operational:'COMPLETED',source:{commit:'b'.repeat(40)}}]}}));
  await explore(page,'sessions');await page.locator('#exploration details > summary').click();assert.match(await page.locator('#identity').innerText(),/synthetic-controls-ui-only/);assert.equal(postCount,2);await page.locator('#close-exploration').click();
  // Closed log race: slow old response must not replace the newly selected file.
- fixture=structuredClone(original);fixture.actionsEnabled=false;fixture.session.session='synthetic-evidence-race';await page.reload();await page.waitForSelector('.attempt-row');await choose(page,'attempt-1');
+ fixture=structuredClone(original);fixture.actionsEnabled=false;fixture.session.session='synthetic-evidence-race';fixture.events=fixture.events.map(e=>({...e,session:fixture.session.session}));await page.reload();await page.waitForSelector('.attempt-row');await choose(page,'attempt-1');
  const event=fixture.events.find(e=>e.operation==='f11-early'),first=event.artifacts.find(a=>a.path==='operations/f11-early/closed/F11-early.json'),second=event.artifacts.find(a=>a.path==='operations/f11-early/closed/F11-early.attribution.json');
  await page.route('**/artifact/'+first.id,async r=>{await wait(1800);await r.fulfill({body:'SYNTHETIC OLD RESPONSE'}).catch(()=>{});});
  await page.route('**/artifact/'+second.id,r=>r.fulfill({body:'SYNTHETIC NEW ATTRIBUTION'}));

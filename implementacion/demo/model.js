@@ -32,12 +32,12 @@
  function profileOps(data){return new Set(data.profileOperations||[...definitionOps(data),...data.events.map(e=>e.operation)]);}
  function rows(data){
   const result=[];
-  if(data.session.profile!=='f11-comparison'&&data.catalogue.operations.reference)result.push({id:'reference-preparation',ops:['reference'],events:data.events.filter(e=>e.operation==='reference'),reference:true});
+  if(data.session.profile!=='f11-comparison'&&data.catalogue.operations.reference)result.push({id:'reference-preparation',ops:['reference'],events:sessionEvents(data).filter(e=>e.operation==='reference'),reference:true});
   for(const op of definitionOps(data)){
    const id=data.catalogue.operations[op]?.attempt||op;
    let row=result.find(r=>r.id===id);if(!row){row={id,ops:[],events:[]};result.push(row);}row.ops.push(op);
   }
-  for(const e of data.events.filter(e=>e.phase==='live'&&definitionOps(data).includes(e.operation))){
+  for(const e of sessionEvents(data).filter(e=>e.phase==='live'&&definitionOps(data).includes(e.operation))){
    let row=result.find(r=>r.id===e.attempt);if(!row){row={id:e.attempt,ops:[e.operation],events:[]};result.push(row);}row.events.push(e);
   }
   return result;
@@ -45,6 +45,7 @@
  function latest(row,op){return row.events.filter(e=>!op||e.operation===op).at(-1);}
  function rowOutcome(row,data){
   const active=row.ops.includes(data.session.active?.operation),state=outcome(latest(row),active,data.activeProcessObserved);
+  if(!active&&!latest(row)&&incompletePreparation(data)?.gUnreached&&!row.reference)return {tone:'unreached',label:'No alcanzado'};
   if(!active&&row.ops.includes('accept')&&!confirmed(latest(row,'accept'))&&state.tone==='accepted')return {tone:'pending',label:'Recuperación incompleta'};
   return state;
  }
@@ -62,7 +63,7 @@
   return list;
  }
  function ownArtifact(e,path){return e?.artifacts?.find(a=>a.path===`operations/${e.operation}/closed/${path}`&&a.producer===e.operation);}
- function primaryArtifact(e,data,kind='log'){const path=meta(e?.operation,data)[kind];return path?(ownArtifact(e,path)||null):null;}
+ function primaryArtifact(e,data,kind='log'){const path=meta(e?.operation,data)[kind];return path?(ownArtifact(e,path)||null):(kind==='log'?operationOutput(e):null);}
  function scope(profile,op){
   const common='Vía A · clave local; no GitHub OIDC ni vía B. Observaciones de esta fuente y sesión; sin conclusiones de productividad humana ni compromiso del clúster.';
   if(profile==='f11-comparison')return 'F11: UPDATE de Deployment; cobertura parcial, sin contrato completo CREATE/UPDATE/Pod. L06: actualización legítima con la misma imagen; alcance parcial, sin Pod directo. R ejecuta y retira la configuración de riesgo solo cuando consta en sus recibos. '+common;
@@ -70,5 +71,51 @@
  }
  function family(id){if(['F01','F02'].includes(id))return 'workflow';if(['F03','F04','L02'].includes(id))return 'vulnerability';if(['F05','F06','L03'].includes(id))return 'sbom';if(['F07','F08','L04'].includes(id))return 'signature';if(['F09','F10','L05'].includes(id))return 'provenance';if(['F13','F14'].includes(id))return 'results';return 'runtime';}
  function scenarioOps(id,data){return Object.values(data.catalogue.operations).filter(o=>o.scenario===id).map(o=>o.adapter);}
- root.DemoModel={meta,outcome,confirmed,expectation,definitionOps,profileOps,rows,latest,rowOutcome,segments,ownArtifact,primaryArtifact,scope,family,scenarioOps};
+
+ // The captured catalogue owns phase membership. Display tools describe families,
+ // never independently verified sub-controls of an aggregate operation receipt.
+ const phaseTools={source:'Git · doctor',ci:'make test',infrastructure:'kind · Docker · RBAC',build:'Buildx · registro',manifest:'Conftest',sbom:'Trivy · esquema',vulnerabilities:'Trivy · Conftest',signature:'Cosign','sbom-attestation':'Cosign · contrato',provenance:'Cosign · contrato','delivery-gate':'Verificador de entrega',results:'Atestación de resultados',admission:'API · Kyverno',deployment:'Kubernetes · HTTP',preservation:'SHA-256 · empaquetado · limpieza'};
+ const phaseLabel=phase=>({preparation:'Preparación',live:'Demostración',preservation:'Conservación',readiness:'Disponibilidad'})[phase]||'Contexto no registrado';
+ function sessionEvents(data){return (data.events||[]).filter(e=>(!e.session||e.session===data.session.session)&&profileOps(data).has(e.operation));}
+ function incompletePreparation(data){
+  const es=sessionEvents(data),failure=es.find(e=>e.phase==='preparation'&&['ERROR','ABORTED'].includes(e.operational));
+  const sealed=es.some(e=>e.operation==='seal'&&confirmed(e));
+  const liveObserved=es.some(e=>definitionOps(data).includes(e.operation)&&e.phase!=='preparation'&&e.operational!=='NOT_REACHED');
+  const stopped=!!failure||(!data.session.prepared&&!sealed&&!liveObserved&&['ERROR','ABORTED','INCOMPLETE'].includes(data.session.operational));
+  return stopped&&!sealed?{failure,gUnreached:!liveObserved}:null;
+ }
+ function operationOutput(e){return e?.artifacts?.find(a=>a.producer===e.operation&&new RegExp('^operations/'+e.operation+'(?:-[0-9]+)?/output\\.log$').test(a.path))||null;}
+ function eventIdentity(e,data){const m=meta(e.operation,data);return [(m.arm==='R'?'R':e.arm||'Sesión'),e.scenario||m.title,e.attempt||'sin intento registrado'].join(' · ');}
+ function artifactOrigin(a,e,data){
+  if(!a)return {label:'Archivo ausente'};
+  if(operationOutput(e)?.id===a.id&&a.id)return {label:'Salida de la operación '+e.operation};
+  const previous=sessionEvents(data).filter(x=>Number.isFinite(x.sequence)&&x.sequence<e.sequence).find(x=>x.artifacts?.some(b=>a.source&&a.source!=='generated operation receipt'&&b.source===a.source&&b.sha256===a.sha256));
+  if(previous)return {label:'Copia heredada; mismos bytes capturados antes en '+previous.operation+' · '+phaseLabel(previous.phase),event:previous};
+  if(a.path===`operations/${e.operation}/output.log`)return {label:'Salida de la operación '+e.operation};
+  return {label:'Copia capturada por '+(a.producer||'productor desconocido')+'; origen declarado: '+(a.source||'desconocido')+'. La captura no prueba qué operación produjo el contenido.'};
+ }
+ function journeyFilters(data){return [['all','Toda la sesión'],['preparation','Preparación'],...rows(data).map(r=>[r.id,(meta(r.ops.at(-1),data).arm==='R'?'':(meta(r.ops.at(-1),data).arm||'Sesión')+' · ')+(r.ops.includes('accept')?'Recuperación F13':meta(r.ops.at(-1),data).title)+' · '+r.id]),...(sessionEvents(data).some(e=>e.phase==='preservation')?[['preservation','Conservación / cierre']]:[])];}
+ function filteredEvents(data,filter){return sessionEvents(data).filter(e=>filter==='all'||filter==='preparation'&&e.phase==='preparation'||filter==='preservation'&&e.phase==='preservation'||filter==='reference-preparation'&&e.operation==='reference'||!['preparation','preservation'].includes(filter)&&e.attempt===filter);}
+ function journey(data,filter='all'){
+  const es=filteredEvents(data,filter),eligible=profileOps(data),row=rows(data).find(r=>r.id===filter),incomplete=incompletePreparation(data);
+  const specs=Object.values(data.catalogue.operations).filter(o=>eligible.has(o.adapter)&&(filter==='all'||filter==='preparation'&&(o.attempt==='preparation'||es.some(e=>e.operation===o.adapter))||filter==='preservation'&&o.adapter==='cleanup'||row?.ops.includes(o.adapter)));
+  return data.catalogue.stages.map((stage,index)=>{
+   const entries=[];
+   for(const spec of specs){const matches=es.filter(e=>e.operation===spec.adapter);if(!(spec.stages||[]).includes(stage.id))continue;
+    for(const e of matches.length?matches:[null]){
+     let state=outcome(e,data.session.active?.operation===spec.adapter,data.activeProcessObserved);
+     if(!e&&!data.session.active)state=incomplete&&definitionOps(data).includes(spec.adapter)?{tone:'unreached',label:'No alcanzado: preparación incompleta'}:{tone:'unknown',label:'Sin recibo de ejecución'};
+     const blocker=state.tone==='blocked'&&meta(spec.adapter,data).stage===stage.id;
+     if(state.tone==='blocked'&&!blocker)state={tone:'unknown',label:'Observación asociada; rechazo en '+meta(spec.adapter,data).tool};
+     entries.push({spec,event:e,state,blocker});
+    }
+   }
+   for(const e of es)if(e.notReached?.includes(stage.id))entries.push({event:e,spec:data.catalogue.operations[e.operation],state:{tone:'unreached',label:'No alcanzado en esta petición'},downstream:true});
+   if(row?.ops.includes('comparison-reference')&&['manifest','admission'].includes(stage.id))entries.push({state:{tone:'omitted',label:'No aplicado en R'},omitted:true});
+   // Preparation remains an origin link, never another live operation.
+   if(row&&!row.reference)for(const e of sessionEvents(data).filter(e=>e.phase==='preparation'&&confirmed(e)&&(data.catalogue.operations[e.operation]?.stages||e.stages||[]).includes(stage.id)))entries.push({event:e,spec:data.catalogue.operations[e.operation],state:{tone:'reused',label:'Preparado previamente · origen '+e.operation},reused:true});
+   return {...stage,title:({admission:'Admisión / Kyverno',preservation:'Conservación de evidencias'})[stage.id]||stage.title,number:String(index+1).padStart(2,'0'),tool:phaseTools[stage.id]||'Consultar definición',entries};
+  });
+ }
+ root.DemoModel={meta,outcome,confirmed,expectation,definitionOps,profileOps,rows,latest,rowOutcome,segments,ownArtifact,primaryArtifact,scope,family,scenarioOps,phaseLabel,sessionEvents,incompletePreparation,operationOutput,eventIdentity,artifactOrigin,journeyFilters,filteredEvents,journey};
 })(globalThis);

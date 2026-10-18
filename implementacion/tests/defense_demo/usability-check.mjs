@@ -11,7 +11,7 @@ try{
  await choose(page,'attempt-3');await page.locator('#scope').click();assert.match(await page.locator('#inspector-content').innerText(),/No demuestra L06/);await page.locator('#close-inspector').click();
  await explore(page,'technical');const admission=page.locator('.technical-stage[data-stage="admission"] > summary');assert.match(await admission.innerText(),/F13.*Kyverno/);assert.match(await admission.innerText(),/F11.*Kyverno/);
  assert.equal(await page.locator('.technical-stage[data-stage="deployment"] > summary .blocked').count(),0);
- await page.locator('#exploration select').selectOption('attempt-1');assert.equal(await page.locator('.technical-stage[data-stage="admission"]').count(),0);await snap(page,output,'technical');
+ await page.locator('#exploration select').selectOption('attempt-1');assert.equal(await page.locator('.technical-stage').count(),15);assert.equal(await page.locator('.technical-stage[data-stage="admission"] > summary .blocked').count(),0);assert.match(await page.locator('.technical-stage[data-stage="admission"] > summary').innerText(),/No alcanzado/);await snap(page,output,'technical');
  await page.locator('#close-exploration').click();const previous=await page.locator('#result-title').innerText();
  await explore(page,'scenarios');assert.equal(await page.locator('.catalogue-list button').count(),20);
  await page.getByRole('searchbox').fill('unmatched-synthetic-search');assert.equal(await page.locator('.catalogue-list button').count(),0);assert.match(await page.locator('.catalogue-detail').innerText(),/Sin coincidencias/);

@@ -19,7 +19,7 @@
  </div></details>
 </header>
 <nav class="destinations" aria-label="Navegación principal">
- <a href="#demo" data-destination="demo">Demostración</a><a href="#scenarios" data-destination="scenarios">Escenarios</a><a href="#workflows" data-destination="workflows">Workflows</a><a href="#sessions" data-destination="sessions">Sesiones</a>
+ <a href="#demo" data-destination="demo">Demostración</a><a href="#journey/map" data-destination="journey">Recorrido técnico</a><a href="#scenarios" data-destination="scenarios">Escenarios</a><a href="#workflows" data-destination="workflows">Workflows</a><a href="#sessions" data-destination="sessions">Sesiones</a>
  <span id="viewer-mode">Solo lectura</span>
 </nav>
 <p id="action-status" role="status" class="status-line" hidden></p>
@@ -33,7 +33,8 @@
  <button data-action="check">Comprobar entorno</button><button data-action="export">Exportar HTML y evidencia</button><button data-action="cleanup">Limpiar recursos propios…</button>
  </div></details>
  </section>
- <div class="overview-heading"><h2>Intentos independientes</h2><label id="follow-label"><input type="checkbox" id="follow"> Seguir ejecución en directo</label></div>
+ <div id="preparation-warning" class="preparation-warning" hidden></div>
+ <div class="overview-heading"><h2>Intentos independientes</h2><a href="#journey/map" data-journey-link>Ver proceso completo</a><label id="follow-label"><input type="checkbox" id="follow"> Seguir ejecución en directo</label></div>
  <div id="attempts" aria-label="Progreso por intento"></div>
  <p id="timing"></p><p class="overview-note">Las etapas indican orden, no porcentajes. ↶ Preparación reutilizada. Pulsa un bloqueo para leer su salida original.</p>
 </section>
@@ -43,7 +44,7 @@
  <section id="selected-result" aria-labelledby="result-title">
  <div><p id="result-identity" class="eyebrow"></p><h1 id="result-title">Detalle del intento</h1><p id="result-expectation"></p></div><h2 id="result-outcome"></h2>
  <p id="result-description" hidden></p>
- <div class="result-actions"><button id="blocking-log">Ver log del bloqueo</button><button id="attribution">Ver atribución</button><button id="technical-evidence">Evidencia técnica</button><button id="scope">Alcance</button><button id="related" hidden>Ver recuperación relacionada</button></div>
+ <div class="result-actions"><button id="blocking-log">Ver log del bloqueo</button><button id="attribution">Ver atribución</button><button data-journey-link>Ver recorrido técnico completo</button><button id="technical-evidence">Evidencia técnica</button><button id="scope">Alcance</button><button id="related" hidden>Ver recuperación relacionada</button></div>
  </section>
  <div class="detail-layout"><aside id="attempt-sidebar" aria-label="Cambiar de intento"></aside><div class="detail-main">
  <div class="inspector-tabs" role="tablist" aria-label="Contenido del intento"><button role="tab" data-tab="result">Resultado</button><button role="tab" data-tab="console">Consola</button><button role="tab" data-tab="files">Evidencias</button><button role="tab" data-tab="technical">Detalle técnico</button><button role="tab" data-tab="scope">Alcance</button></div>

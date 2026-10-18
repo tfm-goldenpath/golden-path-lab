@@ -368,3 +368,5 @@ peticiones nuevas al laboratorio.
 
 Refresca el visor para cargar estos cambios de presentación. Los recibos
 conservan su identidad de fuente original; refrescar la interfaz no es otro ensayo.
+
+La entrada visible **Recorrido técnico** separa el mapa completo de controles de la secuencia registrada. Consulta [navegación del recorrido](demo-workspace.md#recorrido-técnico-completo) para filtros, originales, retorno y preparación incompleta.

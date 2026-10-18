@@ -14,11 +14,12 @@
  let acceptedBaseline=null,explorationRevision='';
  let catalogueFilters={query:'',kind:'all',family:'all',availability:'all'},scenarioId='F11',workflowId=null;
  const rowNodes=new Map();
+ let detailOrigin='#demo',journeyTab='map',journeyFilter='all';
  let currentRoute='',routeReady=false,sidebarHidden=false,missingArtifact=false,lastAttemptSelection=null;
  const routeMemory=new Map();
  function allRows(){return M.rows(data);}
  function selectedRow(){return allRows().find(r=>r.id===selection.row);}
- function selectedEvent(){const row=selectedRow();if(row)return M.latest(row,selection.op);return data.events.filter(e=>e.operation===selection.op).at(-1);}
+ function selectedEvent(){if(selection.event!=null)return M.sessionEvents(data).find(e=>e.sequence===selection.event);const row=selectedRow();if(row)return M.latest(row,selection.op);return data.events.filter(e=>e.operation===selection.op).at(-1);}
  function selectedMeta(){return M.meta(selection.op,data);}
  function cancelArtifact(){artifactEpoch++;artifactAbort?.abort();artifactAbort=null;}
  function pin(){ $('follow').checked=false; }
@@ -33,6 +34,7 @@
   const r=s.lastResources;text($('resources'),r?`Disco registrado ${(r.freeBytes/1024**3).toFixed(1)} GiB libres · reserva ${(r.reserveBytes/1024**3).toFixed(1)} GiB`:'Disco: sin lectura registrada');
   text($('source'),s.session+' / '+s.profile+' · Fuente de evidencia: '+(s.source?.commit||'desconocida').slice(0,12)+' · vía '+(s.lane||'?'));
   text($('renderer'),'Renderizador: '+(data.renderer?.['app.js']?.slice(0,12)||'identidad no capturada'));
+  renderPreparationWarning($('preparation-warning'));
   text($('timing'),'Tiempo registrado de ejecución: '+seconds(s.liveDurationSeconds)+' · preparación: '+seconds(s.preparationDurationSeconds));
   text($('environment'),s.active?(data.activeProcessObserved===false?'Interrupción sin recibo final':data.activeProcessObserved===true?'Operación en curso':'Proceso sin confirmar'):s.cleaned?'Recursos retirados':s.demoResult==='CONFIRMED'?'Presentación terminada':s.prepared?'Preparación registrada':s.operational==='PENDING'?'Entorno pendiente':'Preparación incompleta');
   $('html-export').hidden=data.recorded||!s.exports?.length;$('package-export').hidden=!data.recorded&&!s.exports?.length;
@@ -101,12 +103,13 @@
   for(const [key,n] of rowNodes)if(!wanted.has(key)){n.remove();rowNodes.delete(key);}
  }
  function preserveRegion(container,build){
-  const scroll=container.scrollTop,opens=new Set([...container.querySelectorAll('details[open][data-key]')].map(n=>n.dataset.key));
+  const pageScroll=scrollY,scroll=container.scrollTop,opens=new Set([...container.querySelectorAll('details[open][data-key]')].map(n=>n.dataset.key));
   const focusNode=container.contains(document.activeElement)?document.activeElement:null;
   const focused=focusNode?.dataset.focusKey,caret=focusNode?.selectionStart;
-  build();for(const d of container.querySelectorAll('details[data-key]'))if(opens.has(d.dataset.key))d.open=true;
-  if(focused)for(const n of container.querySelectorAll('[data-focus-key]'))if(n.dataset.focusKey===focused){n.focus({preventScroll:true});if(caret!=null&&n.setSelectionRange)n.setSelectionRange(caret,caret);}container.scrollTop=scroll;
+  build();restoreDetails(container,opens);
+  if(focused)for(const n of container.querySelectorAll('[data-focus-key]'))if(n.dataset.focusKey===focused){n.focus({preventScroll:true});if(caret!=null&&n.setSelectionRange)n.setSelectionRange(caret,caret);}container.scrollTop=scroll;scrollTo(0,pageScroll);
  }
+ function restoreDetails(container,opens){for(const d of container.querySelectorAll('details[data-key]')){d.open=opens.has(d.dataset.key);if(d.open){d.populate?.();restoreDetails(d,opens);}}}
  function rememberRoute(){
   if(!currentRoute)return;
   const scope=document.querySelector('#inspector:not([hidden]), #exploration:not([hidden]), #presentation:not([hidden])');
@@ -117,26 +120,31 @@
  function fitConsole(){const pre=document.querySelector('.console-text');if(pre&&innerWidth>800&&innerHeight>600)pre.style.setProperty('--console-height',Math.max(400,innerHeight-pre.getBoundingClientRect().top-20)+'px');}
  function restoreRoute(){
   const saved=routeMemory.get(currentRoute);if(!saved){scrollTo(0,0);return;}
-  for(const d of document.querySelectorAll('details[data-key]'))d.open=saved.opens.includes(d.dataset.key);
+  restoreDetails(document,new Set(saved.opens));
   scrollTo(0,saved.scroll);const pre=document.querySelector('.console-text');if(pre){pre.scrollTop=saved.consoleScroll;pre.classList.toggle('nowrap',saved.nowrap);const wrap=document.querySelector('[data-focus-key=console-wrap]');if(wrap)text(wrap,saved.nowrap?'Activar ajuste de línea':'Desactivar ajuste de línea');}const focus=[...document.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===saved.focus&&n.checkVisibility());if(focus)focus.focus({preventScroll:true});else if(saved.focusId&&$(saved.focusId)?.checkVisibility())$(saved.focusId).focus({preventScroll:true});
  }
- function navigate(hash){rememberRoute();if(location.hash!==hash)history.pushState(null,'',hash);applyRoute();}
- function detailRoute(next){const row=preparationView?'preparation':selection.row;const params=new URLSearchParams({op:selection.op||''});if(artifact)params.set('artifact',artifact.record.id);return '#demo/attempt/'+encodeURIComponent(row)+'/'+next+'?'+params;}
+ function navigate(hash){rememberRoute();if(location.hash!==hash)history.pushState({returnTo:detailOrigin},'',hash);applyRoute();}
+ function detailRoute(next){if(selection.event!=null){const params=new URLSearchParams();if(artifact)params.set('artifact',artifact.record.id);return '#demo/operation/'+selection.event+'/'+next+(params.size?'?'+params:'');}const row=preparationView?'preparation':selection.row;const params=new URLSearchParams({op:selection.op||''});if(artifact)params.set('artifact',artifact.record.id);return '#demo/attempt/'+encodeURIComponent(row)+'/'+next+'?'+params;}
  function applyRoute(){
   if(!data)return;cancelArtifact();const hash=location.hash||'#demo';currentRoute=hash;routeReady=true;
   const [path,query='']=hash.slice(1).split('?'),parts=path.split('/'),params=new URLSearchParams(query);
-  const detail=parts.length===4&&parts[0]==='demo'&&parts[1]==='attempt'&&['result','console','files','technical','scope'].includes(parts[3]);
+  const globalDetail=parts[1]==='operation'&&/^[1-9][0-9]*$/.test(parts[2]||'');
+  const detail=parts.length===4&&parts[0]==='demo'&&(parts[1]==='attempt'||globalDetail)&&['result','console','files','technical','scope'].includes(parts[3]);
   let validDetail=false;if(path==='demo'){if(!selection.row&&lastAttemptSelection)selection={...lastAttemptSelection};preparationView=false;}
-  if(detail){const row=allRows().find(r=>r.id===parts[2]);const op=params.get('op');preparationView=parts[2]==='preparation';
+  if(detail&&!globalDetail){const row=allRows().find(r=>r.id===parts[2]);const op=params.get('op');preparationView=parts[2]==='preparation';
    if(row||preparationView){selection={row:row?.id||null,op:row?.ops.includes(op)?op:preparationView&&data.events.some(e=>e.operation===op)?op:row?.ops[0]};tab=parts[3];artifact=null;
     const e=selectedEvent(),id=params.get('artifact');const a=/^[a-f0-9]{24}$/.test(id||'')?e?.artifacts?.find(x=>x.id===id):null;missingArtifact=id!==null&&!a;if(a)artifact={record:a,event:e};validDetail=true;}
   }
-  exploration=['scenarios','workflows','sessions','technical'].includes(path)?path:null;
+  if(detail&&globalDetail){const e=M.sessionEvents(data).find(e=>String(e.sequence)===parts[2]);if(e){selection={row:null,op:e.operation,event:e.sequence};preparationView=false;tab=parts[3];artifact=null;const id=params.get('artifact'),a=/^[a-f0-9]{24}$/.test(id||'')?e.artifacts?.find(a=>a.id===id):null;missingArtifact=id!==null&&!a;if(a)artifact={record:a,event:e};validDetail=true;}}
+  if(validDetail){detailOrigin=history.state?.returnTo||detailOrigin; text($('close-inspector'),detailOrigin.startsWith('#journey')?'← Volver al recorrido técnico':'← Volver a demostración');}
+  exploration=parts[0]==='journey'||path==='technical'?'journey':['scenarios','workflows','sessions'].includes(path)?path:null;
+  if(exploration==='journey'){journeyTab=parts[1]==='sequence'?'sequence':'map';const filter=params.get('filter')||'all';journeyFilter=M.journeyFilters(data).some(([id])=>id===filter)?filter:'all';}
+
   $('presentation').hidden=validDetail||!!exploration;$('inspector').hidden=!validDetail;$('exploration').hidden=!exploration;
   document.body.dataset.view=validDetail?'detail':exploration||'demo';document.body.dataset.tab=validDetail?tab:'';
   for(const a of document.querySelectorAll('[data-destination]')){if(a.dataset.destination===(exploration==='technical'?'demo':exploration||'demo'))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
   $('provenance').open=false;renderSelection();renderRows();renderSidebar();
-  if(validDetail){inspectorKey='';renderInspector();}else if(exploration){text($('exploration-title'),({scenarios:'Escenarios',workflows:'Workflows GitHub',sessions:'Sesiones locales',technical:'Detalle técnico completo'})[exploration]);text($('exploration-context'),exploration==='technical'?'Evidencia de la sesión vinculada; definiciones separadas de observaciones.':'Configuración y referencias; explorar no ejecuta operaciones ni cambia la sesión vinculada.');renderExplore();}
+  if(validDetail){inspectorKey='';renderInspector();}else if(exploration){text($('exploration-title'),({scenarios:'Escenarios',workflows:'Workflows GitHub',sessions:'Sesiones locales',journey:'Recorrido técnico'})[exploration]);text($('exploration-context'),exploration==='journey'?'Mapa: estructura y evidencia disponible. Secuencia: orden registrado de operaciones.':'Configuración y referencias; explorar no ejecuta operaciones ni cambia la sesión vinculada.');renderExplore();}
   restoreRoute();requestAnimationFrame(fitConsole);
  }
  function renderSidebar(){
@@ -146,12 +154,12 @@
   $('inspector').classList.toggle('sidebar-hidden',sidebarHidden);
  }
  function openInspector(next='result'){
-  if($('inspector').hidden)opener=document.activeElement;
+  if($('inspector').hidden){opener=document.activeElement;detailOrigin=currentRoute.startsWith('#journey')?currentRoute:'#demo';}
   navigate(detailRoute(next));document.querySelector(`[data-tab="${tab}"]`)?.focus({preventScroll:true});
  }
- function closeInspector(){navigate('#demo');if(opener?.isConnected&&opener.closest('#presentation'))opener.focus({preventScroll:true});}
+ function closeInspector(){navigate(detailOrigin);if(opener?.isConnected&&opener.checkVisibility())opener.focus({preventScroll:true});}
  function fileButton(a,e,label){const b=button(label||a.path.split('/').at(-1),()=>openArtifact(a,e));b.dataset.focusKey=a.id;return b;}
- function openArtifact(a,e){pin();const row=allRows().find(r=>r.events.some(x=>x.sequence===e?.sequence));selection={row:row?.id||null,op:e?.operation};preparationView=!row;artifact={record:a,event:e};cancelArtifact();inspectorKey='';openInspector('console');}
+ function openArtifact(a,e){pin();const row=allRows().find(r=>r.events.some(x=>x.sequence===e?.sequence));selection={row:row?.id||null,op:e?.operation,...(row&&!currentRoute.startsWith('#journey')&&selection.event==null?{}:{event:e?.sequence})};preparationView=false;artifact={record:a,event:e};cancelArtifact();inspectorKey='';openInspector('console');}
  function references(value,e){const p=el('p',undefined,'file-references');let start=0;
   for(const match of String(value||'').matchAll(/[A-Za-z0-9_./-]+\.(?:json|log|txt|ya?ml|csv)\b/g)){p.append(el('span',String(value).slice(start,match.index)));const a=M.ownArtifact(e,match[0]);p.append(a?fileButton(a,e,match[0]):el('span',match[0]));start=match.index+match[0].length;}p.append(el('span',String(value||'').slice(start)));return p;
  }
@@ -163,11 +171,11 @@
    const c=$('inspector-content');c.replaceChildren();c.classList.toggle('console-pane',tab==='console');
    if(preparationView&&tab==='result'&&!artifact){renderPreparation(c);return;}
    if(tab==='scope'){c.append(el('h3','Qué demuestra y qué no'),el('p',M.scope(data.session.profile,selection.op)),el('p','Las firmas se verifican solo donde conste el recibo correspondiente; un archivo o un hash visible no acredita autenticación.'));const identity=details('Identidad completa, recursos y revisión registrada','scope-identity');identity.append(el('pre',JSON.stringify({source:data.session.source,image:data.session.image,lane:data.session.lane,renderer:data.renderer,resources:data.session.lastResources,humanReview:data.session.humanReview,recordedUTC:data.savedUTC,lastEvidenceUTC:data.session.lastEvidenceUTC},null,2)));c.append(identity);return;}
-   if(tab==='technical'){renderTechnical(c,inspectedRow||'all',inspectedOp);return;}
+   if(tab==='technical'){c.append(el('p','Detalle técnico de esta operación o intento; no es el recorrido global.'));renderTechnical(c,inspectedRow||'all',inspectedOp);return;}
    if(tab==='files'){renderFiles(c,e);return;}
    if(tab==='console'){renderConsole(c);return;}
    c.append(badge(M.outcome(e,data.session.active?.operation===inspectedOp,data.activeProcessObserved)),el('p',M.expectation(e)),el('p',M.confirmed(e)?M.meta(inspectedOp,data).description:'Sin atribución confirmada para esta selección.'),el('p','Granularidad: recibo agregado de operación. Los tiempos de sus observadores no se suman ni se distribuyen entre controles.'));
-   if(e?.reason)c.append(el('pre',e.reason));if(e?.notReached?.length)c.append(el('p','No alcanzado: '+e.notReached.join(', ')));
+   if(e)appendReceipt(c,e);if(e?.reason)c.append(el('pre',e.reason));if(e?.notReached?.length)c.append(el('p','No alcanzado: '+e.notReached.join(', ')));
    const spec=data.catalogue.operations[inspectedOp];c.append(el('p','Esperado según definición: '+({allow:'aceptación',deny:'rechazo'}[spec?.expected]||'desconocido')));
    const links=el('div',undefined,'inline-actions');for(const [kind,label] of [['log','Ver salida original'],['attribution','Ver atribución']]){const a=M.primaryArtifact(e,data,kind);if(a)links.append(fileButton(a,e,label));}c.append(links);
    if(relatedRow(e))c.append(button('Ver intento relacionado',()=>{const id=relatedRow(e),row=allRows().find(r=>r.id===id);if(row)choose(row.id,row.events.at(-1)?.operation||row.ops[0],true);}));
@@ -176,7 +184,7 @@
  function renderFiles(container,e){
   if(!e?.artifacts?.length){container.append(el('p','No hay archivos registrados para esta selección.','empty'));return;}
   const preferred=[M.primaryArtifact(e,data),M.primaryArtifact(e,data,'attribution')].filter(Boolean);const used=new Set(preferred.map(a=>a.id));
-  const add=(target,a)=>{const row=el('div',undefined,'file-item');row.append(fileButton(a,e),el('p',a.path+' · '+a.size+' bytes · SHA-256 '+a.sha256+' · origen '+a.source,'metadata'));target.append(row);};
+  const add=(target,a)=>{const row=el('div',undefined,'file-item');row.append(fileButton(a,e),el('p',a.path+' · '+a.size+' bytes · SHA-256 '+a.sha256+' · '+M.artifactOrigin(a,e,data).label,'metadata'));target.append(row);};
   container.append(el('h3','Evidencia relevante del intento'));preferred.forEach(a=>add(container,a));
   const groups=new Map();for(const a of e.artifacts){if(used.has(a.id))continue;const path=a.path;const key=/sbom/i.test(path)?'SBOM':/provenance/i.test(path)?'Procedencia':/result|authoriz/i.test(path)?'Resultados':/signature|bundle/i.test(path)?'Firmas y bundles':/log|command/i.test(path)?'Salidas y comandos':'Otros archivos';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(a);}
   container.append(el('p','Inventario registrado; presencia no equivale a verificación criptográfica. Copias heredadas conservan su contexto, no sustituyen originales ausentes.'));
@@ -190,7 +198,7 @@
   const {record:a,event:e}=artifact;const description=el('p','Verificando bytes…','console-status');c.append(description);
   const controls=el('div',undefined,'inline-actions'),wrap=button('Desactivar ajuste de línea',()=>{pre.classList.toggle('nowrap');text(wrap,pre.classList.contains('nowrap')?'Activar ajuste de línea':'Desactivar ajuste de línea');});wrap.dataset.focusKey='console-wrap';controls.append(wrap,button('Copiar contenido mostrado',async()=>{try{await navigator.clipboard.writeText(pre.textContent);text(copyStatus,pre.dataset.excerpt==='true'?'Extracto mostrado copiado':'Contenido mostrado copiado');}catch{ text(copyStatus,'Copia no disponible; selecciona el texto para copiarlo.');}}));const copyStatus=el('span',undefined,'copy-status');copyStatus.setAttribute('role','status');controls.append(copyStatus);
   if(!data.recorded){const link=el('a','Archivo completo ↓');link.href='/download/artifact/'+a.id;controls.append(link);}else controls.append(el('span','Archivo completo: paquete conservado'));
-  c.append(controls);const info=details('Comando, salidas, identidad y hash','console-metadata');info.append(el('p',`UTC ${e?.endUTC||'desconocida'} · operación/oráculo exit=${e?.exitCode??'desconocido'} · la salida del control se consulta en su recibo; no se deduce del oráculo.`,'metadata'),el('p','Comando registrado de operación: '+(e?.command?.join(' ')||'no registrado'),'metadata'),el('p',a.path+' · SHA-256 '+a.sha256+' · origen '+a.source+' · '+a.size+' bytes','metadata'));const toolReceipt=M.ownArtifact(e,'F11-early-command.json');if(e?.operation==='f11-early'&&toolReceipt)info.append(fileButton(toolReceipt,e,'Ver comando y salida de Conftest'));info.classList.add('console-metadata');controls.append(info);
+  c.append(controls);const origin=M.artifactOrigin(a,e,data);const info=details('Comando, salidas, identidad y hash','console-metadata');info.append(el('p',`UTC ${e?.endUTC||'desconocida'} · operación/oráculo exit=${e?.exitCode??'desconocido'} · la salida del control se consulta en su recibo; no se deduce del oráculo.`,'metadata'),el('p','Comando registrado de operación: '+(e?.command?.join(' ')||'no registrado'),'metadata'),el('p',a.path+' · SHA-256 '+a.sha256+' · '+origin.label+' · '+a.size+' bytes','metadata'));if(origin.event)info.append(button('Ver operación de origen',()=>openEvent(origin.event,'result')));const toolReceipt=M.ownArtifact(e,'F11-early-command.json');if(e?.operation==='f11-early'&&toolReceipt)info.append(fileButton(toolReceipt,e,'Ver comando y salida de Conftest'));info.classList.add('console-metadata');controls.append(info);
   const pre=el('pre','Cargando salida…','console-text');pre.tabIndex=0;pre.dataset.focusKey='console-output';pre.setAttribute('aria-label','Salida original del control');c.append(pre);loadArtifact(a,pre,description);
  }
  async function loadArtifact(a,pre,description){
@@ -200,6 +208,7 @@
    else{const r=await fetch('/artifact/'+a.id,{cache:'no-store',signal:artifactAbort.signal});if(!r.ok)throw Error('Archivo ausente, alterado o no verificable (HTTP '+r.status+')');body=await r.text();truncated=r.headers.get('X-Evidence-View')==='excerpt';}
    if(generation!==artifactEpoch||!pre.isConnected)return;
    text(description,(truncated?'EXTRACTO ACOTADO':'CONTENIDO COMPLETO')+' · '+(a.sanitized?'Copia redactada con hash propio':'Copia íntegra / recibo original')+' · '+(data.recorded?'Ejecución registrada':'Archivo cerrado del intento'));
+   const origin=M.artifactOrigin(a,artifact.event,data);if(origin.event)text(description,description.textContent+' · Copia heredada de '+origin.event.operation+'; no es salida del control seleccionado');
    text(pre,body||'(Archivo vacío)');pre.scrollTop=routeMemory.get(currentRoute)?.consoleScroll||0;description.title=a.path;description.dataset.contentType=/\.json$/.test(a.path)?'application/json':'text/plain';text(description,a.path.split('/').at(-1)+' · '+description.dataset.contentType+' · '+description.textContent);pre.dataset.excerpt=String(!!truncated);fitConsole();
   }catch(error){if(error.name==='AbortError'||generation!==artifactEpoch)return;text(description,'Evidencia no disponible');text(pre,error.message);}
  }
@@ -210,12 +219,12 @@
   for(const a of [M.primaryArtifact(e,data),M.primaryArtifact(e,data,'attribution')].filter(Boolean))container.append(fileButton(a,e));
  }
  function renderTechnical(container,filter='all',operation=null){
-  const events=data.events.filter(e=>filter==='all'||e.attempt===filter||filter==='reference-preparation'&&e.operation==='reference');
+  const events=M.sessionEvents(data).filter(e=>(filter==='all'||e.attempt===filter||filter==='reference-preparation'&&e.operation==='reference')&&(selection.event==null||e.sequence===selection.event));
   container.append(el('p','Detalle de '+(filter==='all'?'la sesión completa':filter)+'. Recibos agregados: no establecen éxito independiente de cada control.'));
   const eligible=M.profileOps(data);
   for(const stage of data.catalogue.stages){
-   const specs=Object.values(data.catalogue.operations).filter(o=>eligible.has(o.adapter)&&o.stages.includes(stage.id)&&(filter==='all'||o.attempt===filter||filter==='reference-preparation'&&o.adapter==='reference'));
-   if(!specs.length)continue;const d=details(stage.title,'stage-'+stage.id);d.className='technical-stage';d.dataset.stage=stage.id;const findings=el('span',undefined,'stage-findings');
+   const specs=Object.values(data.catalogue.operations).filter(o=>eligible.has(o.adapter)&&o.stages.includes(stage.id)&&(filter==='all'||o.attempt===filter||filter==='reference-preparation'&&o.adapter==='reference')&&(selection.event==null||o.adapter===selection.op));
+   if(!specs.length)continue;if(selection.event!=null&&!events.some(e=>specs.some(s=>s.adapter===e.operation)))continue;const d=details(stage.title,'stage-'+stage.id);d.className='technical-stage';d.dataset.stage=stage.id;const findings=el('span',undefined,'stage-findings');
    for(const e of events){const m=M.meta(e.operation,data),state=M.outcome(e);if(m.stage!==stage.id||!['blocked','error','unknown','unreached'].includes(state.tone))continue;const b=badge({...state,label:(e.scenario||'Control')+' · '+(state.tone==='blocked'?m.property+' · bloqueo en '+m.tool:state.label)+' · '+e.attempt});findings.append(b);}d.firstChild.append(findings);d.append(el('p',stage.description));
    for(const spec of specs){const matches=events.filter(e=>e.operation===spec.adapter);for(const e of matches.length?matches:[null]){
     const row=el('article',undefined,'scenario-row');row.dataset.tone=M.outcome(e).tone;const heading=el('div',undefined,'scenario-heading');heading.append(el('h3',M.meta(spec.adapter,data).title),badge(M.outcome(e)));row.append(heading);if(e)eventTechnical(e,row);
@@ -229,8 +238,64 @@
  function renderPreparation(c){text($('inspector-identity'),data.session.session+' / '+data.session.profile+' · preparación previa');c.append(el('h3','Preparación registrada'),el('p',seconds(data.session.preparationDurationSeconds)+' · excluida del intervalo en directo. No se reconstruye ni firma al seleccionar un intento.'));for(const e of data.events.filter(e=>e.phase==='preparation')){const d=details(e.operation+' · '+M.outcome(e).label+' · '+seconds(e.durationSeconds),'prep-'+e.sequence);eventTechnical(e,d);c.append(d);}}
  function openPreparation(){artifact=null;preparationView=true;selection={row:null,op:'seal'};inspectorKey='';openInspector('result');}
 
- function openExplore(name){navigate('#'+name);}
- function renderExplore(){const c=$('exploration-content');c.replaceChildren();if(exploration==='scenarios')renderCatalogue(c);if(exploration==='workflows')renderWorkflows(c);if(exploration==='sessions')renderSessions(c);if(exploration==='technical'){const label=el('label','Intento '),select=el('select');for(const [id,name] of [['all','Todos'],...allRows().map(r=>[r.id,r.id])]){const o=el('option',name);o.value=id;select.append(o);}select.value=technicalFilter;select.dataset.focusKey='technical-filter';select.onchange=()=>{technicalFilter=select.value;preserveRegion(body,()=>{body.replaceChildren();renderTechnical(body,technicalFilter);});};label.append(select);const body=el('div');c.append(label,body);renderTechnical(body,technicalFilter);}}
+ function openExplore(name){navigate(name==='technical'?'#journey/map':'#'+name);}
+ function renderExplore(){const c=$('exploration-content');c.replaceChildren();if(exploration==='scenarios')renderCatalogue(c);if(exploration==='workflows')renderWorkflows(c);if(exploration==='sessions')renderSessions(c);if(exploration==='journey')renderJourney(c);}
+
+ function openEvent(e,next='result'){
+  pin();selection={row:null,op:e.operation,event:e.sequence};preparationView=false;artifact=null;missingArtifact=false;cancelArtifact();inspectorKey='';openInspector(next);
+ }
+ function appendReceipt(c,e){const d=details('Recibo registrado · operación '+e.sequence,'original-receipt-'+e.sequence);d.append(el('p','Registro original incluido en el snapshot. Inventario de archivos disponible en Evidencias.'),el('pre',JSON.stringify({...e,artifacts:undefined},null,2)));c.append(d);}
+ function renderPreparationWarning(c){
+  const problem=M.incompletePreparation(data),key=JSON.stringify([problem?.failure?.sequence,problem?.gUnreached]);if(c.dataset.key===key)return;c.dataset.key=key;c.replaceChildren();c.hidden=!problem;if(!problem)return;
+  c.append(el('strong',problem.gUnreached?'Preparación incompleta. Los intentos G no llegaron a ejecutarse.':'Preparación incompleta; consulta los recibos de cada intento.'));
+  if(problem.failure){const e=problem.failure;c.append(el('p','La operación '+M.meta(e.operation,data).title+' no terminó correctamente. La causa concreta debe consultarse en su salida original; no se deduce del código de salida.'));const output=M.operationOutput(e);if(output)c.append(fileButton(output,e,'Ver diagnóstico original'));c.append(button('Ver recibo de preparación',()=>openEvent(e)));
+   if(e.operation==='analysis')for(const [path,label] of [['database-download.log','Ver registro de descarga'],['sbom-generation.log','Ver registro de SBOM'],['vulnerability-scan.log','Ver registro del análisis']]){const a=M.ownArtifact(e,path);if(a)c.append(fileButton(a,e,label));}}
+  else c.append(el('p','No hay evidencia suficiente para conocer la causa.'));
+ }
+ function journeyRoute(next=journeyTab,filter=journeyFilter){return '#journey/'+next+'?'+new URLSearchParams({filter});}
+ function journeyEntry(entry,c){
+  const e=entry.event,spec=entry.spec;const row=el('article',undefined,'journey-entry');row.dataset.tone=entry.state.tone;
+  if(entry.omitted){row.append(badge(entry.state),el('p','Esta referencia omite estos controles específicos; conserva los controles Kubernetes/RBAC que realmente tenga.'));c.append(row);return;}
+  const title=spec?M.meta(spec.adapter,data).title:'Operación no descrita';
+  row.append(e?button(title,()=>openEvent(e)):el('h3',title),badge(entry.state));
+  if(e)row.append(el('p',M.eventIdentity(e,data)+' · '+M.phaseLabel(e.phase)));
+  if(entry.reused){row.append(el('p','↶ Evidencia de la preparación, no repetida en este intento.'),button('Ver operación de origen',()=>openEvent(e)));c.append(row);return;}
+  if(entry.downstream){row.append(el('p','El recibo marca esta fase como no alcanzada por esa petición; la solicitud independiente de admisión mantiene su identidad.'));c.append(row);return;}
+  row.append(el('p',e?M.expectation(e)+' · '+seconds(e.durationSeconds):'Definición capturada; falta un recibo que establezca su ejecución.'));
+  row.append(el('p','Granularidad: operación agregada. No acredita que cada control interno pasara por separado.','evidence-limit'));
+  if(e){const actions=el('div',undefined,'inline-actions'),log=M.primaryArtifact(e,data),attribution=M.primaryArtifact(e,data,'attribution');if(log)actions.append(fileButton(log,e,'Ver salida original'));if(attribution)actions.append(fileButton(attribution,e,'Ver atribución'));actions.append(button('Ver recibo',()=>openEvent(e)),button('Ver archivos capturados',()=>openEvent(e,'files')));row.append(actions);}
+  const controls=details('Qué comprueba · entradas, salidas y versiones','journey-controls-'+(e?.sequence||spec?.adapter));
+  for(const control of e?.controls||spec?.controls||[]){controls.append(el('h3',control.tool),el('p',control.property),references('Entrada: '+control.input,e),references('Salida: '+control.output,e),el('p','Condición declarada: '+control.condition));}
+  const versions=e?.artifacts?.filter(a=>/\/(tool-versions|trivy-version|versions)\.(txt|json)$/.test(a.path))||[];
+  controls.append(el('p',versions.length?'Versiones: archivos capturados; consulta su origen y contenido.':'Versión no desglosada en este recibo. No se usa la versión del checkout actual como evidencia histórica.'));
+  for(const a of versions)controls.append(fileButton(a,e,'Ver '+a.path.split('/').at(-1)));
+  row.append(controls);c.append(row);
+ }
+ function renderJourney(c){
+  const warning=el('div',undefined,'preparation-warning');renderPreparationWarning(warning);c.append(warning);
+  const nav=el('div',undefined,'journey-tabs');nav.setAttribute('role','tablist');nav.setAttribute('aria-label','Recorrido técnico');
+  for(const [id,title] of [['map','Mapa de controles'],['sequence','Secuencia ejecutada']]){const b=button(title,()=>navigate(journeyRoute(id)));b.setAttribute('role','tab');b.setAttribute('aria-selected',String(journeyTab===id));b.dataset.focusKey='journey-tab-'+id;nav.append(b);}
+  const label=el('label','Contexto '),filter=el('select');filter.id='journey-filter';filter.dataset.focusKey='journey-filter';
+  for(const [id,title] of M.journeyFilters(data)){const o=el('option',title);o.value=id;filter.append(o);}filter.value=journeyFilter;filter.onchange=()=>navigate(journeyRoute(journeyTab,filter.value));label.append(filter);
+  const toolbar=el('div',undefined,'journey-toolbar');toolbar.append(nav,label);c.append(toolbar);
+  c.append(el('p','Tiempo registrado de preparación: '+seconds(data.session.preparationDurationSeconds)+' · ejecución: '+seconds(data.session.liveDurationSeconds)+'. Los intervalos de observadores no se suman.','journey-timing'));
+  if(journeyTab==='sequence'){
+   c.append(el('p','Orden de los recibos registrados, incluidos los avisos de No alcanzado. Un aviso no es una operación ejecutada. Sin marcas temporales fiables se conserva este orden, sin fabricar tiempos.'));
+   const list=el('ol',undefined,'journey-sequence'),es=M.filteredEvents(data,journeyFilter);c.append(list);if(!es.length)c.append(el('p','No hay recibos registrados para este contexto.','empty'));
+   for(const e of es){const li=el('li');li.dataset.sequence=e.sequence;const d=details(String(e.sequence??'?').padStart(2,'0')+' · '+M.meta(e.operation,data).title,'sequence-'+e.sequence);d.firstChild.append(badge(M.outcome(e)),el('span',M.phaseLabel(e.phase)+' · '+seconds(e.durationSeconds),'sequence-context'));d.append(el('p',M.eventIdentity(e,data)),el('p','Herramientas declaradas: '+[...new Set((e.controls||data.catalogue.operations[e.operation]?.controls||[]).map(c=>c.tool))].join(' · ')),el('p','Fases: '+(e.stages||data.catalogue.operations[e.operation]?.stages||[]).map(id=>data.catalogue.stages.find(s=>s.id===id)?.title||id).join(' · ')),el('p','Inicio: '+(e.startUTC||'no registrado')+' · fin: '+(e.endUTC||'no registrado')));let loaded=false;d.populate=()=>{if(!loaded){loaded=true;journeyEntry({event:e,spec:data.catalogue.operations[e.operation],state:M.outcome(e)},d);appendReceipt(d,e);}};d.addEventListener('toggle',()=>{if(d.open)d.populate();});li.append(d);list.append(li);}
+   return;
+  }
+  c.append(el('p','Orden pedagógico 01–15: izquierda → derecha, arriba → abajo; no es una cronología. Los resultados mixtos se desglosan.'));
+  const grid=el('div',undefined,'journey-map');c.append(grid);
+  for(const stage of M.journey(data,journeyFilter)){
+   const d=details(stage.number+'. '+stage.title,'journey-stage-'+stage.id);d.className='technical-stage journey-stage';d.dataset.stage=stage.id;const summary=d.firstChild;summary.append(el('span',stage.tool,'phase-tool'));const states=el('span',undefined,'stage-findings'),counts=new Map();
+   for(const entry of stage.entries){if(entry.blocker){const e=entry.event,m=M.meta(e.operation,data);states.append(badge({...entry.state,label:(e.scenario||'Control')+' · '+m.property+' · bloqueo en '+m.tool+' · '+e.attempt}));}else{const key=entry.state.tone;const group=counts.get(key)||{...entry.state,count:0};group.count++;counts.set(key,group);}}
+   for(const group of counts.values())states.append(badge({...group,label:group.tone==='accepted'?group.count+(group.count===1?' comprobación agregada':' comprobaciones agregadas'):group.count+' · '+group.label}));
+   if(!stage.entries.length)states.append(badge({tone:'unknown',label:'Sin evidencia en este contexto'}));summary.append(states);
+   const contexts=[...new Set(stage.entries.map(x=>x.reused?'Preparación reutilizada':x.event?M.phaseLabel(x.event.phase):null).filter(Boolean))];summary.append(el('span',contexts.join(' · '),'phase-context'));
+   let loaded=false;d.populate=()=>{if(!loaded){loaded=true;d.append(el('p',stage.description));if(!stage.entries.length)d.append(el('p','No hay recibos asociados a esta fase en el contexto seleccionado. La ausencia de archivos no demuestra que un control se ejecutara o dejara de ejecutarse.'));for(const entry of stage.entries)journeyEntry(entry,d);}};d.addEventListener('toggle',()=>{if(d.open)d.populate();});grid.append(d);
+  }
+ }
  function renderCatalogue(c){
   const filters=el('div',undefined,'filters'),search=el('input');search.type='search';search.dataset.focusKey='catalogue-search';search.placeholder='Buscar escenario o garantía';search.setAttribute('aria-label','Buscar escenario');search.value=catalogueFilters.query;filters.append(search);
   const select=(key,label,options)=>{const s=el('select');s.setAttribute('aria-label',label);s.dataset.focusKey='catalogue-'+key;for(const [v,t] of options){const o=el('option',t);o.value=v;s.append(o);}s.value=catalogueFilters[key];s.onchange=()=>{catalogueFilters[key]=s.value;update();};filters.append(s);};
@@ -272,7 +337,7 @@
    if(stopRequested&&!control?.busy&&!data.session.active)stopRequested=false;
    if($('follow').checked&&data.session.active){const row=allRows().find(x=>x.ops.includes(data.session.active.operation));if(row&&selection.op!==data.session.active.operation){selection={row:row.id,op:data.session.active.operation};artifact=null;cancelArtifact();inspectorKey='';if(!$('inspector').hidden){history.replaceState(null,'',detailRoute(tab));currentRoute=location.hash;}}}
    renderIdentity();renderControls();renderRows();renderSelection();if(!routeReady)applyRoute();else {renderSidebar();renderInspector();}
-   const revision=JSON.stringify(data.events.map(e=>[e.sequence,e.operation,e.operational]));if(exploration&&revision!==explorationRevision&&exploration!=='sessions')preserveRegion($('exploration-content'),renderExplore);explorationRevision=revision;
+   const revision=JSON.stringify([data.events.map(e=>[e.sequence,e.operation,e.operational,e.artifacts?.length,e.expectation]),data.session.active,data.activeProcessObserved,data.session.operational]);if(exploration&&revision!==explorationRevision&&exploration!=='sessions')preserveRegion($('exploration-content'),renderExplore);explorationRevision=revision;
   }catch(error){stale=true;control=null;if(data){renderIdentity();renderControls();}text($('connection'),'Sin conexión · datos desactualizados');text($('action-status'),error.message+'; ejecución deshabilitada hasta actualizar.');}
   finally{inFlight=false;setTimeout(poll,1500);}
  }
@@ -286,6 +351,7 @@
   $('mobile-attempt').onchange=()=>{const row=allRows().find(r=>r.id===$('mobile-attempt').value);if(row){choose(row.id,row.ops.at(-1));openInspector(tab);}};
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('inspector').hidden)closeInspector();});
   document.querySelectorAll('[data-explore]').forEach(b=>b.onclick=()=>openExplore(b.dataset.explore));$('close-exploration').onclick=()=>navigate('#demo');
+  document.querySelectorAll('[data-journey-link]').forEach(a=>a.onclick=e=>{e.preventDefault();navigate('#journey/map');});
   document.querySelectorAll('[data-destination]').forEach(a=>a.onclick=e=>{if(e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();navigate(a.getAttribute('href'));});
   window.addEventListener('popstate',()=>{rememberRoute();applyRoute();});
   window.addEventListener('hashchange',()=>{if(currentRoute!==location.hash){rememberRoute();applyRoute();}});

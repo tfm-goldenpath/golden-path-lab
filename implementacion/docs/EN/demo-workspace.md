@@ -2,7 +2,7 @@
 
 [Español](../ES/demo-workspace.md) · [F11 profile](f11-comparison.md) · [Operations](defense-demo-operations.md)
 
-One application has four visible destinations: **Demostración**, **Escenarios**,
+One application has five visible destinations: **Demostración**, **Recorrido técnico**, **Escenarios**,
 **Workflows** and **Sesiones**. Each replaces the main area. An attempt's detail
 is a dependent view of Demostración, not a bottom inspector or a modal. Audience
 text is Spanish. Navigation never starts, retries or stops a laboratory operation.
@@ -64,6 +64,65 @@ bash implementacion/scripts/defense-demo.sh step --session "$DEMO_SESSION"
 Automatic and step modes are alternatives, not replay instructions. The web API
 uses its existing 120-second budget per invocation. Step invocations include fresh
 checks and do not establish one continuous timed rehearsal.
+
+## Full technical journey
+
+Open **Recorrido técnico** in the main navigation or **Ver proceso completo** in
+Demostración. The journey replaces the comparison; logs still open in the wide
+main detail. **Detalle técnico** inside a detail remains specific to that operation
+or attempt and links back to the full journey.
+
+- **Mapa de controles** (`#journey/map`): the fifteen captured catalogue phases,
+  in pedagogical reading order left-to-right/top-to-bottom. This is not a claim of
+  chronological execution. Expand a phase for conditions, inputs, outputs, tool
+  version files when captured, original log, attribution and receipt.
+- **Secuencia ejecutada** (`#journey/sequence`): operation receipts in recorded
+  order, including global preparation and conservation. NOT_REACHED notices remain
+  visible but are explicitly not executed operations. Missing timestamps/durations
+  stay unknown; nested observer intervals are not added to parent timings.
+- Filter **Toda la sesión**, **Preparación**, a named arm/scenario/attempt, or
+  **Conservación / cierre** when recorded. Mixed results are broken down, never
+  turned green by a later recovery. Reused preparation links its actual origin and
+  does not become another live operation. Multi-control receipts remain aggregate.
+
+**Ver salida original** opens the selected operation's file directly, even without
+an Fxx/Lxx scenario. **Volver al recorrido técnico**, Back and Forward restore the
+filter, expanded phase, focus and reading position. Global details use safe receipt
+identifiers (`#demo/operation/<sequence>/console`), not arbitrary filesystem paths.
+The original file's metadata identifies its capture producer and source. Matching
+bytes/source in an earlier receipt are labelled as an inherited copy and link to
+that origin; this does not prove which operation originally created the bytes.
+A copied test log never establishes a subsequent admission rejection.
+
+Incomplete preparation displays a warning in both views and links its recorded
+failed operation where available. Captured download/SBOM/scan logs are also linked separately when present;
+their presence alone is not a diagnosis. The UI does not infer disk/network/trust causes
+from an exit code. R's successful preparation cannot confirm G readiness. For
+retained `rehearsal-06`, the data gives four G rows **No alcanzado**, 321.22 s of
+preparation and no live measurement. These values are not hardcoded in the UI.
+
+Read-only commands tested for the journey (free private loopback ports):
+
+```bash
+bash implementacion/scripts/defense-demo.sh serve --session rehearsal-01 --port 8771
+bash implementacion/scripts/defense-demo.sh serve --session rehearsal-06 --port 8772
+bash implementacion/scripts/defense-demo.sh serve --session f11-20261017t193938z --port 8773
+```
+
+Open the port privately in Codespaces and select Recorrido técnico, or append
+`/#journey/map` / `/#journey/sequence` to that viewer URL. No new laboratory work
+is started. The same hash navigation, filters and origin references work in the
+self-contained offline HTML with included excerpts, zero API requests and no
+execution buttons. Missing files remain missing. No logs are eagerly downloaded
+when opening the map.
+
+Proposed three-minute route (not a measured human rehearsal): 0–25 s, explain
+recorded/live status, profile and preparation outside the interval; 25–65 s, open
+the map and distinguish phases from execution; 65–110 s, filter F11 and open its
+Conftest original; 110–140 s, return and show independent Kyverno/F13 and recovery
+only in the selected profile; 140–160 s, return to comparison and state the scope;
+20 s reserve. Use incomplete preparation to explain **No alcanzado**, never as a
+successful blocking demonstration. This UI change does not rerun the lab.
 
 ## During the presentation
 
