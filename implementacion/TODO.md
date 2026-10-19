@@ -1,5 +1,12 @@
 # Incremental implementation plan
 
+## Lane A shared-test dependency repair — 19 October 2026
+
+- [x] Preserve and inspect run `39310363244`, attempts 1/2: both suites fail before scenarios because the Pages policy test imports undeclared PyYAML.
+- [x] Reproduce without Python site packages, replace the import with pinned Conftest parsing, and isolate the normal Python policy-test target. Positive real-workflow and negative permission checks remain enforced.
+- [x] Local doctor and complete shared suite pass, including 951 service/unit, 45 Python policy and 153 defense tests; 46 focused lane A regressions also pass.
+- [ ] New lane A integration on the corrected revision and human review. Historical failures remain unchanged; see [diagnosis and validation](registros/lane_a_pages_parser_EN.md).
+
 ## Recorded demo Pages preparation — 19 October 2026
 
 - [x] Recover the existing local frozen-0002 without regeneration; verify historical anchors, both checksum inventories and exact portable bytes against the authenticated archive.

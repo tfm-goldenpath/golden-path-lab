@@ -12,7 +12,8 @@ test-unit:
 	node --test services/quotes-node/test/*.test.js tests/unit/*.test.mjs
 
 test-policies:
-	python3 -m unittest discover -s tests/policies -p 'test_*.py'
+	# Policy tests require only stdlib Python and the pinned CLI tools.
+	python3 -I -S -m unittest discover -s tests/policies -p 'test_*.py'
 	python3 tests/policies/run_rego.py
 	python3 tests/policies/run_kyverno.py
 	bash scripts/check-policies.sh

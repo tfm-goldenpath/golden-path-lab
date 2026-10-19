@@ -6,6 +6,18 @@ hosting the local devcontainer still executes **lane A**, with local keys and an
 owned local registry. It does not establish hosted OIDC or GHCR mutation coverage.
 Human acceptance remains pending.
 
+## Shared-test dependency regression — 19 October 2026
+
+Run `39310363244`, attempts 1 and 2 on `1d2d71e`, failed both suites at
+`shared-tests`: the Pages policy test imported undeclared PyYAML. Container
+startup and doctor passed; scenarios were **NOT_EXECUTED**. The fix uses the
+pinned Conftest YAML parser and runs Python policy tests with `-I -S` so local
+packages cannot conceal missing dependencies. See the [diagnosis and local
+validation](../../registros/lane_a_pages_parser_EN.md). A new integration on
+the corrected revision and human review remain pending; retrying the old SHA
+does not include the fix. Existing policies, tool pins and scenario oracles
+are unchanged.
+
 ## Later attempt on the measured campaign source — 5 October 2026
 
 [Run 37342413975](../../registros/catalogue_campaign_source_895a3bd_EN.md) used

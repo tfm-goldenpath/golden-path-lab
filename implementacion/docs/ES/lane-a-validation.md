@@ -6,6 +6,18 @@ en GitHub sigue siendo **carril A**, con claves locales y un registro propio;
 no demuestra OIDC alojado ni modificaciones en GHCR. La aceptación humana sigue
 pendiente.
 
+## Regresión de dependencia en pruebas compartidas — 19 de octubre de 2026
+
+El run `39310363244`, intentos 1 y 2 sobre `1d2d71e`, falló en ambas suites
+durante `shared-tests`: la prueba de políticas de Pages importaba PyYAML sin
+declararlo. El contenedor y doctor funcionaron; los escenarios quedaron
+**NOT_EXECUTED**. La corrección usa el parser YAML fijado de Conftest y ejecuta
+las pruebas Python de políticas con `-I -S`, evitando que paquetes locales
+oculten dependencias ausentes. Véase el [diagnóstico y validación local](../../registros/lane_a_pages_parser_EN.md).
+Quedan pendientes una integración sobre la revisión corregida y la revisión
+humana; reintentar el SHA anterior no incorpora el arreglo. Se conservan
+políticas, versiones de herramientas y oráculos de escenarios.
+
 ## Intento posterior sobre la fuente medida — 5 de octubre de 2026
 
 El [run 37342413975](../../registros/catalogue_campaign_source_895a3bd_ES.md) utilizó
