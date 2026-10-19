@@ -165,3 +165,5 @@ Retira únicamente recursos propios comprobados. Conserva evidencias, intentos,
 snapshots, claves y exportaciones. No uses podas globales. Mide el espacio realmente
 recuperado. Ficha humana pendiente: persona/fecha ___; sesión/fuente ___; inicio/fin
 narración ___; duración ___; incidencias/respaldo ___; decisión/revisor ___.
+
+[Publicar evidencias registradas en Pages](github-pages.md) — transporte, pasos explícitos tras merge y recuperación; sin ejecutar laboratorio.

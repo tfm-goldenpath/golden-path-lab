@@ -163,3 +163,5 @@ Preserve raw evidence, attempts, snapshots, keys and exports. No global prune.
 Do not claim space was reclaimed until measured. Human worksheet: presenter/date
 ___; session/source ___; narration start/end ___; total ___; fallback/incidents ___;
 decision/reviewer ___. Leave pending until a person actually performs the rehearsal.
+
+[Publish verified recorded evidence through Pages](github-pages.md) — explicit post-merge steps, transport and rollback; no laboratory execution.
