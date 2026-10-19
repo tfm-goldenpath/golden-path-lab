@@ -63,3 +63,5 @@ Sigue el [guion único de 160 segundos y la ficha del presentador](web-rehearsal
 El [registro del ensayo real](../../../registros/demo_web_rehearsal_EN.md) separa preparación, ejecución automática y navegación medidas de la narración humana todavía pendiente. El presupuesto web de 120 segundos corresponde a cada invocación; no garantiza una exposición de tres minutos. Cambia explícitamente al respaldo verificado si la ejecución falla o no permite continuar la explicación.
 
 [Perfil combinado: todas las familias en una sesión](combined-profile.md).
+
+[Publicar evidencias registradas en Pages](github-pages.md) — transporte, pasos explícitos tras merge y recuperación; sin ejecutar laboratorio.

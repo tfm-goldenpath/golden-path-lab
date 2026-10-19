@@ -62,3 +62,5 @@ Use the [single 160-second browser route and presenter worksheet](web-rehearsal.
 The [real rehearsal record](../../../registros/demo_web_rehearsal_EN.md) separates measured preparation, automatic execution and browser navigation from the still-pending human narration. The 120-second web budget is per invocation; it does not guarantee a three-minute talk. Switch explicitly to the verified recorded fallback if the live sequence fails or cannot support the next explanation.
 
 [Combined profile: all demo families in one session](combined-profile.md).
+
+[Publish verified recorded evidence through Pages](github-pages.md) — explicit post-merge steps, transport and rollback; no laboratory execution.

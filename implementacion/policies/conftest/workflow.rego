@@ -67,6 +67,7 @@ deny contains sprintf("EXCESSIVE_WRITE: %s does not require %s=write", [name, sc
     some scope, permission in object.get(job, "permissions", {})
     permission == "write"
     not scope in {"packages", "id-token", "attestations"}
+    not bounded_pages_job(job, scope)
 }
 
 deny contains sprintf("PR_WRITE: job %s must not receive %s=write on pull_request", [name, scope]) if {
@@ -74,4 +75,39 @@ deny contains sprintf("PR_WRITE: job %s must not receive %s=write on pull_reques
     some name, job in object.get(input, "jobs", {})
     some scope, permission in object.get(job, "permissions", {})
     permission == "write"
+}
+
+# Pages is a read-only recorded-evidence publication, not a delivery lane.
+# No shell/reusable/local actions or extra permissions in the privileged job.
+# Exact official actions + main/manual guard + dependency prevent a name-only exemption.
+bounded_pages_job(job, scope) if {
+    scope == "pages"
+    object.keys(job) - {"if", "needs", "runs-on", "timeout-minutes", "permissions", "environment", "steps"} == set()
+    not "env" in object.keys(input)
+    not "defaults" in object.keys(input)
+    triggers == {"workflow_dispatch"}
+    input.permissions == {}
+    job["if"] == "github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'"
+    job.permissions == {"pages": "write", "id-token": "write"}
+    job.environment.name == "github-pages"
+    job.environment.url == "${{ steps.deployment.outputs.page_url }}"
+    job.needs == "validate"
+    validation := input.jobs.validate
+    validation["if"] == job["if"]
+    validation.permissions == {"contents": "read"}
+    count(job.steps) == 2
+    job.steps[0].uses == "actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b"
+    job.steps[0].with == {"enablement": false}
+    job.steps[1].uses == "actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e"
+    job.steps[1].id == "deployment"
+    object.get(job.steps[1], "with", {}) == {}
+    every step in job.steps {
+        object.keys(step) - {"name", "id", "uses", "with"} == set()
+        not "run" in object.keys(step)
+        not "env" in object.keys(step)
+    }
+    not "uses" in object.keys(job)
+    not "env" in object.keys(job)
+    not "secrets" in object.keys(job)
+    input.concurrency == {"group": "demo-pages", "cancel-in-progress": false}
 }
