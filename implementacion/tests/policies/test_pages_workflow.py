@@ -16,10 +16,14 @@ class PagesWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Same pinned parser as the production workflow checker.
-        cls.text = (ROOT.parent/'.github/workflows/demo-pages.yml').read_text()
-        import yaml
-        cls.workflow = yaml.safe_load(cls.text)
-        cls.workflow['on'] = cls.workflow.pop(True, cls.workflow.get('on'))
+        cls.path = ROOT.parent / '.github/workflows/demo-pages.yml'
+        parsed = subprocess.run(
+            ['conftest', 'parse', '--parser', 'yaml', str(cls.path)],
+            capture_output=True, text=True, check=True, timeout=30,
+        )
+        cls.workflow = json.loads(parsed.stdout)
+        # Conftest exposes YAML 1.1's unquoted `on` as the JSON key `true`.
+        cls.workflow['on'] = cls.workflow.pop('true', cls.workflow.get('on'))
 
     def evaluate(self, value):
         with tempfile.TemporaryDirectory() as directory:
@@ -27,7 +31,7 @@ class PagesWorkflowTests(unittest.TestCase):
             return E.evaluate(path, ROOT/'policies/conftest/workflow.rego')
 
     def test_real_pages_workflow(self):
-        result = self.evaluate(self.workflow)
+        result = E.evaluate(self.path, ROOT/'policies/conftest/workflow.rego')
         self.assertEqual(result['classification'], 'ACCEPT', result)
 
     def test_manual_main_guard_and_permissions_cannot_be_bypassed(self):
