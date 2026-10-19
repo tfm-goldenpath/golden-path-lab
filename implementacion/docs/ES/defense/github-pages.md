@@ -144,3 +144,5 @@ Verificación de bytes después del despliegue (destino local nuevo):
 ```bash
 python3 implementacion/scripts/defense-demo/pages.py verify-public implementacion/evidence/packages/pages-public-v1
 ```
+
+Si el lock anterior corresponde a otra fuente congelada, restaura también su verificador revisado compatible; no omitas las anclas actuales. Esta primera publicación no tiene un despliegue Pages anterior con el que afirmar una recuperación probada.

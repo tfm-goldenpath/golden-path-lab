@@ -157,3 +157,5 @@ Post-deployment byte verification (new local destination):
 ```bash
 python3 implementacion/scripts/defense-demo/pages.py verify-public implementacion/evidence/packages/pages-public-v1
 ```
+
+If a prior lock refers to another frozen source, restore its matching reviewed validator as well; do not bypass the current historical anchors. This first publication has no previous Pages deployment to claim as tested rollback.

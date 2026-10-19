@@ -46,6 +46,7 @@ class PagesWorkflowTests(unittest.TestCase):
             lambda w: w['jobs']['deploy']['steps'][0]['with'].update(enablement=True),
             lambda w: w['jobs']['deploy'].update(env={'NODE_OPTIONS':'--require untrusted.js'}),
             lambda w: w['jobs']['deploy'].update(container='attacker/image'),
+            lambda w: w['jobs']['deploy'].update({'runs-on':'self-hosted'}),
             lambda w: w.update(env={'NODE_OPTIONS':'--require untrusted.js'}),
         ]
         for index, mutate in enumerate(mutations):

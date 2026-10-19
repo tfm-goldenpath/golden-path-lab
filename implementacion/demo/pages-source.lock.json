@@ -1,0 +1,26 @@
+{
+  "anchors": {
+    "evidence.tar.gz": "d9b6738e275db0f45f78bd28148477701100983ef8a4dd464fa7d2af75fa4178",
+    "freeze.json": "81b9ba8d56c007d498c375371dae4db20046f3b1e6908b243dd3c0503e46802d",
+    "original.webm": "b7840e65fbf8cbfac1dac4384bcd050e7b96a74d5651e53665875197a77f8d72",
+    "recorded.html": "0b9722d6700c4efb898e39302cb8d65e1a8d2c054095635d18f586f1140c2f1d",
+    "video.mp4": "664047c847ece87276903ae6ad00d45397cb05c8bed1929e4662166405c6b825"
+  },
+  "asset": "demo-site-v1.tar.gz",
+  "manifestSha256": "0fa7727601f345415d36b1bd520ab2f740363e246848840fb4f9bbb0ff660b11",
+  "repository": "tfm-goldenpath/golden-path-lab",
+  "schema": "demo-pages-lock/v1",
+  "selection": {
+    "attempts": "all recorded session attempts",
+    "observations": [
+      "37353632299-fa7f7e2ecb58"
+    ],
+    "session": "freeze-20261018t205939z"
+  },
+  "session": "freeze-20261018t205939z",
+  "sha256": "deba74a10eb63503cfbe58b1e447f3d1cbb06a2ed9f404ddd0c2519c4cbf7a92",
+  "siteBytes": 60567916,
+  "siteFiles": 541,
+  "size": 24870638,
+  "tag": "demo-site-freeze-20261018-v1"
+}

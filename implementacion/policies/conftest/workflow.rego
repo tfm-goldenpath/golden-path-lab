@@ -89,6 +89,8 @@ bounded_pages_job(job, scope) if {
     input.permissions == {}
     job["if"] == "github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'"
     job.permissions == {"pages": "write", "id-token": "write"}
+    job["runs-on"] == "ubuntu-24.04"
+    job["timeout-minutes"] == 10
     job.environment.name == "github-pages"
     job.environment.url == "${{ steps.deployment.outputs.page_url }}"
     job.needs == "validate"

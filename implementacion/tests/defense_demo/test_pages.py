@@ -108,6 +108,32 @@ class PagesTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'reviewed lock'):
             P.verify_site(self.root, {'manifestSha256':'0'*64})
 
+    def test_each_anchor_is_independent(self):
+        anchors = {}
+        for name in P.ANCHORS:
+            (self.root / name).write_text('synthetic-' + name)
+            anchors[name] = P.checksum(self.root / name)
+        for name in anchors:
+            original = (self.root / name).read_bytes()
+            (self.root / name).write_text('altered')
+            with self.subTest(name=name), patch.object(P, 'ANCHORS', anchors), self.assertRaisesRegex(ValueError, 'Historical anchor mismatch: ' + name):
+                P.verify_frozen(self.root)
+            (self.root / name).write_bytes(original)
+
+    def test_missing_essential_and_live_snapshot_rejected(self):
+        # Explicit synthetic recorded snapshot, not scenario evidence.
+        inv = {'selection':P.SELECTION,'source':{'commit':P.SOURCE},'renderer':{},'artifacts':{},'missingEssential':[]}
+        value = {'portable':True,'recorded':True,'actionsEnabled':False,'session':{'source':inv['source'],'active':None},'exportSelection':P.SELECTION,'renderer':{},'exportCompleteness':{'status':'COMPLETE_REFERENCES'}}
+        def save():
+            (self.root / 'inventory.json').write_text(json.dumps(inv))
+            (self.root / 'index.html').write_text('<script>window.SAVED_SESSION='+json.dumps(value)+';</script>')
+            (self.root / 'SHA256SUMS').write_text(''.join(P.checksum(self.root / n)+'  '+n+'\n' for n in ('inventory.json','index.html')))
+        save(); P.validate_portable(self.root)
+        value['actionsEnabled'] = True; save()
+        with self.assertRaisesRegex(ValueError,'Executable/live'): P.validate_portable(self.root)
+        value['actionsEnabled'] = False; inv['missingEssential'] = ['synthetic log']; save()
+        with self.assertRaisesRegex(ValueError,'Missing essential'): P.validate_portable(self.root)
+
     def test_reserve_cannot_be_lowered(self):
         from types import SimpleNamespace
         with patch.object(P.os,'statvfs',return_value=SimpleNamespace(f_bavail=3*1024**3,f_frsize=1,f_favail=100000)):

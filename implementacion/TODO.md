@@ -1,5 +1,13 @@
 # Incremental implementation plan
 
+## Recorded demo Pages preparation — 19 October 2026
+
+- [x] Recover the existing local frozen-0002 without regeneration; verify historical anchors, both checksum inventories and exact portable bytes against the authenticated archive.
+- [x] Prepare immutable public staging and a 24,870,638-byte transport pinned by lock; exclude full archive/private material, preserve selected portable originals and three unchanged backups.
+- [x] Add manual main-only Pages workflow and narrow structural permission exception; local transport, policy, browser/offline/prefix, download hash, historical L01 context and visual checks pass. [Validation](registros/demo_github_pages_EN.md), [EN procedure](docs/EN/defense/github-pages.md), [ES procedure](docs/ES/defense/github-pages.md).
+- [ ] Human review; upload dedicated technical asset, configure Pages if needed, dispatch after merge and verify the actual public URL. Nothing is published by this PR. Human narrated rehearsal remains pending.
+
+
 ## Portable static freeze — 18 October 2026
 
 - [x] Deterministic selected references, complete small F02/F12/F03/F11/F13 logs and four F13 inventories; FULL/EXCERPT/NOT_EMBEDDED, bounded HTML and relative static originals. No automatic global imports/session inventory.
