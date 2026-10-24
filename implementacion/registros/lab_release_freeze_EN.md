@@ -110,3 +110,28 @@ Pages deployment, workflow dispatch, merge or repository refactor was performed.
 **LAB_RELEASE_NOT_YET_VERIFIED**
 
 **REPOSITORY_REFACTOR_BLOCKED**
+
+## Candidate and complete-suite follow-up
+
+Candidate 01 was prepared from committed `fb1ce500dd3d2c7ee7b820d4dad154faa312c0ac`
+and verified from a fresh copy of all **19 proposed public attachments**.
+Manifest SHA-256: `79bb9e137fcb33114cefde8d1b2c5d282373f205db84f37e611d0de15a9d713e`.
+Specification SHA-256: `3b7fc3a7f0731f4cf1e63f47b9e55560f6d8efb513663a1fed934385e560f182`.
+This is a candidate anchor, not a published release or the eventual merged source.
+The final PR head needs its own generated manifest; no self-referential source SHA
+is committed into the specification.
+
+The complete-tree shared rerun passed: 6 environment, 951 service/unit,
+45 Python policy, Conftest/Kyverno, real offline Cosign, static workflow,
+153 defense and then 20 release tests. It started at fb1ce50 with only subsequent
+documentation edits before completion. The later manifest-promotion hardening
+adds a checksum-close failure test: 21 focused release tests PASS. The final
+committed implementation rerun and candidate receipt are identified in the PR.
+An interrupted checksum write now leaves only a partial manifest, never a
+completed candidate manifest. All interruption diagnostics are preserved.
+
+Final preservation comparison: all 547 private original files and all ten public
+input assets unchanged. Protected policy/scenario files, canonical acceptance,
+campaign index, Pages lock/workflow have no diff from the implementation base.
+Generated assets/reports are ignored or outside the repository. Runbook Bash syntax
+and local documentation links pass; publication commands were not executed.

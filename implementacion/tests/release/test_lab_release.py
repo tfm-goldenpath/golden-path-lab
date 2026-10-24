@@ -215,6 +215,19 @@ class ReleaseTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Tracked source changes'):
                 release.source_identity(source)
 
+    def test_failed_checksum_close_never_promotes_manifest(self):
+        repo, spec, source = self.committed_fixture(); output = self.root/'failed-close'
+        original_open = Path.open
+        def fail_sums(path, *args, **kwargs):
+            if path.name == 'RELEASE-SHA256SUMS.txt': raise OSError('synthetic disk error')
+            return original_open(path, *args, **kwargs)
+        with patch.object(release,'REPO',repo), patch.object(release,'SPEC',spec), \
+             patch.object(release,'frozen_custody',return_value={}), patch.object(Path,'open',fail_sums):
+            with self.assertRaisesRegex(OSError,'synthetic disk'):
+                release.prepare(self.lock,self.inputs,output,self.root,source)
+        self.assertTrue((output/'release-manifest.json.partial').exists())
+        self.assertFalse((output/'release-manifest.json').exists())
+
     def test_remote_tag_mismatch_and_draft_identity(self):
         with patch.object(release,'api',side_effect=[{'tag_name':'lab-v2026.10.24','draft':False},
                                                    {'object':{'type':'commit','sha':'b'*40}}]):

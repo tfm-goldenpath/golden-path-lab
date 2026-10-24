@@ -1,5 +1,8 @@
 # Golden Path Lab
 
+[Custodia de la release del laboratorio (P00)](implementacion/docs/ES/lab-release-freeze.md) — verificación antes de reorganizar el repositorio.
+
+
 [English](README.md) | [Español](README.es.md)
 
 La demo visual de defensa tiene una [guía de ejecución con comandos y conservación](implementacion/docs/ES/defense-demo-operations.md), que incluye qué guardar antes de cambiar los recursos del Codespace.

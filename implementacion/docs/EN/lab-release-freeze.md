@@ -193,7 +193,7 @@ gh api "repos/$GH_REPO" --jq .permissions
 gh api "repos/$GH_REPO/releases" --paginate > "$WORK/existing-releases.json"
 git ls-remote origin "refs/tags/$LAB_TAG" "refs/tags/$LAB_TAG^{}" > "$WORK/tag-collision.txt"
 test ! -s "$WORK/tag-collision.txt"
-jq -e --arg tag "$LAB_TAG" 'all(.[]; .tag_name != $tag)' "$WORK/existing-releases.json"
+jq -se --arg tag "$LAB_TAG" 'all(.[][]; .tag_name != $tag)' "$WORK/existing-releases.json"
 # Stop on any existing draft/tag. Inspect its identity deliberately; never replace assets.
 mapfile -t UPLOAD_NAMES < <(jq -r '.assets[].name' "$WORK/final/release-manifest.json")
 UPLOAD_NAMES+=(release-manifest.json RELEASE-SHA256SUMS.txt)

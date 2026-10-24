@@ -292,9 +292,13 @@ def prepare(lock, inputs, output, frozen, source):
                 'historicalIdentities':lock['historicalIdentities'], 'limitations':lock['limitations'],
                 'unresolved':lock['unresolved'], 'scopeExclusions':lock.get('scopeExclusions', []), 'humanReview':'PENDING', 'publication':'NOT_EXECUTED',
                 'boundary':'Outer bytes and selected internal inventories; not new cryptography, experiments or human acceptance'}
-    # Write manifest last, only after every required check and copy succeeds.
-    write_json(output/'release-manifest.json', manifest)
-    (output/'RELEASE-SHA256SUMS.txt').write_text(''.join(r['sha256']+'  '+r['name']+'\n' for r in records)+checksum(output/'release-manifest.json')+'  release-manifest.json\n')
+    # Promote the manifest only after checksums close successfully. Interrupted
+    # output retains diagnostics/partial files but never a completed manifest.
+    partial = output/'release-manifest.json.partial'
+    write_json(partial, manifest)
+    with (output/'RELEASE-SHA256SUMS.txt').open('x') as stream:
+        stream.write(''.join(r['sha256']+'  '+r['name']+'\n' for r in records)+checksum(partial)+'  release-manifest.json\n')
+    partial.rename(output/'release-manifest.json')
     return {'status':manifest['status'], 'manifestSha256':checksum(output/'release-manifest.json'), 'source':identity,
             'uploadNames':[r['name'] for r in records]+['release-manifest.json','RELEASE-SHA256SUMS.txt']}
 
