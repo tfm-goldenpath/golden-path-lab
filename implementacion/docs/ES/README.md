@@ -1,5 +1,7 @@
 # Documentación en español
 
+[Custodia de la release del laboratorio (P00)](lab-release-freeze.md) — verificación de la release antes de reorganizar el repositorio.
+
 [Todos los documentos](../README.md) · [English documentation](../EN/README.md)
 
 Esta documentación ofrece apoyo en español. La implementación y la documentación técnica principal están en inglés; los identificadores, contratos y pruebas ejecutables son comunes a ambos idiomas.

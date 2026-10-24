@@ -1,0 +1,308 @@
+{
+  "schema": "lab-release-inputs/v1",
+  "repository": "tfm-goldenpath/golden-path-lab",
+  "purpose": "Preserve the research and recorded demonstration baseline before repository restructuring",
+  "implementationBase": "3afa1c850f4d294d23cc302558d6ce87c62aa279",
+  "assets": [
+    {
+      "name": "demo-site-v1.tar.gz",
+      "required": true,
+      "size": 24870638,
+      "sha256": "deba74a10eb63503cfbe58b1e447f3d1cbb06a2ed9f404ddd0c2519c4cbf7a92",
+      "releaseId": 416806306,
+      "assetId": 654877193,
+      "tag": "demo-site-freeze-20261018-v1",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/demo-site-freeze-20261018-v1/demo-site-v1.tar.gz",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Selected public demo derivative, original HTML/MP4/WebM and portable originals; not complete frozen-0002",
+      "format": "pages"
+    },
+    {
+      "name": "analysis.json",
+      "required": true,
+      "size": 14335,
+      "sha256": "9d648fb3f589f18c3e37c35187b84824959c543f19d94776552c2229be7beb51",
+      "releaseId": 403052949,
+      "assetId": 609973568,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/analysis.json",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Original public evidence or restoration metadata; unchanged bytes",
+      "format": "file"
+    },
+    {
+      "name": "campaign-evidence-895a3bd-20261004.tar.gz",
+      "required": true,
+      "size": 1412065509,
+      "sha256": "99925065ddb8725b165a736e8d8845fe88718ee21f69c746fd2852d96bf43afa",
+      "releaseId": 403052949,
+      "assetId": 609973571,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/campaign-evidence-895a3bd-20261004.tar.gz",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Ten-pair campaign and development originals, DB archives, failed review and correction; distinct from pilot and functional trials",
+      "format": "tar.gz",
+      "checksums": "FILES.sha256",
+      "assertions": {
+        "final-development-895a3bd/campaign-proposal-01/results-01/report.json": {
+          "source": "895a3bde79089b7544c1dad76a6cd8f48eede0a8"
+        }
+      }
+    },
+    {
+      "name": "lane-a-37353632299-91a33e9-evidence-v2.zip",
+      "required": true,
+      "size": 246596801,
+      "sha256": "1f276947f5ed375df0b4ab41cd93360ea9f6f8443749f36c0d5b216d500bbe4b",
+      "releaseId": 403052949,
+      "assetId": 613384625,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-37353632299-91a33e9-evidence-v2.zip",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Corrected-source lane A functional catalogue; v2 fixes F04 documentation filename; v1 remains historical",
+      "format": "zip",
+      "checksums": "SHA256SUMS.txt",
+      "assertions": {
+        "INDEX.json": {
+          "source": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+          "runId": 37353632299,
+          "attempt": 1
+        }
+      }
+    },
+    {
+      "name": "lane-a-catalogue-37342413975-fix-b0d330e.zip",
+      "required": true,
+      "size": 5862321,
+      "sha256": "3e18d534d3ee4f0d2a9dee7894e3462e90b086b5c66c5db5db492d70dfdae298",
+      "releaseId": 403052949,
+      "assetId": 613292923,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/lane-a-catalogue-37342413975-fix-b0d330e.zip",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Failed common-source attempt and local correction; all twenty scenarios NOT_EXECUTED",
+      "format": "zip",
+      "checksums": "lane-a-catalogue-37342413975-fix-b0d330e/SHA256SUMS.txt",
+      "assertions": {
+        "lane-a-catalogue-37342413975-fix-b0d330e/INDEX.json": {
+          "experimentalSource": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+          "experimentalRun": "37342413975",
+          "runAttempt": 1
+        }
+      }
+    },
+    {
+      "name": "PUBLICATION-README-v2.md",
+      "required": true,
+      "size": 7947,
+      "sha256": "4ea347b846b534b607c8aad6631c2982e2859dfc254e430b1154e112940509ac",
+      "releaseId": 403052949,
+      "assetId": 609979849,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/PUBLICATION-README-v2.md",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Original public evidence or restoration metadata; unchanged bytes",
+      "format": "file"
+    },
+    {
+      "name": "PUBLICATION-README.md",
+      "required": true,
+      "size": 7358,
+      "sha256": "9380a5af8541dd558da96937cb6afece5947e7be44e9707d104ceefdca618820",
+      "releaseId": 403052949,
+      "assetId": 609973569,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/PUBLICATION-README.md",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Original public evidence or restoration metadata; unchanged bytes",
+      "format": "file"
+    },
+    {
+      "name": "PUBLICATION-V2-SHA256SUMS.txt",
+      "required": true,
+      "size": 526,
+      "sha256": "e60c90dcb16d2a16466bec30c1756735af0bd29af09f0093f50a5468ea0a2449",
+      "releaseId": 403052949,
+      "assetId": 609979850,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/PUBLICATION-V2-SHA256SUMS.txt",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Original public evidence or restoration metadata; unchanged bytes",
+      "format": "file"
+    },
+    {
+      "name": "report.json",
+      "required": true,
+      "size": 26938,
+      "sha256": "7bcee14d78662617840b6221d44badb2767d8ea80a6c8277960c782e94e2727e",
+      "releaseId": 403052949,
+      "assetId": 609973567,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/report.json",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Original public evidence or restoration metadata; unchanged bytes",
+      "format": "file"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "required": true,
+      "size": 354,
+      "sha256": "da7fca766756095e44361237355f678442f7a69b745719083f62cab32e83b472",
+      "releaseId": 403052949,
+      "assetId": 609973572,
+      "tag": "evidence-campaign-895a3bd-20261004",
+      "origin": "https://github.com/tfm-goldenpath/golden-path-lab/releases/download/evidence-campaign-895a3bd-20261004/SHA256SUMS.txt",
+      "trustedAnchor": "Authenticated GitHub API digest captured 2026-10-24; cross-check committed Pages lock / campaign / corrected-lane-A indices",
+      "role": "Original public evidence or restoration metadata; unchanged bytes",
+      "format": "file"
+    }
+  ],
+  "privateFrozen": {
+    "required": true,
+    "location": "implementacion/evidence/packages/defense-freeze-20261018t205939z/frozen-0002",
+    "inventorySha256": "11250ad2912018df2eff16d852823fb8729c417599fc17dcb88b5fc108f4d4de",
+    "anchorRecord": "implementacion/registros/demo_static_freeze_EN.md",
+    "classification": "Required private custody; excluded from public upload per existing publication contract",
+    "files": 547,
+    "bytes": 81988946,
+    "ownerConfirmation": {
+      "date": "2026-10-24",
+      "confirmedBy": "repository owner, in the task conversation",
+      "scope": "Downloaded frozen-0002 copy only",
+      "custody": "CONFIRMED_BY_OWNER",
+      "checksumVerification": "CONFIRMED_BY_OWNER",
+      "inventorySha256": "11250ad2912018df2eff16d852823fb8729c417599fc17dcb88b5fc108f4d4de",
+      "privateDestination": "Not disclosed in this record",
+      "independentInspectionOfOwnerCopy": false,
+      "boundary": "Owner confirmation does not establish custody of the complete historical evaluation dossier, release approval or publication authorization."
+    }
+  },
+  "historicalIdentities": {
+    "demoSession": "freeze-20261018t205939z",
+    "evidenceSource": {
+      "commit": "38e7228f7bd8d4bf7c3415fe856653a62dfa8e91",
+      "contentHash": "2edc1b745398cbe0acfa797ba27002cd05a1b40c7f09c805f27cbd13c1bd5041",
+      "changes": "?? package-lock.json\n?? package.json",
+      "scope": "Lab source plus demo catalogue, adapters, UI, tests and configuration; generated evidence excluded"
+    },
+    "rendererSource": {
+      "commit": "38e7228f7bd8d4bf7c3415fe856653a62dfa8e91",
+      "contentHash": "fd5af28bc8f91d3f23be5c644fa2717fbe29c9c531858508d5e878d849c34aaf",
+      "changes": "M implementacion/demo/app.js\n M implementacion/demo/model.js\n M implementacion/docs/EN/defense/README.md\n M implementacion/docs/EN/defense/web-rehearsal.md\n M implementacion/docs/ES/defense/README.md\n M implementacion/docs/ES/defense/web-rehearsal.md\n M implementacion/scripts/defense-demo/export-references.mjs\n M implementacion/scripts/defense-demo/freeze-demo.py\n M implementacion/tests/defense_demo/static-export-check.mjs\n M implementacion/tests/defense_demo/test_portable.py\n?? implementacion/docs/EN/defense/static-freeze.md\n?? implementacion/docs/ES/defense/static-freeze.md\n?? implementacion/registros/demo_static_freeze_EN.md\n?? package-lock.json\n?? package.json",
+      "scope": "Lab source plus demo catalogue, adapters, UI, tests and configuration; generated evidence excluded"
+    },
+    "rendererCommittedEquivalent": "e54eb9117f88d957fdb4caedf653f0065d9dd661",
+    "observations": [
+      {
+        "captureId": "37353632299-fa7f7e2ecb58",
+        "runId": 37353632299,
+        "attempt": 1,
+        "source": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+        "workflow": "lane-a-validation.yml"
+      }
+    ],
+    "campaignIndex": "implementacion/registros/paired-rg-campaign-895a3bd.json",
+    "scenarioIndex": "implementacion/registros/lane-a-corrected-91a33e9.json",
+    "failedAttemptIndex": "implementacion/registros/catalogue-campaign-source-895a3bd.json",
+    "canonicalAcceptance": "implementacion/registros/evaluation_acceptance_20261004_ES.md"
+  },
+  "historicalReferences": [
+    {
+      "tag": "v0.1.0",
+      "releaseId": 397633540,
+      "role": "Classic-profile source baseline; no attached assets"
+    },
+    {
+      "tag": "v0.2.0",
+      "releaseId": 397718622,
+      "role": "Bundle-profile baseline; no attached assets"
+    },
+    {
+      "name": "lane-a-37353632299-91a33e9-evidence.zip",
+      "assetId": 613379813,
+      "size": 246594858,
+      "sha256": "6087de78ac4c0bc5b0b8064dd2de45050f2c149343134d5b59e65f893b84eddd",
+      "role": "Preserved original v1; v2 corrects documentation only"
+    },
+    {
+      "record": "implementacion/docs/EN/evaluation-readiness.md",
+      "role": "A1/A2/B1/AR/P retain recorded boundaries; no new audit or recovered originals claimed"
+    }
+  ],
+  "optional": [
+    {
+      "name": "economic-evaluation-resources-20261005.zip",
+      "assetId": 613456873,
+      "size": 96182,
+      "sha256": "39540320f23a0ba87fe742b7e646c5a556aa03a13808d6b4efdb252f6e0bbcc0",
+      "role": "Supplementary resource assessment; no human-effort claim; retained in original release"
+    }
+  ],
+  "excluded": [
+    "Full private frozen-0002 and evidence.tar.gz, freeze/recording/validation metadata (local verification and owner-confirmed custody only; no public upload)",
+    "Credentials, private keys, kubeconfigs, run state, other sessions, unselected ignored files",
+    "Large omitted build-cache blobs; not recoverable from historical publications"
+  ],
+  "limitations": [
+    "Current release source is not historical execution source.",
+    "Lane A/local-key is distinct from B/hosted OIDC; R/G are control configurations.",
+    "DEMO_VALID_ACCEPT is same-image F13 recovery, not full L01 replacement.",
+    "Functional trials, six scripted repairs, four-pair pilot and ten-pair campaign are distinct datasets; shared positives are not independent samples.",
+    "Technical/integrity success is not human acceptance; canonical 4 October closure supersedes historical pending wording only within its reduced scope.",
+    "Unsupported hosted negatives remain NOT_EXECUTED; human-effort measurement deferred.",
+    "No new signature verification, scenario runs, database update, video re-encoding or human narration.",
+    "Opaque nested archives retain original bytes/hashes; this procedure verifies selected publication inventories, not renewed experimental validity."
+  ],
+  "unresolved": [
+    "Human review of release preparation pending; publication requires separate explicit authorization.",
+    "Custody of the complete historical evaluation dossier remains unverified; the owner confirmation covers only the downloaded frozen-0002 copy."
+  ],
+  "scopeExclusions": [
+    "The original silent video remains included, without audio or narration. Playback on the presentation computer, decoder checks and human narration are outside this release task at the owner's request."
+  ],
+  "sourceSnapshots": [
+    {
+      "name": "lab-source-demo-runtime.tar.gz",
+      "commit": "38e7228f7bd8d4bf7c3415fe856653a62dfa8e91",
+      "role": "New transport of historical demo runtime source; original dirty/untracked status remains separately recorded"
+    },
+    {
+      "name": "lab-source-demo-renderer.tar.gz",
+      "commit": "e54eb9117f88d957fdb4caedf653f0065d9dd661",
+      "role": "New transport of committed renderer equivalent; does not replace original precommit dirty identity"
+    },
+    {
+      "name": "lab-source-campaign.tar.gz",
+      "commit": "895a3bde79089b7544c1dad76a6cd8f48eede0a8",
+      "role": "New transport of measured campaign source; also source of failed catalogue attempt"
+    },
+    {
+      "name": "lab-source-corrected-lane-a.tar.gz",
+      "commit": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
+      "role": "New transport of corrected functional lane A source; separate from campaign"
+    }
+  ],
+  "repositoryProtectionObservation": {
+    "date": "2026-10-24",
+    "access": "RESOLVED using stored GitHub CLI user authentication with environment tokens omitted",
+    "immutableReleases": {
+      "enabled": false,
+      "enforced_by_owner": false
+    },
+    "classicRequiredStatusChecks": {
+      "status": 404,
+      "message": "Branch not protected"
+    },
+    "activeMainRules": {
+      "rulesetId": 24047874,
+      "types": [
+        "deletion",
+        "non_fast_forward",
+        "pull_request"
+      ],
+      "requiredApprovingReviewCount": 0,
+      "requiredStatusCheckRuleReturned": false
+    },
+    "boundary": "Read-only observation; no settings changed. Recheck before publication. Earlier integration-token HTTP 403 observations remain historical."
+  }
+}

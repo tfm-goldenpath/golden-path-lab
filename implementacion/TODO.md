@@ -1,5 +1,19 @@
 # Incremental implementation plan
 
+## P00 — laboratory release custody before product restructuring
+
+- [ ] Preparation/tooling reviewed: [EN guide](docs/EN/lab-release-freeze.md), [ES guide](docs/ES/lab-release-freeze.md), [validation](registros/lab_release_freeze_EN.md). Implementation alone does not satisfy review.
+- [x] Owner confirms downloaded frozen-0002 custody/hash on 24 October 2026; recorded separately from local automated verification.
+- [x] Administrative read access resolved with stored user authentication; immutable releases disabled, no setting changed.
+- [ ] Complete historical evaluation-dossier custody remains unverified; the frozen-0002 confirmation does not cover the full dossier.
+- [ ] Complete the required-original preservation record, with the above scope and private recovery details retained by the owner.
+- [ ] Candidate verified and reviewed with its exact source and limitations.
+- [ ] Final merged source selected; main ancestry and required checks verified.
+- [ ] Lab release published after separate explicit authorization.
+- [ ] Published tag and independently downloaded assets verified; separate receipt retained.
+- [ ] Ready for repository refactor. Until every gate is met: LAB_RELEASE_NOT_YET_VERIFIED / REPOSITORY_REFACTOR_BLOCKED.
+
+
 ## Lane A shared-test dependency repair — 19 October 2026
 
 - [x] Preserve and inspect run `39310363244`, attempts 1/2: both suites fail before scenarios because the Pages policy test imports undeclared PyYAML.

@@ -1,5 +1,7 @@
 # English documentation
 
+[Laboratory release custody (P00)](lab-release-freeze.md) — release verification before repository restructuring.
+
 [All documentation](../README.md) · [Documentación en español](../ES/README.md)
 
 English is the primary language for implementation and technical contribution. Scenario identifiers, contracts and executable tests are shared with the Spanish documentation.
