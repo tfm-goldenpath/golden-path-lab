@@ -3,7 +3,10 @@
 ## P00 — laboratory release custody before product restructuring
 
 - [ ] Preparation/tooling reviewed: [EN guide](docs/EN/lab-release-freeze.md), [ES guide](docs/ES/lab-release-freeze.md), [validation](registros/lab_release_freeze_EN.md). Implementation alone does not satisfy review.
-- [ ] Required originals recovered and verified, including durable private custody; local recovery is recorded separately from the unresolved external copy.
+- [x] Owner confirms downloaded frozen-0002 custody/hash on 24 October 2026; recorded separately from local automated verification.
+- [x] Administrative read access resolved with stored user authentication; immutable releases disabled, no setting changed.
+- [ ] Complete historical evaluation-dossier custody remains unverified; the frozen-0002 confirmation does not cover the full dossier.
+- [ ] Complete the required-original preservation record, with the above scope and private recovery details retained by the owner.
 - [ ] Candidate verified and reviewed with its exact source and limitations.
 - [ ] Final merged source selected; main ancestry and required checks verified.
 - [ ] Lab release published after separate explicit authorization.

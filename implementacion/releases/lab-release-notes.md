@@ -15,8 +15,12 @@ release-freeze guide and input specification for all IDs, hashes and exclusions.
 
 Francisco's canonical 4 October 2026 declaration closes the experimental evaluation
 within its reduced scope. Historical pending-acceptance wording is preserved.
-Later A3/A4 review, release review and external private custody must retain their
-actual status in the separate verification receipt. The original silent video stays included, without audio or narration. Presentation
+The owner confirmed custody/hash of the downloaded frozen-0002 copy on 24 October
+2026; this does not establish custody of the complete historical evaluation dossier
+or independent inspection of the owner copy. Administrative read access is resolved;
+immutable releases are disabled (`enabled=false`, `enforced_by_owner=false`), with
+no settings changed. Recheck before publication. Later A3/A4 review, release review
+and remaining dossier-custody limits retain their actual status in the separate receipt. The original silent video stays included, without audio or narration. Presentation
 playback, decoder checks and narration are outside this release task at the owner's request. Publishing does not establish acceptance or resolve those decisions.
 
 Lane A/local-key differs from B/GitHub OIDC; R/G are control configurations.

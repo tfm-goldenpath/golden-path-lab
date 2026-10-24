@@ -17,7 +17,7 @@ El merge de esta implementación no completa P00 ni autoriza la publicación.
 |---|---|---|
 | Fuente fusionada explícita, herramientas, locks, aceptación y guías | Público obligatorio: `lab-source.tar.gz` creado con `git archive` del SHA completo | Transporte nuevo de código, no experimento nuevo. Se adjuntan snapshots históricos explícitos: runtime 38e7228, renderizador e54eb91, campaña 895a3bd y A corregida 91a33e9. |
 | `demo-site-v1.tar.gz` | Público obligatorio: derivado seleccionado existente | Release 416806306, asset 654877193, 541 archivos; HTML/MP4/WebM originales y portable. No es todo frozen-0002. Se conservan sitio, lock y workflow de Pages. |
-| `freeze-20261018t205939z/frozen-0002` exacto | Custodia privada obligatoria, excluida de subida pública | Carpeta existente bajo `implementacion/evidence/packages/defense-freeze-20261018t205939z/`; cinco anclas históricas, SHA256SUMS completo y manifiestos. Grabación/validación y archivo completo siguen privados. Copia externa aún sin ubicación/verificación. |
+| `freeze-20261018t205939z/frozen-0002` exacto | Custodia privada obligatoria, excluida de subida pública | Carpeta existente bajo `implementacion/evidence/packages/defense-freeze-20261018t205939z/`; cinco anclas históricas, SHA256SUMS completo y manifiestos. Grabación/validación y archivo completo siguen privados. Custodia/hash de la copia descargada confirmados por el propietario el 24 de octubre; destino privado no divulgado y sin inspección independiente de esa copia. |
 | Archivo de campaña `campaign-evidence-895a3bd-20261004.tar.gz` | Público obligatorio | Release 403052949, asset 609973571; 1.412.065.509 bytes. Inventario FILES.sha256 de 3.424 miembros; diez pares, desarrollo, bases y fallo/corrección de revisión. |
 | report/analysis, dos README de publicación y dos ficheros de sumas | Públicos obligatorios para restaurar | v2 corrige la creación de `originals/`; se conserva v1 y el fallo original. |
 | `lane-a-catalogue-37342413975-fix-b0d330e.zip` | Público obligatorio: observación desfavorable | Asset 613292923, fuente 895a3bd, intento 1: fallo en shared-tests; veinte escenarios NOT_EXECUTED. |
@@ -29,9 +29,11 @@ El merge de esta implementación no completa P00 ni autoriza la publicación.
 
 La especificación contiene IDs, ubicaciones, tamaños, hashes y anclas. Los públicos
 seleccionados suman aproximadamente 1,69 GB; el congelado privado, 81.988.946 bytes.
-El subconjunto Pages no reconstruye el original completo. El propietario indicó
-que no hace falta copiar evidencia completa desde ese subconjunto; no aportó una
-ubicación externa privada duradera.
+El subconjunto Pages no reconstruye el original completo. El 24 de octubre de 2026
+el propietario confirmó custodia y verificación de hash de su copia descargada de
+frozen-0002. Es una declaración humana separada de nuestras comprobaciones locales;
+el destino privado no se divulga. No acredita custodia de todo el expediente
+histórico de evaluación. La especificación recoge este alcance sin alterar originales.
 
 La [declaración canónica del 4 de octubre](../../registros/evaluation_acceptance_20261004_ES.md)
 cierra la evaluación con alcance reducido. Los textos históricos de campaña que
@@ -108,7 +110,10 @@ que son la receta compartida para ambos idiomas. Resuelven el PR fusionado y su
 mergeCommit, comprueban pertenencia a main, especificación/herramientas revisadas,
 CI exacta y checks obligatorios/rulesets. Crean un worktree nuevo en el SHA
 explícito, ejecutan doctor/test y generan el manifiesto final sin circularidad.
-Un 403/404 de configuración queda pendiente; no equivale a comprobación favorable.
+Las consultas administrativas usan la sesión guardada de gh, omitiendo GH_TOKEN y
+GITHUB_TOKEN. Solo el 404 exacto «Branch not protected» acredita ausencia de
+protección clásica; se consultan además los rulesets activos. Un 403 u otro error
+inesperado detiene el procedimiento; el 404 clásico no equivale a CI favorable.
 
 - [ ] Herramientas y preparación revisadas.
 - [ ] Originales públicos y custodia privada verificados; ubicación externa y responsable registrados sin credenciales.
@@ -126,10 +131,14 @@ Mantenga `--latest=false`. Un draft/tag existente exige revisión deliberada: nu
 `--clobber`, sustitución automática o force-push. Crear/publicar requiere autorización
 separada; implementar o fusionar este PR no la concede.
 
-El gh instalado 2.102.0 admite create/upload/edit/verify/verify-asset. Endpoint de
-immutability: HTTP 403; cuatro releases históricas indican immutable=false. No se
-cambió configuración. Un administrador debe confirmar el estado efectivo. Si está
-habilitado, la protección se aplica tras publicar: todos los assets deben adjuntarse
+El gh instalado 2.102.0 admite create/upload/edit/verify/verify-asset. El 403 inicial
+quedó resuelto el 24 de octubre mediante la autenticación de usuario guardada en gh:
+`enabled=false`, `enforced_by_owner=false`. Protección clásica: 404 «Branch not
+protected». Ruleset activo 24047874: borrado/force-push/PR, cero aprobaciones exigidas
+y ninguna regla de checks obligatorios devuelta. No se cambió configuración;
+compruébela de nuevo antes de publicar. Activar inmutabilidad sigue siendo una
+decisión separada. Si está habilitada, la protección se aplica tras publicar:
+todos los assets deben adjuntarse
 antes. Se usa la lista explícita del manifiesto, nunca un glob de directorio.
 
 Los comandos EN usan `download-verify --draft` antes de publicar y otra descarga

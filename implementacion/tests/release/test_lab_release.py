@@ -159,6 +159,32 @@ class ReleaseTests(unittest.TestCase):
         self.archive(); self.reanchor()
         with self.assertRaisesRegex(ValueError, 'credential'): self.validate()
 
+    def test_owner_custody_confirmation_is_separate_from_local_verification(self):
+        # Synthetic private metadata; no real owner declaration or experiment.
+        root = self.root/'private'; root.mkdir()
+        for name in ['recording.json','validation.json']:
+            (root/name).write_text('{}')
+        (root/'SHA256SUMS').write_text('synthetic inventory')
+        private = {'location':'synthetic/private', 'inventorySha256':release.checksum(root/'SHA256SUMS'),
+                   'files':1, 'bytes':1}
+        confirmation = {'custody':'CONFIRMED_BY_OWNER', 'scope':'synthetic copy only',
+                        'independentInspectionOfOwnerCopy':False}
+        with patch.object(release,'pages_module') as factory:
+            pages = factory.return_value
+            pages.verify_frozen.return_value = {'recording':{},'validation':{},'session':'synthetic',
+                                               'evidenceSource':{'commit':'a'*40},'rendererSource':{}}
+            pages.inventory.return_value = {'synthetic':{'size':1}}
+            pages.ANCHORS = {}
+            for declaration in [None, confirmation]:
+                with self.subTest(declaration=declaration):
+                    selected = {**private, **({'ownerConfirmation':declaration} if declaration else {})}
+                    result = release.frozen_custody(root, {'privateFrozen':selected})
+                    self.assertEqual(result['status'],'VERIFIED_LOCAL_PRIVATE')
+                    self.assertEqual(result['ownerConfirmation'],declaration)
+                    self.assertIn('no independent inspection',result['externalCopyVerificationBoundary'])
+            with self.assertRaisesRegex(ValueError,'inventory differs'):
+                release.frozen_custody(root, {'privateFrozen':{**private,'ownerConfirmation':confirmation,'inventorySha256':'0'*64}})
+
     def committed_fixture(self):
         """Real tiny Git source, synthetic evidence; only private custody is substituted."""
         repo = self.root/'repo'; repo.mkdir()

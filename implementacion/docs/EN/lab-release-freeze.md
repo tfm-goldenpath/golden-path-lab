@@ -16,7 +16,7 @@ A merged implementation PR does not complete P00 or authorize publication.
 |---|---|---|
 | Explicit merged source, tooling, locks, canonical acceptance and guides | Required public source asset `lab-source.tar.gz`, generated with `git archive` from the selected full SHA | New source transport, not new experimental evidence. Includes the specification; no self-referential commit field. Four explicit historical source snapshots accompany it: runtime 38e7228, renderer e54eb91, campaign 895a3bd and corrected A 91a33e9. |
 | `demo-site-v1.tar.gz` | Required public copy of the existing selected derivative, including original HTML, MP4, WebM and portable logs | Release 416806306 / asset 654877193; exact reviewed Pages lock, 541 files. Public URL: https://tfm-goldenpath.github.io/golden-path-lab/demo/ . Neither the site nor its lock is changed. |
-| Exact `freeze-20261018t205939z/frozen-0002` | Required **private custody**, not an upload | Existing Codespace folder `implementacion/evidence/packages/defense-freeze-20261018t205939z/frozen-0002`; five historical anchors, full `SHA256SUMS`, export manifest and portable inventory. Full evidence, recording/validation metadata remain private under the existing publication contract. External backup location/verification unresolved. |
+| Exact `freeze-20261018t205939z/frozen-0002` | Required **private custody**, not an upload | Existing Codespace folder `implementacion/evidence/packages/defense-freeze-20261018t205939z/frozen-0002`; five historical anchors, full `SHA256SUMS`, export manifest and portable inventory. Full evidence, recording/validation metadata remain private under the existing publication contract. Owner confirmed custody/hash of the downloaded frozen-0002 copy on 24 October; private destination undisclosed, no independent inspection of that copy claimed. |
 | `campaign-evidence-895a3bd-20261004.tar.gz` | Required public original | Release 403052949 / asset 609973571; 1,412,065,509 bytes, committed campaign index and API digest. Verify `FILES.sha256` by streaming all 3,424 members. Preserves development, ten pairs, DB archives, failed review assertion and correction. |
 | Campaign `report.json`, `analysis.json`, both publication READMEs and both checksum files | Required public restoration metadata | Exact IDs/sizes/hashes in specification. v2 corrects the missing `originals/` parent instruction; original README and failed observation remain unchanged. |
 | `lane-a-catalogue-37342413975-fix-b0d330e.zip` | Required public failed observation | Asset 613292923; source 895a3bd, attempt 1, shared-tests failure, zero scenarios executed. |
@@ -29,8 +29,11 @@ A merged implementation PR does not complete P00 or authorize publication.
 The specification records exact original locations, release/asset IDs, sizes,
 SHA-256 and anchor sources. Required public assets total approximately 1.69 GB.
 The private full freeze is 81,988,946 bytes. The Pages subset cannot reconstruct
-that full original. The owner confirmed no need to copy full evidence from the
-public subset; no durable external private location was supplied.
+that full original. On 24 October 2026 the owner confirmed custody and hash
+verification of the downloaded frozen-0002 copy. This is an owner declaration,
+separate from our local byte checks; its private destination is not disclosed.
+It does not establish custody of the complete historical evaluation dossier.
+The specification records this scoped confirmation without changing historical bytes.
 
 The [canonical 4 October declaration](../../registros/evaluation_acceptance_20261004_ES.md)
 closes evaluation in its reduced scope. Historical campaign notes saying acceptance
@@ -115,7 +118,7 @@ material to resolve a custody gap; any sanitized derivative needs separate revie
 ## Post-merge checklist and exact-source preparation
 
 These commands are **pending**, not authorized by the implementation PR. First
-complete human review, resolve private custody, and obtain explicit authorization
+complete human review, record any remaining dossier-custody limits, and obtain explicit authorization
 for release creation/publication. Use the actual publication date; provisional
 name on 24 October is `lab-v2026.10.24`. Do not reuse a colliding name.
 
@@ -145,10 +148,18 @@ gh api "repos/$GH_REPO/commits/$RELEASE_SHA/check-runs" --paginate > "$WORK/merg
 gh run list --repo "$GH_REPO" --commit "$RELEASE_SHA" --workflow ci.yml \
   --json databaseId,headSha,status,conclusion,url > "$WORK/merged-ci.json"
 jq -e --arg sha "$RELEASE_SHA" 'any(.[]; .headSha == $sha and .status == "completed" and .conclusion == "success")' "$WORK/merged-ci.json"
-gh api "repos/$GH_REPO/branches/main/protection/required_status_checks" > "$WORK/required-checks.json"
-# Also inspect applicable rulesets; confirm EVERY required check, not only ci.yml.
-gh api "repos/$GH_REPO/rules/branches/main" > "$WORK/main-rules.json"
-# A 403/404 is an unresolved access/configuration question, not a passing check.
+# Use stored user authentication; the Codespace integration token lacks admin reads.
+if env -u GH_TOKEN -u GITHUB_TOKEN gh api \
+  "repos/$GH_REPO/branches/main/protection/required_status_checks" \
+  > "$WORK/required-checks.json" 2> "$WORK/required-checks.stderr"; then
+  jq -e 'has("contexts") or has("checks")' "$WORK/required-checks.json"
+else
+  # Only this exact response establishes absence of classic protection.
+  jq -e '.status == "404" and .message == "Branch not protected"' "$WORK/required-checks.json"
+fi
+# Also inspect applicable active rulesets; confirm EVERY required check, not only ci.yml.
+env -u GH_TOKEN -u GITHUB_TOKEN gh api "repos/$GH_REPO/rules/branches/main" --paginate > "$WORK/main-rules.json"
+# A 403 or any other unexpected error stops the procedure. A classic 404 is not a CI pass.
 VERIFY_TREE="$WORK/merged-source"
 git worktree add --detach "$VERIFY_TREE" "$RELEASE_SHA"
 # Reuse the pinned installed CLI PATH, install only the locked validation dependencies.
@@ -173,10 +184,13 @@ not hash itself. Verification receipts remain outside the immutable release.
 ## Authorized draft, publication and independent receipt
 
 The installed `gh 2.102.0` supports these commands. Recheck help/version and access
-at publication. The immutable-release setting endpoint returned HTTP 403 during
-preparation despite repository metadata reporting push/admin; all four existing
-releases report `immutable=false`. No setting changed. An administrator must inspect
-actual enabled state; API denial does not mean disabled. Immutability, if enabled,
+at publication. The initial integration-token HTTP 403 was resolved on 24 October
+using stored GitHub CLI user authentication with GH_TOKEN/GITHUB_TOKEN omitted.
+The read-only response confirms `enabled=false`, `enforced_by_owner=false`.
+Classic protection returns 404 `Branch not protected`; active main ruleset 24047874
+has deletion/non-fast-forward/PR rules, zero required approvals and no required
+status-check rule returned. No setting changed. Recheck before publication;
+choosing to enable immutability remains a separate decision. Immutability, if enabled,
 protects assets/tag only **after publication**, so attach everything first.
 
 ```bash
@@ -187,7 +201,7 @@ gh --version
 gh release create --help
 gh release verify --help
 gh release verify-asset --help
-gh api "repos/$GH_REPO/immutable-releases" > "$WORK/immutability-setting.json"
+env -u GH_TOKEN -u GITHUB_TOKEN gh api "repos/$GH_REPO/immutable-releases" > "$WORK/immutability-setting.json"
 gh api "repos/$GH_REPO" --jq .permissions
 # Inspect both lists: network/access failure is not proof of absence.
 gh api "repos/$GH_REPO/releases" --paginate > "$WORK/existing-releases.json"

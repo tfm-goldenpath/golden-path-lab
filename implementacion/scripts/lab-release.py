@@ -243,7 +243,8 @@ def frozen_custody(root, lock):
             'inventorySha256': checksum(root/'SHA256SUMS'), 'anchors': pages.ANCHORS,
             'session': value['session'], 'evidenceSource': value['evidenceSource'],
             'rendererSource': {k:v for k,v in value['rendererSource'].items() if k != 'files'},
-            'durableExternalCopy': 'UNRESOLVED; local Codespace verification is not external preservation'}
+            'ownerConfirmation': lock['privateFrozen'].get('ownerConfirmation'),
+            'externalCopyVerificationBoundary': 'Owner confirmation, when present, is recorded separately from this local byte verification; no independent inspection of the owner copy or complete dossier custody is inferred'}
 
 
 def source_archive(source, output=None):

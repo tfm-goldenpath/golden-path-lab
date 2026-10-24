@@ -164,7 +164,18 @@
     "anchorRecord": "implementacion/registros/demo_static_freeze_EN.md",
     "classification": "Required private custody; excluded from public upload per existing publication contract",
     "files": 547,
-    "bytes": 81988946
+    "bytes": 81988946,
+    "ownerConfirmation": {
+      "date": "2026-10-24",
+      "confirmedBy": "repository owner, in the task conversation",
+      "scope": "Downloaded frozen-0002 copy only",
+      "custody": "CONFIRMED_BY_OWNER",
+      "checksumVerification": "CONFIRMED_BY_OWNER",
+      "inventorySha256": "11250ad2912018df2eff16d852823fb8729c417599fc17dcb88b5fc108f4d4de",
+      "privateDestination": "Not disclosed in this record",
+      "independentInspectionOfOwnerCopy": false,
+      "boundary": "Owner confirmation does not establish custody of the complete historical evaluation dossier, release approval or publication authorization."
+    }
   },
   "historicalIdentities": {
     "demoSession": "freeze-20261018t205939z",
@@ -228,7 +239,7 @@
     }
   ],
   "excluded": [
-    "Full private frozen-0002 and evidence.tar.gz, freeze/recording/validation metadata (local custody only)",
+    "Full private frozen-0002 and evidence.tar.gz, freeze/recording/validation metadata (local verification and owner-confirmed custody only; no public upload)",
     "Credentials, private keys, kubeconfigs, run state, other sessions, unselected ignored files",
     "Large omitted build-cache blobs; not recoverable from historical publications"
   ],
@@ -244,8 +255,7 @@
   ],
   "unresolved": [
     "Human review of release preparation pending; publication requires separate explicit authorization.",
-    "External custody of complete private freeze and original evaluation dossier has not been independently verified.",
-    "Repository immutable-release setting unavailable: API HTTP 403 on 2026-10-24; existing inspected releases immutable=false."
+    "Custody of the complete historical evaluation dossier remains unverified; the owner confirmation covers only the downloaded frozen-0002 copy."
   ],
   "scopeExclusions": [
     "The original silent video remains included, without audio or narration. Playback on the presentation computer, decoder checks and human narration are outside this release task at the owner's request."
@@ -271,5 +281,28 @@
       "commit": "91a33e910ee2ba9ded5391393b06ca70005de4d4",
       "role": "New transport of corrected functional lane A source; separate from campaign"
     }
-  ]
+  ],
+  "repositoryProtectionObservation": {
+    "date": "2026-10-24",
+    "access": "RESOLVED using stored GitHub CLI user authentication with environment tokens omitted",
+    "immutableReleases": {
+      "enabled": false,
+      "enforced_by_owner": false
+    },
+    "classicRequiredStatusChecks": {
+      "status": 404,
+      "message": "Branch not protected"
+    },
+    "activeMainRules": {
+      "rulesetId": 24047874,
+      "types": [
+        "deletion",
+        "non_fast_forward",
+        "pull_request"
+      ],
+      "requiredApprovingReviewCount": 0,
+      "requiredStatusCheckRuleReturned": false
+    },
+    "boundary": "Read-only observation; no settings changed. Recheck before publication. Earlier integration-token HTTP 403 observations remain historical."
+  }
 }

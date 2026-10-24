@@ -83,8 +83,10 @@ The planned `lab-v2026.10.24` tag was absent at inspection; publication date and
 availability must be checked again. Title:
 **Golden Path Lab — frozen research and demonstration baseline**.
 
-The immutable-release setting and classic required-status-check endpoints return
-HTTP 403 with the current integration. The readable main ruleset lists deletion,
+### Initial observation (before the owner follow-up)
+
+The immutable-release setting and classic required-status-check endpoints returned
+HTTP 403 with the integration token. The readable main ruleset lists deletion,
 non-fast-forward and pull-request rules; no required-status-check rule was returned.
 That partial visibility does not authorize bypassing review/checks. Settings and
 permissions were not changed. `gh 2.102.0` help confirms supported release commands.
@@ -95,6 +97,45 @@ custody of the full freeze/evaluation dossier remains unverified. The owner said
 there is no need to copy complete evidence from the public subset; no external
 private location was supplied. Existing publication exclusions remain in force.
 Historical A2/P and omitted-cache limitations remain stated in the coverage guide.
+
+### Owner confirmation and authenticated follow-up — 24 October 2026
+
+The owner confirmed that the downloaded **frozen-0002** is in their custody and
+confirmed its hash after receiving the checksum-verification commands. The trusted
+`SHA256SUMS` anchor is
+`11250ad2912018df2eff16d852823fb8729c417599fc17dcb88b5fc108f4d4de`.
+This is an owner declaration about that downloaded copy, distinct from the earlier
+local automated verification. The private destination was not disclosed and is
+not invented here. No independent inspection of the owner's copy, custody of the
+complete historical evaluation dossier, PR approval or publication authorization
+is inferred. The earlier pending observation above remains historical.
+
+The owner completed `gh auth login`. Read-only API checks using stored user
+credentials, with `GH_TOKEN` and `GITHUB_TOKEN` omitted, resolve the earlier 403:
+
+- Immutable releases: `enabled=false`, `enforced_by_owner=false`.
+- Classic required-status-check protection: HTTP 404, `Branch not protected`.
+- Active main ruleset 24047874: deletion, non-fast-forward and pull-request rules;
+  zero required approving reviews and no required-status-check rule returned.
+
+No repository setting was changed. Enabling immutability remains a separate
+owner decision. The EN/ES procedure distinguishes this exact classic-protection
+404 from permission failures and still checks active rulesets and exact-source CI.
+The release helper carries the owner declaration separately from its local private
+byte verification; the declaration never overrides an integrity failure.
+
+Follow-up validation: 22 synthetic release tests PASS, including a scoped owner
+confirmation that cannot override a failed local inventory check. The retained
+local frozen original still passes the trusted verifier, with the owner declaration
+carried separately in new custody metadata. Documentation regression, links,
+Bash syntax, exact-404 guard checks and `git diff --check` pass. Reports remain
+ignored in `evidence/raw/lab-release-20261024/custody-followup-*`; no full shared
+suite or new experiment is claimed for this follow-up.
+
+The specification changes with this follow-up. Earlier candidate manifests and
+receipts keep their original source/specification hashes; they are not relabelled
+as verification of this revision. Generate the final manifest after merge from the
+explicit selected source. Release review and publication remain pending.
 
 Publication is pending, separately authorized after review and merge. Final merged
 source selection, required-check visibility, draft inventory, publication and
