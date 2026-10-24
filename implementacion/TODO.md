@@ -1,5 +1,16 @@
 # Incremental implementation plan
 
+## P00 — laboratory release custody before product restructuring
+
+- [ ] Preparation/tooling reviewed: [EN guide](docs/EN/lab-release-freeze.md), [ES guide](docs/ES/lab-release-freeze.md), [validation](registros/lab_release_freeze_EN.md). Implementation alone does not satisfy review.
+- [ ] Required originals recovered and verified, including durable private custody; local recovery is recorded separately from the unresolved external copy.
+- [ ] Candidate verified and reviewed with its exact source and limitations.
+- [ ] Final merged source selected; main ancestry and required checks verified.
+- [ ] Lab release published after separate explicit authorization.
+- [ ] Published tag and independently downloaded assets verified; separate receipt retained.
+- [ ] Ready for repository refactor. Until every gate is met: LAB_RELEASE_NOT_YET_VERIFIED / REPOSITORY_REFACTOR_BLOCKED.
+
+
 ## Lane A shared-test dependency repair — 19 October 2026
 
 - [x] Preserve and inspect run `39310363244`, attempts 1/2: both suites fail before scenarios because the Pages policy test imports undeclared PyYAML.
