@@ -1,5 +1,7 @@
 # Golden Path Lab
 
+[Laboratory release custody (P00)](implementacion/docs/EN/lab-release-freeze.md) — release verification before repository restructuring.
+
 [English](README.md) | [Español](README.es.md)
 
 For the visual defense demo, see the [defense guide by objective](implementacion/docs/EN/defense/README.md) ([español](implementacion/docs/ES/defense/README.md)), including what to save before changing Codespaces resources.

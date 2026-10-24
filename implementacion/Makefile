@@ -21,7 +21,11 @@ test-policies:
 test-bundles:
 	bash tests/integration/bundle-crypto.sh
 
-test: test-env test-unit test-policies test-bundles test-workflows test-defense
+test: test-env test-unit test-policies test-bundles test-workflows test-defense test-release
+
+.PHONY: test-release
+test-release:
+	python3 -I -S -m unittest discover -s tests/release -p 'test_*.py'
 
 .PHONY: test-defense
 test-defense:
