@@ -193,6 +193,31 @@ subsequently changed, real GitHub verification on that exact revision remains
 required; local keys, kind and act cannot establish OIDC/certificate/transparency
 integration. No pilot, ten-pair campaign or manual task was run.
 
+## AJV alert follow-up
+
+The owner supplied the alert details after publication. The existing
+[Dependabot PR #23](https://github.com/tfm-goldenpath/golden-path-lab/pull/23)
+proposes AJV 8.17.1 → 8.20.0 in the tooling package manifest and lockfile.
+AJV is also a direct pinned tooling dependency, not only a transitive dependency
+of ajv-formats. quotes-node has no declared package dependencies.
+
+[GHSA-2g4f-4pwh-qvx6 / CVE-2025-69873](https://github.com/advisories/GHSA-2g4f-4pwh-qvx6)
+describes ReDoS with `$data` enabled; the affected v8 range ends at 8.18.0.
+The inspected SBOM validator uses local hash-checked schemas and constructs AJV
+without `$data`. A read-only probe using its constructor options and installed
+8.17.1 reported `dataEnabled: false`, consistent with the
+[documented default](https://ajv.js.org/options.html#data).
+This supports a limited inference that this specific prerequisite is absent in
+the inspected validation path; it is not a blanket safety claim or a fixed alert.
+
+Keep remediation separate from P03. PR #23 alone is insufficient for current
+source: `validate-sbom-schema.mjs` explicitly rejects versions other than 8.17.1.
+The bounded update must also synchronize that version check, its SBOM regression
+and schema README, then run schema/contracts, the shared suite and representative
+delivery before claiming compatibility. Preserve historical reports/snapshots.
+No dependencies were updated or PR merged as part of this follow-up. The original
+P03 integrations still refer to implementation `e3850a4` and AJV 8.17.1.
+
 ## Assistance and review
 
 | Activity | AI contribution | Human review | Decision |

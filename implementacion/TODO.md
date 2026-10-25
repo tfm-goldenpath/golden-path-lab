@@ -69,6 +69,7 @@ a new vulnerability DB has its own identity.
 
 ### A. `chore/dependency-refresh`
 
+- [ ] Prioritize the known AJV alert ([Dependabot #23](https://github.com/tfm-goldenpath/golden-path-lab/pull/23), [GHSA-2g4f-4pwh-qvx6](https://github.com/advisories/GHSA-2g4f-4pwh-qvx6)): proposed 8.20.0, patched range starts at 8.18.0. Synchronize tooling manifest/lock, the explicit version guard in `validate-sbom-schema.mjs`, SBOM regression and schema README; the two-file bot update alone would fail the guard. Validate schema/contracts, shared tests and representative delivery. The current SBOM path does not enable `$data`; this does not close the alert. See the [scope assessment](../docs/EN/maintainers/delivery-core-validation.md#ajv-alert-follow-up).
 - [ ] Review actually used package manifests/lockfiles, tooling, AJV and devcontainers CLI. Check quotes-node's dependency-free status before proposing packages; add none without need.
 - [ ] Refresh GitHub Actions full SHAs with their supported runtime requirements; consult current stable versions/advisories when implementing.
 - [ ] Evaluate Dependabot/Renovate with small groups and explicit exclusions. Do not use `npm audit fix --force` or floating versions as automatic remediation.
