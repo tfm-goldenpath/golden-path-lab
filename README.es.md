@@ -1,76 +1,91 @@
 # Golden Path Lab
 
-[Custodia de la release del laboratorio (P00)](implementacion/docs/ES/lab-release-freeze.md) — verificación antes de reorganizar el repositorio.
+[English](README.md) · [Español](README.es.md)
 
+Golden Path comprueba que una entrega de contenedor tenga la configuración,
+las evidencias de imagen y el origen autorizado requeridos antes de admitirla
+en Kubernetes. Resuelve un problema de entrega: compilar correctamente no demuestra
+qué se ha entregado, qué controles han pasado ni por qué debe permitirse desplegar.
 
-[English](README.md) | [Español](README.es.md)
+Este repositorio implementa ese enfoque en un laboratorio de investigación con el
+servicio sintético `quotes-node`. Permite a desarrolladores inspeccionar controles
+y a responsables de plataforma evaluar cómo se relacionan políticas, firmas y
+evidencias operativas. Actualmente no es un producto autónomo para consumidores.
 
-La demo visual de defensa tiene una [guía de ejecución con comandos y conservación](implementacion/docs/ES/defense-demo-operations.md), que incluye qué guardar antes de cambiar los recursos del Codespace.
-
-La [matriz de preparación de veinte escenarios](implementacion/docs/ES/evaluation-readiness.md)
-consolida ejecuciones registradas, límites por carril y trabajo pendiente sobre
-fuente final; un merge no implica aceptación global ni autorización de campaña.
-
-Laboratorio reproducible de comprobaciones tempranas de políticas y entrega verificable a Kubernetes. La implementación acompaña al TFM **Golden Path para la entrega cloud-native: verificación temprana de políticas e integridad en el flujo CI/CD**. La memoria, el catálogo académico y las decisiones de investigación se mantienen en el [repositorio del TFM](https://github.com/tfm-goldenpath/golden-path).
-
-La base clásica **v0.1.0** está publicada en `9f1999e`. La [ejecución alojada 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654) superó L01/F13/F11 y la sustitución de imagen en `4f8fe77`, cambio incluido en esa versión. Su evidencia corresponde al commit ejecutado y al perfil clásico.
-
-La versión publicada **v0.2.0**, en `dd381d3`, incorpora la [migración a bundles de Cosign](implementacion/docs/ES/cosign-bundle-migration.md) de la PR #15. Todos los pasos de la [ejecución alojada 36332256483](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36332256483) terminaron satisfactoriamente sobre esa revisión y hay un artefacto de evidencias disponible; todavía no se ha auditado el contenido del archivo. Siguen pendientes la admisión negativa real de F07 y la repetición local de la revisión final publicada. Mantiene Cosign 3.1.3, Kyverno 1.19.1 y la confianza diferenciada de A/B. Los registros anteriores de [compatibilidad local](implementacion/registros/cosign_bundles_validation_ES.md) y [revisión alojada](implementacion/registros/pr15_review_ES.md) conservan sus revisiones y límites. El método de veinte escenarios no cambia: fija el perfil adoptado tras el piloto y no mezcles tiempos de desarrollo clásico con mediciones de campaña bundle.
-
-
-La [extensión F11/F12/L06](implementacion/docs/ES/cases/F11-F12-L06/runbook.md)
-añade CREATE/UPDATE de plantilla Deployment y Pods aislados. La implementación y
-pruebas offline están disponibles; la validación A registrada pasó y existe una
-revisión alojada aportada. La preparación sobre fuente final y aceptación humana
-siguen pendientes, según la matriz enlazada arriba.
-
-## Por qué se utiliza inglés
-
-La implementación y su documentación técnica principal utilizan inglés para facilitar la contribución internacional, la reutilización y la coherencia con la terminología del ecosistema cloud-native. Se adopta como convención habitual de la industria, no como una norma técnica obligatoria. Un ejemplo es [Kubernetes, que mantiene documentación original en inglés y traducciones comunitarias](https://kubernetes.io/docs/contribute/localization/). La memoria y la justificación académica permanecen en español.
-
-Esta página y las guías de `implementacion/docs/ES/` ofrecen apoyo documental en español; las principales están en `implementacion/docs/EN/`. El [índice de documentación](implementacion/docs/README.md) permite elegir idioma y tema. La ficha y guía del caso integrado se agrupan en `cases/L01-F13/` dentro de cada idioma. Los mensajes de ejecución se muestran en inglés también en estas guías, para que coincidan con las salidas reales. Cada escenario tiene una única implementación: traducir su explicación no cambia sus entradas ni sus criterios de aceptación. Los registros históricos conservan su idioma original.
-
-## Contribuir con o sin IA
-
-La [guía de contribución](CONTRIBUTING.md) define cambios acotados, comandos de comprobación y registro veraz de aportaciones. La [guía de desarrollo asistido](implementacion/docs/ES/ai-assisted-development.md) explica [`AGENTS.md`](AGENTS.md), las [instrucciones de Copilot](.github/copilot-instructions.md) y la [skill de cambio de escenario](.github/skills/scenario-change/SKILL.md). Las personas asumen requisitos, resultados esperados y revisión; los controles deterministas deciden la autorización. La medición de esfuerzo humano y calibración manual elegible están aplazadas. Las
-seis reparaciones automatizadas usan soluciones conocidas y no constituyen datos
-de productividad/calibración humana. Ensayos funcionales, reparaciones, piloto
-temporal y [campaña completada de diez pares](implementacion/docs/ES/paired-rg-campaign-results.md)
-son datasets separados. En `895a3bd`, 10/10 pares superaron revisión técnica
-automatizada; revisión humana de resultados y aceptación global pendientes.
-
-Las instrucciones orientan; pruebas, permisos y reglas configuradas aplican sus respectivos controles. CI ejecuta las comprobaciones compartidas en cada PR y push. Esta guía no instala hooks, conexiones MCP, agentes personalizados ni permisos remotos. El laboratorio sigue siendo utilizable sin IA.
-
-## Inicio rápido
-
-Abre el repositorio en Codespaces o un devcontainer y selecciona **Golden Path - implementation**, correspondiente a `.devcontainer/implementacion/devcontainer.json`. Desde la raíz del repositorio:
-
-```bash
-cd implementacion
-make doctor
-make test
-make demo
-```
-
-La demostración satisfactoria imprime este resumen antes de la limpieza y el empaquetado:
+## Vista de la entrega
 
 ```text
-== PASS: L01 accepted; F13 and F11 rejected; F07 status recorded for the selected lane. Evidence: <directorio-de-evidencias> ==
+Fuente + configuración → pruebas y política de workflow → build → digest
+  → política de manifiesto → SBOM original → análisis y política de vulnerabilidades
+  → firma independiente de imagen + attestations de SBOM/procedencia
+  → verificación fresca → autorización firmada → admisión Kubernetes
+  → rollout + HTTP → conservación de evidencias + limpieza de recursos propios
 ```
 
-El mensaje añade la ubicación de las evidencias. La demostración utiliza `quotes-node`, crea un laboratorio efímero, comprueba la entrega inicial y la sustitución por otro digest verificado en L01, ausencia de autorización firmada en F13 y una carga privilegiada en F11. Conserva los paquetes bajo `implementacion/evidence/packages/`. Es una prueba de integración funcional; no equivale a ejecutar la campaña completa de veinte escenarios.
+Es el flujo protegido; el laboratorio añade fallos controlados y una entrega de
+referencia. La procedencia alojada se emite entre preparación y finalización.
+[Cómo funciona](docs/ES/how-it-works.md) explica orden, bloqueos y evidencias.
 
-## Guías en español
+## Disponibilidad actual
 
-- [Ejecución en devcontainer y GitHub Actions](implementacion/docs/ES/cases/L01-F13/runbook.md).
-- [Caso L01/F13 y alcance de las comprobaciones](implementacion/docs/ES/cases/L01-F13/README.md).
-- [Arquitectura modular](implementacion/docs/ES/architecture.md).
-- [Contratos de entrega y límites de confianza](implementacion/docs/ES/delivery-contracts.md).
-- [Entorno y versiones](implementacion/docs/ES/environment.md).
-- [Desarrollo asistido por IA y atribución](implementacion/docs/ES/ai-assisted-development.md).
+| Disponible o previsto | Frontera |
+| --- | --- |
+| Laboratorio implementado | Entorno Linux fijado, políticas tempranas, análisis de imagen, evidencias firmadas separadas, verificación, admisión y comprobaciones funcionales. |
+| Observaciones registradas | Resultados locales/alojados sobre revisiones históricas identificadas y datasets de medición separados. La [matriz](implementacion/docs/ES/evaluation-readiness.md) conserva cobertura y huecos; la [decisión humana fechada](implementacion/registros/evaluation_acceptance_20261004_ES.md) cierra solo su alcance reducido. |
+| Plantilla de consumidor: prevista | La extracción del motor neutral y una plantilla soportada son trabajo futuro. Véase la [secuencia de migración](docs/EN/maintainers/repository-map.md#migration-sequence). |
+| Sin soporte o sin verificar | No se afirma preparación para producción, conformidad DORA completa, SLSA Build L3, inventario SBOM completo ni ausencia general de vulnerabilidades. Los negativos alojados no ejecutados siguen sin ejecutarse; las ejecuciones históricas no validan la fuente actual. |
 
-El [README técnico](implementacion/README.md), el [plan incremental](implementacion/TODO.md) y la [guía de configuración de GitHub](implementacion/docs/EN/github-configuration.md) están en inglés. El [README principal](README.md) describe la estructura, las condiciones de contribución y la política de idiomas.
+## Primeros pasos
 
-La vía A utiliza infraestructura y claves locales de desarrollo; la vía B requiere GitHub Actions, GHCR e identidad OIDC real. Las configuraciones R/G comparan el recorrido de referencia con el Golden Path y son independientes de esas vías. Los [registros de validación](implementacion/registros/validacion_importacion_ES.md) delimitan qué se comprobó y qué permanece pendiente.
+Sigue la [ruta de lectura y evidencias sin clúster](docs/ES/getting-started.md).
+Conecta las fases con resultados versionados y sus fuentes/ejecuciones sin instalar
+herramientas ni crear recursos.
 
-La [validación de esta revisión de idioma](implementacion/registros/language_normalization_EN.md), en inglés, recoge las comprobaciones realizadas y la incidencia pendiente del ejecutable Conftest en Windows.
+Para ejecutar deliberadamente, entra en el [laboratorio](lab/README.es.md).
+`make -C implementacion demo` crea kind, un registro y un builder, construye imágenes
+y ejercita escenarios. No es un inicio rápido para consumidores.
+
+## Controles y evidencias
+
+La entrega puede detenerse en controles de fuente/workflow, política de manifiesto,
+vulnerabilidades, verificación de firmas/contenido o admisión. Un fallo posterior
+de rollout o HTTP no demuestra rechazo de admisión. Revisa la decisión estructurada
+y el log original para atribuir la causa. La [guía de fases y controles](docs/ES/how-it-works.md)
+enlaza identificadores, ejemplos, implementación y pruebas; los
+[contratos](implementacion/docs/ES/delivery-contracts.md) separan imagen, SBOM,
+análisis, procedencia y resultados.
+
+## Laboratorio
+
+[Entrada al laboratorio](lab/README.es.md): ejecución, veinte escenarios,
+confianza local/alojada, configuraciones de referencia/protegida, mediciones,
+aceptación histórica, defensa y recuperación de la release congelada.
+Las instrucciones de presentación y la cronología conservan sus guías canónicas.
+
+## Contribución, soporte y hoja de ruta
+
+Consulta [CONTRIBUTING.md](CONTRIBUTING.md), el [índice](docs/ES/README.md),
+[inventario y contrato de migración](docs/EN/maintainers/repository-map.md) y
+[TODO actual](implementacion/TODO.md). El inglés es primario y se sincroniza la
+entrada española. Las personas asumen requisitos y revisión; las herramientas
+deterministas deciden la autorización de entrega.
+
+No hay licencia global de reutilización declarada. Los avisos de terceros conservan
+sus términos. La licencia y el canal privado de seguridad requieren decisión del
+propietario; véase [reutilización y soporte](docs/ES/getting-started.md#reutilización-y-soporte).
+Las [incidencias](https://github.com/tfm-goldenpath/golden-path-lab/issues) sirven
+para preguntas no sensibles y defectos reproducibles; no se declara un SLA.
+
+<details>
+<summary>Enlaces de la introducción anterior</summary>
+
+<a id="por-qué-se-utiliza-inglés"></a>
+[Idioma e índices](docs/ES/README.md).
+<a id="contribuir-con-o-sin-ia"></a>
+[Contribuir con o sin IA](CONTRIBUTING.md).
+<a id="inicio-rápido"></a>
+[Procedimiento del laboratorio](lab/README.es.md).
+<a id="guías-en-español"></a>
+[Guías en español](docs/ES/README.md).
+
+</details>

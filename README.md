@@ -1,100 +1,98 @@
 # Golden Path Lab
 
-[Laboratory release custody (P00)](implementacion/docs/EN/lab-release-freeze.md) — release verification before repository restructuring.
+[English](README.md) · [Español](README.es.md)
 
-[English](README.md) | [Español](README.es.md)
+Golden Path checks whether a container delivery has the required configuration,
+image evidence and authorized source before admitting it to Kubernetes. It addresses
+a common delivery problem: a successful build alone does not show what was shipped,
+which checks passed, or why deployment should be allowed.
 
-For the visual defense demo, see the [defense guide by objective](implementacion/docs/EN/defense/README.md) ([español](implementacion/docs/ES/defense/README.md)), including what to save before changing Codespaces resources.
+This repository implements that approach in a research laboratory using the synthetic
+`quotes-node` service. It is useful to developers inspecting delivery controls and
+platform maintainers evaluating how policy, signatures and operational evidence fit
+together. It is not a standalone consumer delivery product today.
 
-A reproducible laboratory for early policy checks and verifiable software delivery to Kubernetes. The implementation supports the TFM **Golden Path para la entrega cloud-native: verificación temprana de políticas e integridad en el flujo CI/CD**. Thesis authoring and its research decisions remain in the [thesis repository](https://github.com/tfm-goldenpath/golden-path).
+## Delivery overview
 
-The synthetic `quotes-node` service makes delivery behavior observable without requiring a complex business application. The current demonstration exercises a legitimate delivery and replacement with a different verified image digest (**L01**), missing signed authorization (**F13**) and directed checks against a privileged workload (**F11**).
-
-
-The [F11/F12/L06 runtime extension](implementacion/docs/EN/cases/F11-F12-L06/runbook.md)
-adds Deployment CREATE/template UPDATE and isolated Pod checks. Implementation
-and offline tests are available; the recorded lane-A validation passed, and a
-supplied hosted review records runtime success. Final-source readiness and human
-acceptance remain pending. See the [twenty-scenario readiness matrix](implementacion/docs/EN/evaluation-readiness.md).
-
-## Quick start in Codespaces or a devcontainer
-
-Select the **implementacion** devcontainer configuration. Once its setup completes, run these commands from the repository root:
-
-```bash
-cd implementacion
-make doctor
-make test
-make demo
+```text
+Source + configuration → tests and workflow policy → build → image digest
+  → manifest policy → original SBOM → vulnerability scan + policy
+  → independent image signature + SBOM/provenance attestations
+  → fresh verification → signed results authorization → Kubernetes admission
+  → rollout + HTTP observations → preserved evidence + owned-resource cleanup
 ```
 
-The expected successful demo prints `== PASS: L01 accepted; F13 and F11 rejected; F07 status recorded for the selected lane. Evidence: <run-directory> ==`, followed by cleanup and packaging output. It creates an ephemeral kind cluster and registry, verifies delivery evidence and removes the resources it created. Evidence packages remain locally under `implementacion/evidence/packages/`.
+This is the protected delivery flow; the laboratory adds controlled fault trials
+and a reference delivery. Hosted provenance is issued between preparation and
+finalization. See [how it works](docs/EN/how-it-works.md) for actual ordering,
+blocking decisions and their evidence.
 
-The [execution guide](implementacion/docs/EN/cases/L01-F13/runbook.md) explains prerequisites, expected responses and troubleshooting. A [Spanish guide](implementacion/docs/ES/cases/L01-F13/runbook.md) is also available. Tool versions and checksums are fixed in `implementacion/versions.env` and `implementacion/tools.lock.json`; the actual Codespaces quota depends on the account.
+## Current availability
 
-## Language and documentation
+| Available or planned | Boundary |
+| --- | --- |
+| Implemented laboratory | Pinned Linux environment, early policies, image analysis, separate signed evidence, verification, admission and functional checks. |
+| Recorded observations | Local and hosted results at identified historical revisions, plus separate measurement datasets. The [readiness matrix](implementacion/docs/EN/evaluation-readiness.md) records coverage and gaps; the [dated human decision](implementacion/registros/evaluation_acceptance_20261004_ES.md) closes only its stated reduced evaluation scope. |
+| Consumer template: planned | Neutral engine extraction and a supported consumer template are future work. See the [migration sequence](docs/EN/maintainers/repository-map.md#migration-sequence). |
+| Unsupported or unverified | No production-readiness, full DORA compliance, SLSA Build L3, complete SBOM inventory or blanket vulnerability-safety claim. Unexecuted hosted negatives remain unexecuted; historical runs do not validate current source. |
 
-English is the primary language for the implementation and technical documentation to support international contribution and reuse, and to keep terminology consistent with the cloud-native ecosystem. This follows a common industry convention, rather than a mandatory technical standard. For example, [Kubernetes maintains English source documentation with community localizations](https://kubernetes.io/docs/contribute/localization/). The thesis and its academic rationale remain in Spanish.
+## Getting started
 
-Code, comments, tests, project-generated messages, workflow labels and the primary technical guides use English. The [documentation index](implementacion/docs/README.md) groups primary guides under `docs/EN/` and supporting guides under `docs/ES/`. The [Spanish entry point](README.es.md) supports thesis readers. Historical validation records under `implementacion/registros/` and the external-proposal review retain their original language and observations.
+Start with the [no-cluster reading and evidence route](docs/EN/getting-started.md).
+It takes you from the delivery phases to committed results and their source/run
+identities without installing tools or creating resources.
 
-Maintain one implementation per scenario: `F13` has the same inputs, identifiers and acceptance criteria in both languages. Case documentation lives under `docs/EN/cases/L01-F13/` and its Spanish counterpart; executable scenarios remain shared in `tests/scenarios/`. Prefer English for commits, PR descriptions and contributor or AI-assistance instructions. Keep executable paths, JSON fields, error codes and rule IDs stable. When behavior changes, update the English guide and the affected Spanish commands and expected outputs in the same change; explicitly mark any explanation that has not yet been synchronized. Translations must not rewrite historical logs or evidence packages.
+For deliberate execution, use the separate [laboratory entry](lab/README.md).
+The existing `make -C implementacion demo` creates kind, a registry and a builder,
+builds images and exercises scenarios. It is not a consumer quickstart.
 
-The [language revision validation](implementacion/registros/language_normalization_EN.md) records passing checks and the remaining Windows Conftest runtime limitation.
+## Controls and evidence
 
-## Contributing with or without AI
+Delivery can stop at source/workflow checks, manifest policy, vulnerability policy,
+signature/content verification or admission. A later rollout or HTTP failure is a
+functional observation, not proof that admission rejected the workload. Inspect
+the retained structured decision and original log before attributing a failure.
+The [phase and control guide](docs/EN/how-it-works.md) links rule IDs, examples,
+implementation and tests; [delivery contracts](implementacion/docs/EN/delivery-contracts.md)
+define the distinct image, SBOM, scan, provenance and results requirements.
 
-Follow [CONTRIBUTING.md](CONTRIBUTING.md) for scoped changes, actual test commands and truthful contribution records. The [AI-assisted development guide](implementacion/docs/EN/ai-assisted-development.md) explains the [shared agent instructions](AGENTS.md), [Copilot instructions](.github/copilot-instructions.md) and [scenario-change skill](.github/skills/scenario-change/SKILL.md). People own requirements, expected outcomes and review; deterministic controls decide delivery authorization. Human-effort measurement and eligible manual calibration are deferred. The six
-automated remediation tasks use known repairs and cannot become human productivity
-or calibration evidence. Functional trials, remediation, the completed timing pilot
-and the [completed ten-pair campaign](implementacion/docs/EN/paired-rg-campaign-results.md)
-remain separate datasets. At `895a3bd`, all ten campaign pairs passed automated
-technical review; human results review and overall acceptance remain pending.
+## Laboratory
 
-These files guide assistants; tests, permissions and configured repository rules enforce their respective controls. No hooks, MCP connections, custom agents or remote permissions are installed by this guidance. The laboratory remains usable without AI.
+[Enter the laboratory](lab/README.md) for execution, all twenty scenarios,
+local/hosted trust, reference/protected configurations, measurements, historical
+acceptance, defense procedures and frozen-release recovery. Presentation instructions
+and research chronology remain in their canonical guides.
 
-## Evaluation configurations and execution lanes
+## Contributing, support and roadmap
 
-- **R/G:** the reference path delivers the service; the Golden Path adds the selected security controls and evidence checks.
-- **A/B:** lane A uses local development keys and infrastructure; lane B uses real GitHub identity, GHCR and hosted attestations. Local execution does not prove hosted identity integration.
+Use [CONTRIBUTING.md](CONTRIBUTING.md), the [documentation index](docs/EN/README.md),
+[repository inventory and migration contract](docs/EN/maintainers/repository-map.md)
+and [current TODO](implementacion/TODO.md). English is primary; affected Spanish
+entry guidance is maintained alongside it. People own requirements and review;
+deterministic tools make delivery decisions.
 
-The current demo is a functional integration check, not the complete twenty-scenario experiment or a timed campaign.
+No repository-wide reuse license is declared. Third-party notices retain their
+own terms. License selection and a private security-reporting route need owner
+decisions; see [reuse and support](docs/EN/getting-started.md#reuse-and-support).
+Use [repository issues](https://github.com/tfm-goldenpath/golden-path-lab/issues)
+for non-sensitive questions and reproducible defects; no support SLA is declared.
 
-## Repository structure
+<details>
+<summary>Links from the previous introduction</summary>
 
-| Path | Responsibility |
-|---|---|
-| `.devcontainer/implementacion/` | Repository-level Codespaces entry point. |
-| `.github/workflows/ci.yml` | Shared service, unit, policy and offline cryptographic checks on every PR and push. |
-| `.github/workflows/golden-path.yml` | Manual hosted build, evidence verification and admission demonstration. |
-| `CONTRIBUTING.md`, `.github/pull_request_template.md` | Contribution process, verification and assistance/review record. |
-| `AGENTS.md`, `.github/copilot-instructions.md`, `.github/skills/scenario-change/` | Assistant guidance and the reusable scenario-change procedure. |
-| `implementacion/services/quotes-node/` | Synthetic API, tests and image definition. |
-| `implementacion/scripts/` | Delivery entry points, reusable modules and evidence processing. |
-| `implementacion/policies/` | Conftest and Kyverno controls. |
-| `implementacion/tests/` | Configuration, unit, policy and scenario tests. |
-| `implementacion/docs/EN/`, `implementacion/docs/ES/` | Guides grouped by language, with shared topics and case-specific specifications/runbooks. |
-| `implementacion/registros/` | Validation records, distinguishing prior observations from this import. |
-| `implementacion/Makefile` | Shared local and CI commands. |
+<a id="quick-start-in-codespaces-or-a-devcontainer"></a>
+[Codespaces laboratory procedure](lab/README.md#running-the-laboratory).
+<a id="language-and-documentation"></a>
+[Language and documentation](docs/EN/README.md).
+<a id="contributing-with-or-without-ai"></a>
+[Contributing with or without AI](CONTRIBUTING.md).
+<a id="evaluation-configurations-and-execution-lanes"></a>
+[Configurations and execution lanes](lab/README.md#scenarios-and-configurations).
+<a id="repository-structure"></a>
+[Repository structure](docs/EN/maintainers/repository-map.md).
+<a id="github-integration-and-repository-protection"></a>
+[GitHub integration and protection](implementacion/docs/EN/github-configuration.md).
+<a id="implementation-status-and-next-increments"></a>
+[Status and next increments](implementacion/TODO.md).
 
-See the [implementation README](implementacion/README.md) for the module responsibilities and [architecture](implementacion/docs/EN/architecture.md) for their contracts.
-
-## GitHub integration and repository protection
-
-The hosted workflow must be present on the default branch before it can be dispatched. Run **Golden Path GitHub integration** on a reviewed revision. It publishes to `ghcr.io/<owner>/<repository>-quotes-node`; for this repository the destination is `ghcr.io/tfm-goldenpath/golden-path-lab-quotes-node`.
-
-Review package access, the exact authorized workflow identity and the resulting image digest. The workflow uses `GITHUB_TOKEN` and OIDC, and exports an evidence artifact with fourteen-day retention. Preserve a verified local copy.
-
-The [GitHub configuration guide](implementacion/docs/EN/github-configuration.md) covers rulesets, Actions permissions, Dependabot, optional CodeQL, SBOM exports, attestations and releases. Adding these source files does not apply repository settings. The extra lint/format gate described there is a subsequent increment, not an existing command.
-
-## Implementation status and next increments
-
-The released **v0.1.0** baseline is at `9f1999e`. Classic hosted [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654) passed on `4f8fe77`, including independently verified L01 image replacement; that change is included in the release. The run is evidence for its recorded commit and classic profile.
-
-The published **v0.2.0** at `dd381d3` includes PR #15's [Cosign bundle migration](implementacion/docs/EN/cosign-bundle-migration.md). All steps of [hosted run 36332256483](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36332256483) completed successfully on that revision and an evidence artifact is available; its archive contents have not yet been audited. Local directed F07 subsequently passed in `run-xFGRe6X1`; see its [operational record](implementacion/docs/EN/cases/F07/record.md). Hosted F07 remains `NOT_EXECUTED` after the [bounded GHCR investigation](implementacion/docs/EN/cases/F07/hosted-compatibility.md). A local repeat of the unchanged released revision remains a separate task. Cosign 3.1.3 and Kyverno 1.19.1 remain pinned; all evidence consumers select `SigstoreBundle` with an independent image-signature predicate and separate local/hosted trust. Earlier [local compatibility](implementacion/registros/cosign_bundles_validation_EN.md), [hosted review](implementacion/registros/pr15_review_EN.md) and [import](implementacion/registros/validacion_importacion_ES.md) records retain their exact revisions and limitations.
-
-Complete the bundle acceptance checks and affected pilot before freezing the adopted campaign profile; keep classic development timings separate from bundle campaign measurements. Continue the remaining scenario fixtures and evaluation runner under the unchanged twenty-scenario method. Short-lived branches merge into `main`; scenarios remain versioned tests. Preserve results from later corrections as separate revisions.
-
-The [implementation plan](implementacion/TODO.md) lists deliverables; older unchecked entries must be reconciled with the implemented increments and their remaining acceptance conditions. License selection remains pending; this repository does not yet declare a reuse license.
-
-Current runtime status: the user-supplied review of [hosted 36768108684](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36768108684), merged at `eed5aad2828a7156e4c49bf2e2f3d9c2b0476137`, records F11/F12 rejections and L06 success (449 internal hashes, eight authenticated bundles). This increment did not repeat the audit; local validation and the existing F09/F10/L05 and F13/F14 gaps remain pending. The [local F03/F04/L02 procedure](implementacion/docs/EN/cases/F03-F04-L02/runbook.md) retains separate package-selection and image/admission execution status.
+</details>

@@ -1,5 +1,9 @@
 # Golden Path: verifiable delivery laboratory
 
+[Product introduction](../README.md) · [Laboratory navigation](../lab/README.md) · [Current evaluation status](docs/EN/evaluation-readiness.md).
+
+The dated [canonical acceptance](registros/evaluation_acceptance_20261004_ES.md) governs its reduced historical scope; older pending statements below retain their original context.
+
 The [EN](docs/EN/evaluation-readiness.md) / [ES](docs/ES/evaluation-readiness.md) readiness matrices consolidate twenty scenarios and the final execution handoff. Human-effort measurement and eligible manual calibration are deferred; functional trials, known scripted repairs, the four-pair timing pilot and the [completed ten-pair campaign](docs/EN/paired-rg-campaign-results.md) remain separate datasets. Campaign source `895a3bd`: 10/10 favorable pairs with automated technical review; human results review and overall acceptance remain pending.
 
 This laboratory uses **quotes-node**, a synthetic quotation service without production dependencies. **L01** demonstrates a legitimate delivery followed by replacement with a different, independently verified image digest. **F13** checks that a missing signed results attestation prevents deployment. The **F11/F12/L06** family adds privileged/tag-reference rejection on CREATE and legal template UPDATE, plus a meaningful permitted update; [historical lane-A success and supplied hosted review are recorded; final-source acceptance remains pending](docs/EN/evaluation-readiness.md).

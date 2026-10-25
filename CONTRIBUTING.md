@@ -1,5 +1,7 @@
 # Contributing
 
+For product orientation, start with the [reading guide](docs/EN/getting-started.md). Before extraction or path changes, consult the [ownership inventory and migration contract](docs/EN/maintainers/repository-map.md). P01 establishes documentation and inventory only: runtime paths, workflow identities and historical evidence remain unchanged.
+
 Contributions should keep the laboratory reproducible and its conclusions traceable. Start with the [README](README.md), [architecture](implementacion/docs/EN/architecture.md), [delivery contracts](implementacion/docs/EN/delivery-contracts.md) and the relevant scenario record. English is primary for code, tests and contributions; update affected Spanish commands, expectations and explanations alongside the English guide.
 
 ## A small, reviewable change
