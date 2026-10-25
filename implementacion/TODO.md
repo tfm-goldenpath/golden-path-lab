@@ -37,7 +37,7 @@ owner and are not P00/P01 blockers. Historical entries below retain their dates.
 - [ ] Owner selects repository reuse terms and verified private security-reporting route; no license/settings changes made here.
 - [x] Complete documentation/inventory validation: exact 500-path coverage, 10 focused validator tests, relative links/anchors, EN/ES navigation, command dry-run and protected-path comparison. See the [validation record](../docs/EN/maintainers/validation.md).
 - [ ] Human review and acceptance of P01. AI assistance: OpenAI Codex / GPT-6; no human review inferred.
-- [ ] P03 `refactor/delivery-core`: neutral runtime extraction with representative Linux integration.
+- [x] P03 `refactor/delivery-core`: bounded functional implementation and both Linux integrations on `e3850a4`; human PR review remains pending below.
 - [ ] P01b physical product/laboratory file separation, after applicable custody/review gates.
 - [ ] P03b script/interface consolidation or deletion after caller/compatibility review.
 - [ ] P04 real consumer template; new controls, dashboard redesign, P15 richer catalogue and future product release remain later work.
@@ -54,7 +54,7 @@ the owner's supplied scope and preserves the newer P00 records.
 
 - [x] Bounded owner-authorized functional extraction from main `b00d57b91536a00d3dc99bd1a99f4a82c5bab1ca`; unrelated root npm files and original evidence preserved.
 - [x] Fresh-only local quotes-node coordinator, explicit source/configuration/profile, neutral admission classifier and authorized readiness, ordinary workload operations and versioned delivery package. Existing laboratory/paired/defense/manual interfaces retain their historical defaults.
-- [ ] Final candidate shared/focal checks and both sequential real integrations; exact outcomes belong in the [validation record](../docs/EN/maintainers/delivery-core-validation.md).
+- [x] Final candidate shared/focal checks and both sequential real integrations PASS on `e3850a4b59f4cea198d89902285078875457668c`; legitimate delivery `delivery-FKciP7Y2` and laboratory `run-20rUZlEe`, including independent L01 replacement. Hashes verified; exact scope and remaining checks are in the [validation record](../docs/EN/maintainers/delivery-core-validation.md).
 - [ ] Human review of implementation and PR; no P00 custody/review or historical acceptance gate is closed by this extraction.
 - [ ] Physical separation, script consolidation and independent consumer template remain their subsequent increments.
 
