@@ -114,3 +114,6 @@ La vía alojada mantiene su coordinador y workflow actuales. Esta nueva invocaci
 no tiene modo hosted; kind y claves locales no demuestran OIDC, certificados o
 transparencia GitHub. Consulta el registro de validación para los SHAs, resultados
 reales y comprobaciones pendientes.
+
+El [registro de mantenimiento de dependencias](../EN/maintainers/dependency-refresh-validation.md)
+recoge la compatibilidad actual de AJV y formatos, separada de las ejecuciones históricas de P03.

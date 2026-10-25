@@ -50,7 +50,7 @@ export function validateSchema(document, reportFile, documentBytes=Buffer.from(J
     validator:{name:'ajv',version:require('ajv/package.json').version,formats:require('ajv-formats/package.json').version,internationalFormats:require('ajv-formats-draft2019/package.json').version,formatMode:'full'},
     status:'ERROR'};
   try {
-    if (report.validator.version!=='8.17.1' || report.validator.formats!=='3.0.1' || report.validator.internationalFormats!=='1.6.1') throw new Error('Unpinned schema validator');
+    if (report.validator.version!=='8.20.0' || report.validator.formats!=='3.0.1' || report.validator.internationalFormats!=='1.6.1') throw new Error('Unpinned schema validator');
     const compiled=folder===directory ? (cached ??= compileSchema()) : compileSchema(folder);
     report.schemaRevision=compiled.lock.revision; report.schemaFiles=compiled.lock.files;
     if (document?.specVersion!=='1.7') throw new Error('Unsupported CycloneDX specVersion; allowed: 1.7');
