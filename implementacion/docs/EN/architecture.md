@@ -357,3 +357,23 @@ metadata; they do not establish a new verification or modify evidence.
 The defense viewer now adds a CLI-only `observations.py` capture module. It reads bounded GitHub metadata and hash-pinned publication summaries into a separate append-only public evidence store; it cannot dispatch workflows or alter session actions. The frontend separates remote observations, captured configuration and local attestation receipts. Export includes capture originals with existing integrity manifests. See the [canonical defense guide](defense/README.md).
 
 The [early-security profile](defense/early-security.md) reuses the same supervisor and coordinator through enumerated case actions. `early.py` owns per-case preparation and independent observations; the early adapters call existing scenario evaluators. `lab_create_registry_builder` is the registry/builder portion of `lab_create`, allowing F03 preparation without kind. `delivery_scan_original_sbom` is the existing scan/association portion of `delivery_scan`; it reuses a verified frozen database and never regenerates the SBOM. Neither helper changes policies, trust or scenario expectations.
+
+## P03 legitimate delivery boundary
+
+[`deliver.sh`](../../scripts/deliver.sh) is the fresh-only local coordinator.
+It calls the existing context, build/analysis, trust and workload operations with
+explicit delivery-v1 selection. [`local-delivery.sh`](../../scripts/lib/local-delivery.sh)
+implements environment operations using kind/zot/buildx provisioning in `lab.sh`,
+with one protected namespace and recorded immutable resource identities. The core
+receives those Bash operations and initialized context; this is not a plugin API.
+[`admission.sh`](../../scripts/lib/admission.sh) owns the strict classifier;
+F13 retains a compatibility import. Paired and audit consumers no longer import F13.
+
+`workload_deploy`, `workload_rollout`, `workload_image` and `workload_http` separate
+ordinary observations. L01 reuses deployment and keeps R/G comparison and its
+independent replacement. Authorized readiness authenticates the complete inventory
+and accepts a server dry-run of the actual candidate; historical initial/update/
+prepared readiness keeps its old behavior. Module imports execute no operations.
+The [canonical guide](../../../docs/EN/legitimate-delivery.md) covers explicit
+source/configuration/trust state, resource ownership and packaging. Physical paths,
+experimental oracles and the hosted workflow identity/order remain unchanged.

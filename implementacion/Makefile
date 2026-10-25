@@ -60,3 +60,7 @@ paired-plan:
 
 paired-analyze:
 	python3 scripts/paired-rg.py analyze $(PAIR_FILES) --output "$(ANALYSIS_OUTPUT)"
+
+.PHONY: deliver
+deliver:
+	bash scripts/deliver.sh local

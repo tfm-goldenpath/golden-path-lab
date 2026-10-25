@@ -3,6 +3,11 @@
 # Sourced by demo.sh; definitions only. See docs/EN/architecture.md.
 
 delivery_service_tests() {
+  if [[ "${execution_profile:-laboratory}" == delivery-v1 ]]; then
+    env -u NODE_TEST_CONTEXT node --test --test-reporter=tap services/quotes-node/test/*.test.js > "$state_dir/unit-tests.log" 2>&1
+    node "$contract" service-tests "$state_dir/unit-tests.log"
+    return
+  fi
   node --test services/quotes-node/test/*.test.js > "$state_dir/unit-tests.log" 2>&1
 }
 
@@ -45,7 +50,7 @@ delivery_build() {
   node_image=${GP_NODE_IMAGE:-$SERVICE_NODE_IMAGE}
   [[ "$node_image" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'The base image must be pinned by digest.'
   put nodeImage "$node_image"
-  node scripts/capture-build-inputs.mjs "$context" "${base:-$node_image}" "$commit" "${3:-}" "${4:-}" > "$state_dir/build-inputs.json"
+  node scripts/capture-build-inputs.mjs "$context" "${base:-$node_image}" "$commit" "${3:-}" "${4:-}" "${5:-laboratory}" > "$state_dir/build-inputs.json"
   record "Build image $id"
   docker buildx build --builder "$builder" --platform linux/amd64 --provenance=false --sbom=false --push \
     --build-arg "BASE_IMAGE=$base" --build-arg "NODE_IMAGE=$node_image" --build-arg "BUILD_COMMIT=$commit" --label "tfm.lab.run=$id" \
@@ -57,8 +62,9 @@ delivery_build() {
 }
 
 delivery_render_manifests() {
-  local ns
-  for ns in tfm-reference tfm-golden; do
+  local ns; local -a namespaces=("$@")
+  [[ ${#namespaces[@]} != 0 ]] || namespaces=(tfm-reference tfm-golden)
+  for ns in "${namespaces[@]}"; do
     node "$contract" manifest "$image_repo@$digest" "$ns" "$state_dir/$ns.json" "$mode"
   done
 }

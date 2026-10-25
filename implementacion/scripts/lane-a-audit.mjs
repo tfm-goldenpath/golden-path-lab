@@ -17,7 +17,7 @@ export function audit(suite,directory,staticDirectory,main) {
   const status=(p,wanted='PASS')=>{const v=json(p);check(v.status===wanted,`${p}: expected ${wanted}, found ${v.status}`);return v;};
   const boundary=(scenario,name,operation)=>{try {operation();rows.push({scenario,boundary:name,status:'PASS'});} catch(e){rows.push({scenario,boundary:name,status:'FAIL',reason:e.message});}};
   const http=(prefix,commit)=>execFileSync(process.execPath,[join(import.meta.dirname,'lab-contracts.mjs'),'response',...['health','quote','version'].map(k=>join(directory,prefix+k+'.json')),commit]);
-  const admission=(log,policy,rule,name='quotes-node')=>execFileSync('bash',['-c','source "$1/tests/scenarios/f13.sh"; scenario_admission_single_reason "$2" "$3" "$4" "$5"','audit',resolve(import.meta.dirname,'..'),join(directory,log),policy,rule,name],{encoding:'utf8'}).trim();
+  const admission=(log,policy,rule,name='quotes-node')=>execFileSync('bash',['-c','source "$1/scripts/lib/admission.sh"; scenario_admission_single_reason "$2" "$3" "$4" "$5"','audit',resolve(import.meta.dirname,'..'),join(directory,log),policy,rule,name],{encoding:'utf8'}).trim();
   const positive=dir=>{
     const prefix=dir?dir+'/':'';
     const a=status(prefix+'analysis.json');authorize(join(directory,dir),a.image);

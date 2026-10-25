@@ -71,6 +71,7 @@ lab_create_registry_builder() {
   # docker cp also works when the daemon is reached through a socket from a devcontainer.
   docker create --name "$registry" --network "$network" --label tfm.lab="$cluster" \
     "$(jq -r '.images.zot.reference' "$lock")" serve /etc/zot/config.json >/dev/null
+  if declare -F environment_record_container >/dev/null; then environment_record_container "$registry"; fi
   docker cp "$private/zot.json" "$registry:/etc/zot/config.json"
   docker start "$registry" >/dev/null
   registry_host="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$network\").IPAddress}}" "$registry"):5000"
@@ -97,6 +98,7 @@ lab_create() {
     record 'Explicit cgroup v1 compatibility: this is not the campaign environment'
   fi
   kind create cluster --name "$cluster" --image "$KIND_NODE_IMAGE" --kubeconfig "$private/kubeconfig" --wait 180s "${kind_args[@]}"
+  if declare -F environment_record_container >/dev/null; then environment_record_container "$cluster-control-plane"; fi
   if [[ "$mode" == local ]]; then
     if [[ "${CODESPACES:-}" == true ]]; then
       python3 scripts/codespaces-network.py ensure --cluster "$cluster" --output "$state_dir/codespaces-network.json"
@@ -116,8 +118,9 @@ lab_create() {
 }
 
 lab_prepare_namespaces() {
-  local ns
-  for ns in tfm-reference tfm-golden; do
+  local ns; local -a namespaces=("$@")
+  [[ ${#namespaces[@]} != 0 ]] || namespaces=(tfm-reference tfm-golden)
+  for ns in "${namespaces[@]}"; do
     k create namespace "$ns"
     k -n "$ns" create serviceaccount deployer
     k -n "$ns" create role deployment-writer --verb=get,list,watch,create,update,patch --resource=deployments.apps,pods
@@ -146,7 +149,7 @@ lab_install_admission() {
 
 lab_apply_admission_policies() {
   local lifecycle=${1:-update} pod rejection reason
-  [[ "$lifecycle" == initial || "$lifecycle" == update || "$lifecycle" == prepared ]] || fail "Invalid admission lifecycle."
+  [[ "$lifecycle" == initial || "$lifecycle" == update || "$lifecycle" == prepared || "$lifecycle" == authorized ]] || fail "Invalid admission lifecycle."
   local -a renderer_args
   renderer_args=(--mode "$mode" --repository "$repository" --commit "$commit" --image-repository "$image_repo" --sbom-version "$(get sbomVersion)" --output "$state_dir/admission-policies.json")
   if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
@@ -189,9 +192,20 @@ lab_apply_admission_policies() {
     [[ "${rejection#*$'\t'}" == 'validation failure: IMAGE_REPOSITORY: all images must belong to the authorized repository and use a digest' ]] || fail 'Unexpected prepared readiness diagnostic.'
     return
   fi
+  if [[ "$lifecycle" == authorized ]]; then
+    # A complete, freshly authenticated authorized inventory is prerequisite.
+    # The actual candidate must be accepted; no prior negative request is needed.
+    attestations_ci_gate CI-admission authorized
+    local status=0
+    actor tfm-golden create --dry-run=server -f "$state_dir/tfm-golden.json" > "$state_dir/admission-readiness-probe.log" 2>&1 || status=$?
+    if [[ "$status" != 0 ]]; then
+      admission_record_failure "$state_dir/admission-readiness-probe.log" "$state_dir/admission-failure.json" "$status"
+    fi
+    return "$status"
+  fi
   # Exercise the actual API-server -> webhook path without persisting a workload.
   # At initial install results are deliberately absent. Reuse the strict shared
-  # classifier loaded from f13.sh; this preflight does not count as an F13 trial.
+  # classifier from lib/admission.sh; this preflight does not count as an F13 trial.
   if actor tfm-golden apply --dry-run=server -f "$state_dir/tfm-golden.json" > "$state_dir/admission-readiness-probe.log" 2>&1; then
     [[ "$lifecycle" == update ]] || fail 'Admission readiness probe unexpectedly accepted missing results.'
   else

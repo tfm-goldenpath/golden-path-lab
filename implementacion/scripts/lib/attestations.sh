@@ -74,13 +74,16 @@ attestations_issue_delivery() {
     fi
     [[ -f "$private/cosign.key" && -f "$private/cosign.pub" ]] || fail 'Incomplete local signing key pair.'
     cp "$private/cosign.pub" "$state_dir/development-public-key.pem"
+    if [[ "${execution_profile:-laboratory}" == delivery-v1 ]]; then
+      put trustPublicKeySha256 "$(sha256sum "$state_dir/development-public-key.pem" | cut -d ' ' -f 1)"
+    fi
     # Local keys are the trust anchor. Empty service/root configurations prevent
     # public signing services and implicit TUF bootstrap in this development lane.
     cosign signing-config create > "$state_dir/local-signing-config.json"
     cosign trusted-root create > "$state_dir/local-trusted-root.json"
     sign_args+=(--key "$private/cosign.key" --signing-config "$state_dir/local-signing-config.json" --trusted-root "$state_dir/local-trusted-root.json" --allow-insecure-registry)
     verify_args+=(--key "$private/cosign.pub" --trusted-root "$state_dir/local-trusted-root.json" --insecure-ignore-tlog --allow-insecure-registry)
-    node "$contract" provenance "$repository" "$commit" "$(get sourceSnapshot)" "$(basename "$state_dir")" "$state_dir/provenance.json"
+    node "$contract" provenance "$repository" "$commit" "$(get sourceSnapshot)" "$(basename "$state_dir")" "$state_dir/provenance.json" "${delivery_producer:-implementacion/scripts/demo.sh}"
   else
     # Cosign authenticates this material through its TUF client. Do not replace
     # it with an unauthenticated CA download or add intermediates as trust roots.
@@ -122,11 +125,16 @@ attestations_verify_delivery() {
 }
 
 attestations_authorize_results() {
+  if [[ "${execution_profile:-laboratory}" == delivery-v1 ]]; then
+    delivery_source_recheck
+    [[ "$(sha256sum "$state_dir/development-public-key.pem" | cut -d ' ' -f 1)" == "$(get trustPublicKeySha256)" ]] || fail 'Delivery trust anchor changed.'
+    cmp "$private/cosign.pub" "$state_dir/development-public-key.pem"
+  fi
   # Re-read the registry immediately before issuance; no saved report grants it.
   attestations_ci_gate CI-authorization
   attestations_observe begin results-issuance
   node scripts/vulnerability-evidence.mjs authorize "$state_dir" "$image" > "$state_dir/analysis-authorization.json"
-  node "$contract" results "$state_dir" "$repository" "$commit" "$state_dir/results-predicate.json"
+  node "$contract" results "$state_dir" "$repository" "$commit" "$state_dir/results-predicate.json" "${execution_profile:-laboratory}"
   attestations_sign_bundle results.bundle.json attest "${sign_args[@]}" --type "$results_type" --predicate "$state_dir/results-predicate.json"
   attestations_verify_bundle results.bundle.json "$results_type" verified-results-bundle.txt verified-results.json
   attestations_observe end results-issuance

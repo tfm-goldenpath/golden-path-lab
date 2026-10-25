@@ -17,10 +17,15 @@ state_dir="$GP_DIR"; private="$GP_DIR"; mode=local; repository=synthetic; commit
 contract="$root/scripts/lab-contracts.mjs"; SERVICE_NODE_IMAGE="docker.io/library/node@sha256:$(printf 'a%.0s' {1..64})"
 get() { echo 1.7; }
 python3() { :; }
+attestations_ci_gate() { echo "verification:$*" >> "$GP_DIR/events"; [[ "$GP_FAULT" != inventory ]]; }
 actor() {
   if [[ "$*" == *'auth can-i'* ]]; then echo no; return; fi
   echo "probe:$*" >> "$GP_DIR/events"
   if [[ "$GP_FAULT" == probe-timeout ]]; then echo 'context deadline exceeded'; return 1; fi
+  if [[ "$GP_FAULT" == wrong-policy ]]; then
+    echo 'resource Deployment/tfm-golden/quotes-node was blocked due to the following policies'
+    echo 'tfm-signature:'; echo '  require-image-signature: registry unavailable'; return 1
+  fi
   if [[ "$GP_FAULT" == unexpected-acceptance ]]; then return 0; fi
   if [[ "$GP_LIFECYCLE" == prepared ]]; then
     echo 'resource Deployment/tfm-golden/measurement-readiness was blocked due to the following policies'
@@ -94,4 +99,14 @@ test('prepared admission checks actual CREATE denial without a measured image',t
 });
 for(const fault of ['probe-timeout','unexpected-acceptance']) test(`prepared readiness fails closed on ${fault}`,t=>{
  const r=run(t,fault,'prepared');assert.notEqual(r.status,0);assert.doesNotMatch(r.events,/workload/);
+});
+
+test('authorized readiness authenticates inventory then accepts the actual candidate without F13',t=>{
+ const r=run(t,'','authorized');assert.equal(r.status,0,r.stderr);
+ assert.match(r.events,/verification:CI-admission authorized[\s\S]*probe:tfm-golden create --dry-run=server[\s\S]*workload/);
+ assert.doesNotMatch(r.events,/rollout restart|measurement-readiness/);
+});
+for(const fault of ['inventory','probe-timeout','wrong-policy','bootstrap']) test(`authorized readiness stops on ${fault}`,t=>{
+ const r=run(t,fault,'authorized');assert.notEqual(r.status,0);assert.doesNotMatch(r.events,/workload/);
+ if(fault==='inventory') assert.doesNotMatch(r.events,/probe:tfm-golden create/);
 });

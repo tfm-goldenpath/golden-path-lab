@@ -244,7 +244,7 @@ def main():
     parser.add_argument('--cluster', help='Only this lab cluster may be attached when recovering connectivity')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
-    if args.cluster and not re.fullmatch(r'tfm-demo-run-[a-z0-9]+', args.cluster): parser.error('Invalid owned cluster name')
+    if args.cluster and not re.fullmatch(r'(?:tfm-demo-run-[a-z0-9]+|tfm-delivery-[a-z0-9]{8})', args.cluster): parser.error('Invalid owned cluster name')
     output = args.output or ROOT / 'evidence/environment' / ('codespaces-network-' + uuid.uuid4().hex[:12] + '.json')
     output = output.absolute()
     if output.resolve() != output or output.exists(): parser.error('Use a new non-symlink evidence path')

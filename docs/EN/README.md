@@ -1,5 +1,7 @@
 # Product and implementation guide
 
+[One legitimate local delivery (P03)](legitimate-delivery.md)
+
 [Repository](../../README.md) · [Español](../ES/README.md)
 
 1. [Getting started](getting-started.md): understand the project and inspect existing evidence without a cluster.

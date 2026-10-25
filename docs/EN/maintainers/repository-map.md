@@ -46,18 +46,18 @@ Focused synthetic tests exercise missing, duplicate, unsafe and stale paths plus
 invalid classifications/profiles. There is no change to the runtime Make/CI targets.
 
 <!-- inventory-summary:start -->
-500 tracked paths; 228 individually enumerated scripts/helpers/tests.
+508 tracked paths; 233 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 130 |
+| developer | 132 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 267 |
-| product | 8 |
-| shared | 31 |
+| product | 11 |
+| shared | 34 |
 
-99 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
+100 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
 <!-- inventory-summary:end -->
 
 Current physical roots are `.github/` (automation and contribution instructions),
@@ -112,6 +112,9 @@ is authoritative about current coupling and callers.
 | --- | --- |
 | P01 — `chore/product-foundation` | Product-first EN/ES journey, separate lab entry, complete tracked inventory and compatibility contract. Documentation/inventory checks; no Kubernetes. Human review and owner decisions remain explicit. |
 | P03 — `refactor/delivery-core` | Extract neutral delivery while retaining the lab adapter and oracle. Demonstrate a legitimate non-measured delivery without scenario dispatch; inventory mixed helpers before splitting. Linux and representative integration required. |
+| Refresh A — `chore/dependency-refresh` | Later pinned application/development/Actions updates; audit before/after, exclude vulnerable fixtures; see TODO. |
+| Refresh B — `chore/devcontainer-refresh` | Later reproducible runtimes/images/three profiles and optional official pinned Codex; full rebuild and storage comparison; see TODO. |
+| Refresh C — `chore/security-toolchain-refresh` | Later compatible scanner/policy/crypto/admission versions; real crypto/admission and hosted verification if trust changes; CEL migration stays separate. |
 | P01b — physical repository separation | Move product/lab files only after extraction and the outstanding custody/review gate is resolved. Prove product works with lab files absent; preserve URL/command compatibility and historical evidence interpretation. |
 | P03b — script/interface consolidation | Consolidate proven duplicate behavior behind the supported interface; preserve arguments, status codes and failure classification. Investigate unreferenced/manual helpers before any retirement. |
 | P04 — consumer template | Ship a real consumer starter using the extracted engine, with documented prerequisites and actual independent execution. No fictional install/configuration API beforehand. |
@@ -126,7 +129,7 @@ moves, deletions, releases, settings changes or measurement runs.
 | Existing dependency | Migration obligation |
 | --- | --- |
 | Bash `root` resolves to `implementacion/`; state helpers and module globals | Introduce explicit roots/state adapters before relocation; restore cross-step values. Never silently retarget digest, trust or evidence directory. |
-| `demo.sh` and paired/defense coordinators source modules and dynamic scenario lists | Inspect all coordinators/importers, not just textual filename calls. Keep imports effect-free and direct calls preserving Bash `errexit`. `f11.sh` shares F13's classifier. |
+| `demo.sh` and paired/defense coordinators source modules and dynamic scenario lists | Inspect all coordinators/importers, not just textual filename calls. Keep imports effect-free and direct calls preserving Bash `errexit`. `f13.sh` imports the neutral admission classifier; historical names remain compatible. |
 | Build contexts and fixture allowlists | Update Dockerfile COPY/context, `.dockerignore`, captured input hashes and actual source exports together. Quotes service must remain independent of delivery scripts. |
 | Selected source/configuration snapshots | A path move changes snapshot bytes/identity. Preserve old manifests and teach new code the new layout; never rewrite historical source or evidence hashes. |
 | Workflow command paths and signing identities | Keep `.github/workflows/golden-path.yml` and `paired-rg.yml` identities unchanged here. A rename can change authorized OIDC identity/builder and requires separate trust review plus hosted verification. |
@@ -213,3 +216,15 @@ release-review gate.
 The [validation record](validation.md) reports actual documentation/inventory
 checks, newcomer walkthrough, protected-path comparison and explicit unrun checks.
 Human acceptance remains pending. Repository-wide refactoring is not complete.
+
+## P03 functional extraction
+
+The owner explicitly authorizes this bounded extraction from main
+`b00d57b91536a00d3dc99bd1a99f4a82c5bab1ca`. P00 human review/custody gates stay open.
+The [operator guide](../legitimate-delivery.md) and [validation record](delivery-core-validation.md)
+state current behavior and observed checks. Context/source selection, build,
+authentication, authorization and workload operations are shared; environment
+operations remain local adapters. No directory migration, dependency update,
+consumer template or measurement campaign is included. Future refresh branches
+above follow P03 separately and must consult stable supported releases at their
+implementation date, pin them and test compatibility; `latest` is not a pin.

@@ -14,7 +14,7 @@ import {validateGithubVerificationResults} from './github-attestation.mjs';
 const SBOM = 'https://cyclonedx.org/bom', PROVENANCE = 'https://slsa.dev/provenance/v1';
 const save = (file, value) => writeFileSync(file, JSON.stringify(value, null, 2) + '\n');
 
-export function authenticateBundle({mode, image, directory, repository, commit, identity, ref}, bundle, type, file, prefix, run = spawnSync) {
+export function authenticateBundle({mode, image, directory, repository, commit, identity, ref, producer}, bundle, type, file, prefix, run = spawnSync) {
   const digest = image.split('@')[1];
   const hostedProvenance = mode === 'github' && type === PROVENANCE;
   const args = hostedProvenance ? ['attestation', 'verify', 'oci://' + image,
@@ -43,7 +43,7 @@ export function authenticateBundle({mode, image, directory, repository, commit, 
     save(prefix + '.provenance-contract.json', contract);
     return output;
   }
-  return statementFromVerifiedBundle(readFileSync(file, 'utf8'), digest, type, repository, commit, prefix + '.schema.json');
+  return statementFromVerifiedBundle(readFileSync(file, 'utf8'), digest, type, repository, commit, prefix + '.schema.json', producer);
 }
 
 export async function verifyDelivery(options, {download = downloadBundleInventory, authenticate = authenticateBundle} = {}) {
@@ -119,7 +119,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const state = JSON.parse(readFileSync(join(directory, 'state.json'), 'utf8'));
     const result = await verifyDelivery({directory, prefix, phase, mode:state.mode,
       image:state.imageRepository + '@' + state.digest, repository:state.sourceRepository,
-      commit:state.sourceCommit, identity:state.identity, ref:process.env.GITHUB_REF});
+      commit:state.sourceCommit, ...(state.profile==='delivery-v1'?{producer:'implementacion/scripts/deliver.sh'}:{}), identity:state.identity, ref:process.env.GITHUB_REF});
     process.exitCode = result.status === 'VERIFIED' ? 0 : 42;
   } catch (error) { console.error('CI verification failed: ' + error.message); process.exitCode = 1; }
 }

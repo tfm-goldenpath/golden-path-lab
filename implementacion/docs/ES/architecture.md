@@ -366,3 +366,21 @@ comparan fuente/hash capturados; no acreditan otra verificación ni modifican ev
 El visor añade `observations.py`, importador exclusivo de CLI: captura metadatos GitHub y resúmenes publicados con hashes, de forma acotada y en un almacén de evidencia pública separado. No despacha workflows ni cambia acciones de sesión. La interfaz separa observaciones remotas, configuración y recibos locales de atestaciones; la exportación incluye originales con el manifiesto de integridad existente. Consulta la [guía canónica de defensa](defense/README.md).
 
 El perfil [early-security](defense/early-security.md) reutiliza supervisor y coordinador mediante acciones de caso enumeradas. `early.py` gestiona preparación por caso y observaciones independientes; sus adaptadores llaman evaluadores de escenario existentes. `lab_create_registry_builder` extrae registro/builder de `lab_create` para preparar F03 sin kind. `delivery_scan_original_sbom` extrae análisis/asociación de `delivery_scan`: reutiliza la base congelada comprobada y no regenera el SBOM. No cambia políticas, confianza ni expectativas de escenarios.
+
+## Frontera P03 de entrega legítima
+
+[`deliver.sh`](../../scripts/deliver.sh) coordina una entrega local con estado nuevo.
+Reutiliza contexto, build/análisis, confianza y workload con selección explícita
+delivery-v1. [`local-delivery.sh`](../../scripts/lib/local-delivery.sh) adapta
+kind/zot/buildx de `lab.sh`, crea solo el namespace protegido y registra IDs de
+recursos para cleanup. No es un framework de plugins ni una API pública estable.
+[`admission.sh`](../../scripts/lib/admission.sh) contiene el clasificador neutral;
+F13 conserva importación compatible y paired/auditoría lo usan directamente.
+
+Despliegue, rollout, digest efectivo y HTTP son operaciones separadas. L01 conserva
+comparación R/G y sustitución independiente. La nueva readiness exige inventario
+autenticado y aceptación del candidato autorizado en dry-run; los caminos históricos
+initial/update/prepared conservan su comportamiento. Importar módulos no ejecuta
+operaciones. La [guía canónica](../../../docs/ES/legitimate-delivery.md) explica
+estado, fuente, confianza, propiedad y empaquetado. No se completa separación física
+ni se alteran oráculos, identidad u orden del workflow hosted.

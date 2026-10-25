@@ -1,5 +1,7 @@
 # English documentation
 
+[One legitimate local delivery (P03)](../../../docs/EN/legitimate-delivery.md)
+
 [Product guide](../../../docs/EN/README.md) · [Laboratory entry](../../../lab/README.md) · [Current P00 receipt assessment](../../../docs/EN/maintainers/repository-map.md#p00-baseline).
 
 [Laboratory release custody (P00)](lab-release-freeze.md) — release verification before repository restructuring.

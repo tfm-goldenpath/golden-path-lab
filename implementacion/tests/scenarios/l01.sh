@@ -3,7 +3,7 @@
 # Sourced by demo.sh; definitions only. See docs/EN/architecture.md.
 
 scenario_l01_accept() {
-  actor tfm-golden apply -f "$state_dir/tfm-golden.json" | tee "$state_dir/L01-admission.log"
+  workload_deploy "$state_dir/L01-admission.log"
   probe tfm-golden
   cmp "$state_dir/tfm-reference-quote.json" "$state_dir/tfm-golden-quote.json"
 }

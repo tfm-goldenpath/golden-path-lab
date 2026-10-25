@@ -1,5 +1,7 @@
 # Guía del producto y la implementación
 
+[Una entrega legítima local (P03)](legitimate-delivery.md)
+
 [Repositorio](../../README.es.md) · [English](../EN/README.md)
 
 1. [Primeros pasos](getting-started.md): entender e inspeccionar evidencias sin clúster.

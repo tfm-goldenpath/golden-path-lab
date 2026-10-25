@@ -5,7 +5,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$root"
 source versions.env
 for module in context lab delivery attestations workload; do source "$root/scripts/lib/$module.sh"; done
-source "$root/tests/scenarios/f13.sh" # strict preflight diagnostic classifier only
+source "$root/scripts/lib/admission.sh" # neutral strict diagnostic classifier
 mode=github; phase=${1:?}; context_init
 pair_dir=${PAIR_DIR:?}
 clock() { python3 scripts/paired-rg.py mark "$state_dir/measurement.json" "$@"; }
