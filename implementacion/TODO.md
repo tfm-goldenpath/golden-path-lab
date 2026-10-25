@@ -6,12 +6,48 @@
 - [x] Owner confirms downloaded frozen-0002 custody/hash on 24 October 2026; recorded separately from local automated verification.
 - [x] Administrative read access resolved with stored user authentication; immutable releases disabled, no setting changed.
 - [ ] Complete historical evaluation-dossier custody remains unverified; the frozen-0002 confirmation does not cover the full dossier.
+- [x] Record the owner report of the four-pair timing pilot backup as **COPIED** on 25 October 2026; no personal identity or storage location is recorded.
+- [x] Owner confirms pilot-backup verification **COMPLETE** on 25 October 2026. This is owner-reported verification, not an independent assistant audit; it does not establish custody of the complete historical dossier.
 - [ ] Complete the required-original preservation record, with the above scope and private recovery details retained by the owner.
 - [ ] Candidate verified and reviewed with its exact source and limitations.
-- [ ] Final merged source selected; main ancestry and required checks verified.
-- [ ] Lab release published after separate explicit authorization.
-- [ ] Published tag and independently downloaded assets verified; separate receipt retained.
+- [x] Final merged source selected: `76f93355ba78f3735b5e864970c63ab4e12b2b33`; retained source/check receipt binds PR #59 and successful CI `40136532287`. See the [P01 receipt assessment](../docs/EN/maintainers/repository-map.md#p00-baseline).
+- [x] `lab-v2026.10.24` published after explicit owner authorization; release `423007376`, tag at `76f93355ba78f3735b5e864970c63ab4e12b2b33`, `immutable=false`. Publication does not imply human release review.
+- [x] Published tag and all 19 independently downloaded assets verified on 24 October; retained `published-receipt.json` is `PUBLISHED_BYTES_VERIFIED`, bound to the independently recorded manifest anchor. P01 rechecked receipt/source/specification binding without downloading the assets again.
 - [ ] Ready for repository refactor. Until every gate is met: LAB_RELEASE_NOT_YET_VERIFIED / REPOSITORY_REFACTOR_BLOCKED.
+
+
+Current P00 clarification (25 October): the later publication handoff still records
+`LAB_RELEASE_NOT_YET_VERIFIED` / `REPOSITORY_REFACTOR_BLOCKED`. Detailed human
+release review and complete evaluation-dossier custody have not been recovered as
+closed decisions. The owner authorizes non-behavioral P01 documentation/inventory;
+physical restructuring is not authorized by inference. Frozen-0002 custody does
+not cover the full dossier. Original silent video remains unchanged; narration
+and presentation-computer playback were excluded from the release task by the
+owner and are not P00/P01 blockers. Historical entries below retain their dates.
+
+## P01 — product foundation (`chore/product-foundation`)
+
+- [x] Product-first [EN](../README.md) / [ES](../README.es.md) entries and matching small user-guide indexes.
+- [x] Honest implemented laboratory / historical observation / planned consumer / unsupported-property distinction; no fictional consumer CLI or quickstart.
+- [x] Source-inspected phase/control explanation, stopping outcomes, evidence, existing rule IDs and links to canonical contracts/tests ([EN](../docs/EN/how-it-works.md), [ES](../docs/ES/how-it-works.md)).
+- [x] Separate [EN laboratory](../lab/README.md) / [ES laboratorio](../lab/README.es.md) navigation for scenarios, lanes/configurations, measurements, acceptance, defense and recovery.
+- [x] Whole tracked-repository [ownership inventory](../docs/EN/maintainers/repository-inventory.json), including each script/helper/test, docs/configuration and explicit generated/custody patterns; unresolved migration questions remain explicit.
+- [x] [Target modular/dependency contract and compatibility sequence](../docs/EN/maintainers/repository-map.md): P01 → P03 → P01b → P03b → P04. Current runtime paths and signing workflow identities unchanged.
+- [x] Inspect actual reuse/support situation: no repository license or declared private security route; enabled Issues for non-sensitive questions; third-party terms preserved.
+- [ ] Owner selects repository reuse terms and verified private security-reporting route; no license/settings changes made here.
+- [x] Complete documentation/inventory validation: exact 500-path coverage, 10 focused validator tests, relative links/anchors, EN/ES navigation, command dry-run and protected-path comparison. See the [validation record](../docs/EN/maintainers/validation.md).
+- [ ] Human review and acceptance of P01. AI assistance: OpenAI Codex / GPT-6; no human review inferred.
+- [ ] P03 `refactor/delivery-core`: neutral runtime extraction with representative Linux integration.
+- [ ] P01b physical product/laboratory file separation, after applicable custody/review gates.
+- [ ] P03b script/interface consolidation or deletion after caller/compatibility review.
+- [ ] P04 real consumer template; new controls, dashboard redesign, P15 richer catalogue and future product release remain later work.
+
+P01 can be developed locally or in Codespaces without Kubernetes. Its validation
+is documentation/inventory validation, not a new laboratory run. Later runtime
+refactors require Linux and representative registry/trust/admission integration.
+`docs/use-case-intake` may proceed independently once P01 is accepted. No detailed
+product roadmap was found in this tracked checkout; this section implements only
+the owner's supplied scope and preserves the newer P00 records.
 
 
 ## Lane A shared-test dependency repair — 19 October 2026

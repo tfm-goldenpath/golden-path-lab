@@ -1,5 +1,7 @@
 # Documentación en español
 
+[Guía del producto](../../../docs/ES/README.md) · [Entrada al laboratorio](../../../lab/README.es.md) · [Estado actual de informes P00 (EN)](../../../docs/EN/maintainers/repository-map.md#p00-baseline).
+
 [Custodia de la release del laboratorio (P00)](lab-release-freeze.md) — verificación de la release antes de reorganizar el repositorio.
 
 [Todos los documentos](../README.md) · [English documentation](../EN/README.md)

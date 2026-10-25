@@ -1,5 +1,7 @@
 # English documentation
 
+[Product guide](../../../docs/EN/README.md) · [Laboratory entry](../../../lab/README.md) · [Current P00 receipt assessment](../../../docs/EN/maintainers/repository-map.md#p00-baseline).
+
 [Laboratory release custody (P00)](lab-release-freeze.md) — release verification before repository restructuring.
 
 [All documentation](../README.md) · [Documentación en español](../ES/README.md)

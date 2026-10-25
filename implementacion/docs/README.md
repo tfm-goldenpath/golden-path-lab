@@ -1,5 +1,7 @@
 # Documentation
 
+Start with the [product guide](../../docs/EN/README.md) ([ES](../../docs/ES/README.md)) or deliberately enter the [laboratory](../../lab/README.md) ([ES](../../lab/README.es.md)). This technical index keeps existing detailed URLs. The [dated acceptance](../registros/evaluation_acceptance_20261004_ES.md) qualifies older pending-acceptance descriptions below.
+
 Choose a language:
 
 - [English — primary technical documentation](EN/README.md)
