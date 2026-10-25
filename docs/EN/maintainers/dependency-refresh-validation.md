@@ -42,6 +42,9 @@ advisories. The [3.1.9 release](https://github.com/fastify/fast-uri/releases/tag
 provides the compatible fix. URI resolution remains confined to hash-checked local
 schemas; no document-controlled network loader is added.
 
+AJV and the format-plugin metadata declare no Node engine constraint; this
+change validates them on the existing Node 24.21.0, not every possible runtime.
+
 The existing [Dependabot PR #23](https://github.com/tfm-goldenpath/golden-path-lab/pull/23)
 was OPEN at `7d5734000e2b3a71d4585c463c1aead004b9a26d` when inspected. Its two-file
 npm update does not synchronize this repository's strict installed-version guard,
@@ -137,11 +140,73 @@ relative targets and the inventory checks pass: 509 tracked paths, 233 individua
 enumerated scripts/helpers/tests and 10 inventory tests. The map uses validator
 output. These checks run on the candidate content before its implementation commit.
 
-A real legitimate delivery is required after committing the candidate; its exact
-SHA and observation will be recorded in a later documentation-only commit. It is
-one delivery, not all L01 or the catalogue. No orchestration, laboratory adapter or
-hosted behavior changes warrant a second full laboratory integration; focal/shared
-compatibility checks and the real delivery cover the changed boundary.
+Implementation commit: `7fe7a760454900caec08737f93c632168596e4eb`.
+The integration below runs on that clean tracked revision. The later commit
+recording its outcome changes only this document and TODO; it does not receive
+retroactive attribution for the integration. No orchestration, laboratory adapter
+or hosted behavior changes warrant a second full laboratory integration;
+focal/shared compatibility checks and the real delivery cover the changed boundary.
+
+### Real legitimate delivery
+
+Executed from the repository root with the existing tools on PATH:
+
+```bash
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+export GP_VULNERABILITY_DB=/tmp/dependency-refresh-db-wn32n0dg
+bash implementacion/scripts/deliver.sh local
+```
+
+The temporary DB input was restored from the verified archive described below;
+it was retired only after verifying the archive and the new retained local snapshot.
+This command records the actual execution, not a promise that its temporary input
+still exists. For another run, select the retained new snapshot or restore the
+archive and verify its original hashes first; recheck available capacity.
+
+Run `delivery-ZxZX3rpM`: PASS, exit 0. Inspection of `result.json`, all 21 entries in
+`delivery-steps.json` and `finalization.json` confirms successful delivery, cleanup
+and packaging. Actual SBOM generation/presigning and authenticated-bundle reports
+all record AJV 8.20.0, formats 3.0.1 / 1.6.1, and VALID. The real image-signature,
+SBOM, provenance and results contracts remain distinct. Fresh authorized admission
+reports VERIFIED; the restricted actor's request succeeds. Rollout, effective
+Deployment/ready-Pod digest and HTTP health/version/quote observations pass separately.
+
+- Raw evidence: `implementacion/evidence/raw/delivery-ZxZX3rpM/`.
+- Implementation: `7fe7a760454900caec08737f93c632168596e4eb`.
+- Source snapshot: `2791741ce0807a77fafa3b82d05561a9e40a43f8c9a2a049daac9b020eb9b86d`.
+- Configuration hash: `27d61770ff81fea6087480027960a09491f4d764fafaafddf13d2c43baee53fa`.
+- Image digest: `sha256:70b5acf6fa1b3a4a39a95696d38243b00d9c2f5979839d6fc37ff27f0ec2d864`.
+- Package: `implementacion/evidence/packages/delivery-ZxZX3rpM.tar.gz`.
+- Package SHA-256: `bf2990e4af5abf30a1aa09090f1fa8b6bf1a9087ee254d6f81a9c9fde64626a0`.
+
+The existing `lane_a_evidence.verify_package(path)` verifies the outer checksum
+and every internal manifest entry without extracting/executing archive code.
+`integration-verification.json` in the maintenance evidence records those checks,
+matching source, schema versions and immutable resource retirement. All three
+owned containers and both owned volumes were retired; the three prior volumes'
+full metadata remains unchanged. Private recovery material remains excluded from
+the public package. HTTP `/version` identifies the implementation commit; the
+quote is EUR / 1000 cents / demo-v1.
+
+The preserved DB came from the real publisher download used by P03, updated
+`2026-10-25T19:10:35.479132794Z`, downloaded `2026-10-25T21:35:34.093781555Z`.
+Both its original identity and archive recovery were verified before reuse:
+
+- DB SHA-256: `41ea1f096472748bead3571d7da40bd66a68f8c04fde4aa0eea6c9dfa3cdae21`.
+- Metadata SHA-256: `5483b54e98601142109dcddc5b95fa009b1dc10440e267105856619ed49c3d62`.
+- New retained snapshot: `implementacion/.tmp/vulnerability-db-delivery-ZxZX3rpM/`.
+
+No new publisher download or historic identity rewrite was needed. Trivy's original
+warnings about missing details for CVE-2026-107891 and vendor severity fallback
+remain in `vulnerability-scan.log`; the configured scan policy passes without a
+claim of complete vulnerability knowledge. Existing Kyverno deprecation warnings
+remain future policy work. Effective tools are recorded in the run and doctor:
+Docker 29.8.0, Buildx 0.37.1, kind 0.33.0, kubectl 1.35.8, Trivy 0.74.0,
+Conftest 0.70.1, Cosign 3.1.3, Helm 4.3.0 and Kyverno 1.19.1; none were updated.
+
+This is one legitimate delivery, not all L01 or the catalogue. No pilot, campaign,
+manual task or hosted workflow was dispatched. Local keys/kind do not validate
+GitHub OIDC, certificate or transparency integration.
 
 ## Capacity, retention and next work
 
@@ -159,14 +224,20 @@ packages, other snapshots and both small scanner caches remain unchanged.
 `snapshot-retention.json` identifies the exact retired paths, archive hash and
 restored temporary input. This recovers free capacity to 8.8 GiB while retaining
 the original bytes in a local archive; it is not an external custody claim.
+Archive SHA-256: `b052b596c8de171c115e25ae8d154d0de44c67f7f117252e50f4b00ae712da30`.
+Both P03 packages still pass their original outer/internal hashes. The new run's
+storage logs and the maintenance `resources-*` records cover preflight, post-build,
+post-analysis, packaging and final retirement. Final workspace/Docker free capacity
+is 7.3 GiB; `/tmp` returns to approximately 105 GiB after the temporary DB restore
+is retired. No global cache/volume prune was used.
 
 To recover either P03 DB at its recorded path, extract the archive with `tar -xzf
 ARCHIVE -C ORIGINAL_SNAPSHOT_DIRECTORY`; it contains only `db/trivy.db` and
 `db/metadata.json`. Check against that run's original `database-identity.json`
 with `python3 implementacion/scripts/vulnerability-database.py check DIRECTORY
 IDENTITY_FILE`. Never regenerate the identity to fit changed bytes. The temporary
-restore is an integration input; the verified compressed copy remains durable
-within the checkout's storage and must be included in eventual external custody.
+restore is an integration input; the verified compressed copy remains
+in the checkout's storage and must be included in eventual external custody.
 
 Next increments remain `chore/devcontainer-refresh` (reproducible runtimes/images,
 three profiles, optional Codex, 4 cores / 16 GB / 32 GB and capacity validation),
