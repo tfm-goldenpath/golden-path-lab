@@ -199,6 +199,13 @@ narration/presentation-computer playback are outside the owner's release scope.
 For actual recovery use the [reviewed release procedure](../../../implementacion/docs/EN/lab-release-freeze.md),
 with independent anchors and a capacity check preserving 3 GiB plus growth.
 
+### Owner custody follow-up — 25 October 2026
+
+The owner reports the four-pair timing pilot backup as **COPIED**. No personal
+identity or storage location is recorded. File identification and checksum
+verification remain pending; this report does not establish complete historical
+evaluation-dossier custody or close the human release-review gate.
+
 ## P01 validation and review
 
 The [validation record](validation.md) reports actual documentation/inventory

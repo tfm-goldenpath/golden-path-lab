@@ -6,6 +6,7 @@
 - [x] Owner confirms downloaded frozen-0002 custody/hash on 24 October 2026; recorded separately from local automated verification.
 - [x] Administrative read access resolved with stored user authentication; immutable releases disabled, no setting changed.
 - [ ] Complete historical evaluation-dossier custody remains unverified; the frozen-0002 confirmation does not cover the full dossier.
+- [x] Record the owner report of the four-pair timing pilot backup as **COPIED** on 25 October 2026. File identification and checksum verification remain pending; no personal identity or storage location is recorded.
 - [ ] Complete the required-original preservation record, with the above scope and private recovery details retained by the owner.
 - [ ] Candidate verified and reviewed with its exact source and limitations.
 - [x] Final merged source selected: `76f93355ba78f3735b5e864970c63ab4e12b2b33`; retained source/check receipt binds PR #59 and successful CI `40136532287`. See the [P01 receipt assessment](../docs/EN/maintainers/repository-map.md#p00-baseline).
