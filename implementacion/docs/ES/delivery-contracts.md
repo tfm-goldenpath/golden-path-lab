@@ -229,3 +229,14 @@ de la autorización. F03 exige análisis nuevo de la imagen corregida y compatib
 funcional; F10 selecciona un artefacto autorizado existente y verifica de nuevo
 sus evidencias; F11 conserva las restricciones explícitas de privilegios. Ningún
 evento manual ni registro temporal autoriza una carga protegida.
+
+## Perfil de ejecución P03
+
+La [entrega legítima local](../../../docs/ES/legitimate-delivery.md) conserva las
+siete `CHECKS`, `golden-path-v1`, predicados y confianza local. Los recibos vinculan
+fuente/configuración y evidencia de imagen; logs no vacíos no autorizan.
+La procedencia acepta un productor validado: conserva `implementacion/scripts/demo.sh`
+por defecto y delivery-v1 declara/verifica `implementacion/scripts/deliver.sh`.
+`legitimate-delivery-package/v1` describe una entrega sin resúmenes de escenarios;
+no cambia la política firmada. Hosted mantiene obligaciones de certificados, OIDC,
+transparencia, procedencia nativa e identidades autorizadas.

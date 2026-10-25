@@ -52,9 +52,11 @@ evidence and requires deliberate remote authorization.
 
 ## Consumer template: planned
 
-There is no supported standalone CLI or consumer template. The measured single-delivery
-runner is a research interface, not that future API. Planned work is P03 neutral
-extraction → P01b physical separation → P03b interface consolidation → P04 template.
+The [P03 local coordinator](legitimate-delivery.md) supports one fresh legitimate
+quotes-node delivery in this checkout. It is an internal interface, with no standalone
+installer or consumer template. The measured single-delivery runner remains a research
+interface. Subsequent work is P01b physical separation → P03b interface consolidation
+→ P04 template, plus the separately scoped maintenance refresh branches.
 See the [migration contract](maintainers/repository-map.md#migration-sequence).
 
 ## Reuse and support

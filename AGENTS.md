@@ -25,6 +25,11 @@ with Makefile and GitHub workflows invoking it.
 
 ### Entry points and service
 
+- [deliver.sh](implementacion/scripts/deliver.sh) coordinates one fresh local
+  quotes-node delivery without scenarios, R/G, measurements or presentation.
+  It owns its cleanup trap; [the guide](docs/EN/legitimate-delivery.md) defines
+  its internal P03 profile, immutable resource receipts and non-resume boundary.
+
 - [Makefile](implementacion/Makefile) exposes the local/test commands.
   [CI](.github/workflows/ci.yml) runs shared checks;
   [hosted integration](.github/workflows/golden-path.yml) owns GitHub-specific
@@ -43,7 +48,7 @@ with Makefile and GitHub workflows invoking it.
 
 ### Shared automation modules
 
-All five modules live in [scripts/lib](implementacion/scripts/lib/). They define
+Shared modules and the local delivery adapter live in [scripts/lib](implementacion/scripts/lib/). They define
 functions when sourced; importing them must not create infrastructure, perform
 network operations or start a scenario.
 
@@ -53,7 +58,9 @@ network operations or start a scenario.
 | `lab.sh` | Create kind, registry, builder and namespaces; install admission; supply explicit cluster access (`k`) and workload-actor access (`actor`); collect diagnostics, package evidence and clean up owned resources. |
 | `delivery.sh` | Preflight checks, image build/publication, manifest preparation, early policies and Trivy analysis. Save original reports and the resolved digest. |
 | `attestations.sh` | Configure lane-specific trust; sign and verify image/SBOM/provenance evidence; issue and verify successful results authorization after required checks. |
-| `workload.sh` | Deploy the reference workload and probe actual HTTP behavior. A functional response and an admission decision are separate observations. |
+| `admission.sh` | Strict singleton diagnostic classifier; no scenario dependency. The historical classifier name remains an alias. |
+| `local-delivery.sh` | Local kind/zot/buildx adapter over laboratory provisioning, capacity checks and immutable owned-resource retirement for delivery-v1. |
+| `workload.sh` | Ordinary deployment, rollout, effective digest and HTTP observations; reference and directed laboratory adapters remain here. A functional response and an admission decision are separate observations. |
 
 The shell variable `root` resolves to `implementacion/`, not the repository root.
 Functions depend on initialized shared context:
@@ -69,7 +76,7 @@ Use local variables for temporary values. Persist cross-phase values through the
 existing state helpers and restore them explicitly; shell variables do not
 survive separate Actions steps. Do not silently replace the active digest, trust
 identity or evidence directory. Keep resource deletion tied to validated run
-state. `demo.sh` owns shared cleanup; a scenario subshell may clean up only its
+state. `demo.sh` owns laboratory cleanup and `deliver.sh` owns legitimate-delivery cleanup; a scenario subshell may clean up only its
 own transient resources without replacing that owner.
 Submit scenario workload changes through `actor` under the restricted service
 account; reserve `k` for laboratory administration and observation. Keep cleanup
@@ -107,9 +114,9 @@ Preserve that order when adding a scenario with different evidence prerequisites
 
 [Scenario modules](implementacion/tests/scenarios/) own controlled alterations and
 their expected outcomes. Common delivery operations stay in `scripts/lib/` and
-acceptance rules stay in policies/validators. Currently `f11.sh` reuses the strict
-admission classifier defined in `f13.sh`; these modules are not independently
-executable programs. Review callers before moving a shared helper.
+acceptance rules stay in policies/validators. `f13.sh` imports the neutral `scripts/lib/admission.sh` classifier for historical
+scenario callers; paired delivery and audit tools import it directly. Scenario
+modules are not independently executable programs. Review callers before moving a shared helper.
 
 L01's replacement runs in a subshell with separate `L01-update/` state and fresh
 image-specific evidence, reusing the run's trusted local key where applicable.

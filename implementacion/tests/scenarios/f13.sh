@@ -2,51 +2,8 @@
 # F13: missing signed results for the already verified image.
 # Sourced by demo.sh; definitions only. See docs/EN/architecture.md.
 
-# Shared with F11, sourced after this file by demo.sh. Only one identified
-# policy/rule rejection may be attributed to a scenario. Preserve the original
-# log separately; normalize only YAML string quoting and continuation whitespace.
-# kubectl UPDATE errors include a patch and a "to:" preamble. Start reading
-# policies only at the complete Kyverno denial marker for the protected workload.
-scenario_admission_single_reason() {
-  local expected_name=${4:-quotes-node}
-  [[ "$expected_name" =~ ^[a-z0-9][a-z0-9-]*$ ]] || return 1
-  awk -v expected_name="$expected_name" -v expected_policy="$2" -v expected_rule="$3" '
-    $0 ~ "^resource (Deployment|Pod)/tfm-golden/" expected_name " was blocked due to the following policies[[:space:]]*$" {
-      blocked++
-      next
-    }
-    !blocked { next }
-    /^[[:alnum:]_.-]+:[[:space:]]*$/ {
-      policies++
-      policy = $0
-      sub(/:[[:space:]]*$/, "", policy)
-      if (policy != expected_policy) invalid = 1
-      next
-    }
-    /^  [[:alnum:]_.-]+:/ {
-      rules++
-      rule = $0
-      sub(/^  /, "", rule)
-      sub(/:.*/, "", rule)
-      if (policy != expected_policy || (rule != expected_rule && rule != "autogen-" expected_rule)) invalid = 1
-      reason = $0
-      sub(/^  [[:alnum:]_.-]+:[[:space:]]*/, "", reason)
-      next
-    }
-    rules { reason = reason " " $0 }
-    END {
-      if (blocked != 1 || invalid || policies != 1 || rules != 1) exit 1
-      gsub(/[[:space:]]+/, " ", reason)
-      sub(/^ /, "", reason)
-      sub(/ $/, "", reason)
-      quote = substr(reason, 1, 1)
-      if ((quote == sprintf("%c", 39) || quote == "\"") && substr(reason, length(reason), 1) == quote) {
-        reason = substr(reason, 2, length(reason) - 2)
-      }
-      printf "%s\t%s\n", rule, reason
-    }
-  ' "$1"
-}
+# Compatibility import for historical scenario/audit callers.
+source "${BASH_SOURCE[0]%/*}/../../scripts/lib/admission.sh"
 
 scenario_f13_prepare() {
   record 'F13: preflight check that results authorization is missing'

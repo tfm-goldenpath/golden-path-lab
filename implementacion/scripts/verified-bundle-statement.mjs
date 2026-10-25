@@ -8,7 +8,7 @@ import { validateStatementPredicate } from './lab-contracts.mjs';
 // Content validation only: the caller must first authenticate this exact saved
 // bundle with verify-blob-attestation, including subject, predicate and trust.
 // No registry verifier output can replace the payload examined here.
-export function statementFromVerifiedBundle(text, digest, type, repository, commit, schemaReport) {
+export function statementFromVerifiedBundle(text, digest, type, repository, commit, schemaReport, producer) {
   if (typeof digest !== 'string' || digest.length !== 71 || !/^sha256:[a-f0-9]{64}$/.test(digest)) {
     throw new Error('Expected a canonical SHA-256 digest');
   }
@@ -24,7 +24,7 @@ export function statementFromVerifiedBundle(text, digest, type, repository, comm
     throw new Error('Authenticated statement does not have the required digest and type');
   }
   if (type === 'https://cyclonedx.org/bom') validateSchema(statement.predicate, schemaReport, undefined, undefined, {authenticatedBundleSha256:createHash('sha256').update(text).digest('hex'),documentRepresentation:'JSON.stringify(authenticated statement predicate)'});
-  validateStatementPredicate(statement.predicate, type, repository, commit);
+  validateStatementPredicate(statement.predicate, type, repository, commit, producer);
   return statement;
 }
 

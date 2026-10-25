@@ -50,6 +50,47 @@ product roadmap was found in this tracked checkout; this section implements only
 the owner's supplied scope and preserves the newer P00 records.
 
 
+## P03 — legitimate delivery core (`refactor/delivery-core`)
+
+- [x] Bounded owner-authorized functional extraction from main `b00d57b91536a00d3dc99bd1a99f4a82c5bab1ca`; unrelated root npm files and original evidence preserved.
+- [x] Fresh-only local quotes-node coordinator, explicit source/configuration/profile, neutral admission classifier and authorized readiness, ordinary workload operations and versioned delivery package. Existing laboratory/paired/defense/manual interfaces retain their historical defaults.
+- [ ] Final candidate shared/focal checks and both sequential real integrations; exact outcomes belong in the [validation record](../docs/EN/maintainers/delivery-core-validation.md).
+- [ ] Human review of implementation and PR; no P00 custody/review or historical acceptance gate is closed by this extraction.
+- [ ] Physical separation, script consolidation and independent consumer template remain their subsequent increments.
+
+## Subsequent maintenance branches (outside P03)
+
+Execute each branch separately with a new baseline. “Latest” means the stable,
+supported release checked on its implementation date, explicitly pinned and
+tested; never floating `latest` or a claim of no vulnerabilities. A real blocker
+requiring a security patch needs a separate bounded patch and restored baseline,
+not an update hidden in P03. Preserve DB snapshots and frozen packages unchanged;
+a new vulnerability DB has its own identity.
+
+### A. `chore/dependency-refresh`
+
+- [ ] Review actually used package manifests/lockfiles, tooling, AJV and devcontainers CLI. Check quotes-node's dependency-free status before proposing packages; add none without need.
+- [ ] Refresh GitHub Actions full SHAs with their supported runtime requirements; consult current stable versions/advisories when implementing.
+- [ ] Evaluate Dependabot/Renovate with small groups and explicit exclusions. Do not use `npm audit fix --force` or floating versions as automatic remediation.
+- [ ] Record audit/scan before and after, behavior/tests, compatibility and remaining findings.
+- [ ] Exclude deliberately vulnerable fixtures from bulk repair. Their dependencies, oracles and historical databases encode test conditions; renewal requires explicit scenario review.
+
+### B. `chore/devcontainer-refresh`
+
+- [ ] Reproducibly update supported runtimes (prefer LTS), base images, system snapshots, versions/digests, Docker/Buildx, kind/kubectl/Kubernetes compatibility, `versions.env`, Dockerfiles, checks and related locks.
+- [ ] Synchronize `.devcontainer/implementacion/`, `.devcontainer/defense/` and `implementacion/.devcontainer/`; retain 4 cores, 16 GB RAM and 32 GB disk as Codespace target. Avoid duplicate installation/image growth; inspect effective existing-machine resources.
+- [ ] Consult current official OpenAI documentation then install explicitly pinned Codex CLI through an official method in common installation, with no divergent per-profile copies. Add the official VS Code extension if compatible.
+- [ ] Verify `codex --version` and availability for the non-root user; document interactive authentication and the officially supported remote alternative where applicable.
+- [ ] No credentials, tokens or `auth.json` in image/repository/evidence; no automatic login, startup AI tasks or disabled permissions/protections. Codex is optional development tooling, never a service, deterministic gate or admission dependency.
+- [ ] Full rebuild, environment checks, reproducible installation and representative build/delivery; record disk usage before/after.
+
+### C. `chore/security-toolchain-refresh`
+
+- [ ] Update a compatible pinned set through `tools.lock.json`, installers, checksums/checks: Trivy, Conftest, Cosign and related tools; Kyverno CLI/chart/controllers/images with matching versions/digests; Helm/other implicated tools as needed.
+- [ ] Check Kubernetes/evidence-format compatibility. ClusterPolicy → CEL migration, if still needed, retains its own policy branch; never fold it silently into a version bump.
+- [ ] Run policies/contracts, real bundle cryptography and local real admission. Require actual hosted verification if identity, certificates, transparency or workflow behavior changes.
+- [ ] Keep every historic DB snapshot and frozen package unchanged; preserve new unsuccessful attempts and explicit remaining checks.
+
 ## Lane A shared-test dependency repair — 19 October 2026
 
 - [x] Preserve and inspect run `39310363244`, attempts 1/2: both suites fail before scenarios because the Pages policy test imports undeclared PyYAML.

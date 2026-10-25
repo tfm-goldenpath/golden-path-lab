@@ -119,13 +119,15 @@ def shareable(file):
     if re.search(rb'-----BEGIN [^\r\n]*PRIVATE KEY-----', content): return False
     return file.name != 'development-public-key.pem' or is_public_key_pem(content)
 
-def package(source, output, status):
+def package(source, output, status, profile="laboratory"):
+    if profile not in ("laboratory", "delivery-v1"):
+        raise ValueError("Unknown evidence package profile")
     source, output = Path(source).resolve(), Path(output).resolve()
     candidates = list(source.iterdir())
     runtime_directories = ['runtime'] + ['runtime/' + case for case in ('F11', 'F12', 'L06')] + [
         'runtime/' + case + '/' + operation for case in ('F11', 'F12')
         for operation in ('Deployment-CREATE', 'Deployment-UPDATE', 'Pod-CREATE')]
-    for name in ('F03-vulnerable', 'F03-repaired', 'F04', 'L02', *runtime_directories, 'L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission', 'L01-update/F05-CI', 'L01-update/F05-admission', 'L01-update/F06-CI', 'L01-update/F06-admission', 'L01-update/F09-CI', 'L01-update/F09-admission', 'L01-update/F10-CI', 'L01-update/F10-admission', 'L01-update/F13-admission', 'L01-update/F14-admission', 'L05-from', 'L05-to'):
+    for name in (() if profile == "delivery-v1" else ('F03-vulnerable', 'F03-repaired', 'F04', 'L02', *runtime_directories, 'L01-update', 'F07', 'L01-update/F07-CI', 'L01-update/F08-CI', 'L01-update/F08-admission', 'L01-update/F05-CI', 'L01-update/F05-admission', 'L01-update/F06-CI', 'L01-update/F06-admission', 'L01-update/F09-CI', 'L01-update/F09-admission', 'L01-update/F10-CI', 'L01-update/F10-admission', 'L01-update/F13-admission', 'L01-update/F14-admission', 'L05-from', 'L05-to')):
         directory = source / name
         if directory.is_symlink() or directory.resolve() != directory:
             raise ValueError('Refusing symlinked scenario evidence directory')
@@ -134,7 +136,7 @@ def package(source, output, status):
     manual_operations = source / 'manual-operations'
     if manual_operations.is_symlink():
         raise ValueError('Refusing symlinked manual operations')
-    if manual_operations.is_dir() and (source / 'manual-task.json').is_file():
+    if profile == 'laboratory' and manual_operations.is_dir() and (source / 'manual-task.json').is_file():
         for directory in sorted(manual_operations.iterdir()):
             if directory.is_symlink() or not directory.is_dir() or not re.fullmatch(r'[0-9]{4,}-(start|tool|check)', directory.name):
                 raise ValueError('Unexpected manual operation directory')
@@ -143,7 +145,7 @@ def package(source, output, status):
             if inputs.is_symlink(): raise ValueError('Refusing symlinked manual input')
             if inputs.is_dir(): candidates.extend(inputs.iterdir())
     names = {p: p.relative_to(source).as_posix() for p in sorted(candidates) if shareable(p)}
-    for name, file in manual_task_files(source).items():
+    for name, file in (manual_task_files(source) if profile == "laboratory" else {}).items():
         if name in names.values(): raise ValueError('Conflicting manual evidence archive path')
         if shareable(file): names[file] = name
     files = list(names)
@@ -151,6 +153,8 @@ def package(source, output, status):
     target = output / (source.name + '.tar.gz')
     checksum = output / (target.name + '.sha256')
     for destination in (target, checksum):
+        if profile == "delivery-v1" and destination.exists():
+            raise ValueError("Refusing to replace a delivery package")
         if destination.is_symlink() or (destination.exists() and not destination.is_file()):
             raise ValueError('Refusing unsafe evidence output: ' + destination.name)
     summary = source / 'execution-summary.json'
@@ -173,13 +177,25 @@ def package(source, output, status):
         measurement_status = json.loads(measurement.read_text()).get('classification', 'indeterminate') if measured else None
     except (ValueError, AttributeError):
         measurement_status = 'INVALID_RECORD'
-    write_metadata(summary, json.dumps({'run': source.name, 'status': status,
-        'scope': 'Directed defense presentation; inspect defense-demo.json; no complete L01 or campaign claim' if source / 'defense-demo.json' in files else 'Provisional automated technical evidence; predefined repair; no human effort or acceptance' if scripted else 'One human-operated lane A manual task; inspect manual-task.json and the separate task event record; human acceptance pending' if manual else 'One legitimate paired R/G measurement arm; inspect measurement.json; no fault trials or campaign acceptance' if measured else 'Shared paired R/G preparation; outside primary delivery intervals' if preparation else 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13 and runtime F11/F12/L06; optional local F03/F04/L02 and F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
-        **({k: json.loads((source / 'manual-task.json').read_text())[k] for k in ('executionMode', 'dataset', 'actor', 'humanAcceptance', 'eligibleForHumanCalibration')} if scripted else {}),
-        'measurementClassification': measurement_status,
-        'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
-        'scenarios': scenario_summary(source, files),
-        'secretsIncluded': False}, indent=2) + '\n')
+    if profile == 'delivery-v1':
+        result = json.loads((source / 'result.json').read_text())
+        if result.get('schema') != 'legitimate-delivery-result/v1' or result.get('status') != status:
+            raise ValueError('Invalid legitimate delivery result')
+        if any(re.match(r'^(?:F[0-9]{2}|L[0-9]{2}|measurement|manual-task|defense-demo)', p.name) for p in files):
+            raise ValueError('Laboratory evidence in delivery profile')
+        write_metadata(summary, json.dumps({
+            'schema': 'legitimate-delivery-package/v1', 'profile': profile,
+            'run': source.name, 'status': status, 'result': 'result.json',
+            'scope': 'One legitimate local quotes-node delivery; no scenario, replacement, measurement or hosted claim',
+            'secretsIncluded': False}, indent=2) + '\n')
+    else:
+        write_metadata(summary, json.dumps({'run': source.name, 'status': status,
+            'scope': 'Directed defense presentation; inspect defense-demo.json; no complete L01 or campaign claim' if source / 'defense-demo.json' in files else 'Provisional automated technical evidence; predefined repair; no human effort or acceptance' if scripted else 'One human-operated lane A manual task; inspect manual-task.json and the separate task event record; human acceptance pending' if manual else 'One legitimate paired R/G measurement arm; inspect measurement.json; no fault trials or campaign acceptance' if measured else 'Shared paired R/G preparation; outside primary delivery intervals' if preparation else 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13 and runtime F11/F12/L06; optional local F03/F04/L02 and F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
+            **({k: json.loads((source / 'manual-task.json').read_text())[k] for k in ('executionMode', 'dataset', 'actor', 'humanAcceptance', 'eligibleForHumanCalibration')} if scripted else {}),
+            'measurementClassification': measurement_status,
+            'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
+            'scenarios': scenario_summary(source, files),
+            'secretsIncluded': False}, indent=2) + '\n')
     files = [p for p in files if p != summary] + [summary]
     names[summary] = summary.name
     write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + names[p] + '\n' for p in files))

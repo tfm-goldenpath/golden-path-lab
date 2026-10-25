@@ -2,8 +2,27 @@
 # Workload deployment and HTTP checks.
 # Sourced by demo.sh; definitions only. See docs/EN/architecture.md.
 
-probe() {
+workload_deploy() {
+  if [[ "${execution_profile:-laboratory}" == delivery-v1 ]]; then
+    local status=0
+    actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "${1:-$state_dir/admission.log}" 2>&1 || status=$?
+    if [[ "$status" != 0 ]]; then admission_record_failure "${1:-$state_dir/admission.log}" "$state_dir/admission-failure.json" "$status"; fi
+    return "$status"
+  fi
+  actor tfm-golden apply -f "$state_dir/tfm-golden.json" | tee "${1:-$state_dir/admission.log}"
+}
+workload_rollout() {
   k -n "$1" rollout status deployment/quotes-node --timeout=300s
+}
+workload_image() {
+  local ns=$1
+  k -n "$ns" get deployment quotes-node -o json > "$state_dir/deployment.json"
+  k -n "$ns" get pods -l app=quotes-node -o json > "$state_dir/pods.json"
+  node "$root/scripts/check-image-rollout.mjs" --same-image "$image" "$state_dir/deployment.json" "$state_dir/pods.json" "$ns" > "$state_dir/deployed-image.json"
+}
+
+probe() {
+  workload_rollout "$1"
   workload_http "$1"
 }
 

@@ -42,3 +42,20 @@ echo unexpected-success
     assert.doesNotMatch(result.stdout,/unexpected-success/);
   });
 }
+
+// CLI acceptance only: no network, Docker or firewall operations are executed.
+for(const [cluster,status] of [['tfm-demo-run-historical',0],['tfm-delivery-abcdefgh',0],['tfm-delivery-short',2]]) {
+ test(`network adapter cluster scope: ${cluster}`,()=>{
+  const script=`import importlib.util, contextlib, sys
+spec=importlib.util.spec_from_file_location("network",sys.argv[1]); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+class Fake:
+    data={"status":"SYNTHETIC"}
+    def __init__(self,*args): pass
+    def execute(self,*args): return 0
+mod.Recovery=Fake; mod.mutation_lock=contextlib.nullcontext
+sys.argv=["network","check","--cluster",sys.argv[2]]
+sys.exit(mod.main())`;
+  const r=spawnSync('python3',['-c',script,resolve(import.meta.dirname,'../../scripts/codespaces-network.py'),cluster],{encoding:'utf8'});
+  assert.equal(r.status,status,r.stderr);
+ });
+}

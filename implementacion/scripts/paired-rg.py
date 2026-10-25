@@ -37,7 +37,7 @@ def admission_denial(diagnostic):
     for rule, reason in expected.items():
         result=subprocess.run(['bash','-c',
             'source "$1"; scenario_admission_single_reason "$2" tfm-runtime "$3"',
-            'classifier',str(ROOT/'tests/scenarios/f13.sh'),str(diagnostic),rule],
+            'classifier',str(ROOT/'scripts/lib/admission.sh'),str(diagnostic),rule],
             capture_output=True,text=True)
         if result.returncode==0 and result.stdout.strip().split('\t',1)[-1]==reason:
             return {'policy':'tfm-runtime','rule':rule,'reason':reason}

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const bash = process.env.BASH_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash');
-const modules = ['context', 'lab', 'delivery', 'attestations', 'workload'];
+const modules = ['admission', 'context', 'lab', 'delivery', 'attestations', 'workload'];
 const scenarios = ['l01', 'f13', 'f07', 'f08', 'sbom', 'provenance', 'results', 'l05', 'runtime', 'f11', 'vulnerabilities'];
 const repository = 'registry.invalid/quotes';
 const digest = `sha256:${'a'.repeat(64)}`;

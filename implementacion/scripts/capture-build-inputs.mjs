@@ -2,7 +2,9 @@
 import {readFileSync,readdirSync,lstatSync,realpathSync} from 'node:fs';
 import {join,relative,resolve,dirname} from 'node:path';
 import {createHash} from 'node:crypto';
-const [context,base,commit,authorizationFile,execution]=process.argv.slice(2), root=resolve(context);
+const [context,base,commit,authorizationFile,execution,profile="laboratory"]=process.argv.slice(2), root=resolve(context);
+if(!['laboratory','delivery-v1'].includes(profile)) throw new Error('Unknown build capture profile');
+if(profile==='delivery-v1' && (context!=='services/quotes-node' || authorizationFile || execution)) throw new Error('Delivery requires the quotes-node build context');
 const vulnerabilityPins={'f03-vulnerable':['minimist','1.2.5'],'f03-repaired':['minimist','1.2.8'],'f04':['ip','2.0.1'],'l02':['lodash.unset','4.5.2']};
 const allowed=['services/quotes-node','tests/fixtures/l03',...Object.keys(vulnerabilityPins).map(k=>'tests/fixtures/vulnerabilities/'+k)];
 let authorized, manual = false;

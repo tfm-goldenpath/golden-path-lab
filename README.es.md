@@ -1,5 +1,7 @@
 # Golden Path Lab
 
+[Ejecutar una entrega legítima local](docs/ES/legitimate-delivery.md)
+
 [English](README.md) · [Español](README.es.md)
 
 Golden Path comprueba que una entrega de contenedor tenga la configuración,
@@ -32,7 +34,7 @@ referencia. La procedencia alojada se emite entre preparación y finalización.
 | --- | --- |
 | Laboratorio implementado | Entorno Linux fijado, políticas tempranas, análisis de imagen, evidencias firmadas separadas, verificación, admisión y comprobaciones funcionales. |
 | Observaciones registradas | Resultados locales/alojados sobre revisiones históricas identificadas y datasets de medición separados. La [matriz](implementacion/docs/ES/evaluation-readiness.md) conserva cobertura y huecos; la [decisión humana fechada](implementacion/registros/evaluation_acceptance_20261004_ES.md) cierra solo su alcance reducido. |
-| Plantilla de consumidor: prevista | La extracción del motor neutral y una plantilla soportada son trabajo futuro. Véase la [secuencia de migración](docs/EN/maintainers/repository-map.md#migration-sequence). |
+| Plantilla de consumidor: prevista | P03 extrae una entrega legítima local; la plantilla independiente sigue siendo trabajo futuro. Véase la [secuencia de migración](docs/EN/maintainers/repository-map.md#migration-sequence). |
 | Sin soporte o sin verificar | No se afirma preparación para producción, conformidad DORA completa, SLSA Build L3, inventario SBOM completo ni ausencia general de vulnerabilidades. Los negativos alojados no ejecutados siguen sin ejecutarse; las ejecuciones históricas no validan la fuente actual. |
 
 ## Primeros pasos

@@ -241,3 +241,15 @@ analysis of the actual corrected image and functional compatibility; F10 selects
 an existing authorized artifact and freshly verifies its evidence; F11 retains
 the explicit privilege restrictions. No manual event or elapsed-time record can
 authorize a protected workload.
+
+## P03 delivery execution profile
+
+The [legitimate local path](../../../docs/EN/legitimate-delivery.md) uses the same
+seven `CHECKS`, `golden-path-v1`, predicates and local trust. Successful receipts
+bind source/configuration and image evidence; nonempty logs alone cannot authorize.
+Provenance generation accepts a validated producer path, defaulting to the historic
+`implementacion/scripts/demo.sh`; delivery-v1 declares and verifies
+`implementacion/scripts/deliver.sh`. `legitimate-delivery-package/v1` describes
+one delivery without scenario summaries. This archive profile is not a new signed
+policy/predicate version. Hosted certificate, OIDC, transparency, native provenance
+and authorized workflow paths retain their existing obligations.
