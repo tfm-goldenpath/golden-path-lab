@@ -44,7 +44,7 @@ test('invalid results retain validator, document hash and outcome',t=>{
   const d=mkdtempSync(join(tmpdir(),'schema-report-'));t.after(()=>rmSync(d,{recursive:true,force:true}));
   const b=valid(); b.components[0].hashes=[{alg:'SHA-256',content:'x'}];
   const file=join(d,'report.json'); assert.throws(()=>validateSchema(b,file));
-  const report=JSON.parse(readFileSync(file)); assert.equal(report.status,'INVALID'); assert.equal(report.validator.version,'8.17.1'); assert.equal(report.documentSha256.length,64);
+  const report=JSON.parse(readFileSync(file)); assert.equal(report.status,'INVALID'); assert.equal(report.validator.version,'8.20.0'); assert.equal(report.documentSha256.length,64);
 });
 test('known component evolution ignores timestamps and requires distinct digests',()=>{
   const a=valid(),b=valid(); const first='sha256:'+'a'.repeat(64),second='sha256:'+'b'.repeat(64);
@@ -60,4 +60,63 @@ test('malformed document CLI retains a failure report',t=>{
   const file=join(d,'bad.json'),report=join(d,'report.json');writeFileSync(file,'{"components":');
   const r=spawnSync(process.execPath,[new URL('../../scripts/validate-sbom-schema.mjs',import.meta.url).pathname,file,report],{stdio:'ignore'});
   assert.equal(r.status,1);assert.equal(JSON.parse(readFileSync(report)).status,'MALFORMED');
+});
+
+test('validation preserves supplied values and does not insert defaults or coerce input',()=>{
+  const b=valid(); delete b.version; // Optional schema default must not be inserted.
+  const before=JSON.stringify(b);
+  validateSchema(b);
+  assert.equal(JSON.stringify(b),before);
+  b.version='1';
+  const invalidBefore=JSON.stringify(b);
+  assert.throws(()=>validateSchema(b));
+  assert.equal(JSON.stringify(b),invalidBefore);
+});
+
+test('altered local schema bytes fail against the original lock',t=>{
+  const d=mkdtempSync(join(tmpdir(),'altered-schema-'));t.after(()=>rmSync(d,{recursive:true,force:true}));
+  cpSync(new URL('../../schemas/cyclonedx-1.7/',import.meta.url),d,{recursive:true});
+  const file=join(d,'spdx.schema.json');writeFileSync(file,readFileSync(file,'utf8')+'\n');
+  assert.throws(()=>compileSchema(d),/Schema integrity mismatch/);
+});
+
+test('an incompatible installed validator is rejected with its actual version recorded',t=>{
+  // Isolate the installed package tree; never mutate the checkout's dependencies.
+  const d=mkdtempSync(join(tmpdir(),'unpinned-validator-'));t.after(()=>rmSync(d,{recursive:true,force:true}));
+  cpSync(new URL('../../tooling/',import.meta.url),join(d,'tooling'),{recursive:true});
+  // Preserve the module-relative tooling path in this isolated layout.
+  cpSync(new URL('../../scripts/validate-sbom-schema.mjs',import.meta.url),join(d,'scripts','validate-sbom-schema.mjs'),{recursive:true});
+  const installed=join(d,'tooling/node_modules/ajv/package.json');
+  const metadata=JSON.parse(readFileSync(installed));metadata.version='0.0.0-test-mismatch';
+  writeFileSync(installed,JSON.stringify(metadata));
+  const input=join(d,'sbom.json'),report=join(d,'report.json');writeFileSync(input,JSON.stringify(valid()));
+  const result=spawnSync(process.execPath,[join(d,'scripts','validate-sbom-schema.mjs'),input,report],{encoding:'utf8'});
+  assert.equal(result.status,1);assert.match(result.stderr,/Unpinned schema validator/);
+  const retained=JSON.parse(readFileSync(report));
+  assert.equal(retained.status,'ERROR');assert.equal(retained.validator.version,metadata.version);
+  assert.equal(retained.documentSha256.length,64);
+});
+
+test('a document schema URL causes no network access during validation',t=>{
+  const d=mkdtempSync(join(tmpdir(),'offline-schema-'));t.after(()=>rmSync(d,{recursive:true,force:true}));
+  const b=valid();b.$schema='https://attacker.invalid/schema.json';
+  const script=join(d,'check.mjs');
+  writeFileSync(script,`
+    import {createRequire,syncBuiltinESMExports} from 'node:module';
+    const require=createRequire(import.meta.url);
+    let calls=0;
+    const deny=()=>{calls++;throw new Error('Unexpected network access');};
+    globalThis.fetch=deny;
+    for(const name of ['http','https']) {
+      const api=require('node:'+name);api.get=deny;api.request=deny;
+    }
+    require('node:net').Socket.prototype.connect=deny;
+    require('node:dns').lookup=deny;
+    syncBuiltinESMExports();
+    const {validateSchema}=await import(${JSON.stringify(new URL('../../scripts/validate-sbom-schema.mjs',import.meta.url).href)});
+    validateSchema(${JSON.stringify(b)});
+    if(calls!==0) throw new Error('Network attempted');
+  `);
+  const result=spawnSync(process.execPath,[script],{encoding:'utf8'});
+  assert.equal(result.status,0,result.stderr);
 });

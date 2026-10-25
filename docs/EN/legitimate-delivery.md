@@ -155,3 +155,6 @@ Hosted `prepare → native provenance → finish → cleanup` remains the labora
 separate interface. This new coordinator has no hosted mode. Local tests and keys
 do not verify GitHub OIDC, certificates or transparency. See the validation record
 for exact revisions, actual checks, integration outcomes and remaining boundaries.
+
+The [validation dependency maintenance record](maintainers/dependency-refresh-validation.md)
+tracks the current AJV/format compatibility checks separately from historical P03 runs.

@@ -46,11 +46,11 @@ Focused synthetic tests exercise missing, duplicate, unsafe and stale paths plus
 invalid classifications/profiles. There is no change to the runtime Make/CI targets.
 
 <!-- inventory-summary:start -->
-508 tracked paths; 233 individually enumerated scripts/helpers/tests.
+509 tracked paths; 233 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 132 |
+| developer | 133 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 267 |
@@ -112,7 +112,7 @@ is authoritative about current coupling and callers.
 | --- | --- |
 | P01 — `chore/product-foundation` | Product-first EN/ES journey, separate lab entry, complete tracked inventory and compatibility contract. Documentation/inventory checks; no Kubernetes. Human review and owner decisions remain explicit. |
 | P03 — `refactor/delivery-core` | Extract neutral delivery while retaining the lab adapter and oracle. Demonstrate a legitimate non-measured delivery without scenario dispatch; inventory mixed helpers before splitting. Linux and representative integration required. |
-| Refresh A — `chore/dependency-refresh` | Later pinned application/development/Actions updates; audit before/after, exclude vulnerable fixtures; see TODO. |
+| Refresh A — `chore/dependency-refresh` | Bounded AJV/fast-uri correction and compatibility validation; [record](dependency-refresh-validation.md). Actions and update automation remain separate pending items; fixtures are preserved. |
 | Refresh B — `chore/devcontainer-refresh` | Later reproducible runtimes/images/three profiles and optional official pinned Codex; full rebuild and storage comparison; see TODO. |
 | Refresh C — `chore/security-toolchain-refresh` | Later compatible scanner/policy/crypto/admission versions; real crypto/admission and hosted verification if trust changes; CEL migration stays separate. |
 | P01b — physical repository separation | Move product/lab files only after extraction and the outstanding custody/review gate is resolved. Prove product works with lab files absent; preserve URL/command compatibility and historical evidence interpretation. |

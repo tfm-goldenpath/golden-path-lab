@@ -69,12 +69,16 @@ a new vulnerability DB has its own identity.
 
 ### A. `chore/dependency-refresh`
 
-- [ ] Prioritize the known AJV alert ([Dependabot #23](https://github.com/tfm-goldenpath/golden-path-lab/pull/23), [GHSA-2g4f-4pwh-qvx6](https://github.com/advisories/GHSA-2g4f-4pwh-qvx6)): proposed 8.20.0, patched range starts at 8.18.0. Synchronize tooling manifest/lock, the explicit version guard in `validate-sbom-schema.mjs`, SBOM regression and schema README; the two-file bot update alone would fail the guard. Validate schema/contracts, shared tests and representative delivery. The current SBOM path does not enable `$data`; this does not close the alert. See the [scope assessment](../docs/EN/maintainers/delivery-core-validation.md#ajv-alert-follow-up).
-- [ ] Review actually used package manifests/lockfiles, tooling, AJV and devcontainers CLI. Check quotes-node's dependency-free status before proposing packages; add none without need.
-- [ ] Refresh GitHub Actions full SHAs with their supported runtime requirements; consult current stable versions/advisories when implementing.
-- [ ] Evaluate Dependabot/Renovate with small groups and explicit exclusions. Do not use `npm audit fix --force` or floating versions as automatic remediation.
-- [ ] Record audit/scan before and after, behavior/tests, compatibility and remaining findings.
-- [ ] Exclude deliberately vulnerable fixtures from bulk repair. Their dependencies, oracles and historical databases encode test conditions; renewal requires explicit scenario review.
+Current bounded implementation and evidence: [dependency refresh validation](../docs/EN/maintainers/dependency-refresh-validation.md). AJV 8.20.0 and compatible fast-uri 3.1.9 address the observed audit; delivery `delivery-ZxZX3rpM` passes on `7fe7a76`, while human review remains pending. This is not completion of all Actions/automation refresh work.
+
+- [x] Correct AJV to 8.20.0 and its compatible fast-uri transitive to 3.1.9; synchronize manifest/lock, explicit validator guard, regressions and schema README. Focal/shared tests and a real legitimate delivery pass on `7fe7a760454900caec08737f93c632168596e4eb`. [Dependabot #23](https://github.com/tfm-goldenpath/golden-path-lab/pull/23) remains open; no merge/closure is performed. Historical P03 reports still describe AJV 8.17.1.
+- [x] Inventory all 13 tracked npm manifests/locks; quotes-node has no application dependencies. Review tooling/plugins/CLI and transitives: only AJV and fast-uri change; format plugins and CLI already match the consulted stable versions.
+- [ ] Refresh the five outdated Actions in a separate automation increment: setup-node 7.1.0, upload-artifact 7.0.2, upload-pages-artifact 5.0.0, configure-pages 6.0.0 and deploy-pages 5.0.1 were observed candidates. Recheck versions/advisories then; retain full SHAs and test runner/cache/artifact/Pages boundaries. The eight current pins, runtime requirements and reasons for deferral are inventoried in the maintenance record; no workflows change here.
+- [x] Evaluate existing updater state: no tracked configuration, existing Dependabot #23, administrative security-update query 403. A future configuration should target only `/implementacion/tooling`, group AJV/formats conservatively, cap PRs and retain review/checks.
+- [ ] Introduce the separately reviewed update schedule if desired; no second updater, automerge, vulnerable-fixture inclusion or alert suppression. Do not use `npm audit fix --force` or floating versions.
+- [x] Retain separate successful-query audit reports: initial exit 1 with AJV and fast-uri findings, final exit 0 with no tooling findings reported. Preserve real scan warnings, source/digest/DB/package identities and all logs; see the canonical maintenance record.
+- [ ] Human review of this dependency PR and outstanding automation updates; no P00 custody or acceptance gate is closed.
+- [x] Preserve deliberately vulnerable fixtures and their oracles in this diff. Renewal remains separate scenario work; only owner-authorized redundant P03 DB copies were retired after verified byte-preserving archival, as recorded in maintenance evidence.
 
 ### B. `chore/devcontainer-refresh`
 
