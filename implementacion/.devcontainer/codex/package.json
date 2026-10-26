@@ -1,0 +1,9 @@
+{
+  "name": "golden-path-optional-codex",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Optional development assistant; not a delivery or security dependency.",
+  "dependencies": {
+    "@openai/codex": "0.164.0"
+  }
+}

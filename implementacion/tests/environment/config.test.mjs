@@ -14,8 +14,8 @@ const versions = Object.fromEntries(read('versions.env').split(/\r?\n/)
 
 test('Debian build dependencies use dated signed snapshot repositories', () => {
   const sources = read('.devcontainer/debian.sources');
-  assert.match(sources, /archive\/debian\/20260921T000000Z\//);
-  assert.match(sources, /archive\/debian-security\/20260921T000000Z\//);
+  assert.match(sources, /archive\/debian\/20261025T000000Z\//);
+  assert.match(sources, /archive\/debian-security\/20261025T000000Z\//);
   assert.equal((sources.match(/Signed-By: \/usr\/share\/keyrings\/debian-archive-keyring.gpg/g) || []).length, 2);
   assert.ok(!sources.includes('trusted=yes'));
   assert.match(read('.devcontainer/Dockerfile'), /COPY .devcontainer\/debian.sources \/etc\/apt\/sources.list.d\/debian.sources/);
@@ -37,10 +37,10 @@ test('build references and checks use the same pinned versions', () => {
   const config = JSON.parse(read('.devcontainer/devcontainer.json'));
   assert.ok(read('.devcontainer/Dockerfile').startsWith(`FROM ${versions.NODE_IMAGE}\n`));
   const [[feature, options]] = Object.entries(config.features);
-  assert.equal(feature, 'ghcr.io/devcontainers/features/docker-in-docker:4.1.0');
+  assert.equal(feature, 'ghcr.io/devcontainers/features/docker-in-docker:4.1.3');
   assert.match(feature, /^[a-zA-Z0-9_/:.-]*$/);
   const lock = JSON.parse(read('.devcontainer/devcontainer-lock.json'));
-  assert.equal(lock.features[feature].version, '4.1.0');
+  assert.equal(lock.features[feature].version, '4.1.3');
   assert.match(lock.features[feature].integrity, /^sha256:[a-f0-9]{64}$/);
   assert.equal(lock.features[feature].resolved, `${feature.slice(0, feature.lastIndexOf(':'))}@${lock.features[feature].integrity}`);
   assert.equal(options.version, versions.DOCKER_VERSION);
@@ -96,4 +96,46 @@ test('Codespaces reuses the build and versions from implementacion', {
   assert.deepEqual(hosted.hostRequirements, local.hostRequirements);
   assert.equal(hosted.remoteUser, local.remoteUser);
   assert.equal(hosted.postCreateCommand, 'npm ci --prefix implementacion/tooling --ignore-scripts --no-audit --no-fund && bash implementacion/scripts/check-environment.sh --tools-only');
+});
+
+// Configuration contracts, not evidence of a running Codespace.
+test('all three profiles share minimums, installer, locks and optional editor tooling', () => {
+  const configurations = ['.devcontainer/devcontainer.json', '../.devcontainer/implementacion/devcontainer.json', '../.devcontainer/defense/devcontainer.json'];
+  const local = JSON.parse(read(configurations[0]));
+  for (const path of configurations) {
+    const config = JSON.parse(read(path));
+    const base = dirname(fileURLToPath(new URL(path, root)));
+    assert.deepEqual(config.hostRequirements, {cpus: 4, memory: '16gb', storage: '32gb'});
+    assert.equal(resolve(base, config.build.context), fileURLToPath(root).replace(/\/$/, ''));
+    assert.equal(resolve(base, config.build.dockerfile), fileURLToPath(new URL('.devcontainer/Dockerfile', root)));
+    assert.deepEqual(config.features, local.features);
+    assert.deepEqual(JSON.parse(readFileSync(resolve(base, 'devcontainer-lock.json'))), JSON.parse(read('.devcontainer/devcontainer-lock.json')));
+    assert.equal(config.remoteUser, 'node');
+    assert.deepEqual(config.customizations.vscode.extensions, ['openai.chatgpt']);
+    const prefix = path.startsWith('../') ? 'implementacion/' : '';
+    assert.equal(config.postCreateCommand, `npm ci --prefix ${prefix}tooling --ignore-scripts --no-audit --no-fund && bash ${prefix}scripts/check-environment.sh --tools-only`);
+    assert.ok(!JSON.stringify(config).includes('cliExecutable'));
+  }
+});
+
+test('Codex has a separate exact official npm lock including Linux AMD64 and no delivery dependency', () => {
+  const pkg = JSON.parse(read('.devcontainer/codex/package.json'));
+  const lock = JSON.parse(read('.devcontainer/codex/package-lock.json'));
+  const version = pkg.dependencies['@openai/codex'];
+  assert.match(version, /^\d+\.\d+\.\d+$/);
+  assert.equal(lock.packages['node_modules/@openai/codex'].version, version);
+  const platform = lock.packages['node_modules/@openai/codex-linux-x64'];
+  assert.equal(platform.version, `${version}-linux-x64`);
+  assert.match(platform.integrity, /^sha512-/);
+  assert.match(platform.resolved, /^https:\/\/registry\.npmjs\.org\/@openai\/codex\//);
+  assert.match(read('.devcontainer/install-tools.sh'), /npm ci --prefix \/opt\/codex --ignore-scripts --no-audit --no-fund/);
+  assert.match(read('.devcontainer/Dockerfile'), /USER node[\s\S]*codex --version[\s\S]*codex --help/);
+  for (const path of ['scripts/check-environment.sh', 'scripts/deliver.sh', 'tools.lock.json', 'services/quotes-node/package.json']) {
+    assert.ok(!read(path).toLowerCase().includes('codex'), path);
+  }
+});
+
+test('restricted context has no broad exceptions for execution data or user configuration', () => {
+  const allowed = read('.dockerignore').split(/\r?\n/).filter(x => x.startsWith('!')).map(x => x.slice(1));
+  assert.deepEqual(allowed.sort(), ['.devcontainer/', '.devcontainer/install-tools.sh', '.devcontainer/debian.sources', '.devcontainer/codex/', '.devcontainer/codex/package.json', '.devcontainer/codex/package-lock.json', 'versions.env', 'tools.lock.json', 'scripts/', 'scripts/install-security-tools.sh'].sort());
 });

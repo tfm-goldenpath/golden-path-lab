@@ -1,4 +1,4 @@
-ARG NODE_IMAGE=node:24.21.0-alpine3.23@sha256:a01ebbfa28f5ac85e27044d661b4415d30508b2e64dc23eef236493b7a99f916
+ARG NODE_IMAGE=node:24.22.1-alpine3.23@sha256:47019ffab12a48f49795a8279603f87e91a64de017fb9aa874e64f489b686079
 FROM ${NODE_IMAGE}
 # This dependency-free service only needs Node at runtime, not package managers.
 RUN rm -rf /usr/local/lib/node_modules /opt/yarn-* \

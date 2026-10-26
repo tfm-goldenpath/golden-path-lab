@@ -26,7 +26,7 @@ as a substitute for the reviewed verification procedure.
 ## Deliberately run the laboratory
 
 Use the [laboratory entry](../../lab/README.md) and its canonical runbook.
-The implementation devcontainer requests 2 CPUs / 8 GB RAM / 32 GB disk; this P01
+The implementation devcontainer requests 4 CPUs / 16 GB RAM / 32 GB disk; this P01
 checkout has a requested 4 CPU / 16 GB / 32 GB environment. Free capacity matters
 more than nominal disk size. Execution needs Linux AMD64, pinned tools, Docker and
 network access. Do not run it merely to read results.

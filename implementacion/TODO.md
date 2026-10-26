@@ -82,12 +82,15 @@ Current bounded implementation and evidence: [dependency refresh validation](../
 
 ### B. `chore/devcontainer-refresh`
 
-- [ ] Reproducibly update supported runtimes (prefer LTS), base images, system snapshots, versions/digests, Docker/Buildx, kind/kubectl/Kubernetes compatibility, `versions.env`, Dockerfiles, checks and related locks.
-- [ ] Synchronize `.devcontainer/implementacion/`, `.devcontainer/defense/` and `implementacion/.devcontainer/`; retain 4 cores, 16 GB RAM and 32 GB disk as Codespace target. Avoid duplicate installation/image growth; inspect effective existing-machine resources.
-- [ ] Consult current official OpenAI documentation then install explicitly pinned Codex CLI through an official method in common installation, with no divergent per-profile copies. Add the official VS Code extension if compatible.
-- [ ] Verify `codex --version` and availability for the non-root user; document interactive authentication and the officially supported remote alternative where applicable.
-- [ ] No credentials, tokens or `auth.json` in image/repository/evidence; no automatic login, startup AI tasks or disabled permissions/protections. Codex is optional development tooling, never a service, deterministic gate or admission dependency.
-- [ ] Full rebuild, environment checks, reproducible installation and representative build/delivery; record disk usage before/after.
+Current bounded implementation: [refresh validation](../docs/EN/maintainers/devcontainer-refresh-validation.md).
+
+- [x] Update Node LTS/npm and both Node image digests, signed Debian snapshots, Docker/feature and Buildx. Retain kind/Kubernetes within Kyverno 1.19 support; general security tooling and Actions remain separate.
+- [x] Synchronize all three profiles at minimum 4 cores / 16 GB / 32 GB, shared installation, correct root/nested hooks and pinned CLI-generated feature locks. Record actual machine/filesystems and authorized local retirement; do not reinterpret historical runs.
+- [x] Install optional official Codex CLI 0.164.0 through a separate exact npm manifest/lock. Verify version/help as non-root without credentials; add official openai.chatgpt identifier, without claiming an extension version pin.
+- [x] Preserve authentication-independent delivery/doctor/CI, personal configuration and security boundaries. Document optional browser/device authentication; no login or model request performed.
+- [x] Clean shared image build and implementation-profile startup using Dev Containers CLI 0.89.0; parse all three configurations and test root/nested hook repetition. This is not a Codespaces UI Full Rebuild.
+- [x] Updated-environment shared suite, successful smoke after a preserved capacity interruption, 43 actual service-image tests, legitimate delivery `delivery-h7LTCVTP` and local Docker/admission regression `run-luDIixP6` on `5f0ec8f`. Packages/DB hashes and owned cleanup verified; final source/digest/retention in the validation record. L05 revision-pair and hosted OIDC execution are not claimed.
+- [ ] Human PR review and acceptance; interactive extension/authentication remain user-owned. No merge, release or hosted publishing validation.
 
 ### C. `chore/security-toolchain-refresh`
 

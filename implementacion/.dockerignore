@@ -6,3 +6,6 @@
 !tools.lock.json
 !scripts/
 !scripts/install-security-tools.sh
+!.devcontainer/codex/
+!.devcontainer/codex/package.json
+!.devcontainer/codex/package-lock.json

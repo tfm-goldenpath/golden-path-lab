@@ -222,7 +222,7 @@ class ComparisonTests(unittest.TestCase):
         profile=repo/'.devcontainer/defense/devcontainer.json'
         value=json.loads(profile.read_text())
         base=json.loads((repo/'.devcontainer/implementacion/devcontainer.json').read_text())
-        self.assertEqual(base['hostRequirements'],{'cpus':2,'memory':'8gb','storage':'32gb'})
+        self.assertEqual(base['hostRequirements'],{'cpus':4,'memory':'16gb','storage':'32gb'})
         self.assertEqual(value['features'],base['features'])
         self.assertEqual(value['hostRequirements'],{'cpus':4,'memory':'16gb','storage':'32gb'})
         self.assertEqual((profile.parent/value['build']['dockerfile']).resolve(),fixtures.REAL_ROOT/'.devcontainer/Dockerfile')
