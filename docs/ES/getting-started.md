@@ -25,7 +25,7 @@ Usa herramientas revisadas, no código recuperado de los archivos.
 ## Ejecutar deliberadamente el laboratorio
 
 Sigue la [entrada al laboratorio](../../lab/README.es.md) y su runbook.
-El devcontainer de implementación solicita 2 CPU / 8 GB RAM / 32 GB disco; el entorno
+El devcontainer de implementación solicita 4 CPU / 16 GB RAM / 32 GB disco; el entorno
 solicitado para P01 es 4 CPU / 16 GB / 32 GB. Hay que comprobar espacio libre real.
 Ejecutar requiere Linux AMD64, herramientas fijadas, Docker y red.
 Tras preparar el entorno, desde la raíz:

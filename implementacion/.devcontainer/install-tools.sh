@@ -24,3 +24,8 @@ download "https://github.com/docker/buildx/releases/download/v${BUILDX_VERSION}/
 [[ "$(npm --version)" == "$NPM_VERSION" ]]
 kind version
 kubectl version --client=true --output=json
+
+# Isolated lock for optional assistant tooling; never needed by doctor/delivery.
+npm ci --prefix /opt/codex --ignore-scripts --no-audit --no-fund
+ln -sfn /opt/codex/node_modules/.bin/codex /usr/local/bin/codex
+npm cache clean --force

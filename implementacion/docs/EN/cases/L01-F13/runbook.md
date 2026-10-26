@@ -37,7 +37,7 @@ make test
 
 `make doctor` must confirm environment readiness. `make test` runs automated service, contract and policy checks. Resolve preparation failures before interpreting a later result as a security acceptance or rejection.
 
-The environment requires Docker, `linux/amd64`, network access to downloads and sufficient resources for kind, Kyverno, the registry and scanner. Configuration requests at least 2 CPUs, 8 GB of memory and 32 GB of storage. Codespaces availability depends on account eligibility and accumulated use; student status does not guarantee unlimited capacity. Stop unused Codespaces.
+The environment requires Docker, `linux/amd64`, network access to downloads and sufficient resources for kind, Kyverno, the registry and scanner. Configuration requests at least 4 CPUs, 16 GB of memory and 32 GB of storage. Codespaces availability depends on account eligibility and accumulated use; student status does not guarantee unlimited capacity. Stop unused Codespaces.
 
 ### Check cgroups before creating kind
 
@@ -63,7 +63,7 @@ make demo
 
 `scripts/demo.sh` prepares an isolated laboratory with **kind, zot and local development keys**. It first builds one `linux/amd64` image shared by the reference and protected paths, then prepares a distinct image for L01's legitimate UPDATE. Both use the same source commit; the L03 fixture adds pinned `is-number@7.0.0` to the second image without changing application behavior. Development keys are neither committed nor trusted by the GitHub lane.
 
-The service runtime uses **Node 24.21.0 on Alpine 3.23**, pinned by digest through `SERVICE_NODE_IMAGE` and separated from the Debian devcontainer. This supported Alpine `main` branch is recognized by Trivy 0.74.0's EOL metadata; see the [compatibility decision](../../../../services/quotes-node/README.md). The service has no production npm dependencies, so its Dockerfile removes npm, npx and Yarn from the delivered image. Trivy still analyzes the remaining components; this reduction does not guarantee no vulnerabilities or relax the HIGH/CRITICAL threshold.
+The service runtime uses **Node 24.22.1 on Alpine 3.23**, pinned by digest through `SERVICE_NODE_IMAGE` and separated from the Debian devcontainer. This supported Alpine `main` branch is recognized by Trivy 0.74.0's EOL metadata; see the [compatibility decision](../../../../services/quotes-node/README.md). The service has no production npm dependencies, so its Dockerfile removes npm, npx and Yarn from the delivered image. Trivy still analyzes the remaining components; this reduction does not guarantee no vulnerabilities or relax the HIGH/CRITICAL threshold.
 
 Outside a Git checkout, the local commit field contains forty zeros as an **unavailable-commit sentinel**. Local provenance records `gitCommitAvailable: false` and a `sourceSnapshotSha256` hash of selected source files. This links a working copy to a run, but is not a real commit, does not automatically cover every repository file and does not establish GitHub provenance. Lane B uses the hosted run's actual commit. See [delivery contracts](../../delivery-contracts.md).
 

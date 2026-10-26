@@ -21,8 +21,8 @@ la PR en `e675325`. Una preparación fallida no permite afirmar ejecución viva.
 El perfil opcional `.devcontainer/defense/devcontainer.json` reutiliza el Dockerfile,
 contexto, Features bloqueadas y herramientas fijadas. Declara mínimos de 4 CPU,
 16 GB RAM y 32 GB de disco **total**. `hostRequirements` no redimensiona la máquina
-al reconstruirla. El perfil base conserva 2 CPU / 8 GB / 32 GB; los ajustes de
-defensa están solo en el perfil opcional. Ambos fijan Docker CE 29.8.0, no el
+al reconstruirla. El perfil base conserva 4 CPU / 16 GB / 32 GB; los ajustes de
+defensa están solo en el perfil opcional. Los tres fijan Docker CE 29.9.2, no el
 paquete Moby más reciente de otra imagen de Codespaces. Ejecuta
 `make -C implementacion doctor` antes de preparar para comprobar CLI y daemon.
 No reinicies ni reconstruyas durante la presentación.
