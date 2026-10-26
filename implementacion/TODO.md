@@ -89,7 +89,7 @@ Current bounded implementation: [refresh validation](../docs/EN/maintainers/devc
 - [x] Install optional official Codex CLI 0.164.0 through a separate exact npm manifest/lock. Verify version/help as non-root without credentials; add official openai.chatgpt identifier, without claiming an extension version pin.
 - [x] Preserve authentication-independent delivery/doctor/CI, personal configuration and security boundaries. Document optional browser/device authentication; no login or model request performed.
 - [x] Clean shared image build and implementation-profile startup using Dev Containers CLI 0.89.0; parse all three configurations and test root/nested hook repetition. This is not a Codespaces UI Full Rebuild.
-- [ ] Complete updated-environment shared suite, smoke, real service-image tests, legitimate delivery and relevant Docker/admission regressions; record final SHA/digest/DB/package/cleanup and disk usage in the validation record.
+- [x] Updated-environment shared suite, successful smoke after a preserved capacity interruption, 43 actual service-image tests, legitimate delivery `delivery-h7LTCVTP` and local Docker/admission regression `run-luDIixP6` on `5f0ec8f`. Packages/DB hashes and owned cleanup verified; final source/digest/retention in the validation record. L05 revision-pair and hosted OIDC execution are not claimed.
 - [ ] Human PR review and acceptance; interactive extension/authentication remain user-owned. No merge, release or hosted publishing validation.
 
 ### C. `chore/security-toolchain-refresh`

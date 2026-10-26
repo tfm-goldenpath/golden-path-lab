@@ -22,10 +22,8 @@ at `e675325`. A failed preparation provides no live comparison.
 Use the optional `.devcontainer/defense/devcontainer.json` profile, which reuses
 `implementacion/.devcontainer/Dockerfile`, its build context, locked Features and
 tool versions. It requests minimums of 4 CPUs, 16 GB RAM and 32 GB storage.
-`hostRequirements` is a minimum; rebuilding does not resize a Codespace. The base
-contributor profile retains 4 CPU / 16 GB / 32 GB; the defense settings live only
-in the optional profile. All three profiles pin Docker CE 29.9.2, not a newer Moby
-package supplied by another Codespaces image. Run `make -C implementacion doctor`
+`hostRequirements` is a minimum; rebuilding does not resize a Codespace. All three profiles request the same minimums; the optional defense profile also
+forwards port 8765. They pin Docker CE 29.9.2. Run `make -C implementacion doctor`
 before preparation to verify both CLI and daemon. Do not rebuild or restart during
 a presentation.
 
