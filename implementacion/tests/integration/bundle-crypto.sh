@@ -7,15 +7,17 @@ umask 077
 [[ "$#" == 0 ]] || { printf 'Usage: bash tests/integration/bundle-crypto.sh\n' >&2; exit 2; }
 command -v cosign >/dev/null
 command -v node >/dev/null
+lock="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)/tools.lock.json"
 cosign version --json | node -e '
+  const expected = "v" + JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")).tools.cosign.version;
   let text = "";
   process.stdin.on("data", chunk => text += chunk);
   process.stdin.on("end", () => {
-    if (JSON.parse(text).gitVersion !== "v3.1.3") {
-      throw new Error("These compatibility checks require pinned Cosign v3.1.3");
+    if (JSON.parse(text).gitVersion !== expected) {
+      throw new Error("These compatibility checks require pinned Cosign " + expected);
     }
   });
-'
+' "$lock"
 
 tmp_root="$(cd -- "${TMPDIR:-/tmp}" && pwd -P)"
 probe_dir="$(mktemp -d "$tmp_root/gp-bundle-crypto.XXXXXXXX")"

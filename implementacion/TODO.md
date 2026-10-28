@@ -94,10 +94,18 @@ Current bounded implementation: [refresh validation](../docs/EN/maintainers/devc
 
 ### C. `chore/security-toolchain-refresh`
 
+Current candidate and exact validation limits: [maintenance record](../docs/EN/maintainers/security-toolchain-refresh-validation.md).
+
 - [ ] Update a compatible pinned set through `tools.lock.json`, installers, checksums/checks: Trivy, Conftest, Cosign and related tools; Kyverno CLI/chart/controllers/images with matching versions/digests; Helm/other implicated tools as needed.
 - [ ] Check Kubernetes/evidence-format compatibility. ClusterPolicy → CEL migration, if still needed, retains its own policy branch; never fold it silently into a version bump.
 - [ ] Run policies/contracts, real bundle cryptography and local real admission. Require actual hosted verification if identity, certificates, transparency or workflow behavior changes.
 - [ ] Keep every historic DB snapshot and frozen package unchanged; preserve new unsuccessful attempts and explicit remaining checks.
+
+### D. `refactor/kyverno-cel-policies` — next priority
+
+- [ ] Migrate the renderer and verification to supported ValidatingPolicy/ImageValidatingPolicy APIs with explicit policy equivalence, focused tests and real admission/recovery. Do not combine this with new scenarios or general Actions upgrades.
+- [ ] Recheck the [official API schedule](https://kyverno.io/docs/policy-types/overview/) and [support matrix](https://kyverno.io/docs/installation/releases/): consulted 28 October 2026, legacy APIs deprecated in 1.19 and removal planned for 1.20 (November 2026 estimated, not guaranteed). Patched 1.19 is a temporary supported compatibility step.
+- [ ] Keep general Actions maintenance as its own subsequent increment.
 
 ## Lane A shared-test dependency repair — 19 October 2026
 
