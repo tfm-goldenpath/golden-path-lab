@@ -136,15 +136,18 @@ these new tests are regressions, not a reconstructed TDD history. Real Conftest
 probes separately preserve nonzero malformed-YAML, rule-load and strict builtin
 evaluation errors. Existing receipt tests reject empty/malformed evaluation.
 The chart was rendered from the production function in both lanes. The real local
-integrations below passed. Hosted compatibility remains unverified.
+integrations below passed, followed by the explicitly authorized hosted execution
+recorded below. Compatibility claims are limited to those observed boundaries.
 
 ## Real integrations and retained artifacts
 
 All three successful local commands tested committed source
 `041f391dea5346076cdcc9d1ad2eb35bfc5a4c57` with clean coordinator inputs and
 `GP_SOURCE_REPOSITORY=https://github.com/tfm-goldenpath/golden-path-lab`.
-The subsequent commit changes only this maintenance record and TODO, not code,
-policies, tool pins or fixtures; it is not claimed as another local execution.
+Commit `a1ec5debd804101af3e8b3c1d46e3af9608ff2a9` adds only this maintenance
+record and TODO and is the hosted source below. Later follow-up changes update
+only documentation, not code, policies, tool pins or fixtures; they are not
+claimed as additional delivery executions.
 
 A fresh real DB came from `ghcr.io/aquasecurity/trivy-db:2` through Trivy's
 `--download-db-only`. `GP_VULNERABILITY_DB` selected the same frozen bytes for
@@ -249,12 +252,92 @@ Pod autogen scope, single-replica lab availability, disabled PolicyExceptions,
 BuildKit fixture ARG defaults and npm update notices. These are not suppressed
 and do not justify changing service/platform pins or admission semantics.
 
-Hosted validation is **NOT_EXECUTED**, pending explicit authorization for
-`golden-path.yml` on the published candidate branch/SHA. It publishes initial and
-replacement images and attestations to GHCR. Local signatures and act do not
-validate GitHub OIDC, issuer/certificate/transparency or native provenance.
-Unsupported hosted negatives remain NOT_EXECUTED. The PR stays draft while any
-required integration remains unresolved.
+## Authorized hosted integration
+
+After explicit user authorization, [run 40722150890, attempt 1](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/40722150890)
+executed `golden-path.yml` on branch `chore/security-toolchain-refresh`, exact SHA
+`a1ec5debd804101af3e8b3c1d46e3af9608ff2a9`, and completed successfully on 28 October.
+Its package run is `run-p8Vt7khq`. The initial dispatch using the environment's
+integration token returned HTTP 403 and created no run. The already configured
+GitHub CLI OAuth session could dispatch it; no credentials or permission settings
+were changed. Automatic shared CI also passed for the earlier published head:
+[push](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/40706109297)
+and [PR](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/40706261893).
+
+The checksum installer and original tool reports confirm the selected security
+versions on the runner. The ready admission Pod's imageID matches the locked
+Kyverno 1.19.2 digest, with policies loaded, insecure registry access false and
+verification cache disabled. Hosted Node/Buildx/kind/kubectl are the expected
+24.22.1/0.38.1/0.33.0/1.35.8. The unchanged workflow uses the runner-provided Docker
+28.0.4; it does not install the local devcontainer's Docker 29.9.2. This hosted
+observation is not a claim that both complete platform environments are identical.
+
+Both images were published under `ghcr.io/tfm-goldenpath/golden-path-lab-quotes-node`:
+
+- Initial: `sha256:6f9a0f7d1f303f90a5558da82b4a12bb9d1c159cabe50ac05600e6d5a5992f88`.
+- Replacement: `sha256:a3b888e5a7c2ad709c8354688c32fb4c50a9d4312cf2ea0601de97f7c2d42af2`.
+
+The workflow issued separate native GitHub provenance for each digest. Original
+verification outputs confirm the exact certificate identity
+`https://github.com/tfm-goldenpath/golden-path-lab/.github/workflows/golden-path.yml@refs/heads/chore/security-toolchain-refresh`,
+issuer `https://token.actions.githubusercontent.com`, expected source commit/ref,
+GitHub-hosted runner and verified Rekor timestamps (16:06:57Z initial, 16:07:13Z
+replacement). No main identity, wildcard, local trust exception or classic-signature
+fallback was used. Both images have distinct v0.3 image-signature, SBOM, provenance
+and results evidence; all delivery/authorization gates report VERIFIED. The six
+Cosign signing operations each succeeded on their first attempt. Thirteen retained
+full-schema receipts report VALID for CycloneDX 1.7 before signing and after
+bundle authentication across both images.
+
+After download, all eight evidence bundles were reauthenticated independently:
+Cosign verified image/SBOM/results for each digest with the exact identity and
+issuer, and `gh attestation verify` verified each saved native provenance bundle
+with exact source digest/ref and `--deny-self-hosted-runners`. Logs and the
+`hosted-reverification.json` receipt are retained outside Git.
+
+Original observations establish preissuance F13 denial by `tfm-results` /
+`autogen-require-results`, followed by results authorization and legitimate
+acceptance. F11/F12 have attributable Deployment CREATE/UPDATE and Pod CREATE
+rejections; L06 records accepted CREATE, legitimate UPDATE and a direct Pod
+accepted then cleaned. L01 replaced the initial digest with independently verified
+fresh evidence and Ready Pods at the replacement digest, observedGeneration 3,
+and successful HTTP. L03/L04 are shared positive observations. Hosted F05/F06,
+F07/F08/F09/F10, postissuance F13/F14 mutation trials and L05 remain
+**NOT_EXECUTED** in their original records. The preissuance F13 observation does
+not turn the unsupported postissuance mutation trial into an execution.
+
+The exact [artifact 12831319641](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/40722150890/artifacts/12831319641)
+was downloaded using the run/branch/SHA association, not a latest-run shortcut:
+
+- GitHub ZIP: 1,067,100 bytes; SHA-256
+  `324cc74b651f6d837cf627a1fdc9d6ea7ae353edcf9855ba595f8b3681494c43`, matching the API and upload log.
+- Inner `run-p8Vt7khq.tar.gz`: 1,071,515 bytes; SHA-256
+  `d667e49a642c6d05565989abc536d5897779a4c5b64ebd8055bce15a2e5c2a7d`, matching its sidecar.
+- All 490 inner file hashes verified; safe unique regular archive entries checked.
+  Original result source is the authorized SHA. The downloaded ZIP, package,
+  originals and audit receipt are retained under the ignored environment directory,
+  including `hosted-40722150890/`. GitHub artifact retention expires 11 November;
+  the local retained copy does not depend on that remote lifetime.
+
+The hosted DB has the same `trivy.db` hash/bytes as the canonical local snapshot,
+with the same schema and UpdatedAt. Both hosted images share its frozen identity.
+DownloadedAt is `2026-10-28T16:06:29.163589942Z`; hosted metadata SHA-256 is
+`75a22ac32f46030f53e5d9b5b07b0396795cdf29968dbac3d83320d99b535759`.
+`hosted-db-metadata.json` was restored from the archived metadata fields and its
+exact bytes checked against that original hash. `hosted-db-retention.json` maps
+it to the single retained canonical DB payload. The original runner directory is
+not retained, and no redundant 1.6 GB DB copy was made.
+
+The explicit cleanup and artifact-retention steps succeeded, and the job completed.
+As with the normal local demo, this coordinator does not emit `finalization.json`.
+Its cleanup implementation suppresses individual deletion errors and has no durable
+post-deletion resource inventory: step success is observed, independent confirmation
+of each hosted resource's absence is **not** claimed. Logs preserve this boundary;
+no stronger cleanup receipt was fabricated. The actual integration establishes the
+implemented lane-B trust/admission behavior on this branch, not a later main run,
+all twenty scenarios, human acceptance or a new campaign sample. After retaining
+the downloaded evidence, the local workspace/Docker filesystem has about 9.2 GiB
+free and /tmp about 107 GiB; no local laboratory was started for this review.
 
 ## Next increment
 

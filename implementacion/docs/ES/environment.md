@@ -30,7 +30,7 @@ Los paquetes Debian del build proceden de snapshots firmados de Debian y Debian-
 
 Trivy 0.76.1 ya incluye Alpine 3.24 en su [tabla de fin de soporte](https://github.com/aquasecurity/trivy/blob/v0.76.1/pkg/detector/ospkg/alpine/alpine.go). El servicio conserva Alpine 3.23: cambiar la distribución requiere construcción, pruebas del servicio y análisis real propios. No se ocultan avisos ni se rebaja el umbral HIGH/CRITICAL.
 
-El mantenimiento selecciona Trivy 0.76.1, Conftest 0.71.1, Cosign 3.1.4, Kyverno 1.19.2/chart 3.9.2 y Helm 4.3.1. El único [registro de mantenimiento](../../../docs/EN/maintainers/security-toolchain-refresh-validation.md) recoge fuentes, firmas, pruebas reales y validación alojada pendiente. [tools.lock.json](../../tools.lock.json) conserva los pins. El comprobador muestra el ejecutable elegido por PATH: una copia antigua en `.tools/bin` no debe ocultar la nueva. Reinstala desde el lock o reconstruye la imagen y ejecuta doctor. Los registros históricos conservan sus versiones.
+El mantenimiento selecciona Trivy 0.76.1, Conftest 0.71.1, Cosign 3.1.4, Kyverno 1.19.2/chart 3.9.2 y Helm 4.3.1. El único [registro de mantenimiento](../../../docs/EN/maintainers/security-toolchain-refresh-validation.md) recoge fuentes, firmas, pruebas locales/alojadas reales y sus límites exactos. [tools.lock.json](../../tools.lock.json) conserva los pins. El comprobador muestra el ejecutable elegido por PATH: una copia antigua en `.tools/bin` no debe ocultar la nueva. Reinstala desde el lock o reconstruye la imagen y ejecuta doctor. Los registros históricos conservan sus versiones.
 
 ## Recursos y apertura
 

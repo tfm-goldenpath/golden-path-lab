@@ -100,7 +100,7 @@ Current candidate and exact validation limits: [maintenance record](../docs/EN/m
 - [x] Verify Kubernetes 1.35.8, CycloneDX 1.7 full schemas, v0.3 bundles and exact chart images/values. ClusterPolicy → CEL remains a separate policy branch.
 - [x] Shared tests and real local integrations on `041f391`: legitimate delivery `delivery-Juza7mF4`, demo `run-hRUtsdlZ`, vulnerabilities `run-q3FVez06`. Verify package hashes and owned cleanup; retain failed preflight `delivery-6iEXPup3`. L05 and unsupported hosted negatives are not claimed.
 - [x] Preserve historical records and new original observations; retain one verified fresh DB byte copy with explicit mappings for retired duplicates. No campaign or human acceptance claim.
-- [ ] Authorize and execute `golden-path.yml` on the published candidate SHA; inspect native provenance for both images, exact branch identity, certificate/transparency, implemented admission/replacement and final archive/cleanup. Draft PR until this required hosted check passes.
+- [x] Authorized hosted `golden-path.yml` run `40722150890` on `a1ec5de`: both native provenances, exact branch identity, certificate/transparency, preissuance F13, F11/F12, legitimate admission and L01 verified. Artifact/inner hashes and eight downloaded evidence bundles verified. Cleanup step succeeded; native finalization/per-resource absence receipts are not emitted, as documented. This does not establish execution on main.
 - [ ] Human review and final acceptance.
 
 ### D. `refactor/kyverno-cel-policies` — next priority

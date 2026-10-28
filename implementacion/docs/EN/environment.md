@@ -31,7 +31,7 @@ Debian build packages come from the signed Debian and Debian-security snapshots 
 
 Security toolchain maintenance selects Trivy 0.76.1, Conftest 0.71.1, Cosign 3.1.4,
 Kyverno 1.19.2/chart 3.9.2 and Helm 4.3.1. See the single [maintenance record](../../../docs/EN/maintainers/security-toolchain-refresh-validation.md)
-for publisher verification, actual checks and pending hosted validation. The
+for publisher verification, actual local/hosted checks and their exact limits. The
 checker prints the executable selected by PATH; an older `.tools/bin` copy must
 not shadow the installed version. Reinstall from the lock or rebuild the image,
 then run doctor. Trivy now recognizes Alpine 3.24 EOL metadata; the service keeps
