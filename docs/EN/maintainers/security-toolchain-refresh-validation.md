@@ -4,8 +4,9 @@ Base: `4e73bf2171f2f4dde35d7bb5b6edaba52537fa18`, fetched current main after
 PR #63. Branch: `chore/security-toolchain-refresh`. OpenAI Codex assisted
 implementation, source inspection and execution; human review and final decision
 remain pending. No merge, release, campaign or Pages publication is authorized.
-The two pre-existing untracked root npm files are preserved in the named stash
-`preserve pre-existing root npm files before security-toolchain-refresh`.
+The two pre-existing untracked root npm files were preserved in the named stash
+`preserve pre-existing root npm files before security-toolchain-refresh`; they are
+restored after clean-source validation and excluded from this change.
 
 ## Selection and publisher verification
 
@@ -79,7 +80,12 @@ The base chart 3.9.1 was also checksum-checked/rendered: it has the same object
 count and already enabled `generateValidatingAdmissionPolicy`; no CEL policy is
 introduced here. Generated laboratory policies remain ClusterPolicy, Enforce/Fail,
 with the restricted actor and protected namespace unchanged. Runtime webhooks
-are created by Kyverno and must be inspected in the actual execution.
+were inspected during the demo: workload validation uses `failurePolicy: Fail`
+for CREATE/UPDATE of Deployments, Pods and ephemeralcontainers. The additional
+generation-label protection also fails closed. The sole observed Ignore webhook
+monitors UPDATE of coordination Leases, not workload enforcement. Namespace
+exclusions remain kube-system/kyverno; the policies protect tfm-golden. The ready
+admission Pod ran the pinned 1.19.2 digest. Raw webhook/controller JSON is retained.
 
 Admission resources retain chart defaults: request 100m CPU / 128Mi, limit 384Mi
 memory (no CPU limit); init and test hook request 10m / 64Mi and limit 100m / 256Mi.
@@ -129,16 +135,119 @@ successful target was repeated. The original and continuation logs are retained;
 these new tests are regressions, not a reconstructed TDD history. Real Conftest
 probes separately preserve nonzero malformed-YAML, rule-load and strict builtin
 evaluation errors. Existing receipt tests reject empty/malformed evaluation.
-The chart was rendered from the production function in both lanes. Real delivery
-integrations remain **NOT_YET_VERIFIED** until recorded below.
+The chart was rendered from the production function in both lanes. The real local
+integrations below passed. Hosted compatibility remains unverified.
 
 ## Real integrations and retained artifacts
 
-Candidate source, DB identity, execution IDs, package hashes, per-boundary
-results and capacity/cleanup will be recorded here after execution. No historical
-run or green aggregate substitutes for those observations. L05 needs its own
-revision pair and is not part of normal demo; shared L01/L03/L04/L06 observations
-are not independent samples. Vulnerability oracles remain unchanged.
+All three successful local commands tested committed source
+`041f391dea5346076cdcc9d1ad2eb35bfc5a4c57` with clean coordinator inputs and
+`GP_SOURCE_REPOSITORY=https://github.com/tfm-goldenpath/golden-path-lab`.
+The subsequent commit changes only this maintenance record and TODO, not code,
+policies, tool pins or fixtures; it is not claimed as another local execution.
+
+A fresh real DB came from `ghcr.io/aquasecurity/trivy-db:2` through Trivy's
+`--download-db-only`. `GP_VULNERABILITY_DB` selected the same frozen bytes for
+all three suites. DB schema is 2; UpdatedAt `2026-10-28T13:01:10.618103814Z`,
+DownloadedAt `2026-10-28T14:02:48.107452921Z`, NextUpdate
+`2026-10-29T13:01:10.618103614Z`. The canonical retained directory is
+`implementacion/.tmp/security-refresh-db` (1,640,521,881 bytes):
+
+- `trivy.db`: `faa015429c6ebd9c9a672be99cfbd5aecec2eade21d1d6e59d4dc091dc752ff3`.
+- `metadata.json`: `75ccefb55d36ea911801b1cdb555f4d022f0fc8a813e061b0d491fe9752dc706`.
+
+| Command / run | Observed result and boundary | Package SHA-256 / verified inner files |
+| --- | --- | --- |
+| Initial deliver `delivery-6iEXPup3` | ERROR before infrastructure: isolated DOCKER_CONFIG resolved old Buildx 0.37.1; preserved finalization exit 1, packaging 0 | `a7d4ac95ae727ebdb5de35bc2aad46efcaa7dba0ca0a7b5606377881017db4c1` / 8 |
+| deliver `delivery-Juza7mF4` | PASS, native finalization exit 0, packaging 0, cleanup 0; all delivery-v1 stages | `23566bf2f094a6037a477ff5dea66d197d13645cc7aad44abbf1b665fc6e9608` / 160 |
+| demo `run-hRUtsdlZ` | PASS, process exit 0; implemented negative/positive boundaries below | `6454b54b6aaa08f1dabad6e0572d6ea4b63bb931ab09a09a64e5e961ca253d63` / 1,715 |
+| vulnerabilities `run-q3FVez06` | PASS, process exit 0; F03/F04/L02 below | `e04ef5d4279c1748a565540c4edf72778616b640b6b72d0b6f772765bc0ab758` / 347 |
+
+Archives and sidecar hashes remain under `implementacion/evidence/packages/`,
+original results under `implementacion/evidence/raw/<run>/`; independent audit
+receipts and command logs are in the environment directory named above. Outer
+hashes and every inner SHA256SUMS entry were verified, including safe unique
+archive members. P03 emits `finalization.json` and it was inspected. The ordinary
+`demo.sh` coordinator used by demo/vulnerabilities does **not** emit that file:
+for those runs the retained evidence is the original result, actual process exit,
+verified archive and post-cleanup inventory. No synthetic native finalization is
+claimed and no duplicate lane-a-validation suite was run.
+
+The first P03 failure exposed a real environment shadowing issue: an isolated
+DOCKER_CONFIG hid the user-level Buildx plugin although doctor in the normal
+shell passed. Installing the already verified, unchanged 0.38.1 pin in the
+system plugin directory fixed both contexts. The retry used the same source and
+DB; the failed attempt remains archived.
+
+P03 exercised build/registry, separate inventory and vulnerability scan, full
+vendored CycloneDX 1.7 schema validation before signing and after authentication,
+independent image/SBOM/provenance/results predicates, authorization, admission,
+rollout, effective digest, HTTP and owned cleanup. Original Trivy reports carry
+schema 2, image references/repo digests/image ID and Alpine 3.23.7 metadata; scan
+logs explicitly enable vulnerability analysis. Base service reports contain no
+findings in this snapshot. Generating an SBOM alone is not counted as that scan.
+Image: `172.18.0.3:5000/quotes-node-delivery-juza7mf4@sha256:97f91a55ca88c5d2f794eaf71e12566b73d96b884a259c2fa63cb1887ce5b4b9`.
+
+The demo's original results establish F05/F06 missing or misassociated SBOM,
+F07/F08 missing or altered independent signature, F09/F10 invalid provenance,
+F13/F14 missing or invalid results, with their implemented CI/admission rejection
+and recovery receipts. F13 preissuance reports RESULTS_ATTESTATION_MISSING.
+F11/F12 preserve their implemented CREATE/UPDATE/Pod runtime barriers and L06
+recovery; no generic nonzero-exit classification replaced attribution. Existing
+classifier recognition handled the new actual diagnostics without widening.
+L01 independently verifies the replacement and observes Ready Pods with its new
+digest; L03/L04 share that replacement, while L06 is the legitimate runtime
+counterpart. These are functional observations, not independent campaign samples.
+L05 remains **NOT_EXECUTED**, requiring its separate immutable revision pair.
+Demo repository: `172.18.0.3:5000/quotes-node-run-hrutsdlz`:
+
+- Initial: `sha256:42ddef5365335f8445025a2ea8d98c8cd06062106210d8ffca1e7277b5c0d78e`.
+- Replacement: `sha256:1d6d6b46572b0813ed9dd2c76c23c7be28e8917a5f73f5dcde4b63e24c5b1ed2`.
+
+The vulnerability suite preserved the approved oracles and real findings:
+
+- F03: minimist 1.2.5 / CVE-2021-44906 CRITICAL is blocked; repaired 1.2.8
+  removes the target, passes the global threshold, dependency/service checks,
+  fresh image-specific authorization, admission and HTTP.
+- F04: ip 2.0.1 / CVE-2024-29415 HIGH has no FixedVersion in the npm finding;
+  policy blocks it. Results authorization and protected deployment are
+  NOT_EXECUTED, as required. This is not a universal no-fix claim.
+- L02: lodash.unset 4.5.2 / CVE-2026-2950 MEDIUM is observed, together with
+  CVE-2025-13465 MEDIUM; no HIGH/CRITICAL findings. It receives fresh evidence,
+  authorization, admission and successful HTTP. The additional finding does not
+  invalidate the existing oracle. No threshold, severity, dependency, ignore,
+  VEX or DB selection was changed to obtain these results.
+
+Vulnerability repository: `172.18.0.3:5000/quotes-node-run-q3fvez06`:
+
+| Image | Digest |
+| --- | --- |
+| F03 vulnerable | `sha256:aafda7cacfe07ab3237038192d41b525df44cbcf510d66790e1140b89c7b1a86` |
+| F03 repaired | `sha256:87ad6347a3c22185d4a8679a18a3152af004dabd22009797f8f844a6ebb1d85a` |
+| F04 | `sha256:a65e1ff166efd3d2f52e9b026280be28d6a62c24083650a9b48684cb57322073` |
+| L02 | `sha256:c0c6f6a1755e47bdd72e18d2c631168aae9f2d75db3095d0e62f134752a608fd` |
+
+Capacity was checked before every integration and after cleanup. Workspace and
+Docker ended with 9.4 GiB free of 32 GiB (about 15 GiB initially), 19% inodes used;
+/tmp retained about 109 GiB free on its separate disk. The 3 GiB reserve was never
+lowered. Only one laboratory ran at a time. Project cleanup left zero containers,
+zero build cache and only the default builder. The same three pre-existing
+inactive volumes (471.2 MB) remain; no volume prune was used. Three reusable
+platform images (1.973 GB) remain inactive.
+
+After verifying the devcontainer image, its session-owned image and build cache
+were retired (4.381 GB cache reclaimed). Final verified image identity was
+`sha256:ba13e76a60e83aea3522725d517c4f3e88c93d1380ee735ee928030eb3cc56bb`.
+After each successful integration, its 1,640,521,881-byte duplicate DB directory
+was verified against both canonical file hashes and retired; receipts map the original
+recorded paths to the single retained canonical snapshot. Replay can restore
+those paths from that snapshot. No redundant DB bytes are claimed as retained.
+Historical packages/snapshots, source work and credentials were not removed.
+
+Remaining warnings are retained in original logs: ClusterPolicy deprecation,
+Pod autogen scope, single-replica lab availability, disabled PolicyExceptions,
+BuildKit fixture ARG defaults and npm update notices. These are not suppressed
+and do not justify changing service/platform pins or admission semantics.
 
 Hosted validation is **NOT_EXECUTED**, pending explicit authorization for
 `golden-path.yml` on the published candidate branch/SHA. It publishes initial and
