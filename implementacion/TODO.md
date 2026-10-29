@@ -105,6 +105,9 @@ Current candidate and exact validation limits: [maintenance record](../docs/EN/m
 
 ### D. `refactor/kyverno-cel-policies` — next priority
 
+- [x] Inspect pinned v1.19.2 source/CRDs and run the bounded real-signature CEL capability probe from PR64 main. [Migration record](../docs/EN/maintainers/kyverno-cel-migration.md) contains the proposed equivalence matrix and original-observation limits.
+- [x] Real isolated stable-v1 CRD/webhook probe confirms selected bundle predicates, runtime rejection, restricted actor and no active legacy policies; records the classic fallback blocker and actual owned-resource absence. Shared suite, documentation and inventory checks pass. This is not migrated delivery/scenario or hosted acceptance.
+- [ ] **BLOCKED:** IVP automatically tries classic Cosign retrieval when no usable bundles exist; no strict bundle-only selector is exposed. Keep the PR in draft and active ClusterPolicy controls unchanged. No resolving released version is verified; require an upstream supported fix and fresh capability tests before switching consumers.
 - [ ] Migrate the renderer and verification to supported ValidatingPolicy/ImageValidatingPolicy APIs with explicit policy equivalence, focused tests and real admission/recovery. Do not combine this with new scenarios or general Actions upgrades.
 - [ ] Recheck the [official API schedule](https://kyverno.io/docs/policy-types/overview/) and [support matrix](https://kyverno.io/docs/installation/releases/): consulted 28 October 2026, legacy APIs deprecated in 1.19 and removal planned for 1.20 (November 2026 estimated, not guaranteed). Patched 1.19 is a temporary supported compatibility step.
 - [ ] Keep general Actions maintenance as its own subsequent increment.

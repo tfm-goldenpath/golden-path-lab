@@ -8,6 +8,11 @@ La demostración comparte inicialmente una imagen `linux/amd64` de `quotes-node`
 
 ## Perfil bundle y estado de validación
 
+La [comprobación de capacidades CEL](../../../docs/ES/maintainers/kyverno-cel-migration.md)
+está bloqueada: el verificador IVP intenta automáticamente la recuperación
+clásica. Se conservan la ruta activa ClusterPolicy y los contratos de entrega;
+el probe aislado no acredita una entrega quotes-node migrada.
+
 Los pins actuales configuran bundles de Cosign 3.1.4 y consumidores `SigstoreBundle` de Kyverno 1.19.2. El [registro de mantenimiento](../../../docs/EN/maintainers/security-toolchain-refresh-validation.md) separa la validación nueva de las observaciones históricas siguientes; la compatibilidad alojada queda pendiente de ejecución explícita sobre este candidato. La [ejecución local de compatibilidad `run-De88fpWy`](../../registros/cosign_bundles_validation_ES.md) pasó con recuperación estricta y la [validación alojada de `82728c5`](../../registros/pr15_review_ES.md) ejercitó OIDC, SCT y transparencia. F07 dirigido local pasó después en `run-xFGRe6X1`; F07 alojado sigue pendiente. El [registro operativo](../EN/cases/F07/record.md) conserva hashes y límites de aceptación. El intento anterior `run-De88fpWy` utilizó Docker Engine 24.0.5/cgroup v1 y `GP_CGROUP_V1_COMPAT=1` explícito; no es una medición de campaña. La base clásica v0.1.0 y sus ejecuciones conservadas no acreditan el perfil nuevo.
 
 La firma de imagen independiente exige `https://sigstore.dev/cosign/sign/v1` para el digest esperado. Un SBOM, una procedencia o unos resultados firmados no la sustituyen. Se conservan los demás predicados, el contenido CycloneDX, el umbral de vulnerabilidades y las condiciones de autorización.

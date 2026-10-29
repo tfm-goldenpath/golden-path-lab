@@ -72,6 +72,12 @@ Las entradas locales siguen siendo `make demo` y `make reference`. En GitHub se 
 
 ## Organización implementada y dependencias
 
+La [comprobación de capacidades CEL](../../../docs/ES/maintainers/kyverno-cel-migration.md)
+está bloqueada por la falta de selección exclusiva de bundles en Kyverno 1.19.2.
+`tests/integration/kyverno-cel-capabilities.py` es un probe optativo con registro
+y clúster desechables, contenido sintético y firmas reales. No sustituye el
+renderer ClusterPolicy activo ni los coordinadores del laboratorio.
+
 Las rutas siguientes existen en la base actual. El [plan de la primera base integrada](implementation-plan.md) conserva el diseño inicial; las carpetas `deploy/`, `lab/` y `contracts/` allí propuestas no son módulos separados en esta versión. R/G expresa la configuración de controles; A/B expresa el entorno de ejecución y su modelo de confianza.
 
 | Componente y código | Entrada y salida principales | Comprobación separada |
