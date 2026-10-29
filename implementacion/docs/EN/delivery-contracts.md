@@ -8,10 +8,12 @@ The demonstration initially shares one `linux/amd64` image of `quotes-node`, ide
 
 ## Bundle profile and validation status
 
-The [CEL migration capability gate](../../../docs/EN/maintainers/kyverno-cel-migration.md)
-is blocked: the new IVP verifier automatically falls back to classic retrieval.
-The active ClusterPolicy bundle path and delivery contracts remain unchanged;
-the isolated capability probe is not a migrated quotes-node delivery.
+The [CEL architecture decision](../../../docs/EN/maintainers/kyverno-cel-migration.md)
+revises format exclusivity for the proposed migration: bundles remain canonical
+for generation, CI verification and custody; official admission representations
+require demonstrated authenticity and authorization. Classic retrieval alone is
+no longer a blocker. The active ClusterPolicy route remains unchanged during
+capability assessment; old bundle-only inventories do not prove absence for CEL.
 
 The current pins configure Cosign 3.1.4 Sigstore bundles and Kyverno 1.19.2 `SigstoreBundle` consumers. The [security maintenance record](../../../docs/EN/maintainers/security-toolchain-refresh-validation.md) separates new validation from the historical observations below; hosted compatibility is pending until explicitly executed on this candidate. [Local compatibility run `run-De88fpWy`](../../registros/cosign_bundles_validation_EN.md) passed with strict inventory retrieval, and [hosted validation at `82728c5`](../../registros/pr15_review_EN.md) exercised OIDC, SCT and transparency. Local directed F07 subsequently passed in `run-xFGRe6X1`; hosted F07 remains pending. See the [operational record](cases/F07/record.md) for source hashes and acceptance limits. The earlier `run-De88fpWy` used Docker Engine 24.0.5/cgroup v1 with explicit `GP_CGROUP_V1_COMPAT=1`; it is not a campaign measurement. The classic v0.1.0 baseline and its retained executions do not prove the new profile.
 

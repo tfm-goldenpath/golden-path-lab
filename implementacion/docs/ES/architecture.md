@@ -73,7 +73,8 @@ Las entradas locales siguen siendo `make demo` y `make reference`. En GitHub se 
 ## Organización implementada y dependencias
 
 La [comprobación de capacidades CEL](../../../docs/ES/maintainers/kyverno-cel-migration.md)
-está bloqueada por la falta de selección exclusiva de bundles en Kyverno 1.19.2.
+permite ahora las representaciones del verificador oficial si se demuestran las
+garantías obligatorias; el fallback de formato por sí solo ya no es un bloqueo.
 `tests/integration/kyverno-cel-capabilities.py` es un probe optativo con registro
 y clúster desechables, contenido sintético y firmas reales. No sustituye el
 renderer ClusterPolicy activo ni los coordinadores del laboratorio.

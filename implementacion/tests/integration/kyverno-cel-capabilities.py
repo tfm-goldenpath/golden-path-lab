@@ -3,21 +3,27 @@
 
 This does not authorize a delivery or establish hosted compatibility. It never
 installs production policies. Exit 2 means a required migration capability is
-blocked; other nonzero exits are probe errors. Python requires only stdlib.
+blocked; other nonzero exits are probe errors. Format fallback alone is not a
+blocker. Python requires only stdlib.
 """
 
 import argparse
 import base64
 import copy
 import hashlib
+import http.server
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import socket
+import ipaddress
 import subprocess
 import tempfile
 import time
+import threading
+import urllib.error
 import urllib.request
 import uuid
 
@@ -44,12 +50,22 @@ def save(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n")
 
 
-def evaluation_counts(output):
+def evaluation_counts(output, legacy=False, integration_error=False):
     counts = re.findall(r"pass: (\d+), fail: (\d+), warn: (\d+), error: (\d+), skip: (\d+)", output)
     if len(counts) != 1:
         raise ValueError("Expected one unambiguous engine count summary")
     passed, failed, warned, errors, skipped = map(int, counts[0])
-    if passed + failed != 1 or warned or errors or skipped:
+    # The legacy CLI reports both verification and required-image rejection.
+    # Normalize only this explicit single-control pair in the isolated oracle.
+    legacy_pair = (legacy and (passed, failed) == (0, 2)
+                   and len(re.findall(r"^1 - require-results ", output, re.MULTILINE)) == 2
+                   and "image attestations verification failed" in output
+                   and "unverified image" in output)
+    legacy_positive_pair = (legacy and (passed, failed) == (2, 0)
+                            and "Applying 1 policy rule(s) to 1 resource(s)..." in output)
+    error_result = integration_error and passed == 0 and failed + errors == 1
+    if ((passed + failed != 1 and not legacy_pair and not legacy_positive_pair and not error_result)
+            or warned or (errors and not error_result) or skipped):
         raise ValueError("Expected one evaluated policy without warnings, errors or skips")
     return passed, failed, warned, errors
 
@@ -79,7 +95,8 @@ def policy(public_key, generic=False):
     }] if generic else [{
         "expression": "images.containers.size() > 0 && images.containers.all(i, "
                       f"verifyAttestationSignatures(i, attestations.{name}, [attestors.development]) == 1 && "
-                      f"extractPayload(i, attestations.{name}).predicate.probe == '{name}')",
+                      f"[extractPayload(i, attestations.{name})].all(p, "
+                      f"p.predicate.probe == '{name}' && p.predicate.authorized == true))",
         "message": "PROBE_" + name.upper(),
     } for name in TYPES]
     return {
@@ -106,6 +123,20 @@ def policy(public_key, generic=False):
     }
 
 
+def legacy_policy(public_key):
+    """Isolated old-engine all-statements oracle, never co-installed with CEL."""
+    return {"apiVersion": "kyverno.io/v1", "kind": "ClusterPolicy",
+        "metadata": {"name": "legacy-content-selection", "annotations": {"pod-policies.kyverno.io/autogen-controllers": "none"}},
+        "spec": {"background": False, "validationFailureAction": "Enforce", "failurePolicy": "Fail",
+            "rules": [{"name": "require-results", "match": {"any": [{"resources": {"kinds": ["Pod"], "namespaces": ["tfm-golden"]}}]},
+                "verifyImages": [{"type": "SigstoreBundle", "imageReferences": ["*"], "mutateDigest": False,
+                    "verifyDigest": True, "required": True, "attestations": [{"type": TYPES["results"],
+                        "attestors": [{"count": 1, "entries": [{"keys": {"publicKeys": public_key,
+                            "rekor": {"ignoreTlog": True}, "ctlog": {"ignoreSCT": True}}}]}],
+                        "conditions": [{"all": [{"key": "{{ probe }}", "operator": "Equals", "value": "results"},
+                                                {"key": "{{ authorized }}", "operator": "Equals", "value": True}]}]}]}]}]}}
+
+
 class Probe:
     def __init__(self, output, admission=False):
         self.output = output
@@ -113,6 +144,10 @@ class Probe:
         self.admission = admission
         self.cluster = None
         self.observations = []
+        self.cases = []
+        self.proxy = None
+        self.proxy_requests = []
+        self.referrer_orders = {}
         self.environment = {**os.environ, "COSIGN_PASSWORD": ""}
         self.lock = json.loads((ROOT / "tools.lock.json").read_text())
 
@@ -150,7 +185,7 @@ class Probe:
 
     def image(self, repo):
         config = self.blob(repo, encoded({"architecture": "amd64", "os": "linux",
-            "rootfs": {"type": "layers", "diff_ids": []}, "config": {}}), "application/vnd.oci.image.config.v1+json")
+            "rootfs": {"type": "layers", "diff_ids": []}, "config": {"Labels": {"probe-run": self.output.name}}}), "application/vnd.oci.image.config.v1+json")
         return self.manifest(repo, {"schemaVersion": 2, "mediaType": OCI, "config": config, "layers": []}, "probe")
 
     def publish(self, repo, subject, bundles, classic=False):
@@ -161,23 +196,29 @@ class Probe:
                           subject["digest"].replace(":", "-") + ".att")
         else:
             for bundle in bundles:
-                layer = self.blob(repo, encoded(bundle), BUNDLE)
-                self.manifest(repo, {"schemaVersion": 2, "mediaType": OCI, "artifactType": BUNDLE,
+                layer = self.blob(repo, bundle if isinstance(bundle, bytes) else encoded(bundle), BUNDLE)
+                descriptor = self.manifest(repo, {"schemaVersion": 2, "mediaType": OCI, "artifactType": BUNDLE,
                     "subject": subject, "config": config, "layers": [layer]})
+                self.referrer_orders.setdefault(repo, []).append(descriptor["digest"])
         raw, _ = self.request("GET", f"/v2/{repo}/referrers/{subject['digest']}")
         (self.output / (repo + "-referrers.json")).write_bytes(raw)
 
-    def evaluate(self, name, repo, subject, generic=False):
+    def evaluate(self, name, repo, subject, generic=False, expected=False, category="CONTROL_REJECTION", policy_file=None):
         resource = {"apiVersion": "v1", "kind": "Pod", "metadata": {"name": "cel-probe", "namespace": "tfm-golden"},
                     "spec": {"containers": [{"name": "probe", "image": self.host + "/" + repo + "@" + subject["digest"]}]}}
         resource_file = self.output / (name + ".yaml")
         save(resource_file, resource)
-        result = self.command(name, ["kyverno", "apply", str(self.output / ("generic.yaml" if generic else "policy.yaml")),
+        result = self.command(name, ["kyverno", "apply", str(policy_file or self.output / ("generic.yaml" if generic else "policy.yaml")),
             "--resource", str(resource_file), "--registry", "--detailed-results", "--warn-no-pass"], check=False)
         text = (result.stdout + result.stderr).decode()
-        passed, failed, warned, errors = evaluation_counts(text)
+        passed, failed, warned, errors = evaluation_counts(text, legacy=category == "ISOLATED_LEGACY_CHARACTERIZATION",
+                                                            integration_error=category == "INTEGRATION_ERROR")
         observation = {"name": name, "image": resource["spec"]["containers"][0]["image"],
-                       "exitCode": result.returncode, "pass": passed, "fail": failed, "warn": warned, "error": errors}
+                       "exitCode": result.returncode, "pass": passed, "fail": failed, "warn": warned, "error": errors,
+                       "expected": "ACCEPT" if expected else "REJECT", "category": category,
+                       "matchesExpectation": ((passed == 0 and failed + errors > 0 and result.returncode != 0)
+                          if category == "INTEGRATION_ERROR" else
+                          (bool(passed), bool(failed), result.returncode) == (expected, not expected, int(not expected)))}
         self.observations.append(observation)
         print(json.dumps(observation), flush=True)
         return observation
@@ -242,21 +283,98 @@ class Probe:
                 result = self.kubectl("rbac-" + kind + "-" + verb, ["auth", "can-i", verb, kind], False, True)
                 if result.returncode != 1 or result.stdout.strip() != b"no":
                     raise RuntimeError("Workload actor can change policy controls or RBAC query failed")
-        for name in ("all-bundles", "no-signature", "tampered", "classic", "runtime-denied"):
+        for case in [*self.cases, {"name": "runtime-denied", "expected": False}]:
+            name = case["name"]
             resource = json.loads((self.output / (("all-bundles" if name == "runtime-denied" else name) + ".yaml")).read_text())
             resource["spec"]["containers"][0]["securityContext"] = {"privileged": name == "runtime-denied"}
             file = self.output / ("admission-" + name + ".yaml")
             save(file, resource)
             result = self.kubectl("admission-" + name, ["create", "--dry-run=server", "-f", str(file)], False, True)
-            expected = name == "all-bundles"
-            if (result.returncode == 0) != expected:
-                raise RuntimeError("Unexpected admission decision: " + name)
-            if not expected:
-                diagnostic = (result.stdout + result.stderr).decode()
-                marker = "PROBE_RUNTIME_PRIVILEGED" if name == "runtime-denied" else "PROBE_SIGNATURE"
-                if marker not in diagnostic:
-                    raise RuntimeError("Unattributed admission failure: " + name)
+            diagnostic = (result.stdout + result.stderr).decode()
+            integration_error = name.startswith("registry-")
+            if result.returncode and not integration_error and not re.search(r'admission webhook "(?:ivpol|vpol)\.validate\.kyverno\.svc[^" ]*" denied the request: Policy cel-(?:runtime-)?capability-probe failed: PROBE_', diagnostic):
+                raise RuntimeError("Unattributed admission failure: " + name)
+            self.observations.append({"name": "admission-" + name, "expected": "ACCEPT" if case["expected"] else "REJECT",
+                "exitCode": result.returncode, "matchesExpectation": (result.returncode == 0) == case["expected"],
+                "category": "INTEGRATION_ERROR" if integration_error else "REAL_ADMISSION", "diagnostic": diagnostic})
+            if integration_error and not any(r.get("injectedFault") and r["path"].startswith("/v2/" + name + "/") for r in self.proxy_requests):
+                raise RuntimeError("Registry fault did not reach the controlled endpoint: " + name)
         self.kubectl("controller-log", ["logs", "-n", "kyverno", "deployment/kyverno-admission-controller", "-c", "kyverno", "--tail=500"])
+
+    def sign(self, private, label, kind, predicate, subject, key=None, repo="bundles"):
+        path = private / (label + ".json")
+        save(path, predicate)
+        bundle = self.output / (label + ".bundle.json")
+        self.command("sign-" + label, ["cosign", "attest", "--yes", "--key", str(key or private / "development") + ".key",
+            "--signing-config", str(private / "signing.json"), "--trusted-root", str(private / "trust.json"),
+            "--allow-insecure-registry", "--no-upload", "--predicate", str(path), "--type", TYPES[kind],
+            "--bundle", str(bundle), self.host + "/" + repo + "@" + subject["digest"]])
+        return json.loads(bundle.read_text())
+
+    def start_proxy(self):
+        # Controlled registry ordering, never a cryptographic verifier. The same
+        # authenticated blobs/manifests are forwarded unchanged. Only the order of
+        # OCI referrer index entries is set to the recorded publication order.
+        probe = self
+        upstream = self.host
+        network = json.loads(self.command("proxy-network", ["docker", "network", "inspect",
+            "kind" if self.admission else "bridge"]).stdout)[0]
+        gateway = next(entry["Gateway"] for entry in network["IPAM"]["Config"]
+                       if entry.get("Gateway") and ipaddress.ip_address(entry["Gateway"]).version == 4)
+
+        class Registry(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *_args):
+                pass
+
+            def do_HEAD(self):
+                self.forward("HEAD")
+
+            def do_GET(self):
+                self.forward("GET")
+
+            def forward(self, method):
+                if not self.path.startswith("/v2/") or ".." in self.path:
+                    self.send_error(400)
+                    return
+                repo = self.path.split("/")[2] if len(self.path.split("/")) > 2 else ""
+                fault = {"registry-auth-error": 401, "registry-permission-error": 403,
+                         "registry-server-error": 503, "registry-network-error": "disconnect"}.get(repo)
+                if fault:
+                    probe.proxy_requests.append({"method": method, "path": self.path, "injectedFault": fault})
+                    if fault == "disconnect":
+                        self.connection.shutdown(socket.SHUT_RDWR)
+                        self.connection.close()
+                    else:
+                        self.send_error(fault, "Controlled capability fault")
+                    return
+                try:
+                    response = urllib.request.urlopen(urllib.request.Request("http://" + upstream + self.path,
+                        headers={"Accept": self.headers.get("Accept", "*/*")}, method=method), timeout=30)
+                except urllib.error.HTTPError as error:
+                    response = error
+                with response:
+                    body = response.read()
+                    order = None
+                    if method == "GET" and "/referrers/" in self.path and response.status == 200:
+                        index = json.loads(body)
+                        repo = self.path.split("/referrers/", 1)[0][len("/v2/"):]
+                        expected = probe.referrer_orders.get(repo, [])
+                        index["manifests"].sort(key=lambda d: expected.index(d["digest"]) if d["digest"] in expected else len(expected))
+                        order = [d["digest"] for d in index["manifests"]]
+                        body = encoded(index)
+                    self.send_response(response.status)
+                    for header in ("Content-Type", "Docker-Distribution-Api-Version", "Docker-Content-Digest"):
+                        if response.headers.get(header) and not (order is not None and header == "Docker-Content-Digest"):
+                            self.send_header(header, response.headers[header])
+                    self.send_header("Content-Length", str(len(body)) if method != "HEAD" else response.headers.get("Content-Length", "0"))
+                    self.end_headers()
+                    if method != "HEAD":
+                        self.wfile.write(body)
+                    probe.proxy_requests.append({"method": method, "path": self.path, "status": response.status, "referrerOrder": order})
+
+        self.proxy = http.server.ThreadingHTTPServer((gateway, 0), Registry)
+        self.host = gateway + ":" + str(self.proxy.server_port)
+        threading.Thread(target=self.proxy.serve_forever, daemon=True).start()
 
     def run(self):
         version = self.command("kyverno-version", ["kyverno", "version"]).stdout.decode()
@@ -304,36 +422,79 @@ class Probe:
             save(self.output / "policy.yaml", policy(pub))
             save(self.output / "generic.yaml", policy(pub, generic=True))
             subject = self.image("bundles")
-            bundles = {}
-            for name, kind in TYPES.items():
-                predicate = private / (name + ".json")
-                save(predicate, {"probe": name})
-                bundle = self.output / (name + ".bundle.json")
-                self.command("sign-" + name, ["cosign", "attest", "--yes", "--key", str(private / "development.key"),
-                    "--signing-config", str(private / "signing.json"), "--trusted-root", str(private / "trust.json"),
-                    "--allow-insecure-registry", "--no-upload", "--predicate", str(predicate), "--type", kind,
-                    "--bundle", str(bundle), self.host + "/bundles@" + subject["digest"]])
-                bundles[name] = json.loads(bundle.read_text())
-            self.publish("bundles", subject, bundles.values())
-            self.evaluate("all-bundles", "bundles", subject)
-            for repo, selected, generic in [("no-signature", [bundles[k] for k in TYPES if k != "signature"], False),
-                                             ("generic-substitution", [bundles["sbom"]], True),
-                                             ("classic", list(bundles.values()), False)]:
-                other = self.image(repo)
-                assert other == subject
-                self.publish(repo, subject, selected, classic=repo == "classic")
-                self.evaluate(repo, repo, subject, generic)
+            bundles = {name: self.sign(private, name, name, {"probe": name, "authorized": True}, subject)
+                       for name in TYPES}
+            wrong_key = private / "untrusted"
+            self.command("untrusted-key", ["cosign", "generate-key-pair", "--output-key-prefix", str(wrong_key)])
+            other_subject = self.image("other-digest")
+            config = self.blob("other-digest", encoded({"architecture": "amd64", "os": "linux",
+                "rootfs": {"type": "layers", "diff_ids": []}, "config": {"Labels": {"different": "true"}}}),
+                "application/vnd.oci.image.config.v1+json")
+            other_subject = self.manifest("other-digest", {"schemaVersion": 2, "mediaType": OCI, "config": config, "layers": []}, "probe")
+            wrong_digest = self.sign(private, "wrong-digest", "signature", {"probe": "signature", "authorized": True}, other_subject, repo="other-digest")
+            untrusted = self.sign(private, "wrong-key", "signature", {"probe": "signature", "authorized": True}, subject, key=wrong_key)
             bad = copy.deepcopy(bundles["signature"])
             sig = bytearray(base64.b64decode(bad["dsseEnvelope"]["signatures"][0]["sig"]))
             sig[-1] ^= 1
             bad["dsseEnvelope"]["signatures"][0]["sig"] = base64.b64encode(sig).decode()
-            self.image("tampered")
-            self.publish("tampered", subject, [bad, *[bundles[k] for k in TYPES if k != "signature"]])
-            self.evaluate("tampered", "tampered", subject)
-            for observed in self.observations:
-                expected = observed["name"] in ("all-bundles", "generic-substitution")
-                if (observed["pass"], observed["fail"], observed["warn"], observed["error"], observed["exitCode"]) != (int(expected), int(not expected), 0, 0, int(not expected)):
-                    raise RuntimeError("Unexpected CLI evaluation: " + observed["name"])
+            others = [bundles[k] for k in TYPES if k != "signature"]
+            all_bundles = list(bundles.values())
+            # Explicit expected decisions; synthetic predicate fields are not delivery-contract tests.
+            cases = [
+                ("all-bundles", all_bundles, [], True),
+                ("registry-auth-error", all_bundles, [], False),
+                ("registry-permission-error", all_bundles, [], False),
+                ("registry-server-error", all_bundles, [], False),
+                ("registry-network-error", all_bundles, [], False),
+                ("no-signature", others, [], False),
+                ("sbom-only", [bundles["sbom"]], [], False),
+                ("empty", [], [], False),
+                ("classic", [], all_bundles, False),  # timestamp-free local DSSE, not general classic support
+                ("tampered", [bad, *others], [], False),
+                ("wrong-key", [untrusted, *others], [], False),
+                ("wrong-digest", [wrong_digest, *others], [], False),
+                ("malformed", [b"not-json", *others], [], False),
+                ("malformed-only", [b"not-json"], [], False),
+                ("bundles-and-classic", all_bundles, all_bundles, True),
+                ("mixed-split", others, [bundles["signature"]], False),
+                ("invalid-and-classic-local", [bad], all_bundles, False),
+                ("malformed-and-classic-local", [b"not-json"], all_bundles, False),
+            ]
+            for name in ("provenance", "results"):
+                wrong = self.sign(private, "wrong-" + name, name, {"probe": name, "authorized": False}, subject)
+                cases.append(("wrong-" + name, [wrong if k == name else bundles[k] for k in TYPES], [], False))
+            good_duplicate = self.sign(private, "duplicate-good", "results", {"probe": "results", "authorized": True, "copy": 2}, subject)
+            wrong_duplicate = self.sign(private, "duplicate-bad", "results", {"probe": "results", "authorized": False}, subject)
+            partial = self.sign(private, "duplicate-partial", "results", {"probe": "wrong", "authorized": True}, subject)
+            nonresults = [bundles[k] for k in TYPES if k != "results"]
+            for order in ("forward", "reverse"):
+                pairs = [("duplicates-valid", [bundles["results"], good_duplicate], True),
+                         ("duplicates-contradictory", [bundles["results"], wrong_duplicate], False),
+                         ("duplicates-no-complete", [partial, wrong_duplicate], False)]
+                for label, pair, expected in pairs:
+                    cases.append((label + "-" + order, [*nonresults, *(pair if order == "forward" else pair[::-1])], [], expected))
+            for name, modern, classic, expected in cases:
+                assert self.image(name) == subject
+                self.publish(name, subject, modern)
+                if classic:
+                    self.publish(name, subject, classic, classic=True)
+                self.cases.append({"name": name, "expected": expected, "subject": subject})
+            self.start_proxy()
+            save(self.output / "expectations.json", self.cases)
+            for case in self.cases:
+                self.evaluate(case["name"], case["name"], subject, expected=case["expected"],
+                              category=("INTEGRATION_ERROR" if case["name"].startswith("registry-") else
+                                        "CONTENT_SELECTION" if "duplicates" in case["name"] else "CAPABILITY"))
+            self.evaluate("generic-substitution", "sbom-only", subject, generic=True, expected=True,
+                          category="UNSAFE_GENERIC_CONTROL_CHARACTERIZATION")
+            # Characterize the existing all-authenticated-statements behavior separately.
+            legacy = legacy_policy(pub)
+            save(self.output / "legacy.yaml", legacy)
+            for name in ("all-bundles", "duplicates-valid-forward", "duplicates-valid-reverse",
+                         "duplicates-contradictory-forward", "duplicates-contradictory-reverse",
+                         "duplicates-no-complete-forward", "duplicates-no-complete-reverse"):
+                self.evaluate("legacy-" + name, name, subject, expected=name == "all-bundles" or "duplicates-valid" in name,
+                              category="ISOLATED_LEGACY_CHARACTERIZATION", policy_file=self.output / "legacy.yaml")
             if self.admission:
                 self.admission_cases()
 
@@ -354,27 +515,32 @@ def main():
         "lockSha256": hashlib.sha256((ROOT / "tools.lock.json").read_bytes()).hexdigest(),
         "admission": args.admission,
     })
+    status = "ERROR"
     try:
         probe.run()
-        status = "OBSERVED"
+        mismatches = [o for o in probe.observations if not o["matchesExpectation"]]
+        status = ("BLOCKED_CONTENT_SELECTION" if mismatches and all("duplicates" in o["name"] for o in mismatches)
+                  else "BLOCKED_CAPABILITY_EXPECTATION" if mismatches else "CAPABILITIES_OBSERVED")
     except Exception as error:
         status = "ERROR"
         (args.output / "error.txt").write_text(str(error) + "\n")
         raise
     finally:
+        if probe.proxy:
+            probe.proxy.shutdown()
+            probe.proxy.server_close()
+            save(args.output / "proxy-requests.json", probe.proxy_requests)
         if probe.cid:
             registry_log = probe.command("registry-log", ["docker", "logs", probe.cid], check=False)
             fallback = fallback_requests((registry_log.stdout + registry_log.stderr).decode())
             save(args.output / "classic-fallback-requests.json", fallback)
-            if status == "OBSERVED":
-                status = "BLOCKED_CLASSIC_FALLBACK" if fallback else "ERROR_NO_FALLBACK_OBSERVATION"
             probe.command("registry-remove", ["docker", "rm", "-f", probe.cid])
             probe.command("registry-absence", ["docker", "inspect", probe.cid], check=False)
         if probe.cluster:
             probe.command("kind-delete", ["kind", "delete", "cluster", "--name", probe.cluster, "--kubeconfig", str(probe.kubeconfig)])
             probe.command("kind-absence", ["docker", "inspect", probe.cluster + "-control-plane"], check=False)
         save(args.output / "observations.json", {"status": locals().get("status", "ERROR"), "cases": probe.observations})
-    return 2 if status == "BLOCKED_CLASSIC_FALLBACK" else 1
+    return 2 if status.startswith("BLOCKED_") else (0 if status == "CAPABILITIES_OBSERVED" else 1)
 
 
 if __name__ == "__main__":

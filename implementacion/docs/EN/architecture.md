@@ -73,7 +73,8 @@ The public interfaces are `make demo` and `make reference`. GitHub retains **pre
 ## Implemented modules and dependencies
 
 The [CEL migration capability gate](../../../docs/EN/maintainers/kyverno-cel-migration.md)
-is blocked on strict bundle-only verification in Kyverno 1.19.2. Its opt-in
+now permits official verifier representations subject to demonstrated security
+guarantees; format fallback alone is no longer a blocker. Its opt-in
 `tests/integration/kyverno-cel-capabilities.py` owns only a disposable probe
 registry/cluster and synthetic content with real signatures. It does not replace
 the active ClusterPolicy renderer or any laboratory coordinator.
