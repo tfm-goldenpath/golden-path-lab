@@ -103,16 +103,33 @@ Current candidate and exact validation limits: [maintenance record](../docs/EN/m
 - [x] Authorized hosted `golden-path.yml` run `40722150890` on `a1ec5de`: both native provenances, exact branch identity, certificate/transparency, preissuance F13, F11/F12, legitimate admission and L01 verified. Artifact/inner hashes and eight downloaded evidence bundles verified. Cleanup step succeeded; native finalization/per-resource absence receipts are not emitted, as documented. This does not establish execution on main.
 - [ ] Human review and final acceptance.
 
-### D. `refactor/kyverno-cel-policies` — next priority
+### D. Kyverno CEL compatibility research (PR #65)
 
-- [x] Inspect pinned v1.19.2 source/CRDs and run the bounded real-signature CEL capability probe from PR64 main. [Migration record](../docs/EN/maintainers/kyverno-cel-migration.md) contains the proposed equivalence matrix and original-observation limits.
-- [x] Real isolated stable-v1 CRD/webhook probe confirms selected bundle predicates, runtime rejection, restricted actor and no active legacy policies; records the initial format-only blocker (now withdrawn) and actual owned-resource absence. Shared suite, documentation and inventory checks pass. This is not migrated delivery/scenario or hosted acceptance.
-- [x] Owner revises format exclusivity: bundles remain canonical in production/CI/custody; official admission representations may qualify after authentication/authorization tests. No fork or custom verifier. Historical evidence remains unchanged.
-- [x] Reproduce blocking authenticated-content selection in official 1.19.2 CLI and actual restricted-actor admission: contradictory results change verdict with index order; isolated legacy checks reject both. Retain active controls and the draft PR.
-- [ ] Complete revised capability gate: valid-transparency classic DSSE, mixed formats, malformed/invalid inputs, duplicate ordering and integration errors; then switch consumers only if the official engine satisfies every requirement. Keep PR draft and active controls intact until demonstrated.
-- [ ] Migrate the renderer and verification to supported ValidatingPolicy/ImageValidatingPolicy APIs with explicit policy equivalence, focused tests and real admission/recovery. Do not combine this with new scenarios or general Actions upgrades.
-- [ ] Recheck the [official API schedule](https://kyverno.io/docs/policy-types/overview/) and [support matrix](https://kyverno.io/docs/installation/releases/): consulted 28 October 2026, legacy APIs deprecated in 1.19 and removal planned for 1.20 (November 2026 estimated, not guaranteed). Patched 1.19 is a temporary supported compatibility step.
-- [ ] Keep general Actions maintenance as its own subsequent increment.
+Research branch: `refactor/kyverno-cel-policies`; PR scope: **tests/documentation**,
+not an active migration. [Decision, upstream review, matrix and unsent report](../docs/EN/maintainers/kyverno-cel-migration.md).
+
+- [x] Inspect official 1.19.2 source/CRDs and preserve the original capability observations, including the superseded format-only blocker. Owner permits official admission representations subject to demonstrated authenticity/authorization; bundles remain canonical in production/CI/custody.
+- [x] Reproduce authenticated-content selection dependence with official CLI and restricted-actor CEL admission. Preserve the synthetic/full-contract and CLI/admission distinctions; no signature forgery, missing-all-results or general Kyverno vulnerability claim.
+- [x] Inspect issue #18023 and final PR #18049: merged newest-candidate selection is absent from inspected 1.19.0/1.19.1/1.19.2 and rc.5; no published corrected release identified on 29 October. Verify official CLI archive/member, tag source, release-branch history and main implementation; closed issue/publication date alone is insufficient.
+- [x] Provide a reduced same-reference, unchanged-bundle order reproducer and separate execution/observation/contract/adoption outcomes; original evidence and NOT_EXECUTED cases remain intact. Preserve active policies/producers and normal delivery/demo entry points.
+- [x] Compare all/any/current authorization contracts and recommend explicit current authorization for a future product decision, with authenticated context, supersession, freshness, tie/conflict and replay rules. This does not approve or implement new semantics.
+- [ ] Human review of the bounded research PR. Research can be accepted independently; **CEL migration remains unimplemented and blocked**.
+
+### E. Next design: `design/attestation-selection-contract`
+
+**Maintainer review due 2 November 2026**, or at a 1.20 release announcement if earlier.
+Official sources checked **29 October 2026**: [legacy retirement](https://kyverno.io/docs/policy-types/overview/#deprecation-schedule-for-legacy-types)
+deprecates ClusterPolicy in 1.19 and removes it in 1.20; [patch support](https://kyverno.io/docs/installation/releases/#community-patch-support)
+ends 1.19 support at the 1.20 release, estimated November 2026. This is not a
+fixed guaranteed date or indefinite patch support for pinned 1.19.2.
+
+- [ ] Approve the product's applicable-authorization context and all/any/current semantics. Decide supersession, exact current identity/head, trusted time source, lifetime/skew, equal-time conflicts, historical replay/withholding and local-versus-hosted limits before changing fields, producers or golden-path-v1.
+- [ ] Exit A: validate an official artifact containing the necessary supported capability. Inspect code/artifact inclusion and embedded libraries, then execute all approved selection, cryptographic, representation and full-contract cases; issue closure and newest sorting alone are not compatibility.
+- [ ] Exit B: if an explicit current-authorization contract improves the product, approve and implement it separately, with both-lane regressions and migration evidence. Do not silently replace all-statements behavior with any-PASS/latest.
+- [ ] Exit C: evaluate a maintained alternative if no supported path exists before 1.19 support ends. Keep this a dated decision; do not rely on an automatic upgrade that could remove active policies.
+- [ ] Resume CEL implementation only after the capability/contract decision: renderer, readiness/RBAC/snapshots, strict diagnostics and complete F07/F08/F13 inventory coverage, runtime CREATE/UPDATE, annotation/cache matrix, local deliver/demo/vulnerabilities/L01 and a fresh authorized hosted run. Unexecuted cases remain NOT_EXECUTED.
+- [ ] Assess a separate runtime-only ValidatingPolicy migration if it reduces verified work; it still depends on legacy image verification and is **not** a solution to ClusterPolicy removal. Not implemented in PR #65.
+- [ ] Keep general Actions maintenance separate; no automatic upgrade, merge or release authorized by this research.
 
 ## Lane A shared-test dependency repair — 19 October 2026
 

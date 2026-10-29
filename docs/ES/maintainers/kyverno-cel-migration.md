@@ -1,9 +1,91 @@
-# Migración de Kyverno a CEL — bloqueo de capacidades
+# Compatibilidad CEL y selección de atestaciones
 
 El [registro único de migración](../../EN/maintainers/kyverno-cel-migration.md)
 contiene la matriz de equivalencia, versiones, fuentes, observaciones y pasos
 pendientes. La rama parte de `e0fbe6490794b0da679777d465117a43bdb482ad`, después
-de PR64. **La migración está bloqueada y la PR debe permanecer en borrador.**
+de PR64. **La adopción CEL sigue bloqueada; la PR se reorienta a pruebas y documentación revisables por ese alcance.**
+
+## Cierre de investigación y continuidad — 29 de octubre de 2026
+
+La PR no activa una migración ni modifica productores, políticas o escenarios.
+El hallazgo es dependencia del orden al seleccionar contenido autenticado en la
+configuración probada; no es falsificación de firmas, ausencia de todo resultado
+conforme ni una vulnerabilidad general demostrada de Kyverno. Se mantienen los
+resultados originales y los NOT_EXECUTED. Una CI satisfactoria no aprueba la adopción.
+
+Se inspeccionaron la issue [#18023](https://github.com/kyverno/kyverno/issues/18023)
+y la implementación final de [#18049](https://github.com/kyverno/kyverno/pull/18049),
+merge `edd8b239e393a611137a5d466d12cdc416331224`. La corrección está en main,
+pero no en los tags oficiales 1.19.0, 1.19.1, 1.19.2 ni 1.19.2-rc.5 inspeccionados.
+El archivo oficial del CLI, su miembro instalado, el checksum publicado y la
+revisión compilada coinciden. No se ha identificado una publicación posterior
+que contenga la corrección, ni se ha compilado o ejecutado un controlador propio.
+
+La implementación final selecciona **una** declaración: elimina duplicados de
+payload idéntico; prioriza tiempos verificados del bundle si todos los candidatos
+los tienen; en su defecto usa fechas del contenido firmado si todos las aportan.
+Si falta una fuente común, rechaza los candidatos múltiples. Un único candidato
+puede carecer de fecha. Ante tiempos iguales elige por bytes del payload, incluso
+si son contradictorios. No expone la colección ni incorpora por sí misma caducidad,
+revocación, contexto de autorización o defensa frente a ocultar una declaración
+más reciente. La asociación firma/bundle/resultado verificado se conserva; las
+fechas declaradas por el emisor no equivalen a un reloj independiente. El registro
+inglés detalla las rutas Rekor/TSA, fallbacks y casos no ejecutados.
+
+La semántica actual de comprobar todas las declaraciones no es un estándar universal:
+un FAIL histórico puede bloquear una recuperación legítima. “Algún PASS” permite
+recuperar, pero también puede mantener permisos tras un FAIL posterior. Recomiendo
+preparar **una autorización vigente, completa y explícita por contexto**, con
+identidad actual protegida, sustitución autenticada, reglas de frescura y rechazo
+de conflictos. Contexto incluye digest, predicado, autoridad/identidad, fuente,
+revisión, constructor y versión esperada; PASS/checks son condiciones, no filtros
+para ignorar un FAIL. El índice del registro no demuestra que no se ocultó una
+autorización posterior. Esta es una recomendación pendiente, no un nuevo contrato.
+La comparación y ejemplos de PASS/FAIL, fechas, versiones, duplicados y replay
+están en la [decisión completa](../../EN/maintainers/kyverno-cel-migration.md#pending-product-decision-which-declarations-are-applicable).
+
+El mismo reproducer incorpora `--selection-only`, sin otra colección de scripts:
+
+```bash
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+python3 -I -S implementacion/tests/integration/kyverno-cel-capabilities.py \
+  --selection-only --admission \
+  --output implementacion/evidence/environment/kyverno-cel/fresh-selection
+```
+
+Solo cambia el orden de referrers sobre **la misma referencia y bytes firmados**;
+restaura el orden inicial y conserva controles positivos/negativos y caché deshabilitada.
+`summary.json` separa funcionamiento del test, resultado observado, cumplimiento
+del contrato y adopción. Reproducir el defecto produce
+`COMPLETED / ORDER_DEPENDENCE_REPRODUCED / FAIL / BLOCKED`, salida 2.
+El informe upstream está preparado en el registro inglés y **no se ha publicado**.
+
+La ejecución de cierre conserva 15 observaciones: nueve CLI y seis peticiones
+reales de admisión. CEL responde rechazo/aceptación/rechazo; la caracterización
+CLI legacy rechaza los tres órdenes. El código ejecutado es `19c1094` más los dos
+cambios registrados en probe/tests; su hash está en el registro inglés, separado
+del commit documental posterior. Las 52 pruebas Python de políticas, Rego y
+16 comprobaciones del motor activo pasaron. Se reutiliza la CI satisfactoria del
+código previo sin atribuírsela a los cambios nuevos; la CI normal comprueba la PR.
+El paquete compacto nuevo tiene 161.329 bytes, 138 entradas y SHA-256
+`6111841999e99994ac7f3bff3f74723d0c5178624e03f5f84bf478692bc245d2`.
+Se comprobaron hashes, retirada de recursos propios y directorios vacíos; los
+paquetes anteriores y la DB permanecen intactos. No se repitió la entrega alojada.
+
+Siguiente rama propuesta: **`design/attestation-selection-contract`**.
+Revisión del mantenedor: **2 de noviembre de 2026**, o anuncio de 1.20 si ocurre
+antes. Fuentes oficiales consultadas el 29 de octubre: [retirada de APIs](https://kyverno.io/docs/policy-types/overview/#deprecation-schedule-for-legacy-types)
+y [soporte](https://kyverno.io/docs/installation/releases/#community-patch-support).
+ClusterPolicy se retira en 1.20; el soporte comunitario de 1.19 termina con esa
+publicación, estimada en noviembre, sin día garantizado. Salidas concretas:
+validar una versión oficial con la capacidad necesaria; aprobar un contrato de
+autorización vigente si mejora el producto; o evaluar una alternativa mantenida
+antes del fin de soporte. No hay actualización automática ni retirada de políticas.
+
+Migrar solo runtime a ValidatingPolicy podría adelantar trabajo comprobable, pero
+mantendría las verificaciones de imagen legacy y añadiría inventario/RBAC/diagnósticos
+mixtos. No resuelve la retirada de ClusterPolicy; se evalúa separadamente y no se
+implementa aquí. La prioridad es resolver el contrato y la continuidad de soporte.
 
 El propietario autoriza revisar la exclusividad de bundles en admisión. La
 [decisión de arquitectura](../../EN/maintainers/kyverno-cel-migration.md#architecture-decision-canonical-bundles-official-admission-verification)

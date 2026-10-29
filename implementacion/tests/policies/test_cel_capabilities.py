@@ -51,6 +51,21 @@ class CapabilityEvidenceTests(unittest.TestCase):
             with self.subTest(output=changed), self.assertRaises(ValueError):
                 probe.evaluation_counts(changed, integration_error=True)
 
+    def test_reproduced_defect_does_not_mean_adoption_pass(self):
+        observations = [{"name": "same-reference-forward", "exitCode": 1, "matchesExpectation": True},
+                        {"name": "same-reference-reverse", "exitCode": 0, "matchesExpectation": False}]
+        result = probe.result_summary(observations, completed=True)
+        self.assertEqual(result["testExecution"], "COMPLETED")
+        self.assertEqual(result["engineObservation"], "ORDER_DEPENDENCE_REPRODUCED")
+        self.assertEqual(result["contractEvaluation"], "FAIL")
+        self.assertEqual(result["migrationAdoption"], "BLOCKED")
+        result = probe.result_summary([{**item, "exitCode": 1, "matchesExpectation": True} for item in observations], completed=True)
+        self.assertEqual(result["contractEvaluation"], "SATISFIED_FOR_EXECUTED_CASES")
+        self.assertEqual(result["migrationAdoption"], "NOT_ASSESSED")
+        for cases, completed in (([], True), (observations, False)):
+            self.assertEqual(probe.result_summary(cases, completed=completed)["testExecution"], "ERROR")
+            self.assertEqual(probe.result_summary(cases, completed=completed)["migrationAdoption"], "BLOCKED")
+
     def test_fallback_requires_actual_engine_retrieval(self):
         event = {"method": "GET", "path": "/v2/classic/manifests/sha256-" + "a" * 64 + ".att",
                  "statusCode": 200, "headers": {"User-Agent": ["Kyverno/v1.19.2"]}}

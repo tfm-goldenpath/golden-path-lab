@@ -1,9 +1,339 @@
-# Kyverno CEL migration — capability gate
+# Kyverno CEL compatibility and attestation selection
 
-Status: **BLOCKED_CONTENT_SELECTION; draft, not an active-policy migration**. Base:
+Status: **research ready for review; CEL adoption BLOCKED_CONTENT_SELECTION**. Base:
 `e0fbe6490794b0da679777d465117a43bdb482ad` (main after PR64), fetched on
 29 October 2026. Branch: `refactor/kyverno-cel-policies`.
 [Spanish operator note](../../ES/maintainers/kyverno-cel-migration.md).
+
+## Research closure and upstream review — 29 October 2026
+
+This PR is now **tests and documentation**, reviewable independently of whether
+CEL can be adopted. Production policies, producers, trust, scenario oracles and
+normal delivery/demo installation remain unchanged. The finding is **order-dependent
+selection of authenticated content in the tested configuration**. It is not
+signature forgery, acceptance without any conforming results, or a demonstrated
+vulnerability in all Kyverno configurations. The synthetic capability predicates
+are not the complete Golden Path contract. Legacy results are CLI
+characterization; only the candidate CEL policy was installed for actual admission.
+Passing CI establishes shared regressions, not migration suitability.
+
+### What #18049 actually contains and where it is published
+
+Inspected [issue #18023](https://github.com/kyverno/kyverno/issues/18023),
+[PR #18049](https://github.com/kyverno/kyverno/pull/18049), its six commits and
+final merge **`edd8b239e393a611137a5d466d12cdc416331224`** (17 October 2026).
+The [merged timestamp implementation](https://github.com/kyverno/kyverno/blob/edd8b239e393a611137a5d466d12cdc416331224/pkg/image/verifiers/ivpol/cosign/timestamp.go),
+[verifier](https://github.com/kyverno/kyverno/blob/edd8b239e393a611137a5d466d12cdc416331224/pkg/image/verifiers/ivpol/cosign/verifier.go)
+and [tests](https://github.com/kyverno/kyverno/blob/edd8b239e393a611137a5d466d12cdc416331224/pkg/image/verifiers/ivpol/cosign/timestamp_test.go)
+are the source of this analysis, rather than the PR's initial description or its
+example manifest. The merge's go.mod uses Cosign **3.1.3**, sigstore **1.11.0**
+and sigstore-go **1.3.0**; these differ from released 1.19.2's embedded libraries.
+No patched controller was compiled or run.
+
+| Reference / official publication | Inspected implementation | Conclusion |
+| --- | --- | --- |
+| v1.19.0 and v1.19.1 | No timestamp selector; repeated payload overwrite | Do not contain this fix |
+| v1.19.2-rc.5, published 20 October | Same verifier bytes as v1.19.2; timestamp.go absent | Post-merge publication does not imply inclusion |
+| v1.19.2, published 20 October | Overwrite loop; timestamp.go absent; actual CLI/webhook reproduce ordering | Does not contain this fix |
+| PR merge and main `79927727e928aaf0d3ce08f1bb256cd02c693696`, inspected 29 October | Newest-candidate selector; verifier/timestamp files match merge bytes | Development source, not a released compatibility claim |
+
+The published release inventory still ends at v1.19.2, with no later stable or
+prerelease artifact carrying this fix identified. The merge-to-v1.19.2 comparison
+is **diverged**, with merge base `3ada4053fd04787498ebe60ca619da8559f8bb75`;
+release-1.19 file history and actual tag contents show no equivalent cherry-pick.
+Thus **no currently identified official release contains #18049**. A future tag
+must be inspected and its distributed artifacts tested; no future version number
+is promised compatible. Even inclusion alone would not preserve all-statements
+semantics.
+
+Artifact cross-check: the retained official v1.19.2 CLI archive matches both the
+lock and the freshly retrieved published checksum
+`357eaf1df8bc24ddd5a73979fadeaae6a032e8710f11af264229756e4956bf4a`.
+Its `kyverno` member matches the installed binary SHA-256
+`dd492a230e3f7c68235efbf925932cdb34cefbabbd4436d932c3287d9450eea8`.
+Go build metadata reports revision `e63308f1e16c05cd009ac4864be6ec25c66b49be`
+and embedded Cosign 3.1.2. The official artifact itself reports `vcs.modified=true`;
+this is not a locally modified build. Controller images remain the official
+chart/lock digests recorded in the admission evidence. No image was rebuilt.
+
+### Final selection algorithm, trust binding and limits
+
+1. The verifier first authenticates the bundle/signature against the configured
+   attestor and image digest. The modern path preserves parallel arrays of the
+   verified signature, its **same verified bundle**, and the verification result.
+   Only matching predicate payloads become candidates. Selection groups by
+   predicate type and image, not Golden Path repository/revision/policy context.
+2. Byte-identical extracted payloads are deduplicated. Available timestamps are
+   retained, taking the later bundle timestamp when identical candidates carry
+   different bundle times. This is payload-byte deduplication, not a promise of
+   semantic JSON equivalence or a new authorization event on re-signing.
+3. A single remaining candidate is selected even without a timestamp. For several
+   distinct payloads, **all having bundle timestamps takes precedence**. Otherwise
+   all must have usable signed-statement timestamps. Missing a common category
+   causes an error. There is no configurable all/any/latest policy strategy and
+   no returned collection for CEL to inspect.
+4. Within the selected time category, the greatest time wins. Equal times select
+   the lexicographically greatest payload bytes, including contradictory payloads;
+   equality is deterministic, not an authorization-conflict rejection.
+5. A request-scoped candidate store merges choices across attestors/evaluations
+   using the same selector; it does not expose discarded candidates. This differs
+   from a per-issuer/per-source policy-context ledger.
+
+Timestamp provenance is more specific than “the newest signed time”:
+
+- The modern path first uses nonzero `VerifiedTimestamps` from the corresponding
+  sigstore-go verification result, choosing the earliest available time **within
+  that bundle**. These results come from successful signature/digest verification.
+  The selector does not inspect the timestamp's `Type`: sigstore-go also has a
+  `CurrentTime` result for configurations using `WithCurrentTime`, which is verifier
+  wall-clock time, not independent signing-time evidence. Cosign 3.1.3 chooses
+  `WithNoObserverTimestamps` for our timestamp-free public-key profile; normal
+  hosted trust instead requires log/signed timestamps. No `CurrentTime`-based
+  selection is demonstrated here. A future contract must specify acceptable time
+  types rather than treating every result entry as an external clock attestation.
+- Fallback association checks the DSSE envelope bytes or the decoded payload
+  against the associated bundle. With transparency enabled it attempts
+  `VerifyTlogEntry`; the helper also has a fallback reading the first entry's
+  integrated time, relying on prior bundle authentication. It can then use a
+  successfully verified RFC 3161 timestamp. The traditional path reads the Rekor
+  bundle integrated time when transparency is not ignored, relying on prior
+  signature verification, or explicitly verifies an RFC 3161 timestamp. These
+  fallback branches need real transparency tests in an eventual released build;
+  their presence is not a completed hosted proof here.
+- `IgnoreTlog` excludes the helper's unverified Rekor-time extraction. The local
+  key profile has no external signing-time evidence; it falls back to dates inside
+  the authenticated statement if present. Hosted verification may supply Rekor
+  or TSA times. The common **bundle** category does not require every candidate
+  to use the same log or the same Rekor-versus-TSA source. Choosing earliest proof
+  time per bundle, then latest candidate, has different semantics from choosing
+  the author's declared decision time.
+- Signed-statement dates are author assertions covered by the signature, not
+  independent clock attestations. Lookup checks predicate `metadata`, then
+  `runDetails.metadata`, `creationInfo.created`, predicate-level fields, then
+  limited top-level fields. Within those locations it takes the first parseable
+  known key (including scan/build start/finish, timestamp, created and time), not
+  the maximum of every date. Accepted strings include RFC3339/Nano and layouts
+  without an explicit zone. Numeric epochs are not parsed by this helper.
+- The selector adds no authorization TTL, future-date bound, monotonic sequence,
+  context-specific revocation or protection against a registry withholding a newer
+  statement. Certificate/timestamp cryptographic validity is a separate property.
+  Timestamp-free distinct local statements would fail selection under #18049 even
+  if both conform; identical duplicates can collapse to a timestamp-free singleton.
+  These are source-derived predictions, **not executions of the patched engine**.
+
+This fixes an ordering mechanism on main but does not by itself implement the
+current all-statements contract or the proposed product contract below. In
+particular, deterministic byte tie-breaking is insufficient to resolve two
+contradictory authorization decisions, and a fresh transparency receipt for an old
+payload must not automatically renew that payload's authorization lifetime.
+
+### Pending product decision: which declarations are applicable?
+
+**No new semantics are approved or implemented here.** “All historical statements
+must pass” is the observed active-engine behavior, not a universal security
+standard. It can prevent legitimate recovery when an authorized issuer has issued
+a replacement decision. Conversely, “any PASS” can make an old permission survive
+a newer denial. Neither tradeoff is settled merely by changing policy APIs.
+
+An authorization needs an explicit context selected from trusted execution
+configuration: image digest, predicate type, authorized authority (local key or
+exact hosted issuer/workflow/ref), source repository and revision, expected
+builder/build type where required, and exact policy version. Existing results
+still require PASS and the seven checks; signature/SBOM/provenance remain
+independent requirements. Those outcomes are **conditions to evaluate**, never
+filters used to discard a FAIL before selecting a decision.
+
+For the proposed design, an *applicable* statement is an authenticated, unambiguous
+statement for that exact context. A recognized different context/version cannot
+supply authorization for this one. Malformed or ambiguous context must not be
+silently ignored. Context membership must be authenticated before selection;
+unknown policy versions cannot become compatible by sorting newer. This explicit
+partition is itself a proposed change: the current legacy consumer groups by
+predicate/digest/attestor and evaluates source/version conditions on every match.
+
+| Alternative | Benefit | Cost / required policy decision |
+| --- | --- | --- |
+| All applicable authenticated statements must conform | Rejects contradictions and needs no clock ordering | An old FAIL can indefinitely block a legitimate replacement; define the applicable set rather than treating all history as current |
+| At least one complete applicable statement conforms | Allows recovery despite older failures; no field splicing | An old PASS can defeat later FAIL/revocation; requires an explicitly monotonic permission model or a separate freshness rule |
+| Explicit current authorization selected by authenticated, deterministic rules | Supports controlled replacement and revocation by the designated authority | Requires an approved identity/freshness/supersession contract and supported verification; registry order or timestamp sorting alone is insufficient |
+
+Examples below compare the alternatives **within one authenticated context**;
+“current” means the proposed explicit-authority model, not an implemented feature:
+
+| Input | All | Any complete | Recommended current-authorization behavior |
+| --- | --- | --- | --- |
+| Old PASS, new FAIL | Reject | Accept | Reject when FAIL is the designated successor; never fall back to old PASS |
+| Old FAIL, new PASS | Reject | Accept | Accept only after authorized supersession and all current independent controls pass |
+| Different source/context or P0 alongside required P1 | Depends on defined applicable set; current legacy rejects nonconforming matches | Only a full required-context statement can authorize | Partition explicitly; P0/another source cannot replace P1; absence of required context blocks |
+| Contradictory statements with the same date | Reject | Accept if one fully passes | Block ambiguous current identity/order; a lexical byte winner is not an authority decision |
+| Missing or future date | No temporal rule by itself | No temporal rule by itself | Block missing required freshness material or future time beyond an approved skew; no timestamp defaults |
+| Old PASS replayed after newer FAIL is withheld | Can accept if inventory hides FAIL | Can accept | Require the trusted expected current authorization identity/head and freshness; a registry listing alone cannot prove currentness |
+| Byte-identical duplicate current statement | Same verdict | Same verdict | Deduplicate without renewing lifetime or creating a new authorization |
+| Complementary statements, neither individually complete | Reject | Reject | Reject; fields/checks never combined across statements |
+
+**Recommendation for `design/attestation-selection-contract`:** define one
+complete, explicitly identified **current authorization per delivery context**,
+with authenticated supersession, rather than accept arbitrary historical PASS or
+choose “latest” by a generic timestamp heuristic. Select the expected authorization
+ID/content digest from a trusted coordinator receipt or other approved authority
+state, outside workload-actor control; authenticate its complete contents and
+independent evidence. A new FAIL must be able to supersede PASS; a new PASS must
+require an authorized recovery. Reject conflicting decisions at the same current
+identity/sequence. Specify signed issuance/expiry, permitted skew and bounded age,
+and which independent time evidence anchors them. Parameters and any new fields,
+policy version or authoritative-head mechanism require owner approval in the
+next design branch; this PR does not invent values or alter golden-path-v1.
+
+The design must address rollback/withholding explicitly. Stateless admission
+reading an attacker-controlled registry cannot know that a newer decision was
+hidden. An authenticated expected ID/head or suitably maintained authority state
+is needed if revocation freshness is promised; an unsigned workload annotation
+cannot supply it. Evaluate implementability with official, maintained APIs before
+approving this recommendation. If it cannot be implemented, narrow the product
+claim or choose a maintained engine rather than build a second verifier here.
+The timestamp-free local lane must either remain an explicitly narrower laboratory
+profile or gain an approved issuance contract later; it cannot inherit hosted
+clock assurances by analogy. Do not apply a results-authorization chronology
+implicitly to SBOM inventories or provenance documents.
+
+### Small reproducer and upstream report draft (not sent)
+
+Use the existing opt-in probe; no parallel script collection or production entry
+point was added:
+
+```bash
+export PATH="$PWD/implementacion/.tools/bin:$PATH"
+python3 -I -S implementacion/tests/integration/kyverno-cel-capabilities.py \
+  --selection-only --admission \
+  --output implementacion/evidence/environment/kyverno-cel/fresh-selection
+```
+
+Omit `--admission` for CLI-only reproduction. A new output directory is mandatory.
+The reduced mode issues four synthetic conforming predicates and one authenticated
+nonconforming results predicate. After publication it changes **only** the order
+of the same referrer descriptors on one image reference, then restores the first
+order. It records exact request hashes, response hashes for immutable manifests/
+blobs, descriptor orders, original diagnostics and controls. Cache is disabled in
+the CLI and explicitly checked in the controller values. The namespace/actor and
+owned-resource cleanup are the same as the existing probe. Normal `deliver`,
+`demo`, workflows and production scripts do not import or install this probe;
+only isolated Python regression tests import it without starting infrastructure.
+
+`summary.json` separates `testExecution`, `engineObservation`,
+`contractEvaluation` and `migrationAdoption`. Reproducing the issue gives
+`COMPLETED / ORDER_DEPENDENCE_REPRODUCED / FAIL / BLOCKED` and exit 2. Exit 0 can
+only mean the executed subset matched; adoption remains `NOT_ASSESSED`. Errors
+and empty observations cannot become success. Historical `observations.json`
+files and previous exit results are preserved unchanged.
+
+Closure execution `closure-selection-01` recorded **15 observations**: nine CLI
+observations (including isolated legacy controls) and **six real CEL admission
+requests**. The same-reference sequence is reject/accept/reject for both CEL
+entry points; legacy CLI rejects all three orders. Positive and negative controls
+behave as expected. The test completes, contract evaluation fails, and adoption
+remains blocked. No patch from #18049 was executed and no full delivery/scenario,
+UPDATE/Deployment, classic-transparency or hosted coverage is added.
+
+Executed source was `19c1094d7d8b281a83af884a92bfcc5d63f5fdd5` plus the two
+recorded probe/test modifications, **before** the later documentation commit.
+Executed probe SHA-256:
+`226a2ba5f9fbeb301638068af6e67602443f675961cb9c373c144f467d76e9ae`.
+The exact script is retained. All three requests in each entry point have identical
+resource bytes; all twelve observed immutable manifest/blob responses for the
+selection repository retain their hashes. Image reference:
+`172.18.0.1:37059/selection@sha256:5d3d4b8d43a0674bba2819cbad08939e64601801c396acbd7dfc93fdb62894ce`.
+Both conforming and nonconforming results bundles independently authenticate with
+official Cosign against the retained public key and this digest.
+
+Affected validation: `make -C implementacion test-policies` passes **52 stdlib
+Python tests**, Rego, **16 engine checks** and policy scripts; inventory validation
+covers 517 paths and its 10 tests pass. Documentation links/Bash syntax and
+`git diff --check` pass. The new summary regression initially failed because its
+helper was absent, then passed after implementation. Full CI already succeeded
+on unchanged prior code at `19c1094` in runs
+[40937521940](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/40937521940)
+and [40937514053](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/40937514053).
+That CI is not attributed to new code: affected checks were rerun locally, and
+normal PR CI checks the new revision. No duplicate full local suite or hosted
+delivery was dispatched. Production renderer, scripts, workflows, fixtures and
+tool/chart/image pins are byte-identical to the base of this iteration.
+
+The single sequential lab stayed on 4 cores / 16 GB / 32 GB, starting and ending
+with 9.1 GiB free; capacity/inodes were recorded before creation. Owned kind
+container `c9f591f832d777e376ea1a84a7343d307397fce3f59ed942dfdd82dc282ab454`
+and registry `9668addfcd8dc06145020aea97fcfc95a91213f4f1036340a5d552f7e4eaf84d`
+were removed and their absence checked. Five empty temporary directories from
+owned probe cleanup were matched to retained logs, verified empty and retired
+with `rmdir`; no credential files remained or unrelated files were removed.
+No DB/image/history copy or volume pruning was needed.
+
+Retained compact package:
+`implementacion/evidence/packages/kyverno-cel-selection-closure-19c1094-20261029.tar.gz`,
+**161,329 bytes / 138 entries**, SHA-256
+`6111841999e99994ac7f3bff3f74723d0c5178624e03f5f84bf478692bc245d2`.
+Every entry and its checksum list were compared against original retained bytes.
+It contains focused observations, source/artifact inspection receipts and necessary
+upstream source snapshots, excluding private keys, kubeconfigs, binaries, image
+layers, DBs and prior packages. Both earlier packages retain their recorded hashes.
+
+**Unsent upstream draft — scope: release availability and selection semantics**
+
+> Official Kyverno CLI/controller 1.19.2 (revision e63308f), chart 3.9.2,
+> Kubernetes 1.35.8; local development-key trust only, verification cache disabled.
+> Stable-v1 ImageValidatingPolicy verifies explicit predicates and evaluates two
+> fields on the same authenticated results payload. One conforming and one
+> nonconforming authenticated results statement share the image digest and signer.
+> With the same image reference, resource bytes, policies and signed bundle bytes,
+> ordering referrers forward/reverse/forward yields reject/accept/reject in CLI
+> and real restricted-actor server-dry-run admission. Positive and isolated
+> legacy controls are retained. This is authenticated-content selection dependence,
+> not a forged-signature or no-valid-results claim.
+>
+> Reproducer: the command above and `--selection-only` implementation in PR #65.
+> Expected for our current all-statements contract: reject all three requests.
+> Actual: the middle request is accepted. The test correctly completes while
+> contract evaluation fails; no production migration is enabled.
+>
+> We inspected final #18049, merged as edd8b239 on main. It is absent from the
+> inspected v1.19.2 release artifacts/source, so this is not a claim that #18049's
+> patched code reproduced the defect. That patch chooses newest with bundle-time
+> preference and payload-byte ties; it does not expose all authenticated statements.
+> Please clarify the official release/backport path and whether an authenticated
+> collection/explicit selection strategy is planned. Our product is separately
+> reviewing current-authorization semantics; no upstream all-statements standard
+> or general vulnerability is asserted.
+
+### Support deadline, next branch and partial-runtime option
+
+Consulted **29 October 2026**: the official
+[API retirement schedule](https://kyverno.io/docs/policy-types/overview/#deprecation-schedule-for-legacy-types)
+lists ClusterPolicy deprecated in 1.19 and removed in **1.20**. The
+[community patch policy](https://kyverno.io/docs/installation/releases/#community-patch-support)
+lists 1.19 as supported until the 1.20 release, estimated **November 2026**, with
+about three months of limited critical-bug/high-or-critical-CVE patches. This is
+an event-based estimated deadline, not a guaranteed day or indefinite 1.19.2
+support. Kubernetes 1.35 remains within its documented matrix.
+
+Next maintainer review: **2 November 2026**, or the 1.20 release announcement if
+it occurs earlier. Open **`design/attestation-selection-contract`** to approve
+context, supersession, time/freshness, conflict and replay semantics before changing
+producers or consumers. Reassess three explicit exits: (1) validate an official
+release with the required capability against unchanged or newly approved contracts;
+(2) approve and implement a current-authorization contract that improves the
+product, then test both lanes; (3) evaluate a maintained alternative if no supported
+route is available before 1.19 support ends. Verify artifact provenance, embedded
+libraries, all selection cases, full independent controls, readiness/RBAC/diagnostics,
+real local integrations and a fresh authorized hosted run before adoption.
+No automatic upgrade or policy removal is scheduled.
+
+A separate runtime-only move to ValidatingPolicy could reduce later work and test
+manifest semantics without attestation selection. It also creates a mixed API
+inventory/readiness/RBAC/diagnostic burden and still depends on legacy verifyImages.
+It therefore does **not** solve ClusterPolicy removal or the support deadline.
+Recommendation: prioritize the authorization/support decision, and consider this
+bounded intermediate step only if its tests/maintenance savings justify it. It is
+neither implemented nor claimed as a complete transition in this PR.
+
 
 ## Architecture decision: canonical bundles, official admission verification
 
@@ -50,8 +380,9 @@ equivalence. Historical observations, packages and their bytes remain unchanged.
 
 Adoption remains conditional on these tests, complete consumer migration and a
 new hosted run. Active ClusterPolicy policies remain unchanged during capability
-assessment. A confirmed official-engine limitation must leave this PR in draft
-with an upstream reproducer; it must not be hidden by weaker predicates.
+assessment. A confirmed official-engine limitation blocks adoption and requires
+a reproducer; it must not be hidden by weaker predicates. This PR is now scoped
+to reviewable research/tests rather than activation of that migration.
 
 ### Earlier format-only finding (superseded as an adoption blocker)
 
@@ -185,8 +516,10 @@ this reproduction uses that official release and its pinned source. The issue's
 proposed newest-statement semantics would also require a separate contract
 decision; it does not preserve the current all-statements checks automatically.
 No upstream issue/comment was posted and no compatible replacement release is
-claimed. A suitable official API must expose all authenticated payloads, or an
-equivalent verifier-side all-statements condition, with subject/attestor binding.
+claimed. To preserve the **currently approved** contract, an official API must expose all
+authenticated payloads or equivalent all-statements conditions with subject/attestor
+binding. A separately approved product contract could justify a different strategy;
+the research-closure section compares those choices without changing the active one.
 Rerun this matrix and the outstanding hosted/representation checks before
 selecting such a release. Do not silently choose first, last, newest or any
 conforming statement to make this migration pass.

@@ -70,6 +70,22 @@ def evaluation_counts(output, legacy=False, integration_error=False):
     return passed, failed, warned, errors
 
 
+def result_summary(observations, completed):
+    """Keep a working reproducer distinct from contract/adoption acceptance."""
+    valid_run = completed and bool(observations)
+    failures = [o["name"] for o in observations if not o["matchesExpectation"]]
+    orders = [o["exitCode"] == 0 for o in observations
+              if o["name"].startswith("same-reference-")]
+    return {
+        "testExecution": "COMPLETED" if valid_run else "ERROR",
+        "engineObservation": ("ORDER_DEPENDENCE_REPRODUCED" if valid_run and len(set(orders)) > 1
+                              else "OBSERVATIONS_RECORDED" if valid_run else "INCOMPLETE"),
+        "contractEvaluation": ("FAIL" if failures else "SATISFIED_FOR_EXECUTED_CASES") if valid_run else "INDETERMINATE",
+        "migrationAdoption": "BLOCKED" if not valid_run or failures else "NOT_ASSESSED",
+        "unexpectedCases": failures,
+    }
+
+
 def fallback_requests(log):
     requests = []
     for line in log.splitlines():
@@ -138,10 +154,11 @@ def legacy_policy(public_key):
 
 
 class Probe:
-    def __init__(self, output, admission=False):
+    def __init__(self, output, admission=False, selection_only=False):
         self.output = output
         self.cid = None
         self.admission = admission
+        self.selection_only = selection_only
         self.cluster = None
         self.observations = []
         self.cases = []
@@ -251,6 +268,9 @@ class Probe:
         if hashlib.sha256(chart.read_bytes()).hexdigest() != self.lock["charts"]["kyverno"]["sha256"]:
             raise RuntimeError("Chart checksum mismatch")
         values = self.command("helm-values", ["bash", "-c", "source scripts/lib/lab.sh; mode=local; lock=tools.lock.json; lab_kyverno_values"])
+        chart_values = json.loads(values.stdout)
+        if chart_values["admissionController"]["container"]["extraArgs"]["imageVerifyCacheEnabled"] != "false":
+            raise RuntimeError("The selection probe requires disabled verification caching")
         (self.output / "helm-values.json").write_bytes(values.stdout)
         self.command("helm-install", ["helm", "--kubeconfig", str(self.kubeconfig), "--kube-context", "kind-" + self.cluster,
             "install", "kyverno", str(chart), "--namespace", "kyverno", "--create-namespace", "--values", str(self.output / "helm-values.json"),
@@ -370,11 +390,93 @@ class Probe:
                     self.end_headers()
                     if method != "HEAD":
                         self.wfile.write(body)
-                    probe.proxy_requests.append({"method": method, "path": self.path, "status": response.status, "referrerOrder": order})
+                    probe.proxy_requests.append({"method": method, "path": self.path, "status": response.status, "referrerOrder": order,
+                        "responseSha256": sha(body) if method == "GET" else None})
 
         self.proxy = http.server.ThreadingHTTPServer((gateway, 0), Registry)
         self.host = gateway + ":" + str(self.proxy.server_port)
         threading.Thread(target=self.proxy.serve_forever, daemon=True).start()
+
+    def selection_probe(self, private, subject, bundles, public_key):
+        """Minimal same-reference probe using the existing signing/lab adapter."""
+        bad = self.sign(private, "selection-nonconforming", "results",
+                        {"probe": "results", "authorized": False}, subject)
+        for name, selected, expected in (
+                ("all-bundles", list(bundles.values()), True),
+                ("wrong-results", [*[bundles[k] for k in TYPES if k != "results"], bad], False)):
+            if self.image(name) != subject:
+                raise RuntimeError("Control image digest changed")
+            self.publish(name, subject, selected)
+            self.cases.append({"name": name, "expected": expected, "subject": subject})
+        if self.image("selection") != subject:
+            raise RuntimeError("Selection image digest changed")
+        self.publish("selection", subject, [*bundles.values(), bad])
+        original_order = list(self.referrer_orders["selection"])
+        self.start_proxy()
+        save(self.output / "expectations.json", self.cases)
+        save(self.output / "legacy.yaml", legacy_policy(public_key))
+        for case in self.cases:
+            observation = self.evaluate(case["name"], case["name"], subject, expected=case["expected"], category="TEST_CONTROL")
+            if not observation["matchesExpectation"]:
+                raise RuntimeError("Selection test control failed: " + case["name"])
+        positive = self.evaluate("legacy-positive", "all-bundles", subject, expected=True,
+                                category="ISOLATED_LEGACY_CHARACTERIZATION", policy_file=self.output / "legacy.yaml")
+        if not positive["matchesExpectation"]:
+            raise RuntimeError("Legacy positive test control failed")
+        self.selection_orders(subject, original_order)
+        if self.admission:
+            self.admission_cases()
+            if any(not o["matchesExpectation"] for o in self.observations if o["name"].startswith("admission-")):
+                raise RuntimeError("Admission test control failed")
+            self.selection_orders(subject, original_order, admission=True)
+
+    def selection_orders(self, subject, original_order, admission=False):
+        prefix = "admission-" if admission else ""
+        receipt = {"image": self.host + "/selection@" + subject["digest"],
+                   "expectedContract": "all-authenticated-statements-conform",
+                   "cache": "disabled-controller-flag" if admission else "disabled-by-CLI",
+                   "phases": []}
+        original_resource = None
+        # Return to the first order as a cache/repeatability check. No registry writes
+        # or signing operations occur between these three requests.
+        for label, order in (("forward", original_order),
+                             ("reverse", [*original_order[:-2], original_order[-1], original_order[-2]]),
+                             ("forward-again", original_order)):
+            self.referrer_orders["selection"] = list(order)
+            name = prefix + "same-reference-" + label
+            if admission:
+                resource = json.loads((self.output / "same-reference-forward.yaml").read_text())
+                resource["spec"]["containers"][0]["securityContext"] = {"privileged": False}
+                file = self.output / (name + ".yaml")
+                save(file, resource)
+                result = self.kubectl(name, ["create", "--dry-run=server", "-f", str(file)], False, True)
+                diagnostic = (result.stdout + result.stderr).decode()
+                if result.returncode and not re.search(
+                        r'admission webhook "ivpol\.validate\.kyverno\.svc[^" ]*" denied the request: Policy cel-capability-probe failed: PROBE_RESULTS', diagnostic):
+                    raise RuntimeError("Unattributed selection rejection: " + name)
+                self.observations.append({"name": name, "image": receipt["image"], "exitCode": result.returncode,
+                    "expected": "REJECT", "matchesExpectation": result.returncode != 0,
+                    "category": "REAL_ADMISSION", "diagnostic": diagnostic})
+            else:
+                self.evaluate(name, "selection", subject, expected=False, category="CONTENT_SELECTION")
+                legacy = self.evaluate("legacy-" + name, "selection", subject, expected=False,
+                    category="ISOLATED_LEGACY_CHARACTERIZATION", policy_file=self.output / "legacy.yaml")
+                if not legacy["matchesExpectation"]:
+                    raise RuntimeError("Legacy selection characterization changed")
+            resource_bytes = (self.output / (name + ".yaml")).read_bytes()
+            if original_resource is not None and original_resource != resource_bytes:
+                raise RuntimeError("The same-reference input bytes changed")
+            original_resource = resource_bytes
+            receipt["phases"].append({"name": name, "referrerOrder": order, "resourceSha256": sha(resource_bytes)})
+        observed_bodies = {}
+        for event in self.proxy_requests:
+            path = event["path"]
+            if event.get("status") == 200 and event.get("responseSha256") and path.startswith("/v2/selection/") and "/referrers/" not in path:
+                previous = observed_bodies.setdefault(path, event["responseSha256"])
+                if previous != event["responseSha256"]:
+                    raise RuntimeError("Registry manifest/blob bytes changed during order test")
+        receipt["unchangedResponseHashes"] = observed_bodies
+        save(self.output / (prefix + "same-reference.json"), receipt)
 
     def run(self):
         version = self.command("kyverno-version", ["kyverno", "version"]).stdout.decode()
@@ -424,6 +526,9 @@ class Probe:
             subject = self.image("bundles")
             bundles = {name: self.sign(private, name, name, {"probe": name, "authorized": True}, subject)
                        for name in TYPES}
+            if self.selection_only:
+                self.selection_probe(private, subject, bundles, pub)
+                return
             wrong_key = private / "untrusted"
             self.command("untrusted-key", ["cosign", "generate-key-pair", "--output-key-prefix", str(wrong_key)])
             other_subject = self.image("other-digest")
@@ -503,23 +608,27 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--admission", action="store_true", help="Also create one isolated kind/chart laboratory; requires 8 GiB free")
+    parser.add_argument("--selection-only", action="store_true",
+                        help="Small same-reference order reproducer with positive/negative controls; no full format matrix")
     args = parser.parse_args()
     args.output = args.output.resolve()
     args.output.mkdir(parents=True, exist_ok=False)
     (ROOT / ".tmp").mkdir(exist_ok=True)
-    probe = Probe(args.output, args.admission)
+    probe = Probe(args.output, args.admission, args.selection_only)
     save(args.output / "source.json", {
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "worktreeStatus": subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True),
         "probeSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "lockSha256": hashlib.sha256((ROOT / "tools.lock.json").read_bytes()).hexdigest(),
-        "admission": args.admission,
+        "admission": args.admission, "selectionOnly": args.selection_only,
     })
     status = "ERROR"
+    completed = False
     try:
         probe.run()
+        completed = True
         mismatches = [o for o in probe.observations if not o["matchesExpectation"]]
-        status = ("BLOCKED_CONTENT_SELECTION" if mismatches and all("duplicates" in o["name"] for o in mismatches)
+        status = ("BLOCKED_CONTENT_SELECTION" if mismatches and all("duplicates" in o["name"] or "same-reference" in o["name"] for o in mismatches)
                   else "BLOCKED_CAPABILITY_EXPECTATION" if mismatches else "CAPABILITIES_OBSERVED")
     except Exception as error:
         status = "ERROR"
@@ -540,6 +649,7 @@ def main():
             probe.command("kind-delete", ["kind", "delete", "cluster", "--name", probe.cluster, "--kubeconfig", str(probe.kubeconfig)])
             probe.command("kind-absence", ["docker", "inspect", probe.cluster + "-control-plane"], check=False)
         save(args.output / "observations.json", {"status": locals().get("status", "ERROR"), "cases": probe.observations})
+        save(args.output / "summary.json", result_summary(probe.observations, completed))
     return 2 if status.startswith("BLOCKED_") else (0 if status == "CAPABILITIES_OBSERVED" else 1)
 
 
