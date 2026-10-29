@@ -12,7 +12,7 @@ make -C implementacion test
 ```
 
 El directorio nombrado debe ser nuevo. `test-workflows` requiere Python 3, Git y
-Conftest 0.70.1 fijado; comprueba esa versión sin Docker, kubectl, GHCR, firmas ni
+Conftest 0.71.1 fijado; comprueba esa versión sin Docker, kubectl, GHCR, firmas ni
 OIDC. No necesita `doctor`. La suite compartida mantiene sus otros requisitos,
 incluidos sockets HTTP locales.
 

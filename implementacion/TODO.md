@@ -94,10 +94,20 @@ Current bounded implementation: [refresh validation](../docs/EN/maintainers/devc
 
 ### C. `chore/security-toolchain-refresh`
 
-- [ ] Update a compatible pinned set through `tools.lock.json`, installers, checksums/checks: Trivy, Conftest, Cosign and related tools; Kyverno CLI/chart/controllers/images with matching versions/digests; Helm/other implicated tools as needed.
-- [ ] Check Kubernetes/evidence-format compatibility. ClusterPolicy → CEL migration, if still needed, retains its own policy branch; never fold it silently into a version bump.
-- [ ] Run policies/contracts, real bundle cryptography and local real admission. Require actual hosted verification if identity, certificates, transparency or workflow behavior changes.
-- [ ] Keep every historic DB snapshot and frozen package unchanged; preserve new unsuccessful attempts and explicit remaining checks.
+Current candidate and exact validation limits: [maintenance record](../docs/EN/maintainers/security-toolchain-refresh-validation.md).
+
+- [x] Pin and verify Trivy 0.76.1, Conftest 0.71.1, Cosign 3.1.4, Kyverno 1.19.2/chart 3.9.2 and Helm 4.3.1; clean installer and shared devcontainer Dockerfile build. Retain PR #63 platform pins, act, zot and BuildKit.
+- [x] Verify Kubernetes 1.35.8, CycloneDX 1.7 full schemas, v0.3 bundles and exact chart images/values. ClusterPolicy → CEL remains a separate policy branch.
+- [x] Shared tests and real local integrations on `041f391`: legitimate delivery `delivery-Juza7mF4`, demo `run-hRUtsdlZ`, vulnerabilities `run-q3FVez06`. Verify package hashes and owned cleanup; retain failed preflight `delivery-6iEXPup3`. L05 and unsupported hosted negatives are not claimed.
+- [x] Preserve historical records and new original observations; retain one verified fresh DB byte copy with explicit mappings for retired duplicates. No campaign or human acceptance claim.
+- [x] Authorized hosted `golden-path.yml` run `40722150890` on `a1ec5de`: both native provenances, exact branch identity, certificate/transparency, preissuance F13, F11/F12, legitimate admission and L01 verified. Artifact/inner hashes and eight downloaded evidence bundles verified. Cleanup step succeeded; native finalization/per-resource absence receipts are not emitted, as documented. This does not establish execution on main.
+- [ ] Human review and final acceptance.
+
+### D. `refactor/kyverno-cel-policies` — next priority
+
+- [ ] Migrate the renderer and verification to supported ValidatingPolicy/ImageValidatingPolicy APIs with explicit policy equivalence, focused tests and real admission/recovery. Do not combine this with new scenarios or general Actions upgrades.
+- [ ] Recheck the [official API schedule](https://kyverno.io/docs/policy-types/overview/) and [support matrix](https://kyverno.io/docs/installation/releases/): consulted 28 October 2026, legacy APIs deprecated in 1.19 and removal planned for 1.20 (November 2026 estimated, not guaranteed). Patched 1.19 is a temporary supported compatibility step.
+- [ ] Keep general Actions maintenance as its own subsequent increment.
 
 ## Lane A shared-test dependency repair — 19 October 2026
 

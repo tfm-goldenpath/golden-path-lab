@@ -131,6 +131,24 @@ lab_prepare_namespaces() {
   done
 }
 
+# Shared by installation and chart-render compatibility checks. No infrastructure.
+lab_kyverno_values() {
+  jq -n --arg tag "v$(jq -r '.charts.kyverno.appVersion' "$lock")" \
+    --arg admission "$(jq -r '.images.kyverno.admission.digest' "$lock")" \
+    --arg init "$(jq -r '.images.kyverno.init.digest' "$lock")" \
+    --arg readiness "$(jq -r '.images.kyverno.readiness.digest' "$lock")" \
+    --argjson insecure "$([[ "$mode" == local ]] && echo true || echo false)" \
+    '{global:{image:{registry:"ghcr.io"}},
+      features:{registryClient:{allowInsecure:$insecure}},
+      admissionController:{replicas:1,
+        container:{image:{tag:($tag+"@"+$admission)},extraArgs:{imageVerifyCacheEnabled:"false"}},
+        initContainer:{image:{tag:($tag+"@"+$init)}}},
+      test:{image:{tag:($tag+"@"+$readiness)}},
+      backgroundController:{enabled:false},cleanupController:{enabled:false},
+      reportsController:{enabled:false},reportsServer:{enabled:false},
+      webhooksCleanup:{enabled:false},crds:{migration:{enabled:false}}}'
+}
+
 lab_install_admission() {
   record 'Install mandatory admission checks and trust limited to this lab'
   curl -fsSL --retry 3 "$(jq -r '.charts.kyverno.url' "$lock")" -o "$private/kyverno.tgz"
@@ -139,9 +157,7 @@ lab_install_admission() {
   if [[ "$mode" == github ]]; then
     k -n kyverno create secret generic gp-ghcr --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson="$DOCKER_CONFIG/config.json" >/dev/null
   fi
-  jq -n --arg tag "v$(jq -r '.charts.kyverno.appVersion' "$lock")" --arg admission "$(jq -r '.images.kyverno.admission.digest' "$lock")" \
-    --arg init "$(jq -r '.images.kyverno.init.digest' "$lock")" --arg insecure "$([[ "$mode" == local ]] && echo true || echo false)" \
-    '{global:{image:{registry:"ghcr.io"}}, admissionController:{replicas:1,container:{image:{tag:($tag+"@"+$admission)},extraArgs:{imageVerifyCacheEnabled:"false",allowInsecureRegistry:$insecure}},initContainer:{image:{tag:($tag+"@"+$init)}}},backgroundController:{enabled:false},cleanupController:{enabled:false},reportsController:{enabled:false},webhooksCleanup:{enabled:false},crds:{migration:{enabled:false}}}' > "$state_dir/kyverno-values.json"
+  lab_kyverno_values > "$state_dir/kyverno-values.json"
   helm --kubeconfig "$private/kubeconfig" --kube-context "kind-$cluster" upgrade --install kyverno "$private/kyverno.tgz" --namespace kyverno \
     --values "$state_dir/kyverno-values.json" --wait --timeout 5m
   lab_apply_admission_policies "${1:-initial}"

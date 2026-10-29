@@ -14,7 +14,7 @@ python3 -m unittest discover -s implementacion/tests/policies -p test_workflow_s
 make -C implementacion test
 ```
 
-Only Python 3, Git and locked Conftest 0.70.1 are required by `test-workflows`.
+Only Python 3, Git and locked Conftest 0.71.1 are required by `test-workflows`.
 It checks the Conftest version before evaluating, without calling Docker,
 kubectl, registries, signers or OIDC. Do not run the full environment doctor as a
 prerequisite for this static command. The shared suite has its usual additional

@@ -16,7 +16,7 @@ The first environment test uses an infrastructure probe independent of `quotes-n
 |---|---|---|
 | Node / npm | 24.22.1 / 11.19.1 | LTS line and native tests without another framework. [Node release](https://nodejs.org/en/blog/release/v24.22.1), [bundled npm](https://github.com/nodejs/node/blob/v24.22.1/deps/npm/package.json). |
 | Development base | `node:24.22.1-bookworm`, AMD64 manifest by SHA-256 | [Official Node image](https://hub.docker.com/_/node); full reference in [versions.env](../../versions.env). |
-| Service runtime base | Node 24.22.1 / Alpine 3.23, AMD64 manifest by SHA-256 | Supported Alpine `main` branch recognized by Trivy 0.74.0's EOL metadata. Separate `SERVICE_NODE_IMAGE` in [versions.env](../../versions.env); see [service README](../../services/quotes-node/README.md) for the compatibility decision. |
+| Service runtime base | Node 24.22.1 / Alpine 3.23, AMD64 manifest by SHA-256 | Supported Alpine `main` branch recognized by Trivy 0.76.1's EOL metadata. Separate `SERVICE_NODE_IMAGE` in [versions.env](../../versions.env); see [service README](../../services/quotes-node/README.md) for the compatibility decision. |
 | Docker Engine / CLI | 29.9.2 | [Official release](https://docs.docker.com/engine/release-notes/29/#2992); installed from Docker's Debian repository. |
 | Docker-in-Docker feature | 4.1.3 with lockfile | [Official feature](https://github.com/devcontainers/features/tree/main/src/docker-in-docker). Tagged feature ID in JSON, resolved digest in lockfile; automatic Buildx/Compose disabled. |
 | Buildx | 0.38.1 | [Official release](https://github.com/docker/buildx/releases/tag/v0.38.1), AMD64 download with pinned SHA-256. |
@@ -28,6 +28,15 @@ The first environment test uses an infrastructure probe independent of `quotes-n
 The installer checks kind, kubectl and Buildx downloads against `versions.env`; additional tools use the lockfile. Node and kind images use digests. The feature key must use `docker-in-docker:4.1.3`, with its resolved integrity in `devcontainer-lock.json` beside each configuration. See the [lockfile specification](https://github.com/devcontainers/spec/blob/main/docs/specs/devcontainer-lockfile.md). A pinned hash detects object changes; it does not by itself prove publisher security.
 
 Debian build packages come from the signed Debian and Debian-security snapshots dated `20261025T000000Z` in `.devcontainer/debian.sources`. `Check-Valid-Until: no` allows a dated archive; signature verification remains enabled through the Debian archive keyring. The Docker feature uses Docker’s signed Debian repository, with an explicit Engine/CLI version; its transitive packages are not all frozen. Record `dpkg-query -W` after building; this is not a bit-for-bit reproducibility claim.
+
+Security toolchain maintenance selects Trivy 0.76.1, Conftest 0.71.1, Cosign 3.1.4,
+Kyverno 1.19.2/chart 3.9.2 and Helm 4.3.1. See the single [maintenance record](../../../docs/EN/maintainers/security-toolchain-refresh-validation.md)
+for publisher verification, actual local/hosted checks and their exact limits. The
+checker prints the executable selected by PATH; an older `.tools/bin` copy must
+not shadow the installed version. Reinstall from the lock or rebuild the image,
+then run doctor. Trivy now recognizes Alpine 3.24 EOL metadata; the service keeps
+3.23 until a separately tested distribution update. Prior execution records retain
+their original versions.
 
 ## Resources and opening the environment
 

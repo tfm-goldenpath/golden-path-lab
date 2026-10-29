@@ -91,9 +91,9 @@ attestations_issue_delivery() {
     sign_args+=(--trusted-root "$state_dir/sigstore-trusted-root.json")
     verify_args+=(--trusted-root "$state_dir/sigstore-trusted-root.json" --certificate-identity "$(get identity)" --certificate-oidc-issuer https://token.actions.githubusercontent.com)
   fi
-  # Pinned Cosign 3.1.3 image signing emits a DSSE cosign/sign/v1 statement
+  # Pinned Cosign 3.1.4 image signing emits a DSSE cosign/sign/v1 statement
   # in bundle mode; sign-blob's messageSignature is a different operation.
-  # https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/sign/sign.go
+  # https://github.com/sigstore/cosign/blob/v3.1.4/cmd/cosign/cli/sign/sign.go
   attestations_observe begin image-signature
   attestations_sign_bundle image.bundle.json sign "${sign_args[@]}"
   attestations_verify_bundle image.bundle.json https://sigstore.dev/cosign/sign/v1 verified-image-bundle.txt verified-signature.json

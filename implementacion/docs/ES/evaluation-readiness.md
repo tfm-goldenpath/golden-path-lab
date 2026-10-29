@@ -2,6 +2,8 @@
 
 [English](../EN/evaluation-readiness.md) · [Trabajo actual](../../TODO.md) · [Entrega para ejecución final](paired-rg-campaign.md)
 
+El [registro de mantenimiento de seguridad del 28 de octubre](../../../docs/EN/maintainers/security-toolchain-refresh-validation.md) añade validación local acotada sobre `041f391` y el run alojado autorizado `40722150890` sobre `a1ec5de`. Conserva las fronteras no ejecutadas, los fallos originales y la separación de datasets de esta matriz; no acredita una nueva campaña de veinte escenarios ni ejecución sobre una revisión posterior de main.
+
 ## Última decisión humana — 4 de octubre de 2026
 
 La [declaración canónica de aceptación humana de Francisco](../../registros/evaluation_acceptance_20261004_ES.md) ([traducción inglesa](../../registros/evaluation_acceptance_20261004_EN.md)) cierra la evaluación experimental dentro del alcance reducido documentado. Acepta la campaña de diez pares, las observaciones funcionales, las seis reparaciones automatizadas y el piloto dentro de sus respectivas fuentes y fronteras de ejecución. La medición del esfuerzo humano sigue aplazada; quedan pendientes la ubicación y verificación de checksums de la copia externa, a cargo de Francisco. Los resultados y límites se han incorporado a los capítulos 4–6 de la memoria española local; el manuscrito se mantiene fuera de este repositorio y su revisión editorial final sigue siendo independiente.

@@ -1,43 +1,66 @@
 {
   "schemaVersion": 1,
   "platform": "linux/amd64",
-  "verifiedAt": "2026-09-21",
+  "verifiedAt": "2026-10-28",
   "tools": {
     "trivy": {
-      "version": "0.74.0",
-      "url": "https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz",
-      "sha256": "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a",
+      "version": "0.76.1",
+      "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-64bit.tar.gz",
+      "sha256": "c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0",
       "archive": "tar.gz",
       "member": "trivy",
-      "release": "https://github.com/aquasecurity/trivy/releases/tag/v0.74.0",
-      "checksumSource": "https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_checksums.txt"
+      "release": "https://github.com/aquasecurity/trivy/releases/tag/v0.76.1",
+      "checksumSource": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_checksums.txt",
+      "verification": {
+        "method": "cosign verify-blob",
+        "bundle": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-64bit.tar.gz.sigstore.json",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "identity": "https://github.com/aquasecurity/trivy/.github/workflows/reusable-release.yaml@refs/tags/v0.76.1"
+      }
     },
     "conftest": {
-      "version": "0.70.1",
-      "url": "https://github.com/open-policy-agent/conftest/releases/download/v0.70.1/conftest_0.70.1_Linux_x86_64.tar.gz",
-      "sha256": "613d124b8f6c1f3cee890491f7ab19114cca5a2102ca47cb2e6c35b4c23f9c8a",
+      "version": "0.71.1",
+      "url": "https://github.com/open-policy-agent/conftest/releases/download/v0.71.1/conftest_0.71.1_Linux_x86_64.tar.gz",
+      "sha256": "c3f6b2a753bd56e377a1e51a95ae3e057f926f2e9139f7d5b5dfbbaf810f7985",
       "archive": "tar.gz",
       "member": "conftest",
-      "release": "https://github.com/open-policy-agent/conftest/releases/tag/v0.70.1",
-      "checksumSource": "https://api.github.com/repos/open-policy-agent/conftest/releases/tags/v0.70.1"
+      "release": "https://github.com/open-policy-agent/conftest/releases/tag/v0.71.1",
+      "checksumSource": "https://github.com/open-policy-agent/conftest/releases/download/v0.71.1/checksums.txt",
+      "verification": {
+        "method": "gh attestation verify",
+        "repository": "open-policy-agent/conftest",
+        "identity": "https://github.com/open-policy-agent/conftest/.github/workflows/release.yaml@refs/tags/v0.71.1"
+      }
     },
     "cosign": {
-      "version": "3.1.3",
-      "url": "https://github.com/sigstore/cosign/releases/download/v3.1.3/cosign-linux-amd64",
-      "sha256": "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71",
+      "version": "3.1.4",
+      "url": "https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign-linux-amd64",
+      "sha256": "424e2c97d0b45fd7a6b608a87f090f35633f4c23ece5f092d48bba11aaf4bbfa",
       "archive": "binary",
       "member": "cosign",
-      "release": "https://github.com/sigstore/cosign/releases/tag/v3.1.3",
-      "checksumSource": "https://api.github.com/repos/sigstore/cosign/releases/tags/v3.1.3"
+      "release": "https://github.com/sigstore/cosign/releases/tag/v3.1.4",
+      "checksumSource": "https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign_checksums.txt",
+      "verification": {
+        "method": "cosign verify-blob",
+        "bundle": "https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign-linux-amd64.sigstore.json",
+        "issuer": "https://accounts.google.com",
+        "identity": "keyless@projectsigstore.iam.gserviceaccount.com"
+      }
     },
     "helm": {
-      "version": "4.3.0",
-      "url": "https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz",
-      "sha256": "86584a54def73570558f66f5111cc53dfed56689637ae32c1201205d494f54fb",
+      "version": "4.3.1",
+      "url": "https://get.helm.sh/helm-v4.3.1-linux-amd64.tar.gz",
+      "sha256": "0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b",
       "archive": "tar.gz",
       "member": "linux-amd64/helm",
-      "release": "https://github.com/helm/helm/releases/tag/v4.3.0",
-      "checksumSource": "https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz.sha256sum"
+      "release": "https://github.com/helm/helm/releases/tag/v4.3.1",
+      "checksumSource": "https://get.helm.sh/helm-v4.3.1-linux-amd64.tar.gz.sha256sum",
+      "verification": {
+        "method": "gpg --verify",
+        "signature": "https://github.com/helm/helm/releases/download/v4.3.1/helm-v4.3.1-linux-amd64.tar.gz.asc",
+        "keySource": "https://keybase.io/r6by/pgp_keys.asc",
+        "fingerprint": "208DD36ED5BB3745A16743A4C7C6FBB5B91C1155"
+      }
     },
     "act": {
       "version": "0.2.89",
@@ -49,13 +72,19 @@
       "checksumSource": "https://api.github.com/repos/nektos/act/releases/tags/v0.2.89"
     },
     "kyverno": {
-      "version": "1.19.1",
-      "url": "https://github.com/kyverno/kyverno/releases/download/v1.19.1/kyverno-cli_v1.19.1_linux_x86_64.tar.gz",
-      "sha256": "b38228f367fc0fdc2b08f4c83ea50ac5f16c60ff8d62d76a66157c33c47b70ae",
+      "version": "1.19.2",
+      "url": "https://github.com/kyverno/kyverno/releases/download/v1.19.2/kyverno-cli_v1.19.2_linux_x86_64.tar.gz",
+      "sha256": "357eaf1df8bc24ddd5a73979fadeaae6a032e8710f11af264229756e4956bf4a",
       "archive": "tar.gz",
       "member": "kyverno",
-      "release": "https://github.com/kyverno/kyverno/releases/tag/v1.19.1",
-      "checksumSource": "https://api.github.com/repos/kyverno/kyverno/releases/tags/v1.19.1"
+      "release": "https://github.com/kyverno/kyverno/releases/tag/v1.19.2",
+      "checksumSource": "https://github.com/kyverno/kyverno/releases/download/v1.19.2/checksums.txt",
+      "verification": {
+        "method": "cosign verify-blob",
+        "bundle": "https://github.com/kyverno/kyverno/releases/download/v1.19.2/kyverno-cli_v1.19.2_linux_x86_64.tar.gz.sigstore.json",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "identity": "https://github.com/kyverno/kyverno/.github/workflows/release.yaml@refs/tags/v1.19.2"
+      }
     }
   },
   "images": {
@@ -73,48 +102,54 @@
     "kyverno": {
       "admission": {
         "repository": "ghcr.io/kyverno/kyverno",
-        "version": "v1.19.1",
-        "digest": "sha256:b31d8511ae5fd6010e2a01ea72ebae08eb82fa51d91af14a1d9fe989949b4edb",
-        "reference": "ghcr.io/kyverno/kyverno:v1.19.1@sha256:b31d8511ae5fd6010e2a01ea72ebae08eb82fa51d91af14a1d9fe989949b4edb"
+        "version": "v1.19.2",
+        "digest": "sha256:c8c4dd09e720d2cd7fd24ca73ac28e46651001372f988e0cba3f2f612f04b955",
+        "reference": "ghcr.io/kyverno/kyverno:v1.19.2@sha256:c8c4dd09e720d2cd7fd24ca73ac28e46651001372f988e0cba3f2f612f04b955"
       },
       "init": {
         "repository": "ghcr.io/kyverno/kyvernopre",
-        "version": "v1.19.1",
-        "digest": "sha256:c25c47461f06f2845a48c319ae86fbbc1730a7b9ed5b701889c9dc1f9ee94b09",
-        "reference": "ghcr.io/kyverno/kyvernopre:v1.19.1@sha256:c25c47461f06f2845a48c319ae86fbbc1730a7b9ed5b701889c9dc1f9ee94b09"
+        "version": "v1.19.2",
+        "digest": "sha256:27f3cc52e628559b56d08363b85316819802086c9808606914f7805a244148f4",
+        "reference": "ghcr.io/kyverno/kyvernopre:v1.19.2@sha256:27f3cc52e628559b56d08363b85316819802086c9808606914f7805a244148f4"
       },
       "background": {
         "repository": "ghcr.io/kyverno/background-controller",
-        "version": "v1.19.1",
-        "digest": "sha256:8f1e9143373a27578cafc2d28d2c66ba0926c63b4c77e63de8d2fdd4a122859f",
-        "reference": "ghcr.io/kyverno/background-controller:v1.19.1@sha256:8f1e9143373a27578cafc2d28d2c66ba0926c63b4c77e63de8d2fdd4a122859f"
+        "version": "v1.19.2",
+        "digest": "sha256:c46e124f21ef8a6bb4b48de57106808b1007edcd5ddd4ff7df5d23b9efa60ce2",
+        "reference": "ghcr.io/kyverno/background-controller:v1.19.2@sha256:c46e124f21ef8a6bb4b48de57106808b1007edcd5ddd4ff7df5d23b9efa60ce2"
       },
       "cleanup": {
         "repository": "ghcr.io/kyverno/cleanup-controller",
-        "version": "v1.19.1",
-        "digest": "sha256:67a48e62a8d8f8120c86914ff822b90017c54054c7b64ef8a1555645e9d9761e",
-        "reference": "ghcr.io/kyverno/cleanup-controller:v1.19.1@sha256:67a48e62a8d8f8120c86914ff822b90017c54054c7b64ef8a1555645e9d9761e"
+        "version": "v1.19.2",
+        "digest": "sha256:d7340aa7c9315080c3dafa7b765d090ced37353e89e5cd7a3f9ac69e8fb532b2",
+        "reference": "ghcr.io/kyverno/cleanup-controller:v1.19.2@sha256:d7340aa7c9315080c3dafa7b765d090ced37353e89e5cd7a3f9ac69e8fb532b2"
       },
       "reports": {
         "repository": "ghcr.io/kyverno/reports-controller",
-        "version": "v1.19.1",
-        "digest": "sha256:c0eee97b9b44a0dd35805d56b358fa52548480f79d4944602b9609538eccd64c",
-        "reference": "ghcr.io/kyverno/reports-controller:v1.19.1@sha256:c0eee97b9b44a0dd35805d56b358fa52548480f79d4944602b9609538eccd64c"
+        "version": "v1.19.2",
+        "digest": "sha256:5fb6d3e738050dbce84f60ecabaede7665fbe0578d07c1e8c912443b035e79c3",
+        "reference": "ghcr.io/kyverno/reports-controller:v1.19.2@sha256:5fb6d3e738050dbce84f60ecabaede7665fbe0578d07c1e8c912443b035e79c3"
       },
       "cli": {
         "repository": "ghcr.io/kyverno/kyverno-cli",
-        "version": "v1.19.1",
-        "digest": "sha256:ced7b2be0b04250cabfe695f15307f69eb715fe23234816388af4f3812915b2a",
-        "reference": "ghcr.io/kyverno/kyverno-cli:v1.19.1@sha256:ced7b2be0b04250cabfe695f15307f69eb715fe23234816388af4f3812915b2a"
+        "version": "v1.19.2",
+        "digest": "sha256:322ec5044d600930cb3af0e56dc33154a2d1d1fba58f4cadad3f47be7e78b11c",
+        "reference": "ghcr.io/kyverno/kyverno-cli:v1.19.2@sha256:322ec5044d600930cb3af0e56dc33154a2d1d1fba58f4cadad3f47be7e78b11c"
+      },
+      "readiness": {
+        "repository": "ghcr.io/kyverno/readiness-checker",
+        "version": "v1.19.2",
+        "digest": "sha256:02600428e7c956e222f4376413525866ed9fec28e6bcb1222774ce6bf5fc904a",
+        "reference": "ghcr.io/kyverno/readiness-checker:v1.19.2@sha256:02600428e7c956e222f4376413525866ed9fec28e6bcb1222774ce6bf5fc904a"
       }
     }
   },
   "charts": {
     "kyverno": {
-      "version": "3.9.1",
-      "appVersion": "1.19.1",
-      "url": "https://kyverno.github.io/kyverno/kyverno-3.9.1.tgz",
-      "sha256": "7b7fe51a431b5b133b0ce7eb9dcb222b6a37fb967c163223cf480054ad14d752",
+      "version": "3.9.2",
+      "appVersion": "1.19.2",
+      "url": "https://kyverno.github.io/kyverno/kyverno-3.9.2.tgz",
+      "sha256": "f6fe7184544d5e2ee33a77808c09e67aa603ce6560cc197038fde31d727c861e",
       "checksumSource": "https://kyverno.github.io/kyverno/index.yaml"
     }
   },
@@ -124,9 +159,9 @@
       "imageSignaturePredicate": "https://sigstore.dev/cosign/sign/v1",
       "localSigningServices": "none; explicit development key and empty signing/trusted-root configuration",
       "hostedTrust": "Exact GitHub workflow identity, issuer and transparency verified with authenticated Sigstore trust material.",
-      "admission": "Kyverno 1.19.1 ClusterPolicy SigstoreBundle; policy API migration remains separate.",
+      "admission": "Kyverno 1.19.2 ClusterPolicy SigstoreBundle; policy API migration remains separate.",
       "validation": "Migration candidate: record local and hosted acceptance separately before campaign freeze.",
-      "source": "https://github.com/sigstore/cosign/blob/v3.1.3/cmd/cosign/cli/options/sign.go"
+      "source": "https://github.com/sigstore/cosign/blob/v3.1.4/cmd/cosign/cli/options/sign.go"
     }
   }
 }

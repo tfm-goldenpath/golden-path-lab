@@ -46,11 +46,11 @@ Focused synthetic tests exercise missing, duplicate, unsafe and stale paths plus
 invalid classifications/profiles. There is no change to the runtime Make/CI targets.
 
 <!-- inventory-summary:start -->
-512 tracked paths; 233 individually enumerated scripts/helpers/tests.
+513 tracked paths; 233 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 136 |
+| developer | 137 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 267 |
