@@ -8,6 +8,7 @@
 2. [How it works](how-it-works.md): implemented phases, decisions, evidence and limitations.
 3. [Laboratory](../../lab/README.md): execution, scenarios, measurements and defense.
 4. [Repository map](maintainers/repository-map.md): canonical ownership inventory, target boundaries and migration contract.
+5. [Attestation selection ADR](maintainers/attestation-selection-contract.md): proposed delivery authorization contract and official-engine feasibility; active policies remain unchanged.
 
 Detailed [architecture](../../implementacion/docs/EN/architecture.md),
 [delivery contracts](../../implementacion/docs/EN/delivery-contracts.md) and

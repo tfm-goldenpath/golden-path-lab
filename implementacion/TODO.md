@@ -103,11 +103,24 @@ Current candidate and exact validation limits: [maintenance record](../docs/EN/m
 - [x] Authorized hosted `golden-path.yml` run `40722150890` on `a1ec5de`: both native provenances, exact branch identity, certificate/transparency, preissuance F13, F11/F12, legitimate admission and L01 verified. Artifact/inner hashes and eight downloaded evidence bundles verified. Cleanup step succeeded; native finalization/per-resource absence receipts are not emitted, as documented. This does not establish execution on main.
 - [ ] Human review and final acceptance.
 
-### D. `refactor/kyverno-cel-policies` — next priority
+### D. Attestation selection design before CEL adoption
 
-- [ ] Migrate the renderer and verification to supported ValidatingPolicy/ImageValidatingPolicy APIs with explicit policy equivalence, focused tests and real admission/recovery. Do not combine this with new scenarios or general Actions upgrades.
-- [ ] Recheck the [official API schedule](https://kyverno.io/docs/policy-types/overview/) and [support matrix](https://kyverno.io/docs/installation/releases/): consulted 28 October 2026, legacy APIs deprecated in 1.19 and removal planned for 1.20 (November 2026 estimated, not guaranteed). Patched 1.19 is a temporary supported compatibility step.
-- [ ] Keep general Actions maintenance as its own subsequent increment.
+Base: main `e0fbe6490794b0da679777d465117a43bdb482ad`. On 30 October,
+[PR #65](https://github.com/tfm-goldenpath/golden-path-lab/pull/65) remains open at
+`f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b`; use its
+[commit-pinned investigation](https://github.com/tfm-goldenpath/golden-path-lab/blob/f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b/docs/EN/maintainers/kyverno-cel-migration.md),
+without merging/copying its commits or treating its tests as active migration.
+
+- [x] Prepare `design/attestation-selection-contract`: canonical [EN ADR](../docs/EN/maintainers/attestation-selection-contract.md) / [ES explanation](../docs/ES/maintainers/attestation-selection-contract.md). Recommend exact authenticated statement contents selected by existing trusted preparation for a concrete delivery; defer continuous revocation/supersession. Human approval remains pending.
+- [x] Refresh official release/history/artifact inspection on 30 October 2026 UTC: latest stable 1.19.2, chart 3.9.2, Kubernetes 1.35.8 supported; embedded controller Cosign 3.1.2 differs from CLI 3.1.4. #18049 is on main, not the inspected release/branch, and its newest selector is insufficient for the proposed contract. No pins changed.
+- [x] Bounded new CLI feasibility: signed-subject ID filtering isolates different IDs, but same-ID contradictions remain order-dependent. Nine synthetic observations; test COMPLETED, ID-only contract FAIL, adoption BLOCKED. No new Kubernetes/hosted/full delivery execution or production changes.
+- [ ] Approve the ADR's semantic scope/version, four exact-content bindings and explicit freshness limits; do not reinterpret `golden-path-v1` or historical evidence.
+- [ ] **Review 2 November 2026, or earlier on the 1.20 announcement.** Upcoming as of 30 October. [Official support](https://kyverno.io/docs/installation/releases/#community-patch-support) keeps 1.19 supported until 1.20 release (November estimated); [API schedule](https://kyverno.io/docs/policy-types/overview/#deprecation-schedule-for-legacy-types) announces ClusterPolicy removal in 1.20. No confirmed retirement day, automatic upgrade or policy removal.
+- [ ] Exit 1: identify and prove an official release with exact authenticated-content selection/collection and same-byte binding. Publication of #18049 alone is not sufficient.
+- [ ] Exit 2: after design approval and capability proof, implement `feat/delivery-authorization-selection` with versioned preparations, renderer/CI consumers, readiness/RBAC/snapshots/diagnostics, complete decision matrix, sequential local integrations and a newly authorized exact-SHA hosted run. No custom verifier, fork or authority service.
+- [ ] Exit 3: if no supported Kyverno route exists before support ends, evaluate the bounded maintained alternative in the ADR (Sigstore policy-controller plus runtime ValidatingPolicy). Its compatibility is unproved; do not replace the engine without the same guarantees/tests.
+- [ ] CEL migration remains **not implemented**. Consider runtime-only ValidatingPolicy separately only if its maintenance benefit justifies mixed APIs; retaining legacy image verification does not solve ClusterPolicy retirement.
+- [ ] Keep general Actions maintenance as its own subsequent increment. Preserve the existing 30 November 2026 09:00 Europe/Madrid reminder unchanged; it is not a retirement date or update authorization.
 
 ## Lane A shared-test dependency repair — 19 October 2026
 

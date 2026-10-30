@@ -8,6 +8,7 @@
 2. [Cómo funciona](how-it-works.md): fases implementadas, decisiones, evidencias y límites.
 3. [Laboratorio](../../lab/README.es.md): ejecución, escenarios, medición y defensa.
 4. [Mapa del repositorio (EN)](../EN/maintainers/repository-map.md): inventario canónico, fronteras propuestas y contrato de migración.
+5. [ADR de selección de atestaciones](maintainers/attestation-selection-contract.md): contrato propuesto de autorización y viabilidad oficial; las políticas activas no cambian.
 
 La [arquitectura](../../implementacion/docs/ES/architecture.md), los
 [contratos](../../implementacion/docs/ES/delivery-contracts.md) y el
