@@ -111,8 +111,16 @@ Consulta directa iniciada a **2026-10-30T19:27:59Z**, fuentes fijadas recuperada
 **19:28:59Z**, artefactos comprobados posteriormente ese día. La PR
 [#65](https://github.com/tfm-goldenpath/golden-path-lab/pull/65) seguía abierta en
 `f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b`; esta rama parte de main
-`e0fbe6490794b0da679777d465117a43bdb482ad` sin fusionar/copiar sus commits. Se usa
+`e0fbe6490794b0da679777d465117a43bdb482ad` sin fusionar/copiar sus commits en la preparación inicial. Se usa
 su [investigación fijada](https://github.com/tfm-goldenpath/golden-path-lab/blob/f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b/docs/EN/maintainers/kyverno-cel-migration.md).
+Después, #65 se fusionó en main `2b654f94e9c1bbb42ee3a6e75e788bc167407787`
+a **2026-10-30T20:19:06Z**. La PR #66 incorpora ahora esa revisión para resolver
+el solapamiento de TODO, conservando investigación y diseño. El
+[documento de investigación](kyverno-cel-migration.md) y el reproducer ya existen
+en esta rama; no se modifica la procedencia de las observaciones originales.
+Tras sincronizar, el inventario cubre **519 rutas**; sus 10 pruebas, 174 enlaces
+relativos, sintaxis Bash y comprobación del diff pasan. Runtime, tests y pins
+coinciden con main actualizado.
 
 - [Última estable](https://github.com/kyverno/kyverno/releases/tag/v1.19.2):
   **1.19.2**, chart **3.9.2**, Kubernetes fijado **1.35.8** dentro del rango
@@ -196,7 +204,7 @@ revisión/pins/contrato anteriores. No mezclar políticas legacy/CEL, cambiar re
 sellados ni presentar una revisión fuera de soporte como solución permanente.
 En esta rama solo se revierten documentos. No hay merge, release ni envío upstream.
 
-Validación documental: 170 enlaces relativos, sintaxis Bash/JSON, inventario exacto
+Validación documental inicial del diseño: 170 enlaces relativos, sintaxis Bash/JSON, inventario exacto
 de 515 rutas, 10 pruebas existentes del inventario y `git diff --check` correctos.
 Solo cambian seis archivos de documentación/inventario; CI comprobará el SHA final
 sin convertir el resultado del experimento en compatibilidad. Revisión humana

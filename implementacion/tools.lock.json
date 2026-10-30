@@ -159,7 +159,7 @@
       "imageSignaturePredicate": "https://sigstore.dev/cosign/sign/v1",
       "localSigningServices": "none; explicit development key and empty signing/trusted-root configuration",
       "hostedTrust": "Exact GitHub workflow identity, issuer and transparency verified with authenticated Sigstore trust material.",
-      "admission": "Kyverno 1.19.2 ClusterPolicy SigstoreBundle; policy API migration remains separate.",
+      "admission": "Kyverno 1.19.2 ClusterPolicy SigstoreBundle remains active. CEL capability reassessment permits official admission representations subject to demonstrated authentication and authorization; bundles remain canonical for generation, CI and custody. Classic retrieval alone is no longer a blocker. Official 1.19.2 CEL is blocked by order-dependent authenticated-payload selection, reproduced in CLI and admission; active policies remain unchanged. Embedded Cosign is 3.1.2; CLI is 3.1.4. See docs/EN/maintainers/kyverno-cel-migration.md.",
       "validation": "Migration candidate: record local and hosted acceptance separately before campaign freeze.",
       "source": "https://github.com/sigstore/cosign/blob/v3.1.4/cmd/cosign/cli/options/sign.go"
     }

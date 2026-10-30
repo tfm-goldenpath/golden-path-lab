@@ -38,11 +38,17 @@ Fetched `origin` and started from main
 `e0fbe6490794b0da679777d465117a43bdb482ad`. PR
 [#65](https://github.com/tfm-goldenpath/golden-path-lab/pull/65) was still OPEN,
 ready for review, at `f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b` on this consultation.
-No merge or cherry-pick was performed. Its
+At that initial preparation, no merge or cherry-pick was performed. Its
 [canonical investigation](https://github.com/tfm-goldenpath/golden-path-lab/blob/f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b/docs/EN/maintainers/kyverno-cel-migration.md)
 and [reproducer](https://github.com/tfm-goldenpath/golden-path-lab/blob/f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b/implementacion/tests/integration/kyverno-cel-capabilities.py)
-remain commit-pinned references until incorporated into main. No local link assumes
-their presence in this branch.
+remain commit-pinned references to the original research. PR #65 subsequently
+merged into main as `2b654f94e9c1bbb42ee3a6e75e788bc167407787` at
+**2026-10-30T20:19:06Z**. PR #66 now incorporates that main revision to resolve
+the TODO overlap, retaining both the completed research record and this proposed
+design. The [research document](kyverno-cel-migration.md) and reproducer are now
+present in this branch; the original execution provenance is unchanged. After synchronization, the combined
+inventory covers **519 tracked paths**; its 10 tests, 174 relative documentation
+links, Bash syntax and diff checks pass. Runtime, tests and pins match current main.
 
 PR #65 observed order-dependent **selection of authenticated content** in
 1.19.2: same reference and signed bytes, reversed referrers, reject/accept/reject.
@@ -528,7 +534,7 @@ experiment, not a supported long-term operating recommendation.
 
 ## Validation and custody for this design branch
 
-Documentation relative links (170 checked), Bash block syntax and explanatory JSON
+Initial design validation: documentation relative links (170 checked), Bash block syntax and explanatory JSON
 parse checks pass; the ownership inventory covers **515 tracked paths** and its
 **10 existing tests pass**. `git diff --check` passes. The six tracked changes are
 this EN/ES ADR, both navigation indexes, TODO and inventory. Production policies,

@@ -103,13 +103,27 @@ Current candidate and exact validation limits: [maintenance record](../docs/EN/m
 - [x] Authorized hosted `golden-path.yml` run `40722150890` on `a1ec5de`: both native provenances, exact branch identity, certificate/transparency, preissuance F13, F11/F12, legitimate admission and L01 verified. Artifact/inner hashes and eight downloaded evidence bundles verified. Cleanup step succeeded; native finalization/per-resource absence receipts are not emitted, as documented. This does not establish execution on main.
 - [ ] Human review and final acceptance.
 
-### D. Attestation selection design before CEL adoption
+### D. Kyverno CEL compatibility research (PR #65)
 
-Base: main `e0fbe6490794b0da679777d465117a43bdb482ad`. On 30 October,
-[PR #65](https://github.com/tfm-goldenpath/golden-path-lab/pull/65) remains open at
-`f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b`; use its
-[commit-pinned investigation](https://github.com/tfm-goldenpath/golden-path-lab/blob/f553b9eacad6ee6a4eb1ebcc0d8608315dd1793b/docs/EN/maintainers/kyverno-cel-migration.md),
-without merging/copying its commits or treating its tests as active migration.
+Research branch: `refactor/kyverno-cel-policies`; PR scope: **tests/documentation**,
+not an active migration. [Decision, upstream review, matrix and unsent report](../docs/EN/maintainers/kyverno-cel-migration.md).
+
+- [x] Inspect official 1.19.2 source/CRDs and preserve the original capability observations, including the superseded format-only blocker. Owner permits official admission representations subject to demonstrated authenticity/authorization; bundles remain canonical in production/CI/custody.
+- [x] Reproduce authenticated-content selection dependence with official CLI and restricted-actor CEL admission. Preserve the synthetic/full-contract and CLI/admission distinctions; no signature forgery, missing-all-results or general Kyverno vulnerability claim.
+- [x] Inspect issue #18023 and final PR #18049: merged newest-candidate selection is absent from inspected 1.19.0/1.19.1/1.19.2 and rc.5; no published corrected release identified on 29 October. Verify official CLI archive/member, tag source, release-branch history and main implementation; closed issue/publication date alone is insufficient.
+- [x] Provide a reduced same-reference, unchanged-bundle order reproducer and separate execution/observation/contract/adoption outcomes; original evidence and NOT_EXECUTED cases remain intact. Preserve active policies/producers and normal delivery/demo entry points.
+- [x] Compare all/any/current authorization contracts and recommend explicit current authorization for a future product decision, with authenticated context, supersession, freshness, tie/conflict and replay rules. This does not approve or implement new semantics.
+- [ ] Human review of the bounded research PR. Research can be accepted independently; **CEL migration remains unimplemented and blocked**.
+
+### E. Attestation selection design before CEL adoption
+
+The design started independently from main `e0fbe6490794b0da679777d465117a43bdb482ad`
+while [PR #65](https://github.com/tfm-goldenpath/golden-path-lab/pull/65) was open.
+After #65 merged on 30 October at 20:19:06 UTC, this branch incorporates main
+`2b654f94e9c1bbb42ee3a6e75e788bc167407787`. Its
+[research record](../docs/EN/maintainers/kyverno-cel-migration.md) is now incorporated;
+original commit-pinned observations remain unchanged. Research integration is not
+active CEL migration or approval of this design.
 
 - [x] Prepare `design/attestation-selection-contract`: canonical [EN ADR](../docs/EN/maintainers/attestation-selection-contract.md) / [ES explanation](../docs/ES/maintainers/attestation-selection-contract.md). Recommend exact authenticated statement contents selected by existing trusted preparation for a concrete delivery; defer continuous revocation/supersession. Human approval remains pending.
 - [x] Refresh official release/history/artifact inspection on 30 October 2026 UTC: latest stable 1.19.2, chart 3.9.2, Kubernetes 1.35.8 supported; embedded controller Cosign 3.1.2 differs from CLI 3.1.4. #18049 is on main, not the inspected release/branch, and its newest selector is insufficient for the proposed contract. No pins changed.
