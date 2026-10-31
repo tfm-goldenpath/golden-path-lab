@@ -115,21 +115,26 @@ not an active migration. [Decision, upstream review, matrix and unsent report](.
 - [x] Compare all/any/current authorization contracts and recommend explicit current authorization for a future product decision, with authenticated context, supersession, freshness, tie/conflict and replay rules. This does not approve or implement new semantics.
 - [ ] Human review of the bounded research PR. Research can be accepted independently; **CEL migration remains unimplemented and blocked**.
 
-### E. Next design: `design/attestation-selection-contract`
+### E. Attestation selection design before CEL adoption
 
-**Maintainer review due 2 November 2026**, or at a 1.20 release announcement if earlier.
-Official sources checked **29 October 2026**: [legacy retirement](https://kyverno.io/docs/policy-types/overview/#deprecation-schedule-for-legacy-types)
-deprecates ClusterPolicy in 1.19 and removes it in 1.20; [patch support](https://kyverno.io/docs/installation/releases/#community-patch-support)
-ends 1.19 support at the 1.20 release, estimated November 2026. This is not a
-fixed guaranteed date or indefinite patch support for pinned 1.19.2.
+The design started independently from main `e0fbe6490794b0da679777d465117a43bdb482ad`
+while [PR #65](https://github.com/tfm-goldenpath/golden-path-lab/pull/65) was open.
+After #65 merged on 30 October at 20:19:06 UTC, this branch incorporates main
+`2b654f94e9c1bbb42ee3a6e75e788bc167407787`. Its
+[research record](../docs/EN/maintainers/kyverno-cel-migration.md) is now incorporated;
+original commit-pinned observations remain unchanged. Research integration is not
+active CEL migration or approval of this design.
 
-- [ ] Approve the product's applicable-authorization context and all/any/current semantics. Decide supersession, exact current identity/head, trusted time source, lifetime/skew, equal-time conflicts, historical replay/withholding and local-versus-hosted limits before changing fields, producers or golden-path-v1.
-- [ ] Exit A: validate an official artifact containing the necessary supported capability. Inspect code/artifact inclusion and embedded libraries, then execute all approved selection, cryptographic, representation and full-contract cases; issue closure and newest sorting alone are not compatibility.
-- [ ] Exit B: if an explicit current-authorization contract improves the product, approve and implement it separately, with both-lane regressions and migration evidence. Do not silently replace all-statements behavior with any-PASS/latest.
-- [ ] Exit C: evaluate a maintained alternative if no supported path exists before 1.19 support ends. Keep this a dated decision; do not rely on an automatic upgrade that could remove active policies.
-- [ ] Resume CEL implementation only after the capability/contract decision: renderer, readiness/RBAC/snapshots, strict diagnostics and complete F07/F08/F13 inventory coverage, runtime CREATE/UPDATE, annotation/cache matrix, local deliver/demo/vulnerabilities/L01 and a fresh authorized hosted run. Unexecuted cases remain NOT_EXECUTED.
-- [ ] Assess a separate runtime-only ValidatingPolicy migration if it reduces verified work; it still depends on legacy image verification and is **not** a solution to ClusterPolicy removal. Not implemented in PR #65.
-- [ ] Keep general Actions maintenance separate; no automatic upgrade, merge or release authorized by this research.
+- [x] Prepare `design/attestation-selection-contract`: canonical [EN ADR](../docs/EN/maintainers/attestation-selection-contract.md) / [ES explanation](../docs/ES/maintainers/attestation-selection-contract.md). Recommend exact authenticated statement contents selected by existing trusted preparation for a concrete delivery; defer continuous revocation/supersession. Human approval remains pending.
+- [x] Refresh official release/history/artifact inspection on 30 October 2026 UTC: latest stable 1.19.2, chart 3.9.2, Kubernetes 1.35.8 supported; embedded controller Cosign 3.1.2 differs from CLI 3.1.4. #18049 is on main, not the inspected release/branch, and its newest selector is insufficient for the proposed contract. No pins changed.
+- [x] Bounded new CLI feasibility: signed-subject ID filtering isolates different IDs, but same-ID contradictions remain order-dependent. Nine synthetic observations; test COMPLETED, ID-only contract FAIL, adoption BLOCKED. No new Kubernetes/hosted/full delivery execution or production changes.
+- [ ] Approve the ADR's semantic scope/version, four exact-content bindings and explicit freshness limits; do not reinterpret `golden-path-v1` or historical evidence.
+- [ ] **Review 2 November 2026, or earlier on the 1.20 announcement.** Upcoming as of 30 October. [Official support](https://kyverno.io/docs/installation/releases/#community-patch-support) keeps 1.19 supported until 1.20 release (November estimated); [API schedule](https://kyverno.io/docs/policy-types/overview/#deprecation-schedule-for-legacy-types) announces ClusterPolicy removal in 1.20. No confirmed retirement day, automatic upgrade or policy removal.
+- [ ] Exit 1: identify and prove an official release with exact authenticated-content selection/collection and same-byte binding. Publication of #18049 alone is not sufficient.
+- [ ] Exit 2: after design approval and capability proof, implement `feat/delivery-authorization-selection` with versioned preparations, renderer/CI consumers, readiness/RBAC/snapshots/diagnostics, complete decision matrix, sequential local integrations and a newly authorized exact-SHA hosted run. No custom verifier, fork or authority service.
+- [ ] Exit 3: if no supported Kyverno route exists before support ends, evaluate the bounded maintained alternative in the ADR (Sigstore policy-controller plus runtime ValidatingPolicy). Its compatibility is unproved; do not replace the engine without the same guarantees/tests.
+- [ ] CEL migration remains **not implemented**. Consider runtime-only ValidatingPolicy separately only if its maintenance benefit justifies mixed APIs; retaining legacy image verification does not solve ClusterPolicy retirement.
+- [ ] Keep general Actions maintenance as its own subsequent increment. Preserve the existing 30 November 2026 09:00 Europe/Madrid reminder unchanged; it is not a retirement date or update authorization.
 
 ## Lane A shared-test dependency repair — 19 October 2026
 
