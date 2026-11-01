@@ -4,6 +4,13 @@ Status: **proposed for human approval; implementation and CEL adoption blocked**
 Decision date/reference: **30 October 2026**. Branch:
 `design/attestation-selection-contract`. [Spanish explanation](../../ES/maintainers/attestation-selection-contract.md).
 
+Follow-up **1 November 2026**: the [official-engine feasibility spike](admission-selection-feasibility.md)
+closes Kyverno 1.19.2 and policy-controller 0.15.1 as **NO_GO for this four-hash
+contract**. The latter's envelope-digest alternative was executed with real local
+signatures and fails statement-identity equivalence. No new admission or hosted
+execution; design/adoption approval and the implementation gate remain pending.
+The dated observations below retain their original provenance.
+
 ## Decision and scope
 
 Recommend **authorizing one concrete delivery against explicitly selected,

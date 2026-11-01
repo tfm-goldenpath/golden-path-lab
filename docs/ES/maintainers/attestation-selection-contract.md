@@ -7,6 +7,13 @@ El [ADR canónico en inglés](../../EN/maintainers/attestation-selection-contrac
 contiene la tabla completa de decisiones, funciones oficiales, hashes, pruebas y
 plan. Esta explicación mantiene el mismo alcance; no modifica el contrato activo.
 
+Seguimiento del **1 de noviembre de 2026**: la [prueba de viabilidad oficial](admission-selection-feasibility.md)
+cierra Kyverno 1.19.2 y policy-controller 0.15.1 como **NO_GO para los cuatro hashes**.
+La alternativa por digest de sobre se ejecutó con firmas reales y no conserva la
+identidad de declaración. No hubo nueva admisión ni ejecución alojada; siguen
+pendientes aprobación humana, adopción y desbloqueo de implementación. Las
+observaciones fechadas siguientes conservan su procedencia original.
+
 ## Recomendación concreta
 
 Autorizar una **entrega concreta** mediante cuatro declaraciones completas,
