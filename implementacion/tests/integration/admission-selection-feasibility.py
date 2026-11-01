@@ -3,13 +3,16 @@
 
 Synthetic predicates, real Cosign signatures and official policy-controller CLI.
 This is NOT an implementation of the four-statement-hash contract. No admission
-or production policy is installed. Exit 2 is a reproduced contract contradiction;
-exit 1 is an integration/harness error. See the linked feasibility report.
+or production policy is installed. Exit 2 is the historical statement-contract
+contradiction. Exit 1 means incomplete feasibility or an integration/harness error;
+inspect execution, contract and gate receipts separately. The immutable-envelope
+mode is a partial gate, never GO_LOCAL. See the linked feasibility reports.
 """
 
 import argparse
 import base64
 import copy
+from collections import Counter
 import hashlib
 import importlib.util
 import json
@@ -26,6 +29,25 @@ TESTER_SHA256 = "bf9cd8d21dd17c2c1e890ee540ae19d36021d8d805db9c7754b391c405a4143
 
 def absence_confirmed(result):
     return result.returncode != 0 and b"no such object:" in result.stderr.lower()
+
+
+def owned_registry(container, receipt):
+    return (container.get("Id") == receipt["id"] and
+            container.get("Name") == "/" + receipt["name"] and
+            container.get("Config", {}).get("Labels", {}).get("gp.cel-probe") == receipt["name"])
+
+
+def compare_orders(observations):
+    """A reversal cannot quietly change policy, image or the candidate multiset."""
+    by_name = {o["name"]: o for o in observations}
+    if len(by_name) != len(observations):
+        raise ValueError("Repeated observation name")
+    for prefix in ("selected-pass", "selected-fail"):
+        forward, reverse = [by_name[prefix + suffix] for suffix in ("-forward", "-reverse")]
+        if (forward["image"] != reverse["image"] or forward["policySha256"] != reverse["policySha256"] or
+                Counter(forward["envelopeOrder"]) != Counter(reverse["envelopeOrder"]) or
+                forward["envelopeOrder"] != list(reversed(reverse["envelopeOrder"]))):
+            raise ValueError("Order pair changed more than descriptor order")
 
 
 def statement_bytes(bundle):
@@ -94,6 +116,37 @@ def classify(exit_code, stdout, stderr):
     raise ValueError("Unattributed execution/integration error")
 
 
+def classify_envelope(exit_code, stdout, stderr):
+    """Separate internal content failure from outer selection and technical errors.
+
+    Missing-type and authentication diagnoses need the retained inventory and
+    independent official verification as well; they are not F13 observations.
+    """
+    try:
+        decision, data = classify(exit_code, stdout, stderr)
+        return decision, "OUTER", data
+    except (ValueError, KeyError, TypeError):
+        pass
+    if stderr.count("Checking Authority:") != 1:
+        return "INTEGRATION_ERROR", "UNREACHED", None
+    if stderr.count("Validating CIP level policy"):
+        return "INTEGRATION_ERROR", "OUTER", None
+    try:
+        result = json.loads(stdout)
+        errors = result["errors"]
+        if exit_code != 1 or result.get("warnings") or len(errors) != 1:
+            raise ValueError("Not a single blocking error")
+        error = errors[0]
+    except (ValueError, KeyError, TypeError):
+        return "INTEGRATION_ERROR", "INTERNAL", None
+    if ("policy is not compliant" in error and
+            any(f"failed evaluating rego policy for type {kind}:" in error for kind in base.TYPES)):
+        return "CONTENT_REJECT", "INTERNAL", None
+    if "no matching attestations with type " in error:
+        return "MISSING_VERIFIED_TYPE", "INTERNAL", None
+    return "INTEGRATION_ERROR", "INTERNAL", None
+
+
 class Probe(base.Probe):
     def __init__(self, output, tester):
         super().__init__(output, selection_only=True)
@@ -103,7 +156,26 @@ class Probe(base.Probe):
     def command(self, label, args, check=True):
         self.commands.append({"label": label, "argv": args})
         base.save(self.output / "commands.json", self.commands)
-        return super().command(label, args, check)
+        result = super().command(label, args, check)
+        if label == "registry-create" and result.returncode == 0:
+            base.save(self.output / "registry-receipt.json", {"id": result.stdout.decode().strip(),
+                "name": args[args.index("--name") + 1]})
+        return result
+
+    def cleanup_registry(self):
+        receipt = json.loads((self.output / "registry-receipt.json").read_text())
+        inspected = self.command("registry-owner", ["docker", "inspect", self.cid])
+        objects = json.loads(inspected.stdout)
+        if len(objects) != 1 or not owned_registry(objects[0], receipt):
+            raise RuntimeError("Registry ownership does not match immutable creation receipt")
+        self.command("registry-log", ["docker", "logs", self.cid], check=False)
+        self.command("registry-remove", ["docker", "rm", "-f", self.cid])
+        absent = self.command("registry-absence", ["docker", "inspect", self.cid], check=False)
+        confirmed = absence_confirmed(absent)
+        base.save(self.output / "cleanup.json", {"containerId": self.cid, "ownershipConfirmed": True,
+            "absenceConfirmed": confirmed})
+        if not confirmed:
+            raise RuntimeError("Registry absence not confirmed")
 
     def publish_envelopes(self, subject, envelopes):
         config = self.blob("bundles", b"{}", "application/vnd.oci.image.config.v1+json")
@@ -195,10 +267,109 @@ class Probe(base.Probe):
             raise RuntimeError("A required positive control failed")
 
 
+class EnvelopeProbe(Probe):
+    """New immutable-envelope contract; historical default probe is unchanged."""
+
+    def evaluate_envelope(self, name, subject, envelopes, policy_path, expected):
+        self.publish_envelopes(subject, envelopes)
+        path = "/v2/bundles/manifests/" + subject["digest"].replace(":", "-") + ".att"
+        before, _ = self.request("GET", path)
+        (self.output / (name + "-inventory-before.json")).write_bytes(before)
+        reference = self.host + "/bundles@" + subject["digest"]
+        result = self.command(name, [self.tester, "--policy", str(policy_path),
+            "--image", reference, "--log-level", "debug"], check=False)
+        after, _ = self.request("GET", path)
+        (self.output / (name + "-inventory-after.json")).write_bytes(after)
+        decision, stage, data = classify_envelope(result.returncode, result.stdout.decode(), result.stderr.decode())
+        item = {"name": name, "image": reference, "expected": expected, "observed": decision,
+            "stage": stage, "exitCode": result.returncode, "evaluatedInput": data,
+            "envelopeOrder": [base.sha(e) for e in envelopes], "policySha256": base.sha(policy_path.read_bytes()),
+            "inventoryStable": before == after, "matchesExpectation": decision == expected and before == after}
+        self.observations.append(item)
+        base.save(self.output / "observations.json", self.observations)
+        print(json.dumps({k: v for k, v in item.items() if k != "evaluatedInput"}), flush=True)
+        if not item["matchesExpectation"]:
+            raise RuntimeError("Envelope gate failed; retain diagnostics: " + name)
+
+    def selection_probe(self, private, subject, bundles, public_key):
+        original = {k: base.encoded(v["dsseEnvelope"]) for k, v in bundles.items()}
+        expected = binding(bundles, original)
+        base.save(self.output / "binding.json", expected)
+        for k, raw in original.items():
+            (self.output / (k + ".envelope.json")).write_bytes(raw)
+            (self.output / (k + ".statement.json")).write_bytes(statement_bytes(bundles[k]))
+            self.command("authenticate-" + k, ["cosign", "verify-blob-attestation", "--key", str(private / "development.pub"),
+                "--insecure-ignore-tlog", "--digest", subject["digest"].split(":")[1], "--digestAlg", "sha256",
+                "--type", base.TYPES[k], "--bundle", str(self.output / (k + ".bundle.json"))])
+        bad = self.sign(private, "results-fail", "results", {"probe": "results", "authorized": False}, subject)
+        bad_raw = base.encoded(bad["dsseEnvelope"])
+        (self.output / "results-fail.envelope.json").write_bytes(bad_raw)
+        selected_fail = copy.deepcopy(expected)
+        selected_fail["results"] = {"statementSha256": base.sha(statement_bytes(bad)), "envelopeSha256": base.sha(bad_raw)}
+        path = self.output / "envelope-policy.json"
+        base.save(path, policy(public_key, expected))
+        fail_path = self.output / "fail-policy.json"
+        base.save(fail_path, policy(public_key, selected_fail))
+        others = [original[k] for k in base.TYPES if k != "results"]
+        pair = [*original.values(), bad_raw]
+        repacked = json.dumps(bundles["results"]["dsseEnvelope"], indent=2).encode() + b"\n"
+        (self.output / "results-repacked.envelope.json").write_bytes(repacked)
+        rebound = copy.deepcopy(expected)
+        rebound["results"]["envelopeSha256"] = base.sha(repacked)
+        rebound_path = self.output / "rebound-policy.json"
+        base.save(rebound_path, policy(public_key, rebound))
+        cases = [
+            ("minimal-original", list(original.values()), path, "ACCEPT"),
+            ("identical-duplicates", [*original.values(), original["results"]], path, "ACCEPT"),
+            ("selected-pass-forward", pair, path, "ACCEPT"),
+            ("selected-pass-reverse", list(reversed(pair)), path, "ACCEPT"),
+            ("selected-fail-forward", pair, fail_path, "CONTENT_SELECTION_REJECT"),
+            ("selected-fail-reverse", list(reversed(pair)), fail_path, "CONTENT_SELECTION_REJECT"),
+            ("selected-fail-only", [*others, bad_raw], fail_path, "CONTENT_REJECT"),
+            ("selected-artifact-absent", [*others, repacked], path, "CONTENT_SELECTION_REJECT"),
+            ("repacked-new-preparation", [*others, repacked], rebound_path, "ACCEPT"),
+        ]
+        base.save(self.output / "expectations.json", [{"name": n, "expected": e} for n, _, _, e in cases])
+        for name, envelopes, policy_path, outcome in cases:
+            self.evaluate_envelope(name, subject, envelopes, policy_path, outcome)
+        compare_orders(self.observations)
+        base.save(self.output / "minimal-gate.json", {"result": "PASS", "evaluations": len(self.observations),
+            "formatsAndFullContracts": "PENDING", "admission": "NOT_EXECUTED"})
+        self.producer_format_probe(private, subject, bundles, public_key)
+
+    def producer_format_probe(self, private, subject, bundles, public_key):
+        # Exercise the actual image-signing producer, not an attest command with
+        # a synthetic predicate named sign/v1. Canonical bundle remains intact.
+        file = self.output / "producer-image.bundle.json"
+        self.command("producer-image-sign", ["cosign", "sign", "--yes", "--key", str(private / "development.key"),
+            "--signing-config", str(private / "signing.json"), "--trusted-root", str(private / "trust.json"),
+            "--allow-insecure-registry", "--upload=false", "--bundle", str(file),
+            self.host + "/bundles@" + subject["digest"]])
+        native = json.loads(file.read_text())
+        self.command("producer-image-authenticate", ["cosign", "verify-blob-attestation", "--key", str(private / "development.pub"),
+            "--insecure-ignore-tlog", "--digest", subject["digest"].split(":")[1], "--digestAlg", "sha256",
+            "--type", base.TYPES["signature"], "--bundle", str(file)])
+        original = dict(bundles, signature=native)
+        envelopes = {k: base.encoded(v["dsseEnvelope"]) for k, v in original.items()}
+        for kind, raw in envelopes.items():
+            (self.output / ("producer-" + kind + ".envelope.json")).write_bytes(raw)
+        selected = binding(original, envelopes)
+        base.save(self.output / "producer-binding.json", selected)
+        p = policy(public_key, selected)
+        p["spec"]["authorities"][0]["attestations"][0]["policy"]["data"] = (
+            'package sigstore\ndefault isCompliant = false\nisCompliant {\n'
+            f'  input.predicateType == "{base.TYPES["signature"]}"\n'
+            f'  input.subject[_].digest.sha256 == "{subject["digest"].split(":")[1]}"\n' + '}\n')
+        path = self.output / "producer-policy.json"
+        base.save(path, p)
+        self.evaluate_envelope("actual-image-sign-producer", subject, list(envelopes.values()), path, "ACCEPT")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--tester", type=Path, required=True, help="Official v0.15.1 tester; verify its release signature first")
+    parser.add_argument("--contract", choices=("statement", "immutable-envelope"), default="statement")
     args = parser.parse_args()
     tester = args.tester.resolve()
     if hashlib.sha256(tester.read_bytes()).hexdigest() != TESTER_SHA256:
@@ -212,7 +383,7 @@ def main():
         "files": {str(p.relative_to(base.ROOT)): base.sha(p.read_bytes()) for p in (
             Path(__file__).resolve(), Path(__file__).with_name("kyverno-cel-capabilities.py").resolve(), base.ROOT / "tools.lock.json")},
         "testerSha256": TESTER_SHA256, "cache": "CLI NoCache; OCI11 disabled", "admission": "NOT_EXECUTED"})
-    probe = Probe(output, tester)
+    probe = (EnvelopeProbe if args.contract == "immutable-envelope" else Probe)(output, tester)
     completed = False
     try:
         probe.run()
@@ -221,18 +392,19 @@ def main():
         (output / "error.txt").write_text(str(error) + "\n")
     finally:
         if probe.cid:
-            # Receipt is the immutable ID returned by our own docker create.
-            probe.command("registry-log", ["docker", "logs", probe.cid], check=False)
-            probe.command("registry-remove", ["docker", "rm", "-f", probe.cid])
-            absent = probe.command("registry-absence", ["docker", "inspect", probe.cid], check=False)
-            if not absence_confirmed(absent):
+            try:
+                probe.cleanup_registry()
+            except Exception as error:
                 completed = False
-            base.save(output / "cleanup.json", {"containerId": probe.cid, "absenceConfirmed": absence_confirmed(absent)})
+                (output / "cleanup-error.txt").write_text(str(error) + "\n")
         contradictions = [o["name"] for o in probe.observations if not o["matchesExpectation"]]
         decision = "NO_GO" if completed and contradictions == ["repacked-only"] else "INCONCLUSIVE"
         base.save(output / "summary.json", {"execution": "COMPLETED" if completed else "ERROR",
+            "contract": args.contract,
             "decision": decision, "unexpectedCases": contradictions, "evaluations": len(probe.observations),
             "scope": "artifact digest alternative, synthetic four predicates, CLI only",
+            "localProducerFormats": "actual sign/v1 only" if args.contract == "immutable-envelope" and completed else "NOT_ESTABLISHED",
+            "fullLocalContract": "NOT_EXECUTED",
             "admission": "NOT_EXECUTED", "hosted": "NOT_EXECUTED", "adoption": "BLOCKED"})
     return 2 if decision == "NO_GO" else 1
 

@@ -14,6 +14,19 @@ identidad de declaración. No hubo nueva admisión ni ejecución alojada; siguen
 pendientes aprobación humana, adopción y desbloqueo de implementación. Las
 observaciones fechadas siguientes conservan su procedencia original.
 
+Propuesta experimental separada, **1 de noviembre de 2026**:
+`spike/inmutable-envelope-authorization` investiga identificar el blob OCI del
+envoltorio DSSE completo por SHA-256, asociado al mismo objeto autenticado y
+evaluado. Reempaquetar o volver a firmar puede exigir nueva preparación. Los
+bundles siguen siendo canónicos; cualquier representación adicional conserva
+la asociación de payload y firmas, imagen, autoridad y contexto. Permanecen
+cuatro requisitos independientes y el alcance de una entrega concreta.
+El [nuevo informe](immutable-envelope-authorization.md) concluye **INCONCLUSIVE**:
+selección mínima y productor sign/v1 comprobados por CLI, pero no se acreditó una
+combinación oficial con Kubernetes mantenido. Contratos completos, admisión y
+validación alojada: NOT_EXECUTED. PR #67 está fusionada en `7ba200f`; no implica
+aprobación de adopción ni revisión humana. El contrato anterior se conserva.
+
 ## Recomendación concreta
 
 Autorizar una **entrega concreta** mediante cuatro declaraciones completas,

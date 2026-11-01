@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 import subprocess
 import unittest
+from unittest.mock import Mock
+import tempfile
 
 SPEC = importlib.util.spec_from_file_location("selection", Path(__file__).parents[1] / "integration" / "admission-selection-feasibility.py")
 probe = importlib.util.module_from_spec(SPEC)
@@ -82,6 +84,65 @@ class SelectionEvidenceTests(unittest.TestCase):
         self.assertEqual(set(snapshot['authorityMatches']['trusted']['attestations']), set(probe.base.TYPES))
         with self.assertRaises(ValueError):
             probe.classify(1, original.replace('"errors":', '"warnings":'), self.log())
+
+    def test_internal_rejection_does_not_require_outer_policy(self):
+        error = json.dumps({'errors': ['failed evaluating rego policy for type results: policy is not compliant']})
+        log = 'Checking Authority: trusted\n'
+        self.assertEqual(probe.classify_envelope(1, error, log)[:2], ('CONTENT_REJECT', 'INTERNAL'))
+        self.assertEqual(probe.classify_envelope(1, error, log + log)[0], 'INTEGRATION_ERROR')
+        self.assertEqual(probe.classify_envelope(0, error, log)[0], 'INTEGRATION_ERROR')
+        for technical in ('rego parse error', 'connection refused', '403 Forbidden', 'signature verification failed'):
+            self.assertEqual(probe.classify_envelope(1, json.dumps({'errors': [technical]}), log)[0], 'INTEGRATION_ERROR')
+
+    def test_missing_verified_type_is_not_proof_of_registry_absence(self):
+        error = json.dumps({'errors': ['no matching attestations with type expected']})
+        self.assertEqual(probe.classify_envelope(1, error, 'Checking Authority: trusted\n')[0], 'MISSING_VERIFIED_TYPE')
+        self.assertEqual(probe.classify_envelope(1, error, '')[0], 'INTEGRATION_ERROR')
+
+    def test_outer_omission_or_duplicate_evaluation_cannot_be_accepted(self):
+        good = self.log() + 'Verification was successful!\n'
+        self.assertEqual(probe.classify_envelope(0, '', good)[0], 'ACCEPT')
+        self.assertEqual(probe.classify_envelope(0, '', good + good)[0], 'INTEGRATION_ERROR')
+        self.assertEqual(probe.classify_envelope(0, '', good.replace('"results"', '"unexpected"'))[0], 'INTEGRATION_ERROR')
+
+    def test_registry_cleanup_needs_id_name_and_owner_label(self):
+        receipt = {'id': 'immutable-id', 'name': 'owned-name'}
+        container = {'Id': 'immutable-id', 'Name': '/owned-name', 'Config': {'Labels': {'gp.cel-probe': 'owned-name'}}}
+        self.assertTrue(probe.owned_registry(container, receipt))
+        for change in ({'Id': 'foreign-id'}, {'Name': '/foreign'}, {'Config': {'Labels': {}}}):
+            self.assertFalse(probe.owned_registry({**container, **change}, receipt))
+
+    def test_order_comparison_detects_changed_binding_image_and_missing_candidates(self):
+        observations = [{'name': prefix + suffix, 'image': 'registry/image@sha256:fixed',
+            'policySha256': prefix, 'envelopeOrder': order} for prefix in ('selected-pass', 'selected-fail')
+            for suffix, order in (('-forward', ['a', 'b', 'a']), ('-reverse', ['a', 'b', 'a']))]
+        probe.compare_orders(observations)
+        for field, value in (('image', 'other'), ('policySha256', 'other'), ('envelopeOrder', ['a', 'b'])):
+            altered = copy.deepcopy(observations)
+            altered[1][field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                probe.compare_orders(altered)
+
+    def test_unfavorable_and_unstable_observations_survive_failure(self):
+        for code, stdout, log, after in (
+                (1, '{"errors":["connection refused"]}', '', b'{}'),
+                (0, '', self.log() + 'Verification was successful!\n', b'{"changed":true}')):
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as directory:
+                instance = probe.EnvelopeProbe.__new__(probe.EnvelopeProbe)
+                instance.output, instance.host, instance.tester = Path(directory), 'registry', 'tester'
+                instance.observations = []
+                instance.publish_envelopes = Mock()
+                instance.request = Mock(side_effect=[(b'{}', {}), (after, {})])
+                instance.command = Mock(return_value=subprocess.CompletedProcess([], code, stdout.encode(), log.encode()))
+                policy = instance.output / 'policy.json'
+                policy.write_text('{}')
+                with self.assertRaises(RuntimeError):
+                    instance.evaluate_envelope('case', {'digest': 'sha256:image'}, [b'envelope'], policy, 'ACCEPT')
+                saved = json.loads((instance.output / 'observations.json').read_text())
+                self.assertEqual(len(saved), 1)
+                self.assertFalse(saved[0]['matchesExpectation'])
+                self.assertEqual(instance.command.call_count, 1)
+                self.assertEqual((instance.output / 'case-inventory-after.json').read_bytes(), after)
 
 
 if __name__ == '__main__':
