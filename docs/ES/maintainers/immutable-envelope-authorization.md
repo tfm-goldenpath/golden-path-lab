@@ -137,3 +137,19 @@ evidencias; las rutas activas, pins, productores, demos y golden-path-v1 siguen
 intactos. Codex realizó la investigación; revisión humana y adopción pendientes.
 TODO sitúa `perf/codex-context-retrieval` inmediatamente después de este spike y
 `spike/serena-repomix-evaluation` al final del roadmap. No se instalaron esas herramientas.
+
+### Correcciones de revisión — 1 de noviembre de 2026
+
+Los dos comentarios de PR #67 sobre el estado de salida ante un checksum incorrecto
+y los fallos de limpieza seguían siendo aplicables. El tester no verificado ahora
+termina con estado 1 antes de crear salida o ejecutar el motor. Tras confirmar la
+propiedad, se intentan independientemente logs, retirada e inspección de ausencia;
+los errores quedan en `cleanup.json` y fuerzan ERROR/INCONCLUSIVE. Si no se confirma
+la propiedad, no se elimina el recurso. Se conserva también el error original.
+
+Cuatro nuevas pruebas de regresión (18 en total, con subcasos de fallo) reprodujeron
+los defectos antes de corregirlos. Pasaron las 18 pruebas focalizadas, la suite
+compartida, doctor y el inventario sobre los archivos corregidos. Los resultados se conservan
+por separado en `implementacion/evidence/raw/inmutable-envelope-review-20261101/`
+y PR #68. Las diez observaciones del motor, su código ejecutado y el paquete
+anterior no cambian; no hubo otra ejecución del motor ni de admisión con las correcciones.

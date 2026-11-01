@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 import subprocess
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 import tempfile
+import sys
+import hashlib
 
 SPEC = importlib.util.spec_from_file_location("selection", Path(__file__).parents[1] / "integration" / "admission-selection-feasibility.py")
 probe = importlib.util.module_from_spec(SPEC)
@@ -143,6 +145,100 @@ class SelectionEvidenceTests(unittest.TestCase):
                 self.assertFalse(saved[0]['matchesExpectation'])
                 self.assertEqual(instance.command.call_count, 1)
                 self.assertEqual((instance.output / 'case-inventory-after.json').read_bytes(), after)
+
+    def test_unverified_tester_exits_one_without_creating_output_or_running_engine(self):
+        with tempfile.TemporaryDirectory() as directory:
+            tester = Path(directory) / 'invalid-tester'
+            tester.write_bytes(b'not an official executable')
+            output = Path(directory) / 'attempt'
+            result = subprocess.run([sys.executable, str(Path(probe.__file__)), '--tester', str(tester),
+                                     '--output', str(output)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn('Tester does not match the official pinned release', result.stderr)
+            self.assertFalse(output.exists())
+
+    def cleanup_probe(self, output, faults=None, owned=True):
+        instance = probe.Probe.__new__(probe.Probe)
+        instance.output, instance.cid, instance.observations = output, 'owned-id', []
+        probe.base.save(output / 'registry-receipt.json', {'id': 'owned-id', 'name': 'owned-name'})
+        container = {'Id': 'owned-id', 'Name': '/owned-name',
+                     'Config': {'Labels': {'gp.cel-probe': 'owned-name' if owned else 'foreign'}}}
+        responses = {'registry-owner': subprocess.CompletedProcess([], 0, json.dumps([container]).encode(), b''),
+                     'registry-log': subprocess.CompletedProcess([], 0, b'original log', b''),
+                     'registry-remove': subprocess.CompletedProcess([], 0, b'owned-id', b''),
+                     'registry-absence': subprocess.CompletedProcess([], 1, b'[]', b'Error: No such object: owned-id')}
+        responses.update(faults or {})
+        def command(label, args, check=True):
+            response = responses[label]
+            if isinstance(response, Exception):
+                raise response
+            if check and response.returncode:
+                raise RuntimeError(label + ' failed')
+            return response
+        instance.command = Mock(side_effect=command)
+        return instance
+
+    def test_cleanup_attempts_removal_and_absence_after_independent_failures(self):
+        for step, fault, absent in (
+                ('registry-log', subprocess.TimeoutExpired(['docker', 'logs'], 300), True),
+                ('registry-log', subprocess.CompletedProcess([], 1, b'', b'log error'), True),
+                ('registry-remove', subprocess.TimeoutExpired(['docker', 'rm'], 300), True),
+                ('registry-remove', subprocess.CompletedProcess([], 1, b'', b'removal error'), True),
+                ('registry-absence', subprocess.CompletedProcess([], 1, b'', b'permission denied'), False)):
+            with self.subTest(step=step, fault=fault), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory)
+                instance = self.cleanup_probe(output, {step: fault})
+                with self.assertRaises(RuntimeError):
+                    instance.cleanup_registry()
+                self.assertEqual([c.args[0] for c in instance.command.call_args_list],
+                                 ['registry-owner', 'registry-log', 'registry-remove', 'registry-absence'])
+                receipt = json.loads((output / 'cleanup.json').read_text())
+                self.assertTrue(receipt['ownershipConfirmed'])
+                self.assertEqual(receipt['absenceConfirmed'], absent)
+                self.assertEqual([e['step'] for e in receipt['errors']], [step])
+
+    def test_cleanup_never_removes_unconfirmed_owner_but_retains_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            instance = self.cleanup_probe(output, owned=False)
+            with self.assertRaises(RuntimeError):
+                instance.cleanup_registry()
+            self.assertEqual([c.args[0] for c in instance.command.call_args_list], ['registry-owner'])
+            receipt = json.loads((output / 'cleanup.json').read_text())
+            self.assertFalse(receipt['ownershipConfirmed'])
+            self.assertFalse(receipt['absenceConfirmed'])
+            self.assertEqual(receipt['errors'][0]['step'], 'registry-owner')
+
+    def test_cleanup_errors_preserve_original_failure_and_inconclusive_summary(self):
+        for run_failed in (False, True):
+            with self.subTest(run_failed=run_failed), tempfile.TemporaryDirectory() as directory:
+                tester = Path(directory) / 'synthetic-unexecuted-tester'
+                tester.write_bytes(b'synthetic test; no engine or Docker command is executed')
+                output = Path(directory) / 'attempt'
+                original_class = probe.Probe
+                def construct(*args):
+                    # The factory is patched only for this orchestration unit test.
+                    with patch.object(probe, 'Probe', original_class):
+                        instance = self.cleanup_probe(output, {
+                            'registry-log': subprocess.TimeoutExpired(['docker', 'logs'], 300),
+                            'registry-remove': subprocess.CompletedProcess([], 1, b'', b'removal error')})
+                    instance.run = Mock(side_effect=RuntimeError('original engine failure') if run_failed else None)
+                    instance.observations = [{'name': 'repacked-only', 'matchesExpectation': False}]
+                    return instance
+                argv = ['probe', '--tester', str(tester), '--output', str(output)]
+                with patch.object(sys, 'argv', argv), patch.object(probe, 'TESTER_SHA256', hashlib.sha256(tester.read_bytes()).hexdigest()), \
+                        patch.object(probe, 'Probe', side_effect=construct):
+                    self.assertEqual(probe.main(), 1)
+                if run_failed:
+                    self.assertEqual((output / 'error.txt').read_text(), 'original engine failure\n')
+                else:
+                    self.assertFalse((output / 'error.txt').exists())
+                summary = json.loads((output / 'summary.json').read_text())
+                self.assertEqual((summary['execution'], summary['decision']), ('ERROR', 'INCONCLUSIVE'))
+                self.assertEqual(summary['unexpectedCases'], ['repacked-only'])
+                receipt = json.loads((output / 'cleanup.json').read_text())
+                self.assertTrue(receipt['absenceConfirmed'])
+                self.assertEqual([e['step'] for e in receipt['errors']], ['registry-log', 'registry-remove'])
 
 
 if __name__ == '__main__':

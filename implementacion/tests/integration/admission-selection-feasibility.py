@@ -163,19 +163,39 @@ class Probe(base.Probe):
         return result
 
     def cleanup_registry(self):
-        receipt = json.loads((self.output / "registry-receipt.json").read_text())
-        inspected = self.command("registry-owner", ["docker", "inspect", self.cid])
-        objects = json.loads(inspected.stdout)
-        if len(objects) != 1 or not owned_registry(objects[0], receipt):
-            raise RuntimeError("Registry ownership does not match immutable creation receipt")
-        self.command("registry-log", ["docker", "logs", self.cid], check=False)
-        self.command("registry-remove", ["docker", "rm", "-f", self.cid])
-        absent = self.command("registry-absence", ["docker", "inspect", self.cid], check=False)
-        confirmed = absence_confirmed(absent)
-        base.save(self.output / "cleanup.json", {"containerId": self.cid, "ownershipConfirmed": True,
-            "absenceConfirmed": confirmed})
-        if not confirmed:
-            raise RuntimeError("Registry absence not confirmed")
+        record = {"containerId": self.cid, "ownershipConfirmed": False,
+                  "absenceConfirmed": False, "errors": []}
+        try:
+            receipt = json.loads((self.output / "registry-receipt.json").read_text())
+            inspected = self.command("registry-owner", ["docker", "inspect", self.cid])
+            objects = json.loads(inspected.stdout)
+            if len(objects) != 1 or not owned_registry(objects[0], receipt):
+                raise RuntimeError("Registry ownership does not match immutable creation receipt")
+            record["ownershipConfirmed"] = True
+        except Exception as error:
+            record["errors"].append({"step": "registry-owner", "error": str(error)})
+            base.save(self.output / "cleanup.json", record)
+            raise RuntimeError("Registry cleanup blocked: ownership not confirmed") from error
+        # Diagnostic failures must not prevent retirement of a confirmed owned
+        # resource. A failed removal still needs an independent absence check.
+        for label, args in (
+                ("registry-log", ["docker", "logs", self.cid]),
+                ("registry-remove", ["docker", "rm", "-f", self.cid]),
+                ("registry-absence", ["docker", "inspect", self.cid])):
+            try:
+                result = self.command(label, args, check=False)
+                if label == "registry-absence":
+                    record["absenceConfirmed"] = absence_confirmed(result)
+                    if not record["absenceConfirmed"]:
+                        raise RuntimeError("Registry absence not confirmed")
+                elif result.returncode:
+                    raise RuntimeError(f"{label} failed ({result.returncode}); inspect retained log")
+            except Exception as error:
+                record["errors"].append({"step": label, "error": str(error)})
+            finally:
+                base.save(self.output / "cleanup.json", record)
+        if record["errors"]:
+            raise RuntimeError("Registry cleanup had errors; inspect cleanup.json")
 
     def publish_envelopes(self, subject, envelopes):
         config = self.blob("bundles", b"{}", "application/vnd.oci.image.config.v1+json")
@@ -373,7 +393,7 @@ def main():
     args = parser.parse_args()
     tester = args.tester.resolve()
     if hashlib.sha256(tester.read_bytes()).hexdigest() != TESTER_SHA256:
-        parser.error("Tester does not match the official pinned release")
+        parser.exit(1, "ERROR: Tester does not match the official pinned release\n")
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     (base.ROOT / ".tmp").mkdir(exist_ok=True)

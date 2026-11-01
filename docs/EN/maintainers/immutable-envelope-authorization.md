@@ -268,3 +268,23 @@ Package excludes private keys, credentials, downloadable binaries, image layers,
 DBs and prior historical evidence. Sources, commands, policies, public fixtures,
 original outputs, exact executed source, inventories and cleanup are retained.
 Codex performed the investigation and changes; human review/adoption remain pending.
+
+### Review follow-up — 1 November 2026
+
+Both [checksum-status](https://github.com/tfm-goldenpath/golden-path-lab/pull/67#discussion_r4436958214)
+and [cleanup-failure](https://github.com/tfm-goldenpath/golden-path-lab/pull/67#discussion_r4436958241)
+comments on merged PR #67 remain applicable to the first version of this spike.
+The follow-up rejects an unverified tester with exit 1 before creating output or
+running an engine. After confirming ownership, registry log collection, removal
+and absence inspection proceed independently; every failure is retained in
+`cleanup.json` and prevents a successful execution/NO_GO summary. An ownership
+failure records diagnostics and prevents deletion. Original execution errors are
+retained independently of cleanup failures.
+
+Four new regression tests (18 total, including fault subcases) reproduced the
+defects before the fixes. All 18 focused tests, the shared suite, doctor and
+inventory checks pass on the follow-up files. Validation is recorded separately under
+`implementacion/evidence/raw/inmutable-envelope-review-20261101/` and in PR #68.
+This changes harness failure handling after the ten engine observations; those
+observations, their executed source SHA and the package above remain unchanged.
+No new engine or admission run is attributed to these corrected bytes.
