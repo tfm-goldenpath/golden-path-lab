@@ -46,18 +46,18 @@ Focused synthetic tests exercise missing, duplicate, unsafe and stale paths plus
 invalid classifications/profiles. There is no change to the runtime Make/CI targets.
 
 <!-- inventory-summary:start -->
-513 tracked paths; 233 individually enumerated scripts/helpers/tests.
+523 tracked paths; 237 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 137 |
+| developer | 147 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 267 |
 | product | 11 |
 | shared | 34 |
 
-100 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
+104 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
 <!-- inventory-summary:end -->
 
 Current physical roots are `.github/` (automation and contribution instructions),
