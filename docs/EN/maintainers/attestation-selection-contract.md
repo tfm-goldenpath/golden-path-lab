@@ -13,6 +13,28 @@ The dated observations below retain their original provenance.
 
 ## Decision and scope
 
+### Separate experimental proposal — 1 November 2026
+
+The owner authorized investigation of **immutable signed-envelope artifacts** on
+`spike/inmutable-envelope-authorization`; this is not adoption approval or a
+replacement of the statement-byte contract below. For the classic path, select
+the SHA-256 of the complete DSSE envelope OCI blob and require its digest to be
+associated with the same authenticated, content-checked object. Repacking or
+re-signing may require new trusted preparation. Bundles remain canonical; an
+additional admission representation needs explicit payload/signature association
+and unchanged image, authority and delivery-context checks. Four independent
+requirements and delivery-specific scope A remain mandatory.
+
+The [new feasibility report](immutable-envelope-authorization.md) records
+**INCONCLUSIVE**: minimal CLI selection and the real sign/v1 producer work, but
+official support for a currently maintained Kubernetes/controller combination
+was not established. Full local contracts, admission and hosted validation are
+NOT_EXECUTED. PR #67 merged as `7ba200f`; its earlier NO_GO and pending human
+review remain historical facts, not migration approval. The original proposal
+and observations below are preserved.
+
+### Original statement-byte proposal — 30 October 2026
+
 Recommend **authorizing one concrete delivery against explicitly selected,
 authenticated evidence**, using the existing trusted run configuration, CI
 verification, renderer and coordinator. Identify each selected statement by the

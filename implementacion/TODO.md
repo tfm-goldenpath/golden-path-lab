@@ -137,6 +137,31 @@ active CEL migration or approval of this design.
 - [ ] CEL migration remains **not implemented**. Consider runtime-only ValidatingPolicy separately only if its maintenance benefit justifies mixed APIs; retaining legacy image verification does not solve ClusterPolicy retirement.
 - [ ] Keep general Actions maintenance as its own subsequent increment. Preserve the existing 30 November 2026 09:00 Europe/Madrid reminder unchanged; it is not a retirement date or update authorization.
 
+### F. `spike/inmutable-envelope-authorization`
+
+- [x] Record PR #67 merged as `7ba200fd1119082b93d49dd80bee960e4709244b`; no migration approval or undocumented human review is inferred. Preserve its four-statement-hash NO_GO and original observations.
+- [x] Define a separate experimental immutable DSSE-envelope OCI blob identity, including explicit re-preparation after repacking/re-signing and same-object authentication/content association. [EN report](../docs/EN/maintainers/immutable-envelope-authorization.md) / [ES](../docs/ES/maintainers/immutable-envelope-authorization.md).
+- [x] Gate 1: inspect official policy-controller 0.15.1, formats, trust, cache/scope and support on 1 November 2026. Local key + native bundle remains unsupported. **Admission eligibility INCONCLUSIVE**: support table reaches Kubernetes 1.29, release E2E reaches 1.34 (EOL 27 October); no currently maintained combination established. This is not proof of incompatibility.
+- [x] Partial gate 2: ten real CLI evaluations on final executed harness bytes; selected PASS/FAIL contradictions in both orders, duplicate, internal rejection, absent/repacked artifact and new binding, plus actual Cosign sign/v1 producer. Fourteen harness regressions cover association, evaluation/classification, order, unfavorable evidence and owned cleanup. All three sequential registry attempts retained/removed.
+- [ ] Complete full local SBOM/provenance/results contracts and remaining matrix only after eligibility is established; no early full results PASS, no synthetic F13 claim. Gate 3 real admission, actor/RBAC, tags, cache E1→E2, Deployment/Pod operations, rollout and HTTP are **NOT_EXECUTED**. Hosted validation is separately authorized and NOT_EXECUTED.
+- [x] Close this bounded investigation as **INCONCLUSIVE**, not GO_LOCAL. Archive the reproducible prototype; do not start `feat/delivery-authorization-selection` or another documentation-only PR chain. The concrete prerequisite is official support for a published controller/currently maintained Kubernetes combination, then the already-defined contract/admission tests. Adoption remains pending human review.
+- [x] Address both PR #67 review comments in this spike: invalid tester checksum exits 1; owned-resource cleanup continues after diagnostic/removal failures, retains per-step errors and always produces ERROR/INCONCLUSIVE on cleanup failure. Four new regressions (18 total); preserve prior engine observations/package and record follow-up checks separately. No engine/admission rerun or adoption change.
+
+### G. Next branch: `perf/codex-context-retrieval`
+
+Immediately after the immutable-envelope spike; it does not wait for adoption of
+the admission proposal. Plan only in this PR: do not install/evaluate Graphify,
+Serena or Repomix now. No Kubernetes or laboratory rerun is required.
+
+- [ ] Measure whether code, rules, owners, callers and tests can be located with less context/effort while retaining verifiable answer quality.
+- [ ] A — current navigation flow.
+- [ ] B — `ripgrep` + `jq` + concise navigation instructions: names/paths first, bounded searches, relevant excerpts and selective queries of the existing inventory; no persistent index. Keep tests, policies and workflows in pertinent scope. Exclude generated evidence, caches and dependencies from ordinary exploration, consulting them explicitly when the task requires it.
+- [ ] C — B plus Graphify, using a verified/pinned local CLI in code-only mode. No LLM semantic extraction, cloud service, MCP, watcher or automatic installation of extensive instructions. Ignore its index in Git; explicitly exclude evidence/generated directories. Document limitations for Rego, dynamic shell and unsupported files. Source/tests remain authoritative over inferred graph relations.
+- [ ] Fix the same commit, model, configuration and 3–5 representative questions with verifiable answers/quality criteria. Use independent sessions and bounded repetitions; prevent answer carryover between alternatives.
+- [ ] Record observed input/output/cache tokens where available; mark unavailable counters unknown. Do not invent tokens or convert characters into billed tokens. Separate context consumption, time and quality; include extra instructions/tool metadata.
+- [ ] Include installation, index construction/maintenance/update, disk and memory costs. Claim no monetary or percentage saving without comparable observations.
+- [ ] Adopt the simplest option with demonstrated utility; retire an optional pilot if its overhead outweighs benefit. Do not introduce AI navigation into Golden Path security decisions.
+
 ## Lane A shared-test dependency repair — 19 October 2026
 
 - [x] Preserve and inspect run `39310363244`, attempts 1/2: both suites fail before scenarios because the Pages policy test imports undeclared PyYAML.
@@ -770,3 +795,16 @@ open. F11/F12/L06 runtime work is outside this increment.
 - [x] On operator request, retire three obsolete owned laboratories and six exclusively associated volumes, preserving verified exports, raw evidence and private material; recover about 5 GiB (8.99 GiB free at closure). Fix retirement of a stopped registry without weakening readiness or immutable-ID checks.
 - [ ] Complete a new-source Kubernetes rehearsal of check → check → F11 → cancellation. It was blocked by disk margin during the initial validation; subsequent recovery does not constitute that rehearsal. Recheck available space before preparation.
 - [ ] Human review of this correction. Earlier PR review is not reassigned. See [validation](registros/demo_action_lifecycle_EN.md).
+
+## Final pending roadmap: `spike/serena-repomix-evaluation`
+
+Keep this evaluation at the end of the pending plan, after the functional/security
+work and `perf/codex-context-retrieval`; it must not block those improvements.
+This PR plans it only and installs neither tool.
+
+- [ ] Compare Serena and Repomix with the best measured alternative from the preceding context-retrieval evaluation, using the same protocol above.
+- [ ] At execution time verify official repositories, maintenance, licenses, compatibility and available integration mechanisms; do not assume today's capabilities or versions.
+- [ ] Evaluate Serena for semantic navigation only where supported languages and their language servers add value.
+- [ ] Evaluate Repomix for bounded, reproducible context packages; never package the entire repository or private material by default.
+- [ ] Measure observed tokens, answer quality, time, maintenance, storage and memory, including context added by tools, instructions and metadata. Preserve unknown token counters instead of estimating billing.
+- [ ] Neither installing both tools nor adding either to the default image is mandatory. Adoption depends on comparative results and human review.
