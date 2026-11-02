@@ -45,12 +45,15 @@ ignored evidence, infer ownership from Git authors or execute inventoried code.
 Focused synthetic tests exercise missing, duplicate, unsafe and stale paths plus
 invalid classifications/profiles. There is no change to the runtime Make/CI targets.
 
+The optional [context retrieval pilot](context-retrieval.md) records a bounded
+A/B/C comparison; it does not change these navigation or ownership rules.
+
 <!-- inventory-summary:start -->
-525 tracked paths; 237 individually enumerated scripts/helpers/tests.
+530 tracked paths; 239 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 149 |
+| developer | 154 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 267 |

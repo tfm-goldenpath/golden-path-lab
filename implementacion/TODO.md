@@ -147,20 +147,49 @@ active CEL migration or approval of this design.
 - [x] Close this bounded investigation as **INCONCLUSIVE**, not GO_LOCAL. Archive the reproducible prototype; do not start `feat/delivery-authorization-selection` or another documentation-only PR chain. The concrete prerequisite is official support for a published controller/currently maintained Kubernetes combination, then the already-defined contract/admission tests. Adoption remains pending human review.
 - [x] Address both PR #67 review comments in this spike: invalid tester checksum exits 1; owned-resource cleanup continues after diagnostic/removal failures, retains per-step errors and always produces ERROR/INCONCLUSIVE on cleanup failure. Four new regressions (18 total); preserve prior engine observations/package and record follow-up checks separately. No engine/admission rerun or adoption change.
 
-### G. Next branch: `perf/codex-context-retrieval`
+### G. Context retrieval pilot: `perf/codex-context-retrieval`
 
-Immediately after the immutable-envelope spike; it does not wait for adoption of
-the admission proposal. Plan only in this PR: do not install/evaluate Graphify,
-Serena or Repomix now. No Kubernetes or laboratory rerun is required.
+PR #68 merged at `a6cda3203f0ab39ac5d37569d851ae35f9d4068c`; this does not
+close human review or adopt admission changes. Admission remains **INCONCLUSIVE**.
+The 2 November pilot is recorded in [EN](../docs/EN/maintainers/context-retrieval.md)
+and [ES](../docs/ES/maintainers/context-retrieval.md), with its frozen protocol,
+runner/analyzer, original observations and executed-source hashes.
 
-- [ ] Measure whether code, rules, owners, callers and tests can be located with less context/effort while retaining verifiable answer quality.
-- [ ] A — current navigation flow.
-- [ ] B — `ripgrep` + `jq` + concise navigation instructions: names/paths first, bounded searches, relevant excerpts and selective queries of the existing inventory; no persistent index. Keep tests, policies and workflows in pertinent scope. Exclude generated evidence, caches and dependencies from ordinary exploration, consulting them explicitly when the task requires it.
-- [ ] C — B plus Graphify, using a verified/pinned local CLI in code-only mode. No LLM semantic extraction, cloud service, MCP, watcher or automatic installation of extensive instructions. Ignore its index in Git; explicitly exclude evidence/generated directories. Document limitations for Rego, dynamic shell and unsupported files. Source/tests remain authoritative over inferred graph relations.
-- [ ] Fix the same commit, model, configuration and 3–5 representative questions with verifiable answers/quality criteria. Use independent sessions and bounded repetitions; prevent answer carryover between alternatives.
-- [ ] Record observed input/output/cache tokens where available; mark unavailable counters unknown. Do not invent tokens or convert characters into billed tokens. Separate context consumption, time and quality; include extra instructions/tool metadata.
-- [ ] Include installation, index construction/maintenance/update, disk and memory costs. Claim no monetary or percentage saving without comparable observations.
-- [ ] Adopt the simplest option with demonstrated utility; retire an optional pilot if its overhead outweighs benefit. Do not introduce AI navigation into Golden Path security decisions.
+- [x] A: current navigation; rg/jq already available, no deliberately poor baseline.
+- [x] B: same mandatory rules plus brief names/paths-first, scoped rg/jq, inventory/caller/test/source confirmation, relevant excerpts and explicit workflow/policy/test scope; no index.
+- [x] C attempted: B plus optional official Graphify 0.9.100, verified wheel and isolated venv; local code-only, backend none, logging disabled, no cluster/community processing, at most two workers. No integration installer, LLM, cloud, MCP, watcher, embeddings or personal hooks.
+- [x] Freeze main source, CLI 0.166.0 / gpt-6-astra / high, three code-verified rubrics and two independent repetitions. Execute one excluded smoke plus 18 measured sessions sequentially, 180 seconds each, fixed alternating order and no retries.
+- [x] Preserve 16 complete answers and two pre-command timeouts (Q1-2-C, Q3-2-B). Codex rubric review gives all completed answers 2/2 accuracy, coverage and traceability; this is not human review. Timeout usage is unknown. No outside-corpus answer access observed.
+- [x] Record input/output/cache/reasoning aggregates without double-counting cache or cumulative events; keep time, quality and tool costs separate. No monetary/productivity saving claimed.
+- [x] Measure isolated installation, extraction, query and incremental update on a separate source copy; record memory/space and missing download-time/instruction-token data. Document absent Rego nodes and incomplete shell/Makefile/Dockerfile coverage.
+- [x] Decision: **INSUFFICIENT_EVIDENCE; keep current navigation**. B shows no stable advantage; none of six C sessions queried the optional graph, and a post-run probe found the original venv interpreter invisible in the sandbox. Exclude all C configurations from valid graph comparisons. Canonical Python/`--copies` and a pre-model sandbox preflight now pass locally; no model runs were repeated. Retain the bounded reproducer/report, retire owned optional tools after verified packaging, and do not change AGENTS.md or the default image. No mandatory follow-up benchmark chain.
+- [ ] Human review of protocol, answer scoring, evidence custody and this decision. Source/tests remain authoritative; no AI navigation enters Golden Path security decisions.
+
+### Proposed parallel branch pairs and sequencing
+
+These are coordination proposals, not branches created or additional work started
+by this pilot. Names newly proposed below remain proposals until selected.
+
+| Pair | Scope and acceptance boundary |
+| --- | --- |
+| Immediate: `perf/codex-context-retrieval` + proposed `chore/github-actions-refresh` | Finish this bounded pilot; separately recheck pending Actions versions/advisories, retain full SHAs and verify runner/cache/artifact/Pages boundaries. No Actions maintenance is implemented here. |
+| Later light pair: proposed `chore/dependabot-tooling` + `docs/use-case-intake` | Updater targets only `/implementacion/tooling`, conservative AJV/formats grouping, bounded PRs, review/checks; exclude deliberately vulnerable fixtures, no automerge/second updater. Intake may proceed independently **once P01 is human-accepted**, as documented in repository-map and P01 validation; that acceptance remains pending. No detailed approved intake acceptance oracle was found: establish non-sensitive input fields, owner/triage expectations and testable acceptance before implementation; do not invent prior approval. |
+| Conditional future pair: physical product/lab separation + AI assistance design for blocks | Branch names not fixed; pairing proposed only. Separation retains custody/review gates and proves product operation without laboratory files. AI assistance must remain outside deterministic security/acceptance decisions. |
+| Conditional future pair: consumable template + control-catalogue documentation | Branch names not fixed; pairing proposed only after interfaces stabilize. A real independent consumer execution is required; no fictional supported template beforehand. |
+
+Keep the dependency sequence **physical separation → script/interface
+consolidation → consumable template → Java trial depending on that template**.
+Delivery-authorization implementation remains blocked by its documented support,
+format/admission and hosted-validation requirements; this navigation pilot does
+not unlock it. The independent 30 November reminder is unchanged.
+
+Rules for pairs:
+
+- Each agent uses its own checkout/worktree or Codespace, branch, outputs and resource names. Never switch branches in a directory shared by two agents.
+- Do not copy complete evidence, vulnerability databases or caches between worktrees. Coordinate TODO, inventory and shared navigation edits explicitly.
+- During measurement, suspend other Codex sessions/heavy workloads; do not rebuild the devcontainer or update tools midway.
+- Develop independently, then merge and validate sequentially. After the first merge, update the second branch and recheck conflicts/tests; two independently green PRs do not establish combined compatibility.
+
 
 ## Lane A shared-test dependency repair — 19 October 2026
 

@@ -1,0 +1,285 @@
+# Context retrieval pilot — 2 November 2026
+
+**Decision: insufficient evidence; keep current navigation.** Sixteen of eighteen
+independent model runs completed; two timed out before emitting a command or
+answer. All completed answers met the frozen rubric in a **Codex-assisted review,
+not human acceptance**. The same assistant prepared and scored the rubric;
+the review was not blinded. B did not consistently reduce input or elapsed time.
+None of the C sessions queried the optional graph. A post-run sandbox probe
+found its original venv launcher unusable (an interpreter symlink outside the
+readable roots). **All six C trials are configuration-invalid for the graph
+comparison**, although five produced source-grounded answers. The launcher and
+preflight were repaired after measurement; no model trial was repeated. No
+causal improvement can be attributed to Graphify, and no monetary or productivity
+saving is established. No mandatory follow-up benchmark is proposed.
+
+[Español](../../ES/maintainers/context-retrieval.md) ·
+[Protocol and rubrics](../../../implementacion/tests/fixtures/context-retrieval/protocol.json) ·
+[Runner/analyzer](../../../implementacion/tests/integration/context-retrieval.py) ·
+[Synthetic tests](../../../implementacion/tests/policies/test_context_retrieval.py) ·
+[Roadmap](../../../implementacion/TODO.md#g-context-retrieval-pilot-perfcodex-context-retrieval)
+
+A contributor keeps the existing instructions and tools. This change adds an
+explicit research command, not a service, default index, new security decision or
+normal CI model call. `AGENTS.md`, product/laboratory behavior and global pins are
+unchanged. The admission investigation remains **INCONCLUSIVE**; merged PR #68
+is not approval of its adoption or human review.
+
+## Frozen comparison
+
+Source: `a6cda3203f0ab39ac5d37569d851ae35f9d4068c` (updated main, PR #68 merge).
+All modes read the same 464 tracked files exported from Git blobs. Historical
+`implementacion/registros/`, `releases/` and `evidence/` were excluded explicitly;
+ignored data, dependencies and personal files were never copied. Workflows,
+policies, tests and source documentation stayed in scope. New rubrics, answers,
+results, tools and graph output live outside that corpus. Each file has a SHA-256
+receipt; source and index hashes are checked between sessions. Original npm files
+unrelated to this work stayed untracked and untouched.
+
+- **A:** existing repository instructions and available tools, including rg/jq.
+  No forced full-file reads or deliberately poor baseline. The current repository
+  map already describes selective inventory consultation; A chose its own reads.
+- **B:** A plus the short discipline in the protocol: paths first, scoped searches,
+  selective jq ownership/caller/test queries, source confirmation, relevant
+  excerpts, explicit `.github`, tests/policies retained and generated data avoided.
+- **C:** exactly B plus a short optional `graphify explain/path` recipe. The graph
+  only suggests locations; original code/tests are authoritative. No answers or
+  extra skill are supplied. No trial used it; a later probe found its launcher inaccessible in the sandbox.
+
+Three source-checked questions cover results authorization, F11's two privilege
+controls and delivery-v1 resource ownership/retirement. Each rubric freezes
+essential facts, paths/symbols, relations, tests, invalidating confusions and
+execution limits. Alternate correct references/wording are accepted. Accuracy,
+coverage and traceability are each scored 0–2; file mentions alone earn no fact
+credit. The same approximately 250–350-word English answer request applies to all
+modes (actual answers sometimes exceed that soft target).
+
+Explicit configuration: **Codex CLI 0.166.0, `gpt-6-astra`, reasoning `high`**;
+existing ChatGPT authentication, no provider/key/model change. rg 15.2.0, jq 1.7,
+Python 3.14.2. The actual backend routing/model identifier is not independently
+exposed by these events. Sessions use `exec --json --ephemeral --ignore-user-config
+--ignore-rules`, no daemon, no delegation/hooks/plugins/apps/web, and a custom
+read-only filesystem profile with network disabled for commands. Minimal runtime
+paths, the corpus and graph are readable; result/rubric/history directories are
+not mounted into command access. Personal configuration/authentication is not
+copied or modified. The common task explicitly forbids external sources. This is
+an observed trace audit plus sandbox restriction, not a syscall-complete read log.
+
+The excluded smoke run verified capture and attempted an outside read: an
+existing host `../protocol.json` returned no content (ENOENT in the restricted
+filesystem, not an EACCES assertion). It also exposed a Codespaces login-shell
+PATH issue. All 18 measured sessions instead used `allow_login_shell=false`;
+this difference is recorded, with the original smoke retained. The frozen order
+is in `protocol.json`: ABC/BCA/CAB for repetition 1, CBA/ACB/BAC for repetition 2.
+One measured session ran at a time, timeout 180 seconds, without retries or competing
+builds/model sessions. Both timeouts contain only `thread.started`/`turn.started`;
+their cause is unresolved, and is not attributed to retrieval or Graphify.
+
+## Observed results
+
+The table reports input tokens for completed runs and **elapsed time for all
+attempts**, including timeouts. **C rows are descriptive records of invalid
+configurations, excluded by the analyzer from valid comparisons.** Medians and
+ranges are shown; n=2 per cell except
+where one timed out. Raw records retain every attempt and the excluded smoke.
+
+| Question/mode | Completed | Input median [range] | Seconds median [range], all attempts |
+| --- | ---: | ---: | ---: |
+| Q1-A | 2/2 | 219,868.5 [219,108–220,629] | 108.5 [106.7–110.2] |
+| Q1-B | 2/2 | 237,989.0 [200,588–275,390] | 115.6 [93.9–137.3] |
+| Q1-C | 1/2 | 249,801.0 [249,801–249,801] | 137.6 [95.2–180.0] |
+| Q2-A | 2/2 | 218,003.0 [206,921–229,085] | 73.9 [61.4–86.5] |
+| Q2-B | 2/2 | 237,295.5 [192,608–281,983] | 105.8 [97.9–113.7] |
+| Q2-C | 2/2 | 190,011.5 [181,592–198,431] | 71.2 [65.3–77.1] |
+| Q3-A | 2/2 | 216,340.0 [193,010–239,670] | 60.4 [58.1–62.7] |
+| Q3-B | 1/2 | 152,653.0 [152,653–152,653] | 127.5 [75.0–180.0] |
+| Q3-C | 2/2 | 163,785.5 [162,732–164,839] | 78.2 [76.6–79.9] |
+
+Q1 = results; Q2 = F11; Q3 = cleanup. Q1-2-C and Q3-2-B timed out.
+All 16 completed answers scored 2/2 on each dimension; review notes identify
+correct relationships, test boundaries and limitations, not just matched paths.
+Notably, F11 answers distinguished the active `scenario_runtime_negative` route
+from the retained `scenario_f11_admission` helper. Cleanup answers identified
+uncovered volume/transport branches and the diagnostic command-status limitation.
+No contaminated reads, network tools or delegation were observed. Exact file
+access is not exhaustively exposed; literal paths in commands are retained as
+candidates, not proof that every mentioned file was read.
+
+Known totals for **16 completed measured runs only**: 3,369,040 input tokens,
+2,745,728 cached input tokens, 25,447 output tokens, 949 reasoning output tokens.
+The two timeouts' usage is **null/NOT_AVAILABLE**, not zero; these are not totals
+for all consumption. The smoke is excluded (78,344 / 55,040 / 619 / 53 respectively).
+`turn.completed.usage` supplies one turn aggregate; the analyzer never sums
+cumulative snapshots, deduplicates identical terminal events and rejects
+ambiguous multiple terminals. Cached input is a subset of input and is not added.
+Reasoning is reported separately, not added to output. A fresh session does not
+guarantee an uncached provider request. Separate token counts for added
+instructions, tool metadata or source output are not exposed: **null**; all are
+included in observed session usage. Graph query results read by C: none.
+
+B has no stable advantage in this small sample; C's smaller counts on some
+questions cannot demonstrate a graph benefit without a usable launcher or a graph
+query. Eleven completed A/B runs remain eligible for comparison; the C answers
+and both timeouts remain visible with their exclusions. Do not rank
+modes by pooling unlike questions or discard the two timeouts to claim savings.
+Retain the concise B variant as a reproducible experiment, without adding it to
+mandatory navigation instructions. Graphify is not added to the default image.
+
+## Graphify provenance, coverage and cost
+
+Official sources consulted on **2026-11-02**:
+[repository/release](https://github.com/Graphify-Labs/graphify/releases/tag/v0.9.100),
+[PyPI metadata](https://pypi.org/pypi/graphifyy/0.9.100/json),
+[Codex non-interactive execution](https://learn.chatgpt.com/docs/non-interactive-mode),
+[permissions](https://learn.chatgpt.com/docs/permissions),
+[configuration](https://learn.chatgpt.com/docs/config-file/config-reference).
+Local CLI help and observed events were checked, not merely copied from docs.
+
+Pinned package `graphifyy==0.9.100`, official annotated tag object
+`cb103fb4356d0a9deaaf61dfc4530e4106a8c0a9`, commit
+`f5155badddaa3286c78a51653791131e9e2e4d29`. The PyPI wheel SHA-256 was verified
+**before execution**:
+`64c5ed6f2dcc8c28b6a96c87023851c1644c16f55a87f45dbc9127119eb6e769`.
+This records tag/package provenance, not a bit-reproducible build from the tag.
+The isolated venv used only wheels and no extras; `install.json` records resolved
+transitives, versions, download origins and archive hashes. No integration
+installer, skill, hook, personal configuration or default image was changed.
+
+Inspection of the downloaded package confirms `GRAPHIFY_BACKEND=none` disables
+LLM work, `GRAPHIFY_QUERY_LOG_DISABLE=1` overrides query logging, `--code-only`
+skips semantic/document extraction, `--no-cluster` skips communities and
+`--max-workers 2` bounds AST workers. These settings were used for extraction,
+query and update outside the model sessions. No embeddings, local model, cloud, MCP or watcher was used.
+`--out` is a root: this version writes `graphify-out/graph.json` beneath it.
+An initial receipt lookup at the wrong output path failed after a successful
+build; the failure was retained and corrected without repeating extraction.
+
+| Operation | Observed wall time | Memory / storage |
+| --- | ---: | --- |
+| Wheel/dependency installation (venv creation separate) | 8.64 s | 128,216 KiB child high-water; venv 204 MiB |
+| Initial extraction | 9.11 s | 164,728 KiB max RSS; output 9.4 MiB including caches |
+| Independent `explain environment_cleanup` query | 0.50 s | 56,912 KiB max RSS |
+| Update probe's independent baseline | 8.92 s | 164,628 KiB max RSS |
+| One-file incremental extraction | 2.90 s | 71,852 KiB max RSS |
+
+The wheel download's separate elapsed time was not captured (**null**).
+Installation memory is a child high-water upper bound including preceding venv
+creation; it is not claimed as isolated install RSS. `/usr/bin/time` was absent;
+that failed invocation is retained. Extraction/query/update used Python `wait4`
+for process RSS. Venv creation took a separate 3.96 s (75,164 KiB child high-water). Tool
+preparation is separate from Codex time/usage. Session elapsed includes CLI
+startup, model latency and commands; pure search time and per-command duration
+are not exposed by these events and remain null.
+
+The graph contains 2,704 nodes/7,346 edges. Extraction classified 275 code files,
+skipped 151 non-code files and reported 30 unclassified files; nodes reference
+253 unique source files. Ten classified code files explicitly yielded no symbols.
+The detector's counts are not a claim of full 464-file coverage. Nodes cover
+Python, JS/MJS/CJS, shell and some JSON/YAML; no Rego nodes were observed. Makefile
+and Dockerfile were explicitly unclassified. Dynamic shell relationships are
+incomplete: the independent cleanup query returned its definition and one call
+edge, not the full ownership/retirement behavior. rg/jq and source inspection
+remain necessary.
+
+Update used a separate copy of tracked source only, with its own fresh index:
+append `contextRetrievalUpdateProbe` in `quote.js`, then repeat extraction. Logs
+report **1 changed, 274 unchanged**, and the new symbol is present. This is an
+observed incremental update, not a full rebuild claim. The main corpus/index
+remained unchanged. No evidence, databases or complete caches were copied.
+
+## Reproduction and conservation
+
+A post-measurement check with `codex sandbox` and the exact measured filesystem/
+network rules returned **127** for the original Graphify launcher. Its Python
+symlink targeted `/home/codespace/.python/current/bin/python3`, which was not
+visible there. This was not an observed reason for the model choosing not to
+query the graph. Recreating only the owned venv interpreter with canonical
+Python and `--copies` made the same query succeed. Original failure, interpreter
+metadata and successful repair receipts are retained; no measured observation
+was replaced. The final runner now performs this local sandbox preflight **before
+any model call** and fails closed. Its passing local preflight is distinct from
+the still-invalid historical C comparison. A mistaken `sandbox linux --help`
+probe (this CLI uses `sandbox` directly) is also recorded; it ran no model.
+
+The runner's `prepare`, `index`, `smoke`, `run`, `analyze` operations are explicit.
+Ordinary unittest discovery never calls Codex, downloads tools or builds a graph.
+Use a new output directory; existing observations are never overwritten/retried.
+Keep at least 3 GiB free on both workspace and temporary storage. Check CPU,
+memory, space and inodes before/after installation, indexing and measurement;
+stop other model sessions/heavy workloads during measurement. Do not alter the
+CLI, model or provider midway. This task requires no Docker resources.
+
+Install the pinned wheel in a new isolated environment, after verification:
+
+```bash
+set -euo pipefail
+PILOT_TOOLS=$(mktemp -d /tmp/context-tools-XXXXXXXX)
+export PILOT_TOOLS
+"$(readlink -f "$(command -v python3)")" -m venv --copies "$PILOT_TOOLS/venv"
+python3 - <<'PY'
+import hashlib, json, os, pathlib, urllib.request
+root = pathlib.Path(os.environ['PILOT_TOOLS'])
+metadata = urllib.request.urlopen('https://pypi.org/pypi/graphifyy/0.9.100/json').read()
+(root / 'pypi.json').write_bytes(metadata)
+asset = next(a for a in json.loads(metadata)['urls'] if a['filename'].endswith('.whl'))
+data = urllib.request.urlopen(asset['url']).read()
+expected = '64c5ed6f2dcc8c28b6a96c87023851c1644c16f55a87f45dbc9127119eb6e769'
+assert hashlib.sha256(data).hexdigest() == expected == asset['digests']['sha256']
+(root / asset['filename']).write_bytes(data)
+PY
+"$PILOT_TOOLS/venv/bin/pip" install --no-cache-dir --only-binary=:all: \
+  --report "$PILOT_TOOLS/install.json" "$PILOT_TOOLS/graphifyy-0.9.100-py3-none-any.whl"
+export PILOT_OUTPUT="$PWD/.context-retrieval/pilot-$(date -u +%Y%m%dT%H%M%SZ)"
+python3 implementacion/tests/integration/context-retrieval.py prepare --output "$PILOT_OUTPUT"
+python3 implementacion/tests/integration/context-retrieval.py index --output "$PILOT_OUTPUT" \
+  --graphify "$PILOT_TOOLS/venv/bin/graphify"
+python3 implementacion/tests/integration/context-retrieval.py smoke --output "$PILOT_OUTPUT" \
+  --graphify "$PILOT_TOOLS/venv/bin/graphify" --allow-model
+```
+
+Review the smoke trace and record the actual isolation audit in its `result.json`
+(`audit.status=VALID` only after inspection, with reason/reviewer). Then:
+
+```bash
+python3 implementacion/tests/integration/context-retrieval.py run --output "$PILOT_OUTPUT" \
+  --graphify "$PILOT_TOOLS/venv/bin/graphify" --allow-model
+python3 implementacion/tests/integration/context-retrieval.py analyze --output "$PILOT_OUTPUT"
+```
+
+After all runs, review each trace and answer against the frozen rubric; record
+`audit` and `quality` explicitly before a final analysis. A COMPLETE event alone
+is not quality approval. The analyzer initially excludes pending/contaminated
+reviews and retains their rows. Missing runs, errors, timeouts, malformed streams,
+changed configuration and stale indexes cannot become successes. No provider
+credentials are copied. Future independent reproduction may resolve different
+transitive wheel versions. For an exact wheel replay on this platform, install
+with `pip install --require-hashes --only-binary=:all: -r
+receipts/graphify-requirements.txt` from the verified package. Otherwise compare
+its install receipt and do not silently pool changed configurations.
+
+Evidence: `implementacion/evidence/raw/context-retrieval-20261102/` and
+`implementacion/evidence/packages/context-retrieval-20261102.tar.gz` (ignored).
+Package SHA-256: **b6c62a1ffd9896057c0fbd00b606ac8f6451f3f1504f86398665b3a4796932df**.
+It preserves protocol, source manifest, original JSONL/stderr, prompts/answers,
+capture records, derived reviews/metrics, official-source receipts, public graph,
+failed preparation attempts, executed uncommitted code/hashes and validation/
+cleanup receipts. No binaries, venv, private credentials, provider cache, personal
+Codex directories or laboratory evidence are included. Regenerating a graph/run
+from Git is not recovery of these historical observations; retain the package
+outside the Codespace for durable custody. No external evidence upload was made.
+
+The original measured runner's hash is preserved in `executed-source.json` and
+per-run configuration, separately from later analyzer/index-command hardening.
+No model run is attributed to the eventual commit. Final code validation hashes
+and original code snapshots are retained. EN/ES documentation and inventory
+checks accompany the focused/shared suites. No Kubernetes or hosted integration
+was executed; neither is relevant to validating this navigation tool.
+
+Capacity stayed above the reserve: workspace/Docker started at approximately
+8.7 GiB free and ended at 8.6 GiB; temporary storage went from approximately
+109 GiB to 108 GiB free. The environment exposed 4 CPUs and 15 GiB memory. Docker had no containers; its three existing images
+and three volumes were preserved. Optional Graphify tools/index/update copies
+are retired only after package verification, using the task's creation receipt.
+There is no runtime adoption to revert: remove the experimental files/links if
+retiring the runner, preserve historical evidence, and leave product paths alone.
+Human review and any future adoption remain pending.
