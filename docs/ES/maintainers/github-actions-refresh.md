@@ -26,7 +26,8 @@ completo donde se exige, timeouts, concurrencia, limpieza y propagación de fall
 
 Las tres invocaciones de setup-node declaran `package-manager-cache: false`, sin
 entrada `cache`: evita introducir caché automática por futuros cambios de metadatos,
-especialmente en entrega privilegiada y mediciones pareadas. La 7.1.0 incorpora
+especialmente en entrega privilegiada y mediciones pareadas. No deshabilita el
+tool cache local del runner para la distribución Node. La 7.1.0 incorpora
 mejoras de resolución/versiones y dependencias; upload-artifact 7.0.2 incorpora el
 cliente 6.3.1 con reintentos 429/Retry-After. Configure mantiene `enablement: false`
 y deploy conserva `page_url`, con cambios en el sondeo/reintentos.
@@ -90,6 +91,25 @@ Conftest 45/45, inventario exacto de 534 rutas, 10 regresiones de inventario,
 lo ajeno a los cambios enumerados. Las regresiones de inputs explícitos fallaron
 primero por su ausencia y pasan tras el cambio. El registro EN conserva los
 resultados CI y descarga por commit, separados de las comprobaciones locales.
+
+La [CI push 41668073074](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41668073074)
+pasó sobre `3bae81443f98949b93bf3dcd975e4731e062d37d`, con runner **2.338.2**,
+Node 24.22.1, checkout/setup-node, suite completa y ambos upload-artifact (directo
+7.0.2 y anidado 7.0.0). Se descargaron los dos artefactos: los ZIP de 8.799/518 bytes
+coinciden con sus digests GitHub. Se verificaron 18 checksums de evidencia estática,
+revisión y hashes de implementación/política, L01 aceptado y F01/F02 rechazados;
+el smoke conserva exactamente los 3 archivos esperados, identidad SHA/run/intento
+y exclusión de todos los marcadores ocultos. El EN conserva IDs, hashes y comando
+de reproducción; recibo `ci-41668073074/verification.json`, SHA-256
+`04bf00ef8f790cf87b5ddae8c101211a148d37007217f18b5360ca95c096fec5`.
+
+La [PR #70](https://github.com/tfm-goldenpath/golden-path-lab/pull/70) identifica
+el commit final y sus comprobaciones/descargas tras esta actualización documental;
+las observaciones anteriores conservan su fuente real. Se retiraron 142 MiB de
+temporales propios tras verificar recibos, dispositivo/inodo y ausencia final.
+No se borró el activo original remoto. Quedan 8,6 GiB libres en workspace y
+108 GiB en `/tmp`, con inodos suficientes. Los archivos npm ajenos no versionados
+en la raíz conservan sus bytes.
 
 Configure/deploy Pages reales quedan **NOT_EXECUTED**. Tras revisión humana,
 merge y autorización separada de publicación:

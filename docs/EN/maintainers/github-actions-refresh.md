@@ -37,7 +37,7 @@ Setup-node 7.1 adds version/manifest handling and dependency updates; our existi
 `node-version` input/output contract remains applicable. All three uses explicitly
 set `package-manager-cache: false`, with no explicit `cache` input, to avoid future
 package metadata silently enabling caches in CI, privileged delivery or paired
-measurements. Upload-artifact 7.0.2 updates its artifact client to 6.3.1, including
+measurements. This does not disable the runner-local Node distribution tool cache. Upload-artifact 7.0.2 updates its artifact client to 6.3.1, including
 429/Retry-After retry handling. Configure Pages preserves `enablement: false`;
 deploy Pages retains `page_url` and adds capped/backoff polling. No caller depends
 on a removed input/output.
@@ -116,6 +116,42 @@ The new explicit-input regressions first failed for absent cache/hidden settings
 all changed behavior now passes. Exact-commit CI and downloaded-artifact results
 are recorded separately below. A green shared suite is not real OIDC or Pages
 deployment evidence.
+
+### Real Actions result
+
+Executable commit `3bae81443f98949b93bf3dcd975e4731e062d37d` passed ordinary
+[push CI 41668073074](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41668073074).
+Runner **2.338.2** executed checkout, setup-node with explicit cache disablement,
+the complete shared suite, nested upload-artifact 7.0.0 and direct upload-artifact
+7.0.2 successfully. Setup-node installed the unchanged Node 24.22.1 pin; its
+“Adding to the cache” log concerns the Node distribution tool cache, not npm caching.
+
+Downloaded both artifacts and matched their GitHub service SHA-256 digests:
+
+| Artifact / ID | ZIP SHA-256 | Verified contents |
+| --- | --- | --- |
+| workflow-policy / 13247500512 | `bdecbc9e4b0279a18604fa17c6ec6c5749af75d5248cc3a5c3452dd76054aa91` | 18 file checksums, exact membership, source revision, implementation/policy hashes; L01 workflow accepted and F01/F02 static rejection confirmed |
+| pages-packaging-smoke / 13247066151 | `0ab96eb66d18673112882a593333a29830a8a11127d92f5016837277f4d6039f` | All 3 expected file hashes, exact source/run/attempt; all hidden markers excluded |
+
+Verification receipt: `ci-41668073074/verification.json`, SHA-256
+`04bf00ef8f790cf87b5ddae8c101211a148d37007217f18b5360ca95c096fec5`, under the raw root
+above. The source is the push commit, not a PR merge checkout. The downloaded ZIPs
+are only 8,799 and 518 bytes. Reproduce smoke verification with the retained ZIP:
+
+```bash
+python3 implementacion/tests/integration/actions-artifact-smoke.py verify \
+  implementacion/evidence/raw/github-actions-refresh-20261103/ci-41668073074/pages-packaging-smoke-41668073074-1.zip \
+  --source 3bae81443f98949b93bf3dcd975e4731e062d37d --run-id 41668073074 --attempt 1
+```
+
+[PR #70](https://github.com/tfm-goldenpath/golden-path-lab/pull/70) records the final
+source and final-commit CI/download receipts after this documentation-only update;
+these earlier observations retain their actual source. Task-owned temporary
+frozen downloads, extracted copy and local tar (142 MiB) were removed only after
+verification, matching recorded device/inode ownership and confirming absence.
+Receipts and the unchanged original release asset remain. Final local capacity:
+8.6 GiB workspace / 108 GiB separate temporary filesystem, with ample inodes.
+Unrelated pre-existing untracked root npm files were preserved byte-for-byte.
 
 ## Remaining hosted boundaries and rollback
 
