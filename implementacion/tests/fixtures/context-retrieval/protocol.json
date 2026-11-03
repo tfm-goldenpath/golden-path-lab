@@ -1,0 +1,45 @@
+{
+  "schema": "context-retrieval/v1",
+  "source_sha": "a6cda3203f0ab39ac5d37569d851ae35f9d4068c",
+  "cli_version": "codex-cli 0.166.0",
+  "model": "gpt-6-astra",
+  "reasoning": "high",
+  "timeout_seconds": 180,
+  "repetitions": 2,
+  "order": ["Q1-1-A", "Q1-1-B", "Q1-1-C", "Q2-1-B", "Q2-1-C", "Q2-1-A", "Q3-1-C", "Q3-1-A", "Q3-1-B", "Q1-2-C", "Q1-2-B", "Q1-2-A", "Q2-2-A", "Q2-2-C", "Q2-2-B", "Q3-2-B", "Q3-2-A", "Q3-2-C"],
+  "common": "This is an independent read-only repository navigation trial. Follow the repository AGENTS.md and applicable contribution rules. Answer only from the evaluated corpus, never the web, GitHub, personal directories, session history, benchmark results or other runs. Do not delegate, modify files, install tools, execute tests or start infrastructure. Existing tools, including rg and jq, are available in every mode. Give a concise English explanation of about 250-350 words with verifiable repository-relative paths and symbols; explain relationships, tests and limits. Do not infer real execution from text references. Do not read outside the corpus except the explicitly provided local graph and runtime tools. State uncertainty.",
+  "B": "Navigation discipline: locate names and paths first; search within relevant modules; query the existing repository-inventory.json selectively with jq for responsibility, callers and tests. Read necessary excerpts and expand when evidence warrants it. Verify inventory relationships in source. Include .github explicitly for workflow tasks; retain tests and policies in scope. Avoid generated evidence, caches, dependencies and large files in ordinary searches; consult them only when the investigation expressly needs them. Source and tests are authoritative. No persistent index is needed.",
+  "C": "The same navigation discipline applies. Additional optional local graph: {graphify} explain SYMBOL --graph {graph}. You may also use path SYMBOL SYMBOL --graph PATH. Graph relations only locate source; verify in original files/tests. Fall back to rg/jq for unsupported languages, dynamic shell and unresolved relations. GRAPHIFY_BACKEND=none and GRAPHIFY_QUERY_LOG_DISABLE=1 are set. No LLM, cloud, embeddings, watcher or graph modification.",
+  "excluded_prefixes": ["implementacion/registros/", "implementacion/releases/", "implementacion/evidence/"],
+  "questions": {
+    "Q1": {
+      "prompt": "Where and how does the active Golden Path require verification-results evidence? Explain content, image/trust binding, issuance sequencing and the tests that check those decisions. Distinguish admission from CLI and historical experimental proposals.",
+      "facts": ["render.py RESULTS_TYPE and require-results independently require a SigstoreBundle with verifyDigest/required, configured attestors and immutable authorized image repository", "golden-path-v1, expected source.repository/commit, result=PASS, all seven CHECKS: unitTests, manifestPolicy, workflowPolicy, vulnerabilityPolicy, signature, sbom, provenance", "attestations_authorize_results performs fresh CI gate and vulnerability authorization before predicate generation, signing and verification, then authorized inventory/profile and CI gate", "lab-contracts.mjs validateResults validates content; cryptographic verification is separate; sign/v1 remains independent"],
+      "paths_symbols": ["implementacion/policies/kyverno/render.py:CHECKS", "implementacion/scripts/lab-contracts.mjs:validateResults", "implementacion/scripts/lib/attestations.sh:attestations_authorize_results"],
+      "tests": ["implementacion/tests/policies/test_render.py", "implementacion/tests/unit/contracts.test.mjs", "implementacion/tests/unit/ci-verification-gate.test.mjs", "implementacion/tests/unit/legitimate-delivery.test.mjs"],
+      "invalidating_confusions": ["SBOM or results replaces sign/v1", "unsigned content validation authenticates a signature", "immutable-envelope experiment is active production selection", "unit tests prove real hosted admission"],
+      "limits": ["Static tests do not establish Kubernetes or GitHub identity execution", "Do not assert new selection semantics for golden-path-v1"]
+    },
+    "Q2": {
+      "prompt": "Which active Conftest and Kyverno rules reject the privileges used by F11? Trace the controlled mutation, coordinator and attribution of the later rejection, and identify relevant tests and what they do not demonstrate.",
+      "facts": ["manifests.rego rejects missing/true privileged and allowPrivilegeEscalation for containers, including init/ephemeral; render.py tfm-runtime restricted-containers requires both false", "scenario_f11_early changes BOTH flags to true to avoid a Kubernetes API-shape rejection and checks tfm-reference dry-run before scenario_runtime_early", "scenario_f11_admission uses restricted actor to apply in tfm-golden; scenario_f11_attribute requires singleton tfm-runtime restricted-containers rejection at either controlled securityContext field", "demo.sh sources/dispatches scenario functions; nonzero alone or extra/integration rejection does not establish detection"],
+      "paths_symbols": ["implementacion/policies/conftest/manifests.rego", "implementacion/policies/kyverno/render.py:restricted-containers", "implementacion/tests/scenarios/f11.sh:scenario_f11_attribute", "implementacion/tests/scenarios/runtime.sh", "implementacion/scripts/demo.sh"],
+      "tests": ["implementacion/tests/unit/runtime-scenario.test.mjs", "implementacion/tests/unit/f11-comparison.test.mjs", "implementacion/tests/policies/test_render.py"],
+      "invalidating_confusions": ["Any nonzero exit is F11 detection", "Only privileged=true is mutated", "Administrator k submits the experimental workload", "A source reference proves scenario execution on this SHA"],
+      "limits": ["Conftest and Kyverno are different implementations", "Do not claim tests execute hosted F11"]
+    },
+    "Q3": {
+      "prompt": "For the legitimate local delivery adapter (delivery-v1), who owns temporary resource cleanup, how is ownership checked before deletion, and which tests cover execution/cleanup failures? Distinguish this path from demo.sh and explain diagnostic preservation and limits.",
+      "facts": ["deliver.sh owns its EXIT cleanup trap; local-delivery.sh environment_cleanup implements retirement; demo.sh has its own laboratory trap", "environment_record_container records immutable container IDs and volume metadata; cleanup restricts allowed receipt names and validates state/symlinks", "Docker actual container ID must equal recorded ID; volume metadata must match and have no users; removal by immutable ID, no global prune", "failed inspect uses successful inventory listing to distinguish absence from daemon error; first diagnostics retained, retirement marker only on success and repeatable cleanup", "legitimate-delivery.test.mjs stubs stages and Docker: first stage error survives cleanup failure, cleanup-only failure cannot PASS, changed ID blocks removal and repeat cleanup preserves diagnostics"],
+      "paths_symbols": ["implementacion/scripts/deliver.sh", "implementacion/scripts/lib/local-delivery.sh:environment_cleanup", "implementacion/scripts/lib/local-delivery.sh:environment_record_container", "implementacion/scripts/lib/local-delivery.sh:environment_diagnostic"],
+      "tests": ["implementacion/tests/unit/legitimate-delivery.test.mjs"],
+      "invalidating_confusions": ["Names alone establish ownership", "Delete all Docker resources to clean up", "A failed inspect proves absence", "Synthetic cleanup tests prove current real infrastructure execution"],
+      "limits": ["Shared Bash modules do not provide isolation", "Focused tests use substitutions; distinguish from recorded integration"]
+    }
+  },
+  "quality": {
+    "reviewer": "Codex-assisted source review; human review pending",
+    "criteria": "Per answer score accuracy, coverage and traceability from 0 to 2 each. Accuracy: 2 no material error, 1 minor imprecision, 0 material error. Coverage: 2 all essential facts/relations, 1 incomplete but useful, 0 misses core decision. Traceability: 2 cited paths/symbols support relations and relevant tests/limits, 1 partial, 0 unsupported. Any invalidating confusion makes answer invalid regardless of token reduction. Correct alternate paths/wording accepted; a filename mention alone earns no fact credit.",
+    "decision": "Orientative n=2 per question/mode: do not adopt on tokens alone. B needs useful reduction without material quality loss. C needs additional value accounting for installation/index/update costs. Otherwise no demonstrated advantage or insufficient evidence. No money conversion. Missing metrics remain null."
+  }
+}

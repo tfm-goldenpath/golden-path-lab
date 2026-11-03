@@ -18,3 +18,7 @@ coverage/
 /implementacion/evidence/packages/
 /implementacion/evidence/environment/
 /implementacion/pendiente/
+
+# Opt-in context retrieval pilot (never ordinary CI inputs).
+/.context-retrieval/
+graphify-out/
