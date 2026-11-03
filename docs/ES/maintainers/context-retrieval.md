@@ -268,6 +268,52 @@ para cambiar navegación**, sin cambios en AGENTS ni adopción de Graphify; C
 corregido sigue **NOT_EXECUTED**. Se conservan los límites anteriores de alcance
 de limpieza, almacenamiento y SIGKILL. Revisión humana pendiente.
 
+## Validación de contadores de tokens — 3 de noviembre de 2026
+
+La revisión de `2444cf8de096767ed10c56d27e2aad7e2f1b8da8` detectó que
+contadores inválidos podían pasar a null dejando el stream COMPLETE.
+`parse_events()` valida ahora cada valor no nulo de los cuatro `TOKEN_FIELDS`
+como entero real no negativo. Rechaza booleanos, negativos, cadenas, floats
+(incluso con apariencia integral), listas y objetos, sin coerción. `usage_errors`
+conserva línea original, campo y motivo. El uso inválido impide completar como
+`INVALID_USAGE`, salvo prioridad de interrupción, timeout, error de ejecución o
+`INVALID_STREAM`. Se conservan el límite de caché y la deduplicación terminal;
+no se suman ni seleccionan snapshots distintos, pero sus contadores inválidos
+también se diagnostican.
+
+Uso/contadores ausentes o null siguen desconocidos; cero válido sigue siendo una
+medición. `usage_complete` describe finalización válida del stream, no presencia
+de todos los contadores. Los tamaños muestrales excluyen desconocidos e incluyen
+cero. Un intento con uso malformado permanece visible, pero queda fuera de las
+comparaciones elegibles de tokens/tiempo incluso con configuración, aislamiento
+y revisión completa favorable válidos. El tiempo descriptivo de todos los intentos
+lo conserva. Las respuestas desfavorables completamente revisadas y con mediciones
+válidas siguen siendo observaciones elegibles.
+
+Pasan 42 pruebas focalizadas: cada campo/tipo/rango, desconocidos/contenedores,
+prioridad/deduplicación y recorrido parser → registro → analizador. Se verifica
+**sin modificar** la limpieza fatal anterior: persistencia de recibos, parada de
+callers y prioridad de la excepción original. Su hilo todavía abierto no requiere
+reescribirla. Pasan doctor, suite compartida, inventario exacto/sus 10 pruebas,
+10 enlaces locales afectados y diff checks. No hubo modelos, Graphify/índices ni
+Kubernetes.
+
+Se comprueba el impacto desde **los 19 streams JSONL originales**, no solo los
+resultados normalizados. Los resultados nuevos conservan configuraciones,
+revisiones y exclusiones en
+`implementacion/evidence/raw/context-token-validation-20261103/`: `replay.py`,
+`stream-comparison.json`, `comparison.json`, `replayed/` y `replay-analysis.json`.
+No se encontró uso malformado; no cambian clasificación, consumo, elegibilidad ni
+agregados. El análisis conserva SHA-256
+`d8081810eebfa6ce34d8fe66a75c5bd83fa07d4c94f1d443f2a898b97c58d9af`:
+A=6, B=5, C=0 elegibles; se mantienen dos timeouts y seis configuraciones C inválidas.
+Se verifican sin cambios los 274 hashes/miembros y el hash del paquete; los hashes
+del reanálisis se separan de las identidades históricas de ejecución.
+La conclusión sigue **evidencia insuficiente para cambiar navegación**, sin
+Graphify ni cambios en AGENTS; C corregido sigue **NOT_EXECUTED**. Es robustez del
+parser y reanálisis offline, no nueva evidencia de rendimiento. Revisión humana
+y custodia duradera de evidencias pendientes.
+
 ## Reproducción, conservación y revisión
 
 La comprobación local posterior con los mismos permisos devolvió 127: el

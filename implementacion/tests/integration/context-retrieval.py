@@ -244,24 +244,41 @@ def parse_events(raw, exit_code=0, timeout=False, interrupted=False, execution_e
         if kind == 'thread.started':
             thread_ids.add(event.get('thread_id'))
         if kind == 'turn.completed':
-            completed.append(event)
+            completed.append((number, event))
         elif kind in ('error', 'turn.failed'):
             errors.append(event)
         elif kind == 'item.completed':
             item = event['item']
             items[item['id']] = item
     usage = {field: None for field in TOKEN_FIELDS}
-    if len(completed) == 1 and isinstance(completed[0].get('usage', {}), (dict, type(None))):
+    usage_errors = []
+    for number, event in completed:
+        payload = event.get('usage')
+        if payload is None:
+            continue  # Missing/null measurements are unknown, not malformed or zero.
+        if not isinstance(payload, dict):
+            usage_errors.append({'line': number, 'field': 'usage', 'reason': 'Expected an object or null'})
+            continue
+        counters = {field: None for field in TOKEN_FIELDS}
         for key in TOKEN_FIELDS:
-            v = (completed[0].get('usage') or {}).get(key)
-            if type(v) is int and v >= 0:
-                usage[key] = v
+            value = payload.get(key)
+            if value is None:
+                continue
+            if type(value) is not int or value < 0:
+                usage_errors.append({'line': number, 'field': key,
+                                     'reason': 'Expected a nonnegative integer or null',
+                                     'value_type': type(value).__name__})
+            else:
+                counters[key] = value
+        if counters['cached_input_tokens'] is not None and counters['input_tokens'] is not None and counters['cached_input_tokens'] > counters['input_tokens']:
+            usage_errors.append({'line': number, 'field': 'cached_input_tokens',
+                                 'reason': 'Cached input exceeds input_tokens'})
+        if len(completed) == 1:
+            usage = counters  # Never choose or sum ambiguous terminal snapshots.
     messages = [i.get('text', '') for i in items.values() if i.get('type') == 'agent_message']
     commands = [i for i in items.values() if i.get('type') == 'command_execution']
     forbidden = [i for i in items.values() if i.get('type') not in ('agent_message', 'reasoning', 'command_execution')]
-    invalid_usage = (len(completed) == 1 and completed[0].get('usage') is not None and not isinstance(completed[0]['usage'], dict))
-    if usage['cached_input_tokens'] is not None and usage['input_tokens'] is not None and usage['cached_input_tokens'] > usage['input_tokens']:
-        invalid_usage = True
+    invalid_usage = bool(usage_errors)
     status = ('INTERRUPTED' if interrupted else 'TIMEOUT' if timeout else
               'ERROR' if exit_code is None or exit_code or errors or execution_error else
               'INVALID_STREAM' if malformed or len(completed) != 1 or len(thread_ids) != 1 else
@@ -270,7 +287,8 @@ def parse_events(raw, exit_code=0, timeout=False, interrupted=False, execution_e
     return {'status': status, 'usage': usage, 'usage_complete': status == 'COMPLETE',
             'final_answer': messages[-1] if messages else None, 'commands': commands,
             'other_items': forbidden, 'errors': errors, 'malformed_lines': malformed,
-            'invalid_usage': invalid_usage, 'interrupted': interrupted, 'timeout': timeout,
+            'invalid_usage': invalid_usage, 'usage_errors': usage_errors,
+            'interrupted': interrupted, 'timeout': timeout,
             'execution_error': execution_error,
             'completed_events': len(completed), 'thread_ids': sorted(thread_ids)}
 

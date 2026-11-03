@@ -142,6 +142,125 @@ class RetrievalTests(unittest.TestCase):
         self.assertTrue(all(v is None for v in r['usage'].values()))
         self.assertEqual(r['status'], 'INVALID_USAGE')
 
+    def test_every_supplied_counter_rejects_invalid_types_and_ranges(self):
+        for field in m.TOKEN_FIELDS:
+            for value in (-1, True, False, '100', 0.0, 1.0, .5, [], [0], {}, {'n': 1}):
+                with self.subTest(field=field, value=value):
+                    r = m.parse_events(events({field: value}))
+                    self.assertEqual(r['status'], 'INVALID_USAGE')
+                    self.assertTrue(r['invalid_usage']); self.assertFalse(r['usage_complete'])
+                    self.assertIsNone(r['usage'][field])
+                    self.assertEqual(len(r['usage_errors']), 1)
+                    error = r['usage_errors'][0]
+                    self.assertEqual(error['field'], field); self.assertEqual(error['line'], 3)
+                    self.assertTrue(error['reason'])
+
+    def test_known_zero_unknown_counters_and_usage_container_semantics(self):
+        for payload in ({}, dict.fromkeys(m.TOKEN_FIELDS), dict.fromkeys(m.TOKEN_FIELDS, 0),
+                        dict.fromkeys(m.TOKEN_FIELDS, 42), {'input_tokens': 0, 'output_tokens': None}):
+            with self.subTest(payload=payload):
+                r = m.parse_events(events(payload))
+                self.assertEqual(r['status'], 'COMPLETE'); self.assertFalse(r['invalid_usage'])
+                self.assertTrue(r['usage_complete']); self.assertEqual(r['usage_errors'], [])
+                self.assertEqual(r['usage'], {k: payload.get(k) for k in m.TOKEN_FIELDS})
+        # events(None) has a default payload; construct absent/null usage explicitly.
+        for terminal in ({'type': 'turn.completed'}, {'type': 'turn.completed', 'usage': None}):
+            raw = '\n'.join(events().splitlines()[:2] + [json.dumps(terminal)])
+            r = m.parse_events(raw)
+            self.assertEqual(r['status'], 'COMPLETE'); self.assertFalse(r['invalid_usage'])
+            self.assertTrue(all(v is None for v in r['usage'].values()))
+            self.assertEqual(r['usage_errors'], [])
+        for payload in ([], [1], '', '100', 0, -1, True, False, 1.0):
+            with self.subTest(invalid_container=payload):
+                r = m.parse_events(events(payload))
+                self.assertEqual(r['status'], 'INVALID_USAGE'); self.assertTrue(r['invalid_usage'])
+                self.assertFalse(r['usage_complete'])
+                self.assertEqual(r['usage_errors'][0]['field'], 'usage')
+                self.assertTrue(all(v is None for v in r['usage'].values()))
+
+    def test_invalid_usage_preserves_status_precedence_and_terminal_deduplication(self):
+        raw = events({'input_tokens': '100'})
+        duplicate = raw + '\n' + raw.splitlines()[-1]
+        r = m.parse_events(duplicate)
+        self.assertEqual(r['status'], 'INVALID_USAGE'); self.assertEqual(r['completed_events'], 1)
+        self.assertEqual(len(r['usage_errors']), 1); self.assertEqual(r['usage_errors'][0]['line'], 3)
+        for kwargs, status in (({'interrupted': True}, 'INTERRUPTED'), ({'timeout': True}, 'TIMEOUT'),
+                               ({'exit_code': 1}, 'ERROR'), ({'exit_code': None}, 'ERROR'),
+                               ({'execution_error': {'type': 'SyntheticError'}}, 'ERROR')):
+            with self.subTest(kwargs=kwargs):
+                r = m.parse_events(duplicate, **kwargs)
+                self.assertEqual(r['status'], status); self.assertTrue(r['invalid_usage'])
+                self.assertFalse(r['usage_complete']); self.assertTrue(r['usage_errors'])
+        for extra, status in (('not-json', 'INVALID_STREAM'),
+                              (json.dumps({'type': 'error', 'message': 'synthetic failure'}), 'ERROR'),
+                              (json.dumps({'type': 'turn.completed', 'usage': {'input_tokens': 0}}), 'INVALID_STREAM')):
+            r = m.parse_events(raw + '\n' + extra)
+            self.assertEqual(r['status'], status); self.assertTrue(r['invalid_usage'])
+            self.assertFalse(r['usage_complete']); self.assertTrue(r['usage_errors'])
+        # A later invalid terminal still gets diagnosed, without choosing a snapshot.
+        r = m.parse_events(events({'input_tokens': 0}) + '\n' + raw.splitlines()[-1])
+        self.assertEqual(r['status'], 'INVALID_STREAM'); self.assertTrue(r['invalid_usage'])
+        self.assertEqual(r['usage_errors'][0]['line'], 4)
+        self.assertTrue(all(v is None for v in r['usage'].values()))
+
+    def test_cache_consistency_retains_values_and_diagnoses_field(self):
+        r = m.parse_events(events({'input_tokens': 0, 'cached_input_tokens': 1}))
+        self.assertEqual(r['status'], 'INVALID_USAGE'); self.assertTrue(r['invalid_usage'])
+        self.assertEqual(r['usage']['input_tokens'], 0); self.assertEqual(r['usage']['cached_input_tokens'], 1)
+        self.assertEqual(r['usage_errors'][0]['field'], 'cached_input_tokens')
+        self.assertTrue(r['usage_errors'][0]['reason'])
+        r = m.parse_events(events({'input_tokens': None, 'cached_input_tokens': 1}))
+        self.assertEqual(r['status'], 'COMPLETE'); self.assertIsNone(r['usage']['input_tokens'])
+        self.assertEqual(r['usage']['cached_input_tokens'], 1)
+
+    def test_recorded_usage_drives_eligibility_and_metric_sample_counts(self):
+        for invalid_field in m.TOKEN_FIELDS:
+            with self.subTest(invalid_field=invalid_field), tempfile.TemporaryDirectory() as d:
+                p = Path(d)
+                protocol = {'source_sha': 'synthetic', 'order': [f'Q1-{i}-A' for i in range(1, 5)],
+                            'questions': {'Q1': {'invalidating_confusions': ['Synthetic invalid inference']}}}
+                m.save(p / 'protocol.json', protocol)
+                favorable = dict(accuracy=2, coverage=2, traceability=2, invalidating_confusions=[], reviewer='Synthetic unit fixture')
+                cases = [(dict.fromkeys(m.TOKEN_FIELDS, 0), 10, favorable),
+                         ({'input_tokens': 20, 'output_tokens': None}, 20, {**favorable, 'accuracy': 0}),
+                         ({**dict.fromkeys(m.TOKEN_FIELDS, 9999), invalid_field: True}, 999, favorable),
+                         ({}, 30, favorable)]
+                streams = {}
+                for run_id, (usage, elapsed, quality) in zip(protocol['order'], cases):
+                    folder = p / 'runs' / run_id; folder.mkdir(parents=True)
+                    raw = events(usage).encode(); (folder / 'events.stdout').write_bytes(raw)
+                    streams[folder / 'events.stdout'] = raw
+                    m.save(folder / 'config.json', {'source_sha': 'synthetic', 'protocol_sha256': m.digest((p / 'protocol.json').read_bytes()),
+                        'model': 'synthetic', 'reasoning': 'none', 'cli_version': 'synthetic', 'variant': 'A', 'question': 'Q1'})
+                    result = m.record_attempt(folder, {'exit_code': 0, 'timeout': False, 'elapsed_seconds': elapsed,
+                                                      'cleanup': {'status': 'COMPLETE'}})
+                    # Explicit synthetic reviews, never generated for historical attempts.
+                    result.update(configuration_status='VALID', audit={'status': 'VALID'}, quality=quality)
+                    m.save(folder / 'result.json', result)
+                a = m.analyze(p)
+                self.assertEqual(len(a['rows']), 4); self.assertEqual(a['comparability'], 'INCOMPLETE')
+                bad = a['rows'][2]
+                self.assertEqual(bad['status'], 'INVALID_USAGE'); self.assertFalse(bad['valid'])
+                for key in ('configuration_valid', 'isolation_valid', 'quality_review_complete', 'quality_satisfied'):
+                    self.assertTrue(bad[key], key)
+                self.assertIn('TECHNICAL_STATUS:INVALID_USAGE', bad['exclusion_reasons'])
+                self.assertEqual(bad['elapsed_seconds'], 999)
+                self.assertTrue(a['rows'][1]['valid']); self.assertFalse(a['rows'][1]['answer_acceptable'])
+                group = a['groups']['Q1-A']
+                self.assertEqual((group['n_valid'], group['n_acceptable'], group['n_unfavorable']), (3, 2, 1))
+                self.assertEqual(group['metrics']['input_tokens'], {'n': 2, 'median': 10, 'min': 0, 'max': 20})
+                for field in m.TOKEN_FIELDS[1:]:
+                    self.assertEqual(group['metrics'][field], {'n': 1, 'median': 0, 'min': 0, 'max': 0})
+                self.assertEqual(group['metrics']['elapsed_seconds'], {'n': 3, 'median': 20, 'min': 10, 'max': 30})
+                self.assertEqual(group['all_attempts_seconds']['n'], 4)
+                self.assertEqual(group['all_attempts_seconds']['max'], 999)
+                self.assertEqual(json.loads((p / 'analysis.json').read_text()), a)
+                saved_bad = json.loads((p / 'runs/Q1-3-A/result.json').read_text())
+                self.assertTrue(saved_bad['invalid_usage']); self.assertFalse(saved_bad['usage_complete'])
+                self.assertEqual(saved_bad['usage_errors'][0]['field'], invalid_field)
+                for path, raw in streams.items():
+                    self.assertEqual(path.read_bytes(), raw)
+
     def test_nested_malformed_events_preserve_lines_and_later_diagnostics(self):
         bad = []
         for value in (None, [], 4, 'item'):

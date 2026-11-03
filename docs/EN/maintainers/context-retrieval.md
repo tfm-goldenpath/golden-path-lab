@@ -291,6 +291,51 @@ evidence to change navigation**, no AGENTS change or Graphify adoption; correcte
 C measurements remain **NOT_EXECUTED**. The earlier cleanup scope/storage/SIGKILL
 limitations still apply. Human review remains pending.
 
+## Token-counter validation — 3 November 2026
+
+The review against `2444cf8de096767ed10c56d27e2aad7e2f1b8da8` found that
+invalid supplied counters could become null while the stream remained COMPLETE.
+`parse_events()` now validates every non-null value in all four `TOKEN_FIELDS`
+as an actual nonnegative integer. Booleans, negative integers, strings, floats
+(including integral-looking floats), lists and objects are rejected without
+coercion. `usage_errors` records the original line, field and reason. Invalid
+usage prevents completion as `INVALID_USAGE`, except when interruption, timeout,
+execution error or `INVALID_STREAM` has higher priority. The cached-input bound
+and terminal deduplication remain; distinct terminal snapshots are never summed
+or selected, but invalid counters in them still receive diagnostics.
+
+Absent/null usage or counters remain unknown; valid zero remains a measurement.
+`usage_complete` continues to describe successful stream completion, not the
+availability of every counter. Metric sample counts exclude unknown values and
+include zero. A malformed-usage attempt stays visible but is excluded from eligible
+token/time comparisons even with valid configuration, isolation and a complete
+favorable review. Descriptive all-attempt timing retains it. Fully reviewed
+unfavorable answers with valid measurements remain eligible observations.
+
+All 42 focused tests pass, including every field/type/range, unknown/container
+cases, precedence/deduplication and the parser → record → analyzer path. The
+previous fatal-cleanup implementation was **verified unchanged**, including
+receipt persistence, caller stopping and original-exception precedence; its
+still-open review thread does not require another cleanup rewrite. Doctor, the
+shared suite, exact inventory/10 tests, 10 affected local links and diff checks
+pass. No model, Graphify/index or Kubernetes execution was performed.
+
+Historical impact was checked from **all 19 original JSONL streams**, not merely
+old normalized results. Fresh results retain original configurations, reviews and
+exclusions in `implementacion/evidence/raw/context-token-validation-20261103/`.
+`replay.py`, `stream-comparison.json`, `comparison.json`, `replayed/` and
+`replay-analysis.json` preserve reproduction and diagnostics. No malformed usage
+was found; classifications, usage, eligibility and aggregates are unchanged.
+Derived analysis SHA-256 remains
+`d8081810eebfa6ce34d8fe66a75c5bd83fa07d4c94f1d443f2a898b97c58d9af`:
+A=6, B=5, C=0 eligible; both timeouts and all six invalid C configurations remain.
+The 274 original file hashes/archive members and package hash verify unchanged;
+replay source hashes are separate from historical execution identities.
+**Insufficient evidence to change navigation** remains the conclusion, with no
+Graphify adoption or AGENTS changes; corrected C measurements remain
+**NOT_EXECUTED**. This is parser hardening and offline replay, not new performance
+evidence. Human review and durable evidence custody remain pending.
+
 ## Graphify provenance, coverage and cost
 
 Official sources consulted on **2026-11-02**:
