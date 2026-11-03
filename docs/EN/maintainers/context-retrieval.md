@@ -125,6 +125,68 @@ modes by pooling unlike questions or discard the two timeouts to claim savings.
 Retain the concise B variant as a reproducible experiment, without adding it to
 mandatory navigation instructions. Graphify is not added to the default image.
 
+
+## Quality validation correction — 3 November 2026
+
+The original analyzer treated any non-null `quality`, even `{}` or a partial
+review, as sufficient. It now requires integer scores **0–2**, excluding booleans,
+for `accuracy`, `coverage` and `traceability`, plus an explicit
+`invalidating_confusions` list. An empty list declares none of the question's
+protocol-defined confusions; a nonempty list names the observed confusions using
+the protocol labels. Missing declarations, malformed lists or unknown labels
+make the review incomplete/invalid. Original review data is never filled in.
+
+Each row separates `technical_complete`, `configuration_valid`, `isolation_valid`
+and `quality_review_complete`. `quality_satisfied` conservatively denotes full
+rubric satisfaction: **2 in all three dimensions and no declared invalidating
+confusion**. It is unknown for an incomplete review, except that an explicit
+invalidating error rules out satisfaction. `answer_acceptable` additionally
+requires a technically complete execution and valid configuration/isolation.
+This mechanical classification is not a new review, human approval or adoption.
+
+`valid` / `n_valid` mean comparison eligibility, **not an acceptable answer**.
+A complete unfavorable review remains eligible and its tokens/time stay in the
+statistics; `n_acceptable` and `n_unfavorable` separate those outcomes. A comparison
+can be complete while containing incorrect answers. Invalid/incomplete reviews
+prevent comparison completeness, with `quality_review_errors`,
+`quality_rejection_reasons` and `exclusion_reasons` retained alongside every
+attempt. Timeouts and invalid C configurations cannot be rescued by good scores.
+
+Offline reanalysis of all 18 existing attempts found **no changes to existing
+aggregates or eligibility**: 16 technical completions, 12 valid configurations,
+18 valid isolation audits, 16 complete reviews and 11 eligible/acceptable answers
+(A: 6, B: 5, C: 0); no eligible unfavorable answer in these historical records.
+Both timeouts have incomplete quality scores and all six C configurations remain
+excluded. `comparability` remains **INCOMPLETE**. No reviews were invented or
+repeated; the existing sixteen reviews already contain three 2s and explicit
+empty confusion lists. The original 274 file hashes and historical archive hash
+were verified unchanged before and after reanalysis.
+
+New derived files only:
+`implementacion/evidence/raw/context-quality-reanalysis-20261103/analysis.json`
+and `comparison.json`, with validation logs and hashes in that separate directory.
+Derived analysis SHA-256:
+`d8081810eebfa6ce34d8fe66a75c5bd83fa07d4c94f1d443f2a898b97c58d9af`.
+Reproduce without model/tool execution, choosing a fresh output filename:
+
+```bash
+python3 implementacion/tests/integration/context-retrieval.py analyze \
+  --output implementacion/evidence/raw/context-retrieval-20261102 \
+  --analysis-output /tmp/context-quality-review-NEW.json
+```
+
+`--analysis-output` uses exclusive creation and refuses an existing file; the
+historical `analysis.json`, raw records and package stay intact. Without this
+option the original initial-analysis behavior remains. The 22 focused synthetic
+tests include empty/partial/invalid reviews, favorable and unfavorable complete
+reviews, explicit invalidating errors, all score types/ranges, independent status
+axes and preservation of inputs/new outputs. Doctor and the shared suite pass;
+ownership validation (530 paths), its 10 tests, local links and diff checks pass.
+No new model sessions, installs,
+index builds or Kubernetes were performed. The decision stays **insufficient
+evidence**, without Graphify adoption or AGENTS changes. Corrected C model
+measurements remain **NOT_EXECUTED**; a local launcher test is not a model trial.
+
 ## Graphify provenance, coverage and cost
 
 Official sources consulted on **2026-11-02**:

@@ -137,6 +137,104 @@ class RetrievalTests(unittest.TestCase):
             self.assertNotEqual(calls[0][0][2], calls[2][0][2])
             with self.assertRaisesRegex(ValueError, 'already exists'): m.build_index(p, p / 'venv/bin/graphify')
 
+    def quality_trial(self, quality, *, status='COMPLETE', configuration='VALID', isolation='VALID'):
+        """A good reference and a reviewed candidate; both must remain observable."""
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d)
+            protocol = {'order': ['Q1-1-A', 'Q1-2-A'], 'questions': {'Q1': {
+                'invalidating_confusions': ['Unsigned fields establish authentication']}}, 'source_sha': 'base'}
+            m.save(p / 'protocol.json', protocol)
+            good = {'accuracy': 2, 'coverage': 2, 'traceability': 2, 'invalidating_confusions': []}
+            for number, review in [(1, good), (2, quality)]:
+                f = p / 'runs' / f'Q1-{number}-A'; f.mkdir(parents=True)
+                m.save(f / 'config.json', {'source_sha': 'base', 'protocol_sha256': m.digest((p / 'protocol.json').read_bytes()),
+                    'model': 'm', 'reasoning': 'high', 'cli_version': 'v', 'variant': 'A', 'question': 'Q1'})
+                m.save(f / 'result.json', {'status': status if number == 2 else 'COMPLETE',
+                    'configuration_status': configuration if number == 2 else 'VALID',
+                    'audit': {'status': isolation if number == 2 else 'VALID'}, 'quality': review,
+                    'usage': {**dict.fromkeys(m.TOKEN_FIELDS), 'input_tokens': 100 if number == 1 else 300},
+                    'elapsed_seconds': 10 if number == 1 else 30})
+            original = (p / 'runs/Q1-2-A/result.json').read_bytes()
+            analysis = m.analyze(p)
+            self.assertEqual((p / 'runs/Q1-2-A/result.json').read_bytes(), original)
+            return analysis
+
+    def test_empty_partial_or_missing_quality_cannot_complete_comparison(self):
+        for quality in (None, {}, {'accuracy': 2}, {'accuracy': 2, 'coverage': 2}):
+            with self.subTest(quality=quality):
+                a = self.quality_trial(quality)
+                self.assertFalse(a['rows'][1]['valid'])
+                self.assertFalse(a['rows'][1]['quality_review_complete'])
+                self.assertTrue(a['rows'][1]['exclusion_reasons'])
+                self.assertEqual(a['comparability'], 'INCOMPLETE')
+                self.assertEqual(a['groups']['Q1-A']['n_valid'], 1)
+                self.assertEqual(len(a['rows']), 2)
+
+    def test_invalid_score_types_and_ranges_in_every_dimension(self):
+        for dimension in ('accuracy', 'coverage', 'traceability'):
+            for value in (True, False, -1, 3, 2.0, '2', None, [], {}):
+                with self.subTest(dimension=dimension, value=value):
+                    q = dict(accuracy=2, coverage=2, traceability=2, invalidating_confusions=[])
+                    q[dimension] = value
+                    a = self.quality_trial(q)
+                    self.assertFalse(a['rows'][1]['valid'])
+                    self.assertFalse(a['rows'][1]['answer_acceptable'])
+                    self.assertEqual(a['comparability'], 'INCOMPLETE')
+        for q in ([], 'reviewed', True, 2):
+            self.assertFalse(self.quality_trial(q)['rows'][1]['quality_review_complete'])
+
+    def test_complete_favorable_review_has_separate_success_states(self):
+        a = self.quality_trial(dict(accuracy=2, coverage=2, traceability=2, invalidating_confusions=[]))
+        row = a['rows'][1]
+        for key in ('technical_complete', 'configuration_valid', 'isolation_valid', 'quality_review_complete', 'quality_satisfied', 'answer_acceptable', 'valid'):
+            self.assertTrue(row[key], key)
+        self.assertEqual(row['exclusion_reasons'], [])
+        self.assertEqual(a['comparability'], 'COMPLETE')
+        self.assertEqual(a['groups']['Q1-A']['n_acceptable'], 2)
+
+    def test_complete_unfavorable_reviews_remain_in_statistics(self):
+        for score in (0, 1):
+            a = self.quality_trial(dict(accuracy=score, coverage=2, traceability=2, invalidating_confusions=[]))
+            row = a['rows'][1]
+            self.assertTrue(row['valid']); self.assertTrue(row['quality_review_complete'])
+            self.assertFalse(row['quality_satisfied']); self.assertFalse(row['answer_acceptable'])
+            self.assertTrue(row['quality_rejection_reasons'])
+            self.assertEqual(row['quality']['accuracy'], score)
+            self.assertEqual(a['comparability'], 'COMPLETE')
+            group = a['groups']['Q1-A']
+            self.assertEqual((group['n_valid'], group['n_acceptable'], group['n_unfavorable']), (2, 1, 1))
+            self.assertEqual(group['metrics']['input_tokens'], {'n': 2, 'median': 200, 'min': 100, 'max': 300})
+
+    def test_invalidating_confusion_vetoes_full_scores_without_dropping_run(self):
+        q = dict(accuracy=2, coverage=2, traceability=2, invalidating_confusions=['Unsigned fields establish authentication'])
+        a = self.quality_trial(q); row = a['rows'][1]
+        self.assertTrue(row['quality_review_complete']); self.assertTrue(row['invalidating_error_declared'])
+        self.assertFalse(row['answer_acceptable']); self.assertTrue(row['valid'])
+        self.assertEqual(a['groups']['Q1-A']['n_unfavorable'], 1)
+        self.assertEqual(a['groups']['Q1-A']['metrics']['input_tokens']['n'], 2)
+
+    def test_absent_or_invalid_confusion_declarations_are_not_invented(self):
+        for declaration in ('absent', None, False, 'none', {}, [False], [''], ['unknown error']):
+            q = dict(accuracy=2, coverage=2, traceability=2)
+            if declaration != 'absent': q['invalidating_confusions'] = declaration
+            a = self.quality_trial(q); row = a['rows'][1]
+            self.assertFalse(row['quality_review_complete']); self.assertFalse(row['answer_acceptable'])
+            self.assertEqual(row['quality'], q)
+            self.assertEqual(a['comparability'], 'INCOMPLETE')
+            self.assertTrue(row['exclusion_reasons'])
+
+    def test_quality_cannot_override_timeout_configuration_or_isolation(self):
+        q = dict(accuracy=2, coverage=2, traceability=2, invalidating_confusions=[])
+        for kwargs, flag in [({'status': 'TIMEOUT'}, 'technical_complete'),
+                             ({'configuration': 'INVALID_GRAPH_LAUNCHER'}, 'configuration_valid'),
+                             ({'isolation': 'CONTAMINATED'}, 'isolation_valid')]:
+            a = self.quality_trial(q, **kwargs); row = a['rows'][1]
+            self.assertFalse(row[flag]); self.assertTrue(row['quality_review_complete'])
+            self.assertTrue(row['quality_satisfied']); self.assertFalse(row['answer_acceptable'])
+            self.assertFalse(row['valid']); self.assertTrue(row['exclusion_reasons'])
+            self.assertEqual(len(a['rows']), 2)
+            self.assertEqual(a['groups']['Q1-A']['all_attempts_seconds']['n'], 2)
+
     def test_analysis_preserves_failures_missing_and_exclusions(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d)
@@ -147,6 +245,11 @@ class RetrievalTests(unittest.TestCase):
                 m.save(f / 'result.json', {'status': status, 'audit': {'status': audit}, 'quality': None, 'usage': dict.fromkeys(m.TOKEN_FIELDS), 'elapsed_seconds': 180})
             a = m.analyze(p)
             self.assertEqual(a['missing'], ['Q1-1-C']); self.assertEqual(len(a['rows']), 2)
+            original_analysis = (p / 'analysis.json').read_bytes()
+            self.assertEqual(m.analyze(p, p / 'derived.json'), a)
+            self.assertEqual((p / 'analysis.json').read_bytes(), original_analysis)
+            with self.assertRaises(FileExistsError): m.analyze(p, p / 'derived.json')
+            self.assertEqual(json.loads((p / 'derived.json').read_text()), a)
             self.assertEqual(a['comparability'], 'INCOMPLETE'); self.assertEqual(a['groups']['Q1-A']['n_valid'], 0)
             f = p / 'runs/Q1-1-B/result.json'; r = json.loads(f.read_text()); r.update(audit={'status':'VALID'}, quality={'accuracy':2}, configuration_status='INVALID_GRAPH_LAUNCHER'); m.save(f,r)
             self.assertEqual(m.analyze(p)['groups']['Q1-B']['n_valid'],0)

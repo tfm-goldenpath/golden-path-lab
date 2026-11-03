@@ -301,7 +301,48 @@ def run(out, graphify, smoke=False):
             break
 
 
-def analyze(out):
+def assess_quality(quality, question):
+    """Validate recorded review data; never supply scores or a missing declaration.
+
+    A complete review can be unfavorable. Full rubric satisfaction conservatively
+    requires 2 in every dimension and an explicit empty invalidating-confusions
+    list. This classification is neither human approval nor an adoption decision.
+    """
+    errors, rejections = [], []
+    declared = None
+    if not isinstance(quality, dict):
+        errors.append('QUALITY_NOT_OBJECT')
+    else:
+        for dimension in ('accuracy', 'coverage', 'traceability'):
+            if dimension not in quality:
+                errors.append('MISSING_SCORE:' + dimension)
+            elif type(quality[dimension]) is not int or not 0 <= quality[dimension] <= 2:
+                errors.append('INVALID_SCORE:' + dimension)
+            elif quality[dimension] < 2:
+                rejections.append('BELOW_FULL_RUBRIC:' + dimension)
+        expected = question.get('invalidating_confusions')
+        protocol_valid = isinstance(expected, list) and all(isinstance(x, str) and x.strip() for x in expected)
+        if not protocol_valid:
+            errors.append('INVALID_PROTOCOL_CONFUSIONS')
+        if 'invalidating_confusions' not in quality:
+            errors.append('MISSING_CONFUSION_DECLARATION')
+        else:
+            observed = quality['invalidating_confusions']
+            if not isinstance(observed, list) or not all(isinstance(x, str) and x.strip() for x in observed):
+                errors.append('INVALID_CONFUSION_DECLARATION')
+            else:
+                declared = bool(observed)
+                if protocol_valid and any(x not in expected for x in observed):
+                    errors.append('UNKNOWN_INVALIDATING_CONFUSION')
+                rejections.extend('INVALIDATING_CONFUSION:' + x for x in observed)
+    complete = not errors
+    return {'quality_review_complete': complete, 'quality_review_errors': errors,
+            'invalidating_error_declared': declared,
+            'quality_satisfied': not rejections if complete else False if declared else None,
+            'quality_rejection_reasons': rejections}
+
+
+def analyze(out, destination=None):
     protocol = json.loads((out / 'protocol.json').read_text())
     rows, missing, configs = [], [], set()
     for run_id in protocol['order']:
@@ -319,11 +360,29 @@ def analyze(out):
         configs.add((config['source_sha'], config['protocol_sha256'], config['model'], config['reasoning'], config['cli_version'], json.dumps(config.get('command'), sort_keys=True), config.get('runner_sha256')))
         if config.get('id', run_id) != run_id or config['variant'] != run_id.rsplit('-', 1)[1] or config['question'] != run_id.split('-')[0]:
             raise ValueError('Run identity mismatch')
+        technical_complete = result['status'] == 'COMPLETE'
+        configuration_valid = result.get('configuration_status', 'VALID') == 'VALID'
+        isolation_valid = result['audit']['status'] == 'VALID' and not result.get('other_items')
+        review = assess_quality(result.get('quality'), protocol['questions'][config['question']])
+        exclusions = list(review['quality_review_errors'])
+        if not technical_complete:
+            exclusions.append('TECHNICAL_STATUS:' + result['status'])
+        if not configuration_valid:
+            exclusions.append('CONFIGURATION:' + result['configuration_status'])
+        if result['audit']['status'] != 'VALID':
+            exclusions.append('ISOLATION:' + result['audit']['status'])
         if result.get('other_items'):
-            result['audit'] = {'status': 'CONTAMINATED', 'reason': 'Unexpected tool/item requires explicit investigation'}
-        valid = result['status'] == 'COMPLETE' and result['audit']['status'] == 'VALID' and result.get('quality') is not None and result.get('configuration_status', 'VALID') == 'VALID'
+            exclusions.append('UNEXPECTED_ITEMS')
+        # Eligibility includes fully reviewed unfavorable answers, avoiding survivor bias.
+        valid = technical_complete and configuration_valid and isolation_valid and review['quality_review_complete']
         rows.append({'id': run_id, 'variant': config['variant'], 'question': config['question'],
-                     'status': result['status'], 'valid': valid, 'configuration_status': result.get('configuration_status', 'VALID'), 'audit': result['audit'], 'quality': result.get('quality'),
+                     'status': result['status'], 'valid': valid,
+                     'technical_complete': technical_complete, 'configuration_valid': configuration_valid,
+                     'isolation_valid': isolation_valid, **review,
+                     'answer_acceptable': valid and review['quality_satisfied'] is True,
+                     'exclusion_reasons': exclusions,
+                     'configuration_status': result.get('configuration_status', 'VALID'),
+                     'audit': result['audit'], 'quality': result.get('quality'),
                      'usage': result['usage'], 'elapsed_seconds': result['elapsed_seconds']})
     if len(configs) > 1 or (configs and next(iter(configs))[0] != protocol['source_sha']):
         raise ValueError('Incomparable source/configuration')
@@ -338,13 +397,20 @@ def analyze(out):
                 metrics[key] = {'n': len(available), 'median': statistics.median(available) if available else None,
                                 'min': min(available) if available else None, 'max': max(available) if available else None}
             attempts = [r['elapsed_seconds'] for r in rows if r['question'] == q and r['variant'] == mode]
-            groups[q + '-' + mode] = {'n_valid': len(selected), 'metrics': metrics,
+            groups[q + '-' + mode] = {'n_valid': len(selected),
+                'n_acceptable': sum(r['answer_acceptable'] for r in selected),
+                'n_unfavorable': sum(r['quality_satisfied'] is False for r in selected), 'metrics': metrics,
                 'all_attempts_seconds': {'n': len(attempts), 'median': statistics.median(attempts) if attempts else None,
                                         'min': min(attempts) if attempts else None, 'max': max(attempts) if attempts else None}}
     result = {'rows': rows, 'missing': missing, 'groups': groups,
               'comparability': 'INCOMPLETE' if missing or any(not r['valid'] for r in rows) else 'COMPLETE',
               'decision': 'Requires source-grounded quality review; no automatic adoption or monetary conversion'}
-    save(out / 'analysis.json', result)
+    if destination is None:
+        save(out / 'analysis.json', result)
+    else:
+        # Explicit reanalysis outputs are fresh, never overwritten input records.
+        with destination.open('x') as stream:
+            stream.write(json.dumps(result, indent=2) + '\n')
     return result
 
 
@@ -355,6 +421,7 @@ def main():
     parser.add_argument('--protocol', type=Path, default=PROTOCOL)
     parser.add_argument('--graphify', type=Path)
     parser.add_argument('--allow-model', action='store_true')
+    parser.add_argument('--analysis-output', type=Path, help='Fresh derived analysis file; leave the input analysis unchanged')
     args = parser.parse_args()
     out = args.output.resolve()
     if args.action == 'prepare':
@@ -364,7 +431,7 @@ def main():
             parser.error('--graphify is required')
         build_index(out, args.graphify.resolve())
     elif args.action == 'analyze':
-        analyze(out)
+        analyze(out, args.analysis_output)
     else:
         if not args.allow_model or not args.graphify:
             parser.error('Explicit --allow-model and --graphify are required; existing ChatGPT authentication only')

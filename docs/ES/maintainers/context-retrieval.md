@@ -114,6 +114,57 @@ solo mostró su definición y una relación de llamada; no toda la propiedad o
 lógica de retirada. La actualización en una copia descartable detectó un archivo
 cambiado, 274 iguales y el símbolo añadido. No cambió la fuente/índice del piloto.
 
+
+## Corrección de validación de calidad — 3 de noviembre de 2026
+
+El analizador admitía cualquier `quality` no nulo, incluso `{}` o una revisión
+parcial. Ahora exige `accuracy`, `coverage` y `traceability` como enteros **0–2**,
+sin booleanos, y una lista explícita `invalidating_confusions`. `[]` declara que
+no se observó ninguna confusión invalidante de la pregunta; una lista no vacía
+usa sus etiquetas del protocolo. Ausencia, formato incorrecto o etiquetas
+desconocidas hacen incompleta/inválida la revisión. No se rellenan datos ausentes.
+
+Se separan ejecución técnica, configuración, aislamiento y revisión completa.
+`quality_satisfied` indica cumplimiento pleno: **2 en las tres dimensiones y
+ninguna confusión invalidante declarada**. Una revisión incompleta deja este
+resultado desconocido, salvo que un error invalidante explícito ya lo descarte.
+`answer_acceptable` exige además ejecución técnica completa y configuración/
+aislamiento válidos. No equivale a revisión humana ni aprobación de adopción.
+
+`valid`/`n_valid` significan elegibilidad para comparar, no respuesta aceptable.
+Una revisión completa desfavorable conserva tokens y tiempos en las estadísticas;
+`n_acceptable` y `n_unfavorable` distinguen los resultados. Una comparación puede
+estar completa y contener respuestas incorrectas. Revisiones inválidas/incompletas
+impiden declararla completa. Cada intento conserva los motivos de revisión,
+rechazo y exclusión; ni los timeouts ni C se rescatan por buenas puntuaciones.
+
+El reanálisis offline conserva **todos los agregados previos y la elegibilidad**:
+18 intentos, 16 completos técnicamente, 12 configuraciones válidas, 18 auditorías
+de aislamiento válidas, 16 revisiones completas y 11 respuestas elegibles/
+aceptables (A: 6, B: 5, C: 0). No hay respuestas elegibles desfavorables en los
+registros históricos. Ambos timeouts tienen puntuaciones incompletas y las seis
+configuraciones C siguen excluidas. La comparación permanece **INCOMPLETE**.
+Las dieciséis revisiones ya tenían tres 2 y listas vacías explícitas: no se
+inventó ni repitió ninguna revisión. Los 274 hashes originales y el paquete
+histórico se verificaron sin cambios antes y después.
+
+Solo se escribieron derivados en
+`implementacion/evidence/raw/context-quality-reanalysis-20261103/`: `analysis.json`,
+`comparison.json` y registros/hashes de validación. SHA-256 del análisis nuevo:
+`d8081810eebfa6ce34d8fe66a75c5bd83fa07d4c94f1d443f2a898b97c58d9af`.
+El comando EN usa `analyze --analysis-output` con un archivo nuevo y rechaza
+sobrescribirlo; los registros, análisis y paquete históricos permanecen intactos.
+Sin esa opción se conserva el comportamiento inicial del analizador.
+
+Son 22 pruebas focalizadas sintéticas, incluidas revisiones vacías, parciales,
+inválidas y completas favorables/desfavorables, errores invalidantes, estados
+independientes y conservación de datos. Pasan doctor y la suite compartida, el
+inventario de 530 rutas y sus 10 pruebas, enlaces locales y comprobación del diff.
+No se ejecutaron modelos, instalaciones,
+índices ni Kubernetes. Sigue habiendo **evidencia insuficiente para modificar la
+navegación**, sin Graphify ni cambios en AGENTS. Las mediciones corregidas de C
+siguen **NOT_EXECUTED**; comprobar el lanzador local no equivale a medir el modelo.
+
 ## Reproducción, conservación y revisión
 
 La comprobación local posterior con los mismos permisos devolvió 127: el
