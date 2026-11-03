@@ -31,7 +31,7 @@ jobs:
           python3 implementacion/scripts/lane-a-validation.py launcher --suite ${{ matrix.suite }} --output implementacion/evidence/lane-a/${{ matrix.suite }}
       - name: Run lane A in the pinned devcontainer
         id: container
-        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3; review in lane-a-validation.md
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3.1900000450; review in lane-a-validation.md
         with:
           configFile: .devcontainer/implementacion/devcontainer.json
           push: never
@@ -44,7 +44,7 @@ jobs:
         run: python3 implementacion/scripts/lane-a-validation.py finalize --suite ${{ matrix.suite }} --output implementacion/evidence/lane-a/${{ matrix.suite }} --launcher-outcome '${{ steps.container.outcome }}'
       - name: Upload safe validation evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lane-a-${{ matrix.suite }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -55,7 +55,7 @@ jobs:
           include-hidden-files: false
       - name: Upload frozen scanner databases separately
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lane-a-databases-${{ matrix.suite }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: implementacion/evidence/lane-a/${{ matrix.suite }}/databases/*

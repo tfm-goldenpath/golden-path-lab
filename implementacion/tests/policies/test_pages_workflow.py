@@ -46,7 +46,14 @@ class PagesWorkflowTests(unittest.TestCase):
             lambda w: w['jobs']['validate'].pop('if'),
             lambda w: w['jobs']['deploy'].pop('needs'),
             lambda w: w['jobs']['deploy']['steps'].append({'run':'echo unsafe'}),
-            lambda w: w['jobs']['deploy']['steps'][1].update(uses='actions/deploy-pages@v4'),
+            lambda w: w['jobs']['deploy']['steps'][1].update(uses='actions/deploy-pages@v5'),
+            lambda w: w['jobs']['deploy']['steps'][0].update(uses='actions/configure-pages@v6'),
+            lambda w: w['jobs']['deploy']['steps'][0].update(uses='actions/configure-pages@' + '0'*40),
+            lambda w: w['jobs']['deploy']['steps'][1].update(uses='actions/deploy-pages@' + '0'*40),
+            lambda w: w['jobs']['deploy']['steps'][0].update(env={'NODE_OPTIONS':'--require untrusted.js'}),
+            lambda w: w['jobs']['deploy']['steps'].append({'uses':'actions/checkout@' + '0'*40}),
+            lambda w: w['jobs']['deploy'].update(needs='unreviewed'),
+            lambda w: w['jobs']['deploy'].update({'if':'always()'}),
             lambda w: w['jobs']['deploy']['steps'][0]['with'].update(enablement=True),
             lambda w: w['jobs']['deploy'].update(env={'NODE_OPTIONS':'--require untrusted.js'}),
             lambda w: w['jobs']['deploy'].update(container='attacker/image'),
@@ -57,5 +64,30 @@ class PagesWorkflowTests(unittest.TestCase):
             value = copy.deepcopy(self.workflow); mutate(value)
             with self.subTest(index=index):
                 self.assertEqual(self.evaluate(value)['classification'], 'DENY')
+
+class WorkflowPackagingTests(unittest.TestCase):
+    def test_cache_is_explicitly_disabled_and_node_remains_pinned(self):
+        for name in ('ci', 'golden-path', 'paired-rg'):
+            path = ROOT.parent / f'.github/workflows/{name}.yml'
+            workflow = json.loads(subprocess.check_output(
+                ['conftest', 'parse', '--parser', 'yaml', str(path)], text=True))
+            setups = [s for j in workflow['jobs'].values() for s in j.get('steps', [])
+                      if s.get('uses', '').startswith('actions/setup-node@')]
+            self.assertTrue(setups)
+            for step in setups:
+                with self.subTest(workflow=name):
+                    self.assertIs(step['with'].get('package-manager-cache'), False)
+                    self.assertNotIn('cache', step['with'])
+                    self.assertEqual(step['with']['node-version'], '${{ steps.versions.outputs.node }}')
+
+    def test_pages_hidden_files_are_explicitly_excluded(self):
+        path = ROOT.parent / '.github/workflows/demo-pages.yml'
+        workflow = json.loads(subprocess.check_output(
+            ['conftest', 'parse', '--parser', 'yaml', str(path)], text=True))
+        uploads = [s for s in workflow['jobs']['validate']['steps']
+                   if s.get('uses', '').startswith('actions/upload-pages-artifact@')]
+        self.assertEqual(len(uploads), 1)
+        self.assertIs(uploads[0]['with'].get('include-hidden-files'), False)
+
 
 if __name__ == '__main__': unittest.main()

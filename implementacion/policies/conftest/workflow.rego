@@ -98,9 +98,9 @@ bounded_pages_job(job, scope) if {
     validation["if"] == job["if"]
     validation.permissions == {"contents": "read"}
     count(job.steps) == 2
-    job.steps[0].uses == "actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b"
+    job.steps[0].uses == "actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d"
     job.steps[0].with == {"enablement": false}
-    job.steps[1].uses == "actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e"
+    job.steps[1].uses == "actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346"
     job.steps[1].id == "deployment"
     object.get(job.steps[1], "with", {}) == {}
     every step in job.steps {
