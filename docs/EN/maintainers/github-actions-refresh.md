@@ -181,3 +181,18 @@ policy pins, smoke helper/tests and CI steps. Do not revert historical evidence,
 frozen assets or unrelated later work. Human review remains pending; Codex assisted
 implementation, checks and this record. Admission remains INCONCLUSIVE and the
 retrieval pilot remains insufficient evidence to change navigation.
+
+## Post-merge Pages observation — 3 November 2026
+
+The earlier **NOT_EXECUTED** statement records the pre-merge boundary. Independently
+inspected [run 41672595733](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41672595733),
+its job metadata and logs: `.github/workflows/demo-pages.yml`, `workflow_dispatch`
+by `Xylons`, source `9e68811b13cb202bc0231ba1b9b0de3e8f592ae4`, 16:17:05–16:17:54 UTC.
+Both `validate` and `deploy` succeeded, including verified transport consumption,
+configure-pages and deploy-pages. The owner reports explicitly dispatching this
+after merging PR #70; no new dispatch occurred during this inspection.
+
+This establishes successful hosted execution on that source, not human acceptance
+or independent verification of publicly served file bytes. Those checks are not
+claimed here. Read-only metadata/logs are retained under
+`implementacion/evidence/raw/dependabot-tooling-20261103/pages-*`.
