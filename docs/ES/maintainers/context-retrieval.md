@@ -165,6 +165,72 @@ No se ejecutaron modelos, instalaciones,
 navegación**, sin Graphify ni cambios en AGENTS. Las mediciones corregidas de C
 siguen **NOT_EXECUTED**; comprobar el lanzador local no equivale a medir el modelo.
 
+## Correcciones de robustez del ejecutor — 3 de noviembre de 2026
+
+Se corrigen en la misma PR dos observaciones sobre
+`21cbd04c292f3b9da8eb02cbeec092276d9558c1`. Son correcciones del ejecutor,
+**no nuevas evidencias de rendimiento de navegación**. Se conserva la validación
+anterior de las revisiones de calidad.
+
+- **Interrupción después de crear el proceso:** `capture()` finaliza desde un
+  `Popen()` satisfactorio, incluso durante stdin o el sondeo. Señala únicamente
+  su grupo recién creado; mantiene el hijo directo sin recoger hasta enviar la
+  señal para evitar reutilizar su PID, recoge su estado y comprueba la ausencia
+  del grupo con una espera acotada. Un grupo ya ausente no evita recoger ni
+  informar del hijo. Conserva stdout/stderr parciales y el recibo del proceso,
+  separando recogida del hijo, ausencia del grupo y errores. La limpieza no
+  demostrada queda `INCOMPLETE`; estado de salida/RSS no disponibles quedan null.
+  Propaga la interrupción o excepción original tras finalizar; los errores
+  secundarios no la sustituyen. `run()` conserva `result.json` con `INTERRUPTED`
+  si el almacenamiento permite escribir, y no inicia otro intento tras Ctrl+C.
+- **Eventos anidados malformados:** comprueba objetos, IDs/tipos como cadenas no
+  vacías y texto de respuesta como cadena antes de consumirlos. Respeta campos
+  opcionales; tipos de item desconocidos pero textuales quedan visibles para la
+  auditoría de aislamiento. Conserva números de línea originales, incluidos
+  duplicados malformados, y continúa con eventos válidos posteriores para retener
+  diagnósticos y consumo observado. No modifica el JSONL original. Una salida
+  normal con eventos malformados queda `INVALID_STREAM`; interrupción, timeout
+  y error de ejecución conservan prioridad, con líneas malformadas y uso inválido
+  independientes. Se escribe el resultado del intento y se mantiene la parada
+  por autenticación/cuota, la deduplicación terminal y los tokens desconocidos.
+
+Pasan 32 pruebas focalizadas sintéticas: wrapper aislado con hijo y nieto,
+SIGINT durante sondeo y escritura stdin bloqueada, salida parcial, ambos recibos,
+ausencia de otro intento y de workers propios; carrera de salida del hijo,
+limpieza fallida sin ocultar la excepción, valores anidados inválidos y resultados
+del coordinador. Solo el supervisor de prueba usa subreaping de Linux para recoger
+nietos adoptados. El ejecutor informa de miembros residuales, incluso zombis,
+como limpieza incompleta. Su alcance es el grupo creado, no un supervisor general;
+no garantiza recibos sin almacenamiento escribible ni finalización tras SIGKILL.
+
+El nuevo reanálisis offline queda en
+`implementacion/evidence/raw/context-runner-robustness-20261103/`, con
+`analysis.json`, `parser-replay.json`, `comparison.json`, código de reproducción
+y logs. Los **19 streams originales** (18 intentos y smoke excluido) conservan
+clasificación, consumo, respuestas y diagnósticos. El análisis es idéntico byte a
+byte al anterior reanálisis de calidad, SHA-256
+`d8081810eebfa6ce34d8fe66a75c5bd83fa07d4c94f1d443f2a898b97c58d9af`.
+Se verifican los 274 archivos y miembros del paquete contra su manifiesto
+histórico; paquete y hash originales permanecen intactos. Se conserva un fallo
+inicial de verificación offline por correspondencia ambigua de sufijos y su
+corrección mediante nombres exactos. Los recibos nuevos identifican sus propios
+bytes; no se atribuyen las ejecuciones históricas al nuevo código.
+
+Pasan 32 pruebas focalizadas, `doctor`, `make test`, inventario exacto, sus
+10 pruebas, enlaces locales afectados y `git diff --check`. Doctor y suite usan
+`PATH="$PWD/implementacion/.tools/bin:$PATH"`. Capacidad efectiva: 4 CPUs,
+15 GiB RAM y aproximadamente 8,6 GiB libres en workspace, sobre la reserva de
+3 GiB. Las regresiones de interrupción solo crean y retiran sus propios procesos
+Python temporales.
+No hubo sesiones de modelo, Graphify/índices, instalaciones ni Kubernetes.
+La comparación sigue `INCOMPLETE`: 11 respuestas A/B elegibles/aceptables, dos
+timeouts conservados y seis configuraciones C excluidas. Las revisiones completas
+desfavorables siguen siendo observaciones; las incompletas no completan la
+comparación. **Evidencia insuficiente para cambiar navegación; sin adopción de
+Graphify ni cambios en AGENTS; C corregido con modelo sigue NOT_EXECUTED.**
+Una prueba local del lanzador no es una medición con modelo. Asistencia de Codex;
+revisión humana pendiente.
+
 ## Reproducción, conservación y revisión
 
 La comprobación local posterior con los mismos permisos devolvió 127: el

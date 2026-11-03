@@ -1,6 +1,11 @@
 """Synthetic events/processes only: no Codex quota, Graphify or network in CI."""
 import importlib.util
 import json
+import os
+import signal
+import subprocess
+import time
+from unittest.mock import patch
 from pathlib import Path
 import sys
 import tempfile
@@ -17,6 +22,60 @@ def events(usage=None, answer=True):
         data.append({'type': 'item.completed', 'item': {'id': 'answer', 'type': 'agent_message', 'text': 'Synthetic answer'}})
     data.append({'type': 'turn.completed', 'usage': usage if usage is not None else {'input_tokens': 100, 'cached_input_tokens': 70, 'output_tokens': 10}})
     return '\n'.join(json.dumps(e) for e in data)
+
+
+def synthetic_run(out, command, common='Synthetic instructions'):
+    """Exercise the real coordinator/capture, replacing all external tools."""
+    corpus = out / 'corpus'; corpus.mkdir()
+    m.save(out / 'source.json', {'sha': 'synthetic', 'files': {}})
+    m.save(out / 'protocol.json', {'cli_version': 'synthetic', 'model': 'none', 'reasoning': 'none',
+        'order': ['Q1-1-A', 'Q1-2-A'], 'questions': {'Q1': {'prompt': 'Synthetic question'}},
+        'common': common, 'timeout_seconds': 5})
+    smoke = out / 'runs/SMOKE'; smoke.mkdir(parents=True)
+    m.save(smoke / 'result.json', {'status': 'COMPLETE', 'usage': {'input_tokens': 1}, 'audit': {'status': 'VALID'}})
+    with patch.object(m.subprocess, 'check_output', return_value='synthetic'), \
+         patch.object(m, 'index_check', return_value={'graph': str(out / 'unused-graph')}), \
+         patch.object(m, 'command_for', return_value=command), \
+         patch.object(m, 'graph_preflight'), patch.object(m, 'capacity', return_value={}):
+        m.run(out, out / 'unused-tool')
+
+
+def process_identity(pid):
+    # Linux /proc starttime plus PID/session prevents cleanup of a reused PID.
+    fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
+    return {'pid': pid, 'starttime': fields[19], 'session': int(fields[3])}
+
+
+def interrupt_wrapper(out, blocked_stdin):
+    """Isolated test supervisor: adopted grandchildren are reaped here, not CI."""
+    import ctypes
+    if ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER, test only
+        raise RuntimeError('Cannot enable test subreaper')
+    original_popen = subprocess.Popen
+    def spawn(*args, **kwargs):
+        proc = original_popen(*args, **kwargs)
+        m.save(out / 'spawn.json', process_identity(proc.pid))
+        return proc
+    try:
+        with patch.object(m.subprocess, 'Popen', side_effect=spawn):
+            synthetic_run(out, [sys.executable, str(out / 'worker.py'), str(out)],
+                          'x' * (1024 * 1024) if blocked_stdin else 'short')
+    except KeyboardInterrupt:
+        m.save(out / 'propagated.json', {'exception': 'KeyboardInterrupt'})
+        return 130
+    finally:
+        # capture has already killed its group. Reap only our recorded adoptee.
+        if (out / 'owned.json').exists():
+            owned = json.loads((out / 'owned.json').read_text())
+            deadline = time.monotonic() + 2
+            while time.monotonic() < deadline:
+                try:
+                    if os.waitpid(owned['grandchild']['pid'], os.WNOHANG)[0]:
+                        break
+                except ChildProcessError:
+                    break
+                time.sleep(.02)
+    return 0
 
 
 class RetrievalTests(unittest.TestCase):
@@ -70,6 +129,40 @@ class RetrievalTests(unittest.TestCase):
         self.assertTrue(all(v is None for v in r['usage'].values()))
         self.assertEqual(r['status'], 'INVALID_USAGE')
 
+    def test_nested_malformed_events_preserve_lines_and_later_diagnostics(self):
+        bad = []
+        for value in (None, [], 4, 'item'):
+            bad.append({'type': 'item.completed', 'item': value})
+        for key in ('id', 'type'):
+            for value in (None, [], {}, True, 3, ''):
+                bad.append({'type': 'item.completed', 'item': {'id': 'a', 'type': 'agent_message', 'text': 'answer', key: value}})
+        for value in (None, [], {}, True, 3):
+            bad.append({'type': 'item.completed', 'item': {'id': 'a', 'type': 'agent_message', 'text': value}})
+        for value in (None, [], {}, True, 3, ''):
+            bad.append({'type': 'thread.started', 'thread_id': value})
+        # Invalid duplicates must retain BOTH original line numbers.
+        bad.append(bad[0])
+        raw = events() + '\n' + '\n'.join(map(json.dumps, bad)) + '\n' + json.dumps({
+            'type': 'item.completed', 'item': {'id': 'last', 'type': 'agent_message', 'text': 'Later valid answer'}})
+        r = m.parse_events(raw)
+        self.assertEqual(r['status'], 'INVALID_STREAM')
+        self.assertEqual(r['malformed_lines'], list(range(4, 4 + len(bad))))
+        self.assertEqual(r['final_answer'], 'Later valid answer')
+        self.assertEqual(r['usage']['input_tokens'], 100)
+        self.assertFalse(r['usage_complete'])
+        self.assertEqual(r['thread_ids'], ['synthetic'])
+
+    def test_malformed_events_do_not_override_process_failures(self):
+        raw = events([]) + '\n' + json.dumps({'type': 'item.completed', 'item': None})
+        for options, status in [({'timeout': True}, 'TIMEOUT'), ({'exit_code': 2}, 'ERROR'),
+                                ({'interrupted': True}, 'INTERRUPTED')]:
+            r = m.parse_events(raw, **options)
+            self.assertEqual(r['status'], status)
+            self.assertEqual(r['malformed_lines'], [4])
+            self.assertTrue(r['invalid_usage'])
+        r = m.parse_events(raw + '\n' + json.dumps({'type':'error', 'message':'synthetic quota failure'}), timeout=True)
+        self.assertEqual(r['errors'][0]['message'], 'synthetic quota failure')
+
     def test_source_and_index_drift(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d); source = p / 'source'; source.mkdir(); (source / 'a').write_text('a')
@@ -96,6 +189,173 @@ class RetrievalTests(unittest.TestCase):
             self.assertIn('partial', (p / 'run.stdout').read_text())
             import os
             with self.assertRaises(ProcessLookupError): os.killpg(r['process_group'], 0)
+
+    def test_interruption_finalizes_polling_and_blocked_stdin_and_stops_batch(self):
+        for blocked in (False, True):
+            with self.subTest(blocked_stdin=blocked), tempfile.TemporaryDirectory() as d:
+                p = Path(d)
+                worker = """import json, os, subprocess, sys, time
+from pathlib import Path
+out = Path(sys.argv[1])
+def identity(pid):
+    fields = Path(f'/proc/{pid}/stat').read_text().rsplit(')', 1)[1].split()
+    return {'pid':pid, 'starttime':fields[19], 'session':int(fields[3])}
+grand = subprocess.Popen([sys.executable, '-c',
+    'import sys,time; from pathlib import Path; Path(sys.argv[1]).touch(); time.sleep(30)', str(out/'grand-ready')])
+(out/'owned.json').write_text(json.dumps({'child':identity(os.getpid()), 'grandchild':identity(grand.pid)}))
+while not (out/'grand-ready').exists(): time.sleep(.01)
+print('{"type":"thread.started","thread_id":"synthetic"}',flush=True)
+print('partial stderr',file=sys.stderr,flush=True)
+(out/'ready').touch()
+time.sleep(30)
+"""
+                (p / 'worker.py').write_text(worker)
+                wrapper = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), '--interrupt-wrapper', str(p), str(int(blocked))],
+                                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+                try:
+                    deadline = time.monotonic() + 5
+                    while not (p / 'ready').exists() and time.monotonic() < deadline and wrapper.poll() is None:
+                        time.sleep(.02)
+                    self.assertTrue((p / 'ready').exists(), 'Owned child/grandchild did not reach handshake')
+                    os.kill(wrapper.pid, signal.SIGINT)  # Only the wrapper, never its child's session.
+                    stdout, stderr = wrapper.communicate(timeout=7)
+                    self.assertEqual(wrapper.returncode, 130, stderr.decode())
+                    self.assertEqual(json.loads((p / 'propagated.json').read_text())['exception'], 'KeyboardInterrupt')
+                    folder = p / 'runs/Q1-1-A'
+                    process = json.loads((folder / 'events.process.json').read_text())
+                    result = json.loads((folder / 'result.json').read_text())
+                    self.assertTrue(process['interrupted']); self.assertFalse(process['timeout'])
+                    self.assertEqual(process['exit_code'], -signal.SIGKILL)
+                    self.assertTrue(process['cleanup']['direct_child_reaped'])
+                    # The adopted grandchild may be a zombie until wrapper reaps it.
+                    expected = 'COMPLETE' if process['cleanup']['group_absent'] else 'INCOMPLETE'
+                    self.assertEqual(process['cleanup']['status'], expected)
+                    self.assertEqual(result['status'], 'INTERRUPTED')
+                    self.assertEqual(result['cleanup'], process['cleanup'])
+                    self.assertFalse(result['usage_complete'])
+                    self.assertTrue(all(v is None for v in result['usage'].values()))
+                    self.assertIn('thread.started', (folder / 'events.stdout').read_text())
+                    self.assertIn('partial stderr', (folder / 'events.stderr').read_text())
+                    self.assertFalse((p / 'runs/Q1-2-A').exists(), 'Interruption must stop the coordinator')
+                    owned = json.loads((p / 'owned.json').read_text())
+                    for identity in owned.values():
+                        self.assertFalse(Path(f"/proc/{identity['pid']}").exists(), 'Owned worker was not reaped')
+                    with self.assertRaises(ProcessLookupError): os.killpg(process['process_group'], 0)
+                finally:
+                    # A failing regression may kill only its immutable recorded group.
+                    if (p / 'spawn.json').exists():
+                        identity = json.loads((p / 'spawn.json').read_text())
+                        try:
+                            if process_identity(identity['pid']) == identity and identity['session'] == identity['pid']:
+                                os.killpg(identity['pid'], signal.SIGKILL)
+                        except (ProcessLookupError, FileNotFoundError):
+                            pass
+                    # Also handle a descendant whose leader has already disappeared.
+                    if (p / 'owned.json').exists():
+                        for identity in json.loads((p / 'owned.json').read_text()).values():
+                            try:
+                                if process_identity(identity['pid']) == identity:
+                                    os.kill(identity['pid'], signal.SIGKILL)
+                            except (ProcessLookupError, FileNotFoundError):
+                                pass
+                    try:
+                        wrapper.communicate(timeout=3)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(wrapper.pid, signal.SIGKILL)
+                        wrapper.communicate(timeout=2)
+
+    def test_interrupt_during_finalization_is_deferred_not_suppressed(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d); finish = m.finish_process
+            def interrupt_then_finish(proc):
+                os.kill(os.getpid(), signal.SIGINT)
+                return finish(proc)
+            with patch.object(m, 'finish_process', side_effect=interrupt_then_finish):
+                with self.assertRaises(KeyboardInterrupt) as caught:
+                    m.capture([sys.executable, '-c', 'pass'], p, p / 'late', 2)
+            r = json.loads((p / 'late.process.json').read_text())
+            self.assertTrue(r['interrupted']); self.assertEqual(r, caught.exception.capture_result)
+            self.assertEqual(r['cleanup']['status'], 'COMPLETE')
+            self.assertEqual(r['exit_code'], 0)
+
+    def test_child_exit_race_still_reaps_and_reports(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d); killpg = os.killpg
+            def absent_at_signal(pid, sig):
+                if sig == signal.SIGKILL:
+                    raise ProcessLookupError('Synthetic already-absent group')
+                return killpg(pid, sig)
+            with patch.object(m.os, 'killpg', side_effect=absent_at_signal):
+                r = m.capture([sys.executable, '-c', 'print("done")'], p, p / 'race', 2)
+            self.assertEqual(r['exit_code'], 0)
+            self.assertTrue(r['cleanup']['direct_child_reaped']); self.assertTrue(r['cleanup']['group_absent'])
+            self.assertEqual(r['cleanup']['status'], 'COMPLETE')
+            self.assertIsNotNone(r['max_rss_kib'])
+            self.assertEqual(json.loads((p / 'race.process.json').read_text()), r)
+
+    def test_cleanup_failures_do_not_mask_original_exception_or_invent_metrics(self):
+        from unittest.mock import Mock
+        for original in (KeyboardInterrupt('operator'), RuntimeError('poll failed')):
+            with self.subTest(exception=type(original).__name__), tempfile.TemporaryDirectory() as d:
+                p = Path(d); proc = Mock(pid=123, returncode=None, stdin=None)
+                with patch.object(m.subprocess, 'Popen', return_value=proc), \
+                     patch.object(m.os, 'waitid', side_effect=original), \
+                     patch.object(m.os, 'killpg', side_effect=PermissionError('synthetic denied')), \
+                     patch.object(m.os, 'wait4', side_effect=ChildProcessError('synthetic unavailable')):
+                    with self.assertRaises(type(original)) as caught:
+                        m.capture(['synthetic'], p, p / 'failure', 1)
+                self.assertIs(caught.exception, original)
+                r = json.loads((p / 'failure.process.json').read_text())
+                self.assertEqual(r, original.capture_result)
+                self.assertIsNone(r['exit_code']); self.assertIsNone(r['max_rss_kib'])
+                self.assertEqual(r['cleanup']['status'], 'INCOMPLETE')
+                self.assertEqual([e['step'] for e in r['cleanup']['errors']], ['signal', 'reap'])
+                self.assertEqual(r['execution_error']['type'], type(original).__name__)
+
+    def test_unreaped_child_has_unknown_usage_and_incomplete_cleanup(self):
+        from unittest.mock import Mock
+        proc = Mock(pid=123, returncode=None)
+        with patch.object(m.os, 'killpg', side_effect=PermissionError('synthetic denied')), \
+             patch.object(m.os, 'wait4', return_value=(0, 0, Mock(ru_maxrss=0))), \
+             patch.object(m.time, 'monotonic', return_value=0):
+            receipt, usage = m.finish_process(proc)
+        self.assertIsNone(usage); self.assertIsNone(proc.returncode)
+        self.assertFalse(receipt['direct_child_reaped']); self.assertFalse(receipt['group_absent'])
+        self.assertEqual(receipt['status'], 'INCOMPLETE')
+        self.assertEqual([e['step'] for e in receipt['errors']], ['signal', 'probe'])
+
+    def test_malformed_run_has_receipt_and_batch_continues(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d)
+            raw = events() + '\n' + json.dumps({'type': 'item.completed', 'item': None})
+            synthetic_run(p, [sys.executable, '-c', f'print({raw!r})'])
+            for run_id in ('Q1-1-A', 'Q1-2-A'):
+                folder = p / 'runs' / run_id
+                r = json.loads((folder / 'result.json').read_text())
+                self.assertEqual(r['status'], 'INVALID_STREAM'); self.assertEqual(r['malformed_lines'], [4])
+                self.assertEqual(r['usage']['input_tokens'], 100); self.assertFalse(r['usage_complete'])
+                self.assertEqual((folder / 'events.stdout').read_text(), raw + '\n')
+
+    def test_execution_exception_retains_attempt_and_original_error(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d); original = RuntimeError('synthetic polling failure')
+            with patch.object(m.os, 'waitid', side_effect=original):
+                with self.assertRaises(RuntimeError) as caught:
+                    synthetic_run(p, [sys.executable, '-c', 'pass'])
+            self.assertIs(caught.exception, original)
+            r = json.loads((p / 'runs/Q1-1-A/result.json').read_text())
+            self.assertEqual(r['status'], 'ERROR')
+            self.assertEqual(r['execution_error'], {'type': 'RuntimeError', 'message': 'synthetic polling failure'})
+            self.assertFalse((p / 'runs/Q1-2-A').exists())
+
+    def test_malformed_quota_error_still_stops_batch(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d)
+            raw = events() + '\n' + json.dumps({'type': 'thread.started', 'thread_id': []}) + '\n' + json.dumps({'type': 'error', 'message': 'synthetic quota exhausted'})
+            synthetic_run(p, [sys.executable, '-c', f'print({raw!r})'])
+            r = json.loads((p / 'runs/Q1-1-A/result.json').read_text())
+            self.assertEqual(r['status'], 'ERROR'); self.assertEqual(r['malformed_lines'], [4])
+            self.assertFalse((p / 'runs/Q1-2-A').exists())
 
     def test_graph_preflight_fails_before_model_for_invisible_interpreter(self):
         from unittest.mock import patch
@@ -258,4 +518,6 @@ class RetrievalTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == '--interrupt-wrapper':
+        sys.exit(interrupt_wrapper(Path(sys.argv[2]), bool(int(sys.argv[3]))))
     unittest.main()

@@ -187,6 +187,73 @@ index builds or Kubernetes were performed. The decision stays **insufficient
 evidence**, without Graphify adoption or AGENTS changes. Corrected C model
 measurements remain **NOT_EXECUTED**; a local launcher test is not a model trial.
 
+## Runner robustness corrections — 3 November 2026
+
+Two further review findings on `21cbd04c292f3b9da8eb02cbeec092276d9558c1`
+are corrected in the same PR. These are runner corrections, **not new retrieval
+performance evidence**, and do not change the earlier quality-review rules.
+
+- **Interruption after process creation:** `capture()` now finalizes from a
+  successful `Popen()` through stdin handling and polling. It signals only its
+  newly created process group, retains the direct child unreaped until signaling
+  to avoid PID reuse, then reaps it and checks group absence with a bounded wait.
+  An already-absent group still requires reaping/reporting. Partial stdout/stderr
+  and the process receipt survive; cleanup records reaping, group absence and
+  errors separately. Unestablished cleanup is `INCOMPLETE`, never claimed as
+  success. Unavailable exit status/RSS stay null. The original interruption or
+  execution exception propagates after finalization; secondary cleanup/receipt
+  errors do not replace it. `run()` retains an `INTERRUPTED` attempt `result.json`
+  when storage is writable, and does not start another attempt after Ctrl+C.
+- **Malformed nested events:** the parser checks event/item objects, nonempty
+  string IDs/types and string agent-message text before consuming them. Optional
+  fields remain optional; unknown string item types remain visible to the
+  isolation audit. Malformed entries retain their original line numbers, including
+  repeated malformed entries, while later valid events preserve diagnostics and
+  observed usage. Original JSONL is unchanged. A normally exited malformed stream
+  becomes `INVALID_STREAM`; interruption, timeout and execution error retain
+  precedence, with malformed lines and invalid usage recorded independently.
+  The coordinator writes the attempted result and preserves authentication/quota
+  stop behavior. Terminal deduplication and unknown-token accounting are unchanged.
+
+The 32 focused synthetic tests pass, including isolated wrapper/child/grandchild
+SIGINT tests during polling and blocked stdin, partial-output and both-receipt
+checks, no subsequent attempt, owned-worker absence, the child-exit race, cleanup
+failures preserving the original exception, malformed nested values and batch
+result persistence. Test-only Linux subreaping removes adopted grandchildren;
+the runner reports residual group members (including unreaped zombies) as
+incomplete cleanup rather than asserting their absence. Cleanup is limited to
+members remaining in the created group; it is not a general process supervisor.
+It cannot preserve receipts on unwritable storage or finalize after SIGKILL.
+
+Offline reanalysis is retained separately under
+`implementacion/evidence/raw/context-runner-robustness-20261103/`:
+`analysis.json`, `parser-replay.json`, `comparison.json`, reproduction code and
+validation logs. All **19 original streams** (18 attempts plus excluded smoke)
+have unchanged classifications, observed usage, answers and diagnostics. The new
+analysis is byte-identical to the preceding quality reanalysis: SHA-256
+`d8081810eebfa6ce34d8fe66a75c5bd83fa07d4c94f1d443f2a898b97c58d9af`.
+All 274 original files and their archive members verify against the historical
+manifest; the original package/hash remain unchanged. An initial offline archive
+check used ambiguous suffix matching; its failed check is preserved, followed by
+successful exact-member verification. No historical execution is attributed to
+these changed runner bytes; the new receipts record their own source hashes.
+
+Validation: 32 focused tests, `doctor`, the shared `make test` suite, exact
+ownership inventory, 10 inventory tests, affected local links and `git diff
+--check` pass. Doctor/shared tests use
+`PATH="$PWD/implementacion/.tools/bin:$PATH"`. Effective capacity remains 4 CPUs,
+15 GiB RAM and approximately 8.6 GiB workspace free, above the 3 GiB reserve.
+The interruption regressions create and retire only their own temporary Python
+processes.
+No model session, Graphify/index build, installation or Kubernetes execution
+occurred. Comparison remains `INCOMPLETE`: 11 eligible/acceptable A/B answers,
+two retained timeouts and six excluded C configurations. Complete unfavorable
+reviews still remain observations; incomplete reviews cannot complete a comparison.
+**Insufficient evidence to change navigation; no Graphify adoption or AGENTS
+change; corrected C model measurements remain NOT_EXECUTED.** A local launcher
+check is not a model measurement. Codex assisted these corrections; human review
+remains pending.
+
 ## Graphify provenance, coverage and cost
 
 Official sources consulted on **2026-11-02**:

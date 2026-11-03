@@ -74,43 +74,137 @@ def prepare(repo, out, protocol):
     return corpus
 
 
-def capture(command, directory, prefix, timeout, env=None, stdin=None):
-    """One own process group; wait4 supplies actual child max RSS (KiB on Linux)."""
-    started = time.monotonic()
-    timed_out = False
-    with prefix.with_suffix('.stdout').open('wb') as stdout, prefix.with_suffix('.stderr').open('wb') as stderr:
-        proc = subprocess.Popen(command, cwd=directory, env=env, stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
-                                stdout=stdout, stderr=stderr, start_new_session=True)
-        if stdin is not None:
+def finish_process(proc):
+    """Signal only the session we created, then reap; never signal a reaped PID.
+
+    Holding the direct child unreaped until killpg prevents its group ID from
+    being reused before the signal. Descendants must stay in this owned group.
+    Group absence, unlike signal delivery, establishes complete cleanup.
+    """
+    receipt = {'direct_child_reaped': False, 'group_absent': False, 'errors': []}
+    usage = None
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass  # Still reap the direct child and report the observed outcome.
+    except BaseException as exc:
+        receipt['errors'].append({'step': 'signal', 'type': type(exc).__name__, 'message': str(exc)})
+    deadline = time.monotonic() + 2
+    while True:
+        if not receipt['direct_child_reaped']:
             try:
-                proc.stdin.write(stdin.encode())
-                proc.stdin.close()
-            except BrokenPipeError:
-                pass
-        while True:
-            pid, status, usage = os.wait4(proc.pid, os.WNOHANG)
-            if pid:
+                pid, status, observed_usage = os.wait4(proc.pid, os.WNOHANG)
+                if pid:
+                    usage = observed_usage
+                    proc.returncode = os.waitstatus_to_exitcode(status)
+                    receipt['direct_child_reaped'] = True
+            except BaseException as exc:
+                receipt['errors'].append({'step': 'reap', 'type': type(exc).__name__, 'message': str(exc)})
                 break
-            if time.monotonic() - started >= timeout:
-                timed_out = True
-                os.killpg(proc.pid, signal.SIGKILL)
-                pid, status, usage = os.wait4(proc.pid, 0)
-                break
-            time.sleep(0.1)
-        proc.returncode = os.waitstatus_to_exitcode(status)
-        # Kill remaining descendants even if their parent exited first.
         try:
-            os.killpg(proc.pid, signal.SIGKILL)
+            os.killpg(proc.pid, 0)
         except ProcessLookupError:
-            pass
-    result = {'command': command, 'exit_code': proc.returncode, 'timeout': timed_out,
-              'elapsed_seconds': time.monotonic() - started, 'max_rss_kib': usage.ru_maxrss,
-              'process_group': proc.pid, 'cleanup': 'own process group terminated'}
-    save(prefix.with_suffix('.process.json'), result)
+            receipt['group_absent'] = True
+        except BaseException as exc:
+            receipt['errors'].append({'step': 'probe', 'type': type(exc).__name__, 'message': str(exc)})
+            break
+        if receipt['direct_child_reaped'] and receipt['group_absent']:
+            break
+        if time.monotonic() >= deadline:
+            break
+        time.sleep(.02)
+    receipt['status'] = 'COMPLETE' if receipt['direct_child_reaped'] and receipt['group_absent'] and not receipt['errors'] else 'INCOMPLETE'
+    return receipt, usage
+
+
+def capture(command, directory, prefix, timeout, env=None, stdin=None):
+    """Always finalize a successfully created child, retaining the first error."""
+    started = time.monotonic()
+    timed_out, interrupted = False, False
+    proc, usage, failure, result = None, None, None, None
+    cleanup = {'status': 'INCOMPLETE', 'direct_child_reaped': False, 'group_absent': False, 'errors': []}
+    with prefix.with_suffix('.stdout').open('wb') as stdout, prefix.with_suffix('.stderr').open('wb') as stderr:
+        try:
+            proc = subprocess.Popen(command, cwd=directory, env=env, stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
+                                    stdout=stdout, stderr=stderr, start_new_session=True)
+            if stdin is not None:
+                try:
+                    proc.stdin.write(stdin.encode())
+                    proc.stdin.close()
+                except BrokenPipeError:
+                    pass
+            while True:
+                # Observe exit without releasing the PID before group termination.
+                if os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT):
+                    break
+                if time.monotonic() - started >= timeout:
+                    timed_out = True
+                    break
+                time.sleep(.1)
+        except BaseException as exc:
+            failure = exc
+            interrupted = isinstance(exc, KeyboardInterrupt)
+        finally:
+            if proc is not None:
+                # A repeated Ctrl+C must not abandon finalization. Defer it and
+                # propagate after receipts; never suppress it into another run.
+                def defer_interrupt(signum, frame):
+                    nonlocal interrupted, failure
+                    interrupted = True
+                    if failure is None:
+                        failure = KeyboardInterrupt()
+                    if result is not None:
+                        result['interrupted'] = True
+                        result['execution_error'] = {'type': type(failure).__name__, 'message': str(failure)}
+                        failure.capture_result = result
+                previous = None
+                try:
+                    previous = signal.signal(signal.SIGINT, defer_interrupt)
+                except ValueError:
+                    pass  # Signal handlers are only available on the main thread.
+                try:
+                    try:
+                        cleanup, usage = finish_process(proc)
+                    except BaseException as exc:
+                        cleanup['errors'].append({'step': 'finalize', 'type': type(exc).__name__, 'message': str(exc)})
+                    if proc.stdin is not None:
+                        try:
+                            # Closing the raw pipe cannot flush buffered input and
+                            # block again when termination itself failed.
+                            getattr(proc.stdin, 'raw', proc.stdin).close()
+                            proc.stdin.close()
+                        except BrokenPipeError:
+                            pass
+                        except BaseException as exc:
+                            cleanup['status'] = 'INCOMPLETE'
+                            cleanup['errors'].append({'step': 'stdin-close', 'type': type(exc).__name__, 'message': str(exc)})
+                    if interrupted and failure is None:
+                        failure = KeyboardInterrupt()
+                    result = {'command': command, 'exit_code': proc.returncode, 'timeout': timed_out,
+                              'interrupted': interrupted,
+                              'execution_error': None if failure is None else {'type': type(failure).__name__, 'message': str(failure)},
+                              'elapsed_seconds': time.monotonic() - started,
+                              'max_rss_kib': usage.ru_maxrss if usage is not None else None,
+                              'process_group': proc.pid, 'cleanup': cleanup}
+                    if failure is not None:
+                        failure.capture_result = result
+                    try:
+                        save(prefix.with_suffix('.process.json'), result)
+                    except BaseException as exc:
+                        if failure is None:
+                            exc.capture_result = result
+                            failure = exc
+                        else:
+                            failure.add_note(f'Process receipt failed: {type(exc).__name__}: {exc}')
+                finally:
+                    if previous is not None:
+                        signal.signal(signal.SIGINT, previous)
+    if failure is not None:
+        raise failure.with_traceback(failure.__traceback__)
     return result
 
 
-def parse_events(raw, exit_code=0, timeout=False):
+def parse_events(raw, exit_code=0, timeout=False, interrupted=False, execution_error=None):
     """Exec is ONE turn: identical terminal duplicates dedup, never sum snapshots."""
     seen, completed, errors, items, malformed = set(), [], [], {}, []
     thread_ids = set()
@@ -121,10 +215,27 @@ def parse_events(raw, exit_code=0, timeout=False):
             event = json.loads(line)
             if not isinstance(event, dict):
                 raise ValueError('event not object')
-        except (ValueError, TypeError):
+            kind = event.get('type')
+            if not isinstance(kind, str) or not kind:
+                raise ValueError('event type not a nonempty string')
+            if kind == 'thread.started':
+                if not isinstance(event.get('thread_id'), str) or not event['thread_id']:
+                    raise ValueError('thread ID not a nonempty string')
+            if kind in ('item.started', 'item.updated', 'item.completed'):
+                item = event.get('item')
+                if not isinstance(item, dict):
+                    raise ValueError('item not object')
+                for field in ('id', 'type'):
+                    if not isinstance(item.get(field), str) or not item[field]:
+                        raise ValueError(f'item {field} not a nonempty string')
+                # Unknown string item types remain visible to the isolation audit.
+                if item['type'] == 'agent_message' and (kind == 'item.completed' or 'text' in item):
+                    if not isinstance(item.get('text'), str):
+                        raise ValueError('agent message text not string')
+            canonical = json.dumps(event, sort_keys=True)
+        except (ValueError, TypeError, RecursionError):
             malformed.append(number)
             continue
-        canonical = json.dumps(event, sort_keys=True)
         if canonical in seen:
             continue
         seen.add(canonical)
@@ -136,8 +247,8 @@ def parse_events(raw, exit_code=0, timeout=False):
         elif kind in ('error', 'turn.failed'):
             errors.append(event)
         elif kind == 'item.completed':
-            item = event.get('item', {})
-            items[item.get('id', f'line-{number}')] = item
+            item = event['item']
+            items[item['id']] = item
     usage = {field: None for field in TOKEN_FIELDS}
     if len(completed) == 1 and isinstance(completed[0].get('usage', {}), (dict, type(None))):
         for key in TOKEN_FIELDS:
@@ -147,17 +258,36 @@ def parse_events(raw, exit_code=0, timeout=False):
     messages = [i.get('text', '') for i in items.values() if i.get('type') == 'agent_message']
     commands = [i for i in items.values() if i.get('type') == 'command_execution']
     forbidden = [i for i in items.values() if i.get('type') not in ('agent_message', 'reasoning', 'command_execution')]
-    status = ('TIMEOUT' if timeout else 'ERROR' if exit_code or errors else
-              'INVALID_STREAM' if malformed or len(completed) != 1 or len(thread_ids) != 1 else
-              'NO_ANSWER' if not messages or not messages[-1].strip() else 'COMPLETE')
-    if len(completed) == 1 and completed[0].get('usage') is not None and not isinstance(completed[0]['usage'], dict):
-        status = 'INVALID_USAGE'
+    invalid_usage = (len(completed) == 1 and completed[0].get('usage') is not None and not isinstance(completed[0]['usage'], dict))
     if usage['cached_input_tokens'] is not None and usage['input_tokens'] is not None and usage['cached_input_tokens'] > usage['input_tokens']:
-        status = 'INVALID_USAGE'
+        invalid_usage = True
+    status = ('INTERRUPTED' if interrupted else 'TIMEOUT' if timeout else
+              'ERROR' if exit_code is None or exit_code or errors or execution_error else
+              'INVALID_STREAM' if malformed or len(completed) != 1 or len(thread_ids) != 1 else
+              'INVALID_USAGE' if invalid_usage else
+              'NO_ANSWER' if not messages or not messages[-1].strip() else 'COMPLETE')
     return {'status': status, 'usage': usage, 'usage_complete': status == 'COMPLETE',
             'final_answer': messages[-1] if messages else None, 'commands': commands,
             'other_items': forbidden, 'errors': errors, 'malformed_lines': malformed,
-            'completed_events': len(completed), 'thread_ids': sorted(str(x) for x in thread_ids)}
+            'invalid_usage': invalid_usage, 'interrupted': interrupted, 'timeout': timeout,
+            'execution_error': execution_error,
+            'completed_events': len(completed), 'thread_ids': sorted(thread_ids)}
+
+
+def record_attempt(folder, result):
+    """Parse even partial bytes and retain every started attempt outside the corpus."""
+    error = result.get('execution_error')
+    if isinstance(result.get('cleanup'), dict) and result['cleanup']['status'] != 'COMPLETE':
+        error = error or {'type': 'CleanupIncomplete', 'message': 'See process cleanup receipt'}
+    parsed = parse_events((folder / 'events.stdout').read_bytes(), result.get('exit_code'),
+                          result.get('timeout', False), result.get('interrupted', False), error)
+    parsed.update(result)
+    parsed['execution_error'] = error
+    parsed['audit'] = {'status': 'PENDING', 'reason': 'Review commands/output for outside corpus access; no automatic validity claim.'}
+    parsed['quality'] = None
+    save(folder / 'result.json', parsed)
+    (folder / 'answer.txt').write_text(parsed['final_answer'] or '')
+    return parsed
 
 
 def index_check(out, source):
@@ -286,13 +416,19 @@ def run(out, graphify, smoke=False):
         (folder / 'prompt.txt').write_text(full_prompt)
         save(folder / 'config.json', {**config, 'id': run_id, 'question': question, 'repetition': repetition,
                                      'variant': variant, 'instructions_sha256': digest(instructions.encode())})
-        result = capture(command, corpus, folder / 'events', protocol['timeout_seconds'], stdin=full_prompt)
-        parsed = parse_events((folder / 'events.stdout').read_text(), result['exit_code'], result['timeout'])
-        parsed.update(result)
-        parsed['audit'] = {'status': 'PENDING', 'reason': 'Review commands/output for outside corpus access; no automatic validity claim.'}
-        parsed['quality'] = None
-        save(folder / 'result.json', parsed)
-        (folder / 'answer.txt').write_text(parsed['final_answer'] or '')
+        try:
+            result = capture(command, corpus, folder / 'events', protocol['timeout_seconds'], stdin=full_prompt)
+        except BaseException as exc:
+            result = getattr(exc, 'capture_result', None)
+            if result is not None:
+                result['interrupted'] = result.get('interrupted', False) or isinstance(exc, KeyboardInterrupt)
+                result['execution_error'] = result.get('execution_error') or {'type': type(exc).__name__, 'message': str(exc)}
+                try:
+                    record_attempt(folder, result)
+                except BaseException as receipt_error:
+                    exc.add_note(f'Attempt receipt failed: {type(receipt_error).__name__}: {receipt_error}')
+            raise  # Operator interruption and execution exceptions stop the batch.
+        parsed = record_attempt(folder, result)
         save(folder / 'capacity-after.json', capacity(out))
         source_check(corpus, source['files'])
         print(run_id, parsed['status'], parsed['usage'], flush=True)
