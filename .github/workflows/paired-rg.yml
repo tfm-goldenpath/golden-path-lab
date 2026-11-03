@@ -69,7 +69,7 @@ jobs:
           [[ "$DATASET" == campaign ]]
           python3 scripts/paired-rg.py publish-plan --expected-source "$SOURCE" --plan-identity "$PLAN_IDENTITY" --output evidence/measurements/campaign-plan
       - name: Retain the verified frozen plan
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: paired-rg-plan-${{ github.run_id }}
           path: implementacion/evidence/measurements/campaign-plan/**
@@ -136,9 +136,11 @@ jobs:
         run: |
           source versions.env
           printf 'node=%s\n' "$NODE_VERSION" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ steps.versions.outputs.node }}
+          # Keep cache effects out of privileged delivery and paired timings.
+          package-manager-cache: false
       - name: Dependencies and pinned tools (outside primary timer)
         run: python3 scripts/paired-rg.py dependencies
       - name: Shared laboratory regressions (outside primary timer)
@@ -198,7 +200,7 @@ jobs:
         run: python3 scripts/paired-rg.py finalize
       - name: Preserve measurements and packages, including failures
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: paired-rg-${{ github.run_id }}
           path: |
