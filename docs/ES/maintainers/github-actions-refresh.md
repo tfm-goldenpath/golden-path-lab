@@ -134,3 +134,18 @@ inputs de workflows, dos pins de política Pages, smoke y pruebas. Preservar act
 congelados, evidencias y cambios ajenos posteriores. Codex asistió implementación,
 pruebas y documentación; revisión humana pendiente. Admisión continúa INCONCLUSIVE
 y el piloto sigue sin evidencia suficiente para cambiar la navegación.
+
+## Observación Pages posterior al merge — 3 de noviembre de 2026
+
+El **NOT_EXECUTED** anterior conserva la situación previa al merge. Se inspeccionaron
+independientemente [run 41672595733](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41672595733),
+metadatos de jobs y logs: `.github/workflows/demo-pages.yml`, `workflow_dispatch`
+por `Xylons`, fuente `9e68811b13cb202bc0231ba1b9b0de3e8f592ae4`, 16:17:05–16:17:54 UTC.
+`validate` y `deploy` finalizaron correctamente, incluido consumo del transporte
+verificado, configure-pages y deploy-pages. El propietario confirma su despacho
+explícito tras fusionar PR #70; esta inspección no inició otra ejecución.
+
+Esto acredita ejecución alojada satisfactoria en esa revisión, no aceptación humana
+ni verificación independiente de los bytes servidos públicamente. No se atribuyen
+esas comprobaciones. Metadatos/logs de solo lectura conservados en
+`implementacion/evidence/raw/dependabot-tooling-20261103/pages-*`.
