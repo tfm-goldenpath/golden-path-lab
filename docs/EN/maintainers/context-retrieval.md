@@ -254,6 +254,43 @@ change; corrected C model measurements remain NOT_EXECUTED.** A local launcher
 check is not a model measurement. Codex assisted these corrections; human review
 remains pending.
 
+## Stdin deadline and fatal cleanup corrections — 3 November 2026
+
+The two review findings on `2123f515ecd9affe97ed3cf3b6f0fe0fb9b2ad54`
+are corrected in the same PR. `capture()` encodes the prompt as exact UTF-8 bytes
+into a context-managed temporary file, flushes/rewinds it before starting the
+child, and supplies that descriptor as stdin. No input still uses DEVNULL.
+There is no parent pipe write waiting for the child to read; a non-reading child
+cannot prevent the deadline loop from running. EOF, Unicode and byte content are
+preserved, and the file closes on success or exception. Prompt preparation occurs
+before the execution deadline; reported elapsed time still includes preparation.
+The execution timeout permits up to 0.1 seconds of polling delay, followed by at
+most 2 seconds of cleanup waiting, apart from OS scheduling and I/O delays.
+
+Unconfirmed cleanup is now fatal to **every capture caller**, even when the child
+exited zero: save the truthful process receipt, then raise `CleanupIncomplete`
+carrying `capture_result`. An earlier interruption/execution exception remains
+primary, with cleanup diagnostics retained separately. The coordinator records
+an ineligible failed attempt before propagating; index and preflight callers also
+stop rather than advancing. Signaling still precedes reaping the direct child,
+preserving protection against process-group ID reuse.
+
+All 37 focused synthetic tests pass, including a 2 MiB unread prompt with a short
+timeout and no operator interrupt, exact large Unicode/EOF delivery, descriptor
+closure, and fatal incomplete-cleanup receipts and caller stopping. Simulations
+first actually retire the real owned process, then alter its cleanup receipt;
+no worker is deliberately left alive. Previous interruption, malformed-stream,
+exit-race and unfavorable-quality regressions remain covered. Doctor, the shared
+suite, inventory/its 10 tests, 10 affected local links and diff checks pass.
+Validation and any derived analysis are separate from the immutable pilot under
+`implementacion/evidence/raw/context-stdin-cleanup-20261103/`.
+
+No model sessions, Graphify installation/index build or Kubernetes execution
+occurred. These corrections do not establish retrieval performance: **insufficient
+evidence to change navigation**, no AGENTS change or Graphify adoption; corrected
+C measurements remain **NOT_EXECUTED**. The earlier cleanup scope/storage/SIGKILL
+limitations still apply. Human review remains pending.
+
 ## Graphify provenance, coverage and cost
 
 Official sources consulted on **2026-11-02**:

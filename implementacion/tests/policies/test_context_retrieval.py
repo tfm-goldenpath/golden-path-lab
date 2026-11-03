@@ -46,7 +46,7 @@ def process_identity(pid):
     return {'pid': pid, 'starttime': fields[19], 'session': int(fields[3])}
 
 
-def interrupt_wrapper(out, blocked_stdin):
+def interrupt_wrapper(out, large_prompt):
     """Isolated test supervisor: adopted grandchildren are reaped here, not CI."""
     import ctypes
     if ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER, test only
@@ -59,7 +59,7 @@ def interrupt_wrapper(out, blocked_stdin):
     try:
         with patch.object(m.subprocess, 'Popen', side_effect=spawn):
             synthetic_run(out, [sys.executable, str(out / 'worker.py'), str(out)],
-                          'x' * (1024 * 1024) if blocked_stdin else 'short')
+                          'x' * (1024 * 1024) if large_prompt else 'short')
     except KeyboardInterrupt:
         m.save(out / 'propagated.json', {'exception': 'KeyboardInterrupt'})
         return 130
@@ -76,6 +76,19 @@ def interrupt_wrapper(out, blocked_stdin):
                     break
                 time.sleep(.02)
     return 0
+
+
+def stdin_timeout_wrapper(out):
+    """A guarded process so a broken stdin deadline cannot hang unittest."""
+    original_popen = subprocess.Popen
+    def spawn(*args, **kwargs):
+        proc = original_popen(*args, **kwargs)
+        m.save(out / 'spawn.json', process_identity(proc.pid))
+        return proc
+    with patch.object(m.subprocess, 'Popen', side_effect=spawn):
+        result = m.capture([sys.executable, '-c', 'import time; print("ready",flush=True); time.sleep(5)'],
+                           out, out / 'timeout', .2, stdin='x' * (2 * 1024 * 1024))
+    m.save(out / 'returned.json', result)
 
 
 class RetrievalTests(unittest.TestCase):
@@ -190,9 +203,9 @@ class RetrievalTests(unittest.TestCase):
             import os
             with self.assertRaises(ProcessLookupError): os.killpg(r['process_group'], 0)
 
-    def test_interruption_finalizes_polling_and_blocked_stdin_and_stops_batch(self):
-        for blocked in (False, True):
-            with self.subTest(blocked_stdin=blocked), tempfile.TemporaryDirectory() as d:
+    def test_interruption_finalizes_short_and_large_unread_stdin_and_stops_batch(self):
+        for large_prompt in (False, True):
+            with self.subTest(large_prompt=large_prompt), tempfile.TemporaryDirectory() as d:
                 p = Path(d)
                 worker = """import json, os, subprocess, sys, time
 from pathlib import Path
@@ -210,7 +223,7 @@ print('partial stderr',file=sys.stderr,flush=True)
 time.sleep(30)
 """
                 (p / 'worker.py').write_text(worker)
-                wrapper = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), '--interrupt-wrapper', str(p), str(int(blocked))],
+                wrapper = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), '--interrupt-wrapper', str(p), str(int(large_prompt))],
                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
                 try:
                     deadline = time.monotonic() + 5
@@ -264,6 +277,124 @@ time.sleep(30)
                         os.killpg(wrapper.pid, signal.SIGKILL)
                         wrapper.communicate(timeout=2)
 
+    def test_unread_large_stdin_times_out_without_operator_interrupt(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d)
+            wrapper = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), '--stdin-timeout-wrapper', str(p)],
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+            try:
+                # Execution .2s + cleanup 2s + polling .1s, with startup/scheduling allowance.
+                _, stderr = wrapper.communicate(timeout=3.5)
+                self.assertEqual(wrapper.returncode, 0, stderr.decode())
+                r = json.loads((p / 'returned.json').read_text())
+                self.assertTrue(r['timeout']); self.assertFalse(r['interrupted'])
+                self.assertLess(r['elapsed_seconds'], 2.8)
+                self.assertEqual(r['exit_code'], -signal.SIGKILL)
+                self.assertEqual(r['cleanup']['status'], 'COMPLETE')
+                self.assertEqual(r, json.loads((p / 'timeout.process.json').read_text()))
+                self.assertIn('ready', (p / 'timeout.stdout').read_text())
+                with self.assertRaises(ProcessLookupError): os.killpg(r['process_group'], 0)
+            finally:
+                # No operator intervention on the passing path; guard only a broken regression.
+                if (p / 'spawn.json').exists():
+                    identity = json.loads((p / 'spawn.json').read_text())
+                    try:
+                        if process_identity(identity['pid']) == identity and identity['session'] == identity['pid']:
+                            os.killpg(identity['pid'], signal.SIGKILL)
+                    except (ProcessLookupError, FileNotFoundError):
+                        pass
+                try:
+                    wrapper.communicate(timeout=2)
+                except subprocess.TimeoutExpired:
+                    os.killpg(wrapper.pid, signal.SIGKILL)
+                    wrapper.communicate(timeout=2)
+
+    def test_large_unicode_stdin_delivers_exact_bytes_and_eof(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d); prompt = ('á中🙂\r\n\x00' * 131072) + 'end without newline'
+            command = [sys.executable, '-c', 'import sys; sys.stdout.buffer.write(sys.stdin.buffer.read())']
+            files = []; temporary_file = m.tempfile.TemporaryFile
+            def track_file(*args, **kwargs):
+                stream = temporary_file(*args, **kwargs); files.append(stream)
+                return stream
+            with patch.object(m.tempfile, 'TemporaryFile', side_effect=track_file):
+                r = m.capture(command, p, p / 'unicode', 2, stdin=prompt)
+            self.assertEqual(len(files), 1); self.assertTrue(files[0].closed)
+            self.assertEqual(r['exit_code'], 0); self.assertFalse(r['timeout'])
+            self.assertEqual((p / 'unicode.stdout').read_bytes(), prompt.encode('utf-8'))
+            self.assertEqual(r['cleanup']['status'], 'COMPLETE')
+            # No input still uses DEVNULL and yields immediate EOF.
+            with patch.object(m.tempfile, 'TemporaryFile', side_effect=AssertionError('DEVNULL must not need a temporary file')):
+                r = m.capture(command, p, p / 'empty', 2)
+            self.assertEqual(r['exit_code'], 0); self.assertEqual((p / 'empty.stdout').read_bytes(), b'')
+
+    def incomplete_cleanup(self):
+        finish = m.finish_process
+        def finish_then_simulate(proc):
+            receipt, usage = finish(proc)
+            self.assertEqual(receipt['status'], 'COMPLETE')  # Actually retire every real worker first.
+            receipt.update(status='INCOMPLETE', group_absent=False,
+                           errors=[{'step': 'probe', 'type': 'SyntheticFailure', 'message': 'Synthetic unconfirmed group absence'}])
+            return receipt, usage
+        return patch.object(m, 'finish_process', side_effect=finish_then_simulate)
+
+    def test_successful_child_with_incomplete_cleanup_is_fatal_and_retained(self):
+        with tempfile.TemporaryDirectory() as d, self.incomplete_cleanup():
+            p = Path(d)
+            with self.assertRaises(RuntimeError) as caught:
+                m.capture([sys.executable, '-c', 'print("success")'], p, p / 'cleanup', 2)
+            self.assertEqual(type(caught.exception).__name__, 'CleanupIncomplete')
+            r = caught.exception.capture_result
+            self.assertEqual(r, json.loads((p / 'cleanup.process.json').read_text()))
+            self.assertEqual(r['exit_code'], 0); self.assertEqual(r['cleanup']['status'], 'INCOMPLETE')
+            self.assertEqual(r['execution_error']['type'], 'CleanupIncomplete')
+            self.assertEqual((p / 'cleanup.stdout').read_text(), 'success\n')
+            with self.assertRaises(ProcessLookupError): os.killpg(r['process_group'], 0)
+
+    def test_incomplete_cleanup_records_attempt_and_stops_coordinator(self):
+        with tempfile.TemporaryDirectory() as d, self.incomplete_cleanup():
+            p = Path(d)
+            with self.assertRaises(RuntimeError) as caught:
+                synthetic_run(p, [sys.executable, '-c', f'print({events()!r})'])
+            self.assertEqual(type(caught.exception).__name__, 'CleanupIncomplete')
+            r = json.loads((p / 'runs/Q1-1-A/result.json').read_text())
+            self.assertEqual(r['status'], 'ERROR'); self.assertEqual(r['exit_code'], 0)
+            self.assertEqual(r['cleanup'], caught.exception.capture_result['cleanup'])
+            self.assertEqual(r['usage']['input_tokens'], 100); self.assertFalse(r['usage_complete'])
+            self.assertFalse((p / 'runs/Q1-2-A').exists())
+            analysis = self.quality_trial(dict(accuracy=2, coverage=2, traceability=2, invalidating_confusions=[]), status=r['status'])
+            self.assertFalse(analysis['rows'][1]['valid'])
+            self.assertEqual(analysis['groups']['Q1-A']['n_valid'], 1)
+
+    def test_incomplete_cleanup_stops_index_and_preflight_callers(self):
+        for caller in ('index', 'preflight'):
+            with self.subTest(caller=caller), tempfile.TemporaryDirectory() as d, self.incomplete_cleanup():
+                p = Path(d); corpus = p / 'corpus'; corpus.mkdir()
+                m.save(p / 'source.json', {'files': {}})
+                capture = m.capture; calls = []
+                def local_capture(command, directory, prefix, timeout, env=None, stdin=None):
+                    calls.append(command)
+                    self.assertEqual(len(calls), 1, 'No subsequent operation after unconfirmed cleanup')
+                    if caller == 'index':
+                        # Synthetic bytes only, so the old faulty caller could reach its next operation.
+                        fake_graph = p / 'index/graphify-out/graph.json'
+                        fake_graph.parent.mkdir(parents=True); fake_graph.write_text('{}')
+                    return capture([sys.executable, '-c', 'print("Node: environment_cleanup()")'],
+                                   directory, prefix, timeout, env, stdin)
+                with patch.object(m, 'capture', side_effect=local_capture), \
+                     patch.object(m.subprocess, 'check_output', return_value='0.9.100'), \
+                     patch.object(m, 'capacity', return_value={}):
+                    with self.assertRaises(RuntimeError) as caught:
+                        if caller == 'index':
+                            m.build_index(p, p / 'unused/bin/graphify')
+                        else:
+                            m.graph_preflight(['codex', 'exec'], corpus, p / 'unused/graphify', p / 'unused-graph', p / 'preflight')
+                self.assertEqual(type(caught.exception).__name__, 'CleanupIncomplete')
+                self.assertEqual(len(calls), 1)
+                self.assertFalse((p / 'index-receipt.json').exists())
+                prefix = p / 'graph-costs/build' if caller == 'index' else p / 'preflight'
+                self.assertEqual(json.loads(prefix.with_suffix('.process.json').read_text()), caught.exception.capture_result)
+
     def test_interrupt_during_finalization_is_deferred_not_suppressed(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d); finish = m.finish_process
@@ -298,12 +429,13 @@ time.sleep(30)
         for original in (KeyboardInterrupt('operator'), RuntimeError('poll failed')):
             with self.subTest(exception=type(original).__name__), tempfile.TemporaryDirectory() as d:
                 p = Path(d); proc = Mock(pid=123, returncode=None, stdin=None)
-                with patch.object(m.subprocess, 'Popen', return_value=proc), \
+                with patch.object(m.subprocess, 'Popen', return_value=proc) as spawn, \
                      patch.object(m.os, 'waitid', side_effect=original), \
                      patch.object(m.os, 'killpg', side_effect=PermissionError('synthetic denied')), \
                      patch.object(m.os, 'wait4', side_effect=ChildProcessError('synthetic unavailable')):
                     with self.assertRaises(type(original)) as caught:
-                        m.capture(['synthetic'], p, p / 'failure', 1)
+                        m.capture(['synthetic'], p, p / 'failure', 1, stdin='Synthetic prompt')
+                self.assertTrue(spawn.call_args.kwargs['stdin'].closed)
                 self.assertIs(caught.exception, original)
                 r = json.loads((p / 'failure.process.json').read_text())
                 self.assertEqual(r, original.capture_result)
@@ -518,6 +650,8 @@ time.sleep(30)
 
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == '--stdin-timeout-wrapper':
+        sys.exit(stdin_timeout_wrapper(Path(sys.argv[2])))
     if len(sys.argv) > 1 and sys.argv[1] == '--interrupt-wrapper':
         sys.exit(interrupt_wrapper(Path(sys.argv[2]), bool(int(sys.argv[3]))))
     unittest.main()

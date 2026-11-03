@@ -231,6 +231,43 @@ Graphify ni cambios en AGENTS; C corregido con modelo sigue NOT_EXECUTED.**
 Una prueba local del lanzador no es una medición con modelo. Asistencia de Codex;
 revisión humana pendiente.
 
+## Plazo de stdin y limpieza fatal — 3 de noviembre de 2026
+
+Se corrigen en la misma PR las dos observaciones sobre
+`2123f515ecd9affe97ed3cf3b6f0fe0fb9b2ad54`. `capture()` codifica el prompt como
+bytes UTF-8 exactos en un archivo temporal gestionado por contexto, lo vacía al
+archivo y rebobina antes de crear el hijo, y entrega ese descriptor como stdin.
+Sin entrada mantiene DEVNULL. El padre no espera a que el hijo lea una tubería:
+un hijo que no lee ya no bloquea el sondeo del plazo. Se conservan Unicode, bytes
+y EOF; el archivo se cierra al terminar o ante excepción. La preparación precede
+al plazo de ejecución; el tiempo transcurrido informado sigue incluyéndola.
+Al timeout se pueden sumar 0,1 segundos de sondeo y hasta 2 segundos de espera
+de limpieza, aparte de retrasos de planificación del sistema e I/O.
+
+La limpieza no demostrada es fatal para **todos los callers de capture**, incluso
+con salida cero del hijo: guarda el recibo veraz y lanza `CleanupIncomplete` con
+`capture_result`. Una interrupción/excepción anterior mantiene prioridad y los
+diagnósticos de limpieza quedan separados. El coordinador registra el intento
+fallido no elegible antes de propagar; índice y preflight también se detienen.
+Se mantiene el envío de señales antes de recoger al hijo directo, para evitar
+señalar un identificador de grupo reutilizado.
+
+Pasan 37 pruebas focalizadas sintéticas, incluyendo prompt de 2 MiB no leído con
+timeout breve y sin intervención, entrega Unicode/EOF exacta, cierre del descriptor,
+recibos de limpieza incompleta y parada de callers. Las simulaciones retiran
+realmente el proceso propio antes de alterar el recibo; no dejan workers vivos
+intencionadamente. Se mantienen las regresiones de interrupción, streams
+malformados, carrera de salida y calidad desfavorable. Pasan doctor, suite
+compartida, inventario/sus 10 pruebas, 10 enlaces locales afectados y diff checks.
+Los nuevos registros y cualquier análisis derivado quedan separados del piloto
+inmutable en `implementacion/evidence/raw/context-stdin-cleanup-20261103/`.
+
+No hubo sesiones de modelo, instalación/índices de Graphify ni Kubernetes.
+Estas correcciones no prueban rendimiento de navegación: **evidencia insuficiente
+para cambiar navegación**, sin cambios en AGENTS ni adopción de Graphify; C
+corregido sigue **NOT_EXECUTED**. Se conservan los límites anteriores de alcance
+de limpieza, almacenamiento y SIGKILL. Revisión humana pendiente.
+
 ## Reproducción, conservación y revisión
 
 La comprobación local posterior con los mismos permisos devolvió 127: el

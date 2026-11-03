@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Opt-in, sequential navigation pilot. Ordinary tests never call Codex/Graphify."""
 import argparse
+from contextlib import nullcontext
 import hashlib
 import json
 import os
@@ -9,11 +10,16 @@ import shutil
 import signal
 import statistics
 import subprocess
+import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[3]
 PROTOCOL = ROOT / 'implementacion/tests/fixtures/context-retrieval/protocol.json'
 TOKEN_FIELDS = ('input_tokens', 'cached_input_tokens', 'output_tokens', 'reasoning_output_tokens')
+
+
+class CleanupIncomplete(RuntimeError):
+    """Owned cleanup was not established; no subsequent operation is safe."""
 
 
 def digest(data):
@@ -118,26 +124,30 @@ def finish_process(proc):
 
 
 def capture(command, directory, prefix, timeout, env=None, stdin=None):
-    """Always finalize a successfully created child, retaining the first error."""
+    """Finalize every created child; incomplete cleanup is fatal to all callers.
+
+    Prepare exact UTF-8 stdin before starting the execution deadline. Polling may
+    overshoot by .1s; cleanup waits at most 2s, apart from OS scheduling/I/O.
+    """
     started = time.monotonic()
     timed_out, interrupted = False, False
     proc, usage, failure, result = None, None, None, None
     cleanup = {'status': 'INCOMPLETE', 'direct_child_reaped': False, 'group_absent': False, 'errors': []}
-    with prefix.with_suffix('.stdout').open('wb') as stdout, prefix.with_suffix('.stderr').open('wb') as stderr:
+    with (prefix.with_suffix('.stdout').open('wb') as stdout,
+          prefix.with_suffix('.stderr').open('wb') as stderr,
+          tempfile.TemporaryFile(mode='w+b') if stdin is not None else nullcontext(subprocess.DEVNULL) as input_file):
+        if stdin is not None:
+            input_file.write(stdin.encode('utf-8'))
+            input_file.seek(0)  # Flush and rewind before the child inherits the descriptor.
+        deadline = time.monotonic() + timeout
         try:
-            proc = subprocess.Popen(command, cwd=directory, env=env, stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
+            proc = subprocess.Popen(command, cwd=directory, env=env, stdin=input_file,
                                     stdout=stdout, stderr=stderr, start_new_session=True)
-            if stdin is not None:
-                try:
-                    proc.stdin.write(stdin.encode())
-                    proc.stdin.close()
-                except BrokenPipeError:
-                    pass
             while True:
                 # Observe exit without releasing the PID before group termination.
                 if os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT):
                     break
-                if time.monotonic() - started >= timeout:
+                if time.monotonic() >= deadline:
                     timed_out = True
                     break
                 time.sleep(.1)
@@ -167,19 +177,10 @@ def capture(command, directory, prefix, timeout, env=None, stdin=None):
                         cleanup, usage = finish_process(proc)
                     except BaseException as exc:
                         cleanup['errors'].append({'step': 'finalize', 'type': type(exc).__name__, 'message': str(exc)})
-                    if proc.stdin is not None:
-                        try:
-                            # Closing the raw pipe cannot flush buffered input and
-                            # block again when termination itself failed.
-                            getattr(proc.stdin, 'raw', proc.stdin).close()
-                            proc.stdin.close()
-                        except BrokenPipeError:
-                            pass
-                        except BaseException as exc:
-                            cleanup['status'] = 'INCOMPLETE'
-                            cleanup['errors'].append({'step': 'stdin-close', 'type': type(exc).__name__, 'message': str(exc)})
                     if interrupted and failure is None:
                         failure = KeyboardInterrupt()
+                    if cleanup['status'] != 'COMPLETE' and failure is None:
+                        failure = CleanupIncomplete('Owned process group cleanup incomplete; stop further operations')
                     result = {'command': command, 'exit_code': proc.returncode, 'timeout': timed_out,
                               'interrupted': interrupted,
                               'execution_error': None if failure is None else {'type': type(failure).__name__, 'message': str(failure)},
