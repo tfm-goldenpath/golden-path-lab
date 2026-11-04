@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compatibility import; canonical shared implementation. Definitions only.
-source "${BASH_SOURCE[0]%/*}/../../../src/lib/context.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../../../src/lib/context.sh"
 
 load_state() {
   [[ -n "${GP_STATE_DIR:-}" ]] || fail 'GP_STATE_DIR is required to resume or clean up.'

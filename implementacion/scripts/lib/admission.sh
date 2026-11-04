@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 # Compatibility import; canonical shared implementation. Definitions only.
-source "${BASH_SOURCE[0]%/*}/../../../src/lib/admission.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../../../src/lib/admission.sh"

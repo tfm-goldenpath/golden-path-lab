@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compatibility import; canonical shared implementation. Definitions only.
-source "${BASH_SOURCE[0]%/*}/../../../src/lib/workload.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../../../src/lib/workload.sh"
 
 workload_reference() {
   record 'Reference path R: deploy without requiring integrity evidence'

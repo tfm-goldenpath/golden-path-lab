@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compatibility import; canonical shared implementation. Definitions only.
-source "${BASH_SOURCE[0]%/*}/../../../src/lib/delivery.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../../../src/lib/delivery.sh"
 
 delivery_lab_tests() {
   node --test tests/unit/*.test.mjs > "$state_dir/laboratory-unit-tests.log" 2>&1

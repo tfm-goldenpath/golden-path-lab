@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 # Compatibility import; canonical shared implementation. Definitions only.
-source "${BASH_SOURCE[0]%/*}/../../../src/lib/local-delivery.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../../../src/lib/local-delivery.sh"

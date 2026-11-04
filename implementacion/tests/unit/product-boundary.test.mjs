@@ -75,3 +75,8 @@ node "$engine_root/capture-build-inputs.mjs" services/quotes-node base ${'a'.rep
  writeFileSync(runtime,original);chmodSync(runtime,0o755);
  assert.match(capture().stderr,/differs from committed source/);
 });
+
+test('bare entry filenames resolve from their own directories',()=>{
+ for(const [cwd,name] of [[join(repository,'bin'),'deliver'],[join(implementation,'scripts'),'deliver.sh']])
+  assert.match(pass(run('bash',[name,'--help'],cwd)),/cleanup/);
+});
