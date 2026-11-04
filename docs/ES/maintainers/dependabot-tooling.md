@@ -83,3 +83,20 @@ y ajustar su prueba/inventario; conservar este registro y las evidencias. No
 suprimir alertas ni cambiar ajustes de seguridad. No se crearon credenciales,
 paquetes, imágenes ni servicios persistentes. Asistencia Codex; revisión humana
 pendiente. P00/P01, admisión y límites experimentales permanecen intactos.
+
+## Primera ejecución observada — consulta del 4 de noviembre de 2026
+
+Metadatos y logs consultados en solo lectura confirman que [Dependabot 41696607430, job 126128707139](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41696607430/job/126128707139)
+terminó correctamente el 3 de noviembre, con configuración/fuente
+`3e5a41c0d94ab8e68b152cc47991812b61e066f0` (PR #71 fusionada). Creó la
+[PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72), aún abierta en
+`b5d07d3011ac04854f3f1a5f5efedaf4011bce07`, proponiendo `@devcontainers/cli`
+**0.89.0 → 0.90.0**. Los logs indican que no hacía falta actualizar `ajv`
+**8.20.0**, `ajv-formats` **3.0.1** ni `ajv-formats-draft2019` **1.6.1**.
+[CI de main 41696597287](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41696597287)
+también terminó correctamente sobre esa revisión; no prueba el candidato de #72.
+Esto cierra la observación del servicio pendiente arriba, no la validación de
+compatibilidad ni aceptación de la dependencia propuesta. Requieren comprobaciones
+y revisión humana separadas, conservando las guardas existentes. #23 sigue abierta
+en su head ya registrado; ninguna PR se modificó, aprobó, cerró ni comentó.
+No se lanzó otro job ni se cambió ninguna dependencia para esta observación.

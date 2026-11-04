@@ -4,6 +4,15 @@ For product orientation, start with the [reading guide](docs/EN/getting-started.
 
 Contributions should keep the laboratory reproducible and its conclusions traceable. Start with the [README](README.md), [architecture](implementacion/docs/EN/architecture.md), [delivery contracts](implementacion/docs/EN/delivery-contracts.md) and the relevant scenario record. English is primary for code, tests and contributions; update affected Spanish commands, expectations and explanations alongside the English guide.
 
+## Propose a use case
+
+For a public, non-sensitive capability or operator improvement, use the
+[use-case form](https://github.com/tfm-goldenpath/golden-path-lab/issues/new?template=use-case.yml)
+and [intake/triage guide](docs/EN/use-case-intake.md) ([español](docs/ES/use-case-intake.md)).
+Answers may be in English or Spanish. Unknown environment details are acceptable;
+include a concrete problem and observable outcome. Submission is a proposal, not
+support, implementation authorization or verified control behavior.
+
 ## A small, reviewable change
 
 1. Identify the requirement, affected paths and expected acceptance or rejection before implementing it. The contributor owns the test oracle; an assistant may propose it but does not establish its correctness.

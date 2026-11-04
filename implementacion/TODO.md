@@ -45,9 +45,25 @@ owner and are not P00/P01 blockers. Historical entries below retain their dates.
 P01 can be developed locally or in Codespaces without Kubernetes. Its validation
 is documentation/inventory validation, not a new laboratory run. Later runtime
 refactors require Linux and representative registry/trust/admission integration.
-`docs/use-case-intake` may proceed independently once P01 is accepted. No detailed
-product roadmap was found in this tracked checkout; this section implements only
-the owner's supplied scope and preserves the newer P00 records.
+Current scope clarification — 4 November 2026: the owner's explicit request
+permits the additive `docs/use-case-intake` increment independently of pending
+P00/P01 human acceptance. Physical restructuring, evidence custody and broader
+acceptance remain separate gates; earlier dated records retain their conclusions.
+
+## Structured use-case intake (`docs/use-case-intake`)
+
+- [x] Start from fetched main `3e5a41c0d94ab8e68b152cc47991812b61e066f0` (PR #71) in a clean worktree, preserving unrelated work.
+- [x] Add one public EN-labelled form accepting EN/ES answers, five required inputs, optional implementation/references and non-sensitive guidance; no routing defaults or automation. [EN guide](../docs/EN/use-case-intake.md) / [ES](../docs/ES/use-case-intake.md) explain observable outcomes and maintainer triage.
+- [x] Distinguish proposed, implemented and revision/boundary-verified capabilities; Java/template and vulnerability reassessment examples are illustrative and unimplemented. Preserve all twenty Fxx/Lxx expectations.
+- [x] Validate pinned YAML parsing and 5 form contract tests; affected policy target passes (129 Python tests, 62 Conftest decisions, 16 Kyverno checks and existing workflow/manifest checks). Exact 542-path inventory, 10 inventory regressions and 402 relative links/anchors pass. Assistant walkthrough of both unimplemented examples finds all five answers actionable with explicit unknowns; this is not a human usability study. Initial policy attempt lacked installed AJV in the new worktree; reuse of existing pinned modules resolved it without dependency changes.
+- [ ] Human review and acceptance of this increment; assistant walkthrough is not a human usability study. PR records exact checks and final-source CI.
+- [ ] After merge, open the form from New issue, inspect fields/required inputs/guide links and leave without submitting. Local parsing does not establish GitHub rendering.
+
+Physical separation → interface consolidation → independent consumer template →
+Java trial remains the dependency sequence. Admission-selection implementation
+stays blocked by existing capability and validation requirements. No new scenario,
+consumer template, dependency/policy change, evidence-custody decision or adoption
+of Graphify, Serena or Repomix belongs to this increment.
 
 
 ## P03 — legitimate delivery core (`refactor/delivery-core`)
@@ -81,7 +97,7 @@ Current bounded implementation and evidence: [dependency refresh validation](../
 - [x] Implement `chore/dependabot-tooling` from merged PR #70 (`9e68811`): one npm schedule at `/implementacion/tooling`, Monday 08:00 Europe/Madrid, three open version PRs, `increase`; only AJV/plugins minor/patch version updates grouped. No dependency changes, second updater, automerge, fixture inclusion or alert suppression. Do not use `npm audit fix --force` or floating versions. See [EN](../docs/EN/maintainers/dependabot-tooling.md) / [ES](../docs/ES/maintainers/dependabot-tooling.md).
 - [x] Validate the configuration locally: 5 updater contract tests (including negative mutations), 13 SBOM and 16 Lane A tests, doctor/shared suite, inventory and links. Final-head ordinary CI results are recorded in the implementation PR, separately from service execution.
 - [ ] Human review of this increment; configuration correctness does not prove dependency compatibility.
-- [ ] After merge, observe the first Dependabot service job/configuration revision and record outcome/PRs separately. Do not trigger upgrades to manufacture evidence; existing security updates and alerts remain separate.
+- [x] First actual Dependabot service observation, inspected 4 November: [run 41696607430 / job 126128707139](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41696607430/job/126128707139) succeeded on `3e5a41c`; logs proposed CLI 0.89.0 → 0.90.0 in open [PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72), with no update needed for AJV/formats. [Main CI 41696597287](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41696597287) also succeeded on that baseline. This establishes service operation, not #72 compatibility or acceptance; those remain separate review work. No new job dispatched; existing security updates/alerts remain separate.
 - [ ] Owner review of superseded Dependabot #23: its AJV 8.20.0 manifest equals main, but its lock retains fast-uri 3.1.8 versus main 3.1.9. Recommend closure as superseded; no closure, merge or comment performed here.
 - [x] Retain separate successful-query audit reports: initial exit 1 with AJV and fast-uri findings, final exit 0 with no tooling findings reported. Preserve real scan warnings, source/digest/DB/package identities and all logs; see the canonical maintenance record.
 - [ ] Human review of this dependency PR and outstanding automation updates; no P00 custody or acceptance gate is closed.
@@ -180,7 +196,7 @@ by this pilot. Names newly proposed below remain proposals until selected.
 | Pair | Scope and acceptance boundary |
 | --- | --- |
 | Immediate: `perf/codex-context-retrieval` + `chore/github-actions-refresh` | Pilot merged in PR #69 without navigation adoption. Actions refresh implemented separately with full SHAs, explicit cache policy and artifact/Pages checks; actual publication and human review remain separate gates. |
-| Later light pair: `chore/dependabot-tooling` + proposed `docs/use-case-intake` | Updater configuration implemented; first service observation and human review pending. Targets only `/implementacion/tooling`, conservative AJV/formats grouping, bounded PRs, review/checks; exclude deliberately vulnerable fixtures, no automerge/second updater. Intake may proceed independently **once P01 is human-accepted**, as documented in repository-map and P01 validation; that acceptance remains pending. No detailed approved intake acceptance oracle was found: establish non-sensitive input fields, owner/triage expectations and testable acceptance before implementation; do not invent prior approval. |
+| Later light pair: `chore/dependabot-tooling` + `docs/use-case-intake` | Updater configuration merged in PR #71; first actual service observation is recorded above, with dependency compatibility and human review separate. The 4 November owner request authorizes bounded intake documentation/form work while P00/P01 human acceptance remains pending. Non-sensitive inputs, triage outcomes and observable criteria are defined in the linked intake guide; no physical restructuring or broader capability is authorized. |
 | Conditional future pair: physical product/lab separation + AI assistance design for blocks | Branch names not fixed; pairing proposed only. Separation retains custody/review gates and proves product operation without laboratory files. AI assistance must remain outside deterministic security/acceptance decisions. |
 | Conditional future pair: consumable template + control-catalogue documentation | Branch names not fixed; pairing proposed only after interfaces stabilize. A real independent consumer execution is required; no fictional supported template beforehand. |
 

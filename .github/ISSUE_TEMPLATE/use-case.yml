@@ -1,0 +1,76 @@
+name: Use case or feature request
+description: Propose a service, integration, control, laboratory trial or documentation improvement.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for a **public, non-sensitive feature/use-case request**. Answers may be in English or Spanish (puedes responder en español).
+        This is not a confidential vulnerability-reporting channel. Do not include credentials, tokens, personal/customer information, private keys or private evidence, full logs or evidence archives.
+        This reminder is guidance, not an automated secret-detection guarantee.
+        Read the [English guide](https://github.com/tfm-goldenpath/golden-path-lab/blob/main/docs/EN/use-case-intake.md) or [guía en español](https://github.com/tfm-goldenpath/golden-path-lab/blob/main/docs/ES/use-case-intake.md).
+        Unknown details are welcome. Submitting a request does not establish support, authorize implementation or prove a control works.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Request category
+      description: Choose the closest fit; no laboratory knowledge is needed.
+      options:
+        - New service or language
+        - Delivery integration
+        - New control
+        - Laboratory coverage
+        - Documentation or operator experience
+        - Unsure or general request
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and value
+      description: Who encounters this problem, what happens today and what outcome would help?
+      placeholder: As a service developer, I currently have to... It would help if...
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Proposed use case
+      description: Describe the intended service or workflow with one concrete example. Implementation details are optional below.
+      placeholder: When preparing a service for delivery, I want to... For example...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and constraints
+      description: Include language/build tool, local or hosted execution, Kubernetes relevance, resource/network limits and important compatibility needs. Unknown is a valid answer.
+      placeholder: 'Language/build: unknown; execution: local; Kubernetes: undecided; CPU/RAM/disk or network limits: unknown; compatibility: ...'
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Observable acceptance criteria
+      description: What could someone observe to show the improvement? For a control, separate permitted input, prohibited input and inability to evaluate (for example, an unavailable registry).
+      placeholder: |
+        Given ... when ... then the observable result should be ...
+        If this is a control: permitted input ...; prohibited input ...; evaluation unavailable ...
+        Open questions: ...
+    validations:
+      required: true
+  - type: textarea
+    id: implementation-notes
+    attributes:
+      label: Implementation ideas (optional)
+      description: Alternatives or affected components, if known. No architecture design, policy ID or regulatory mapping is required.
+      placeholder: A possible approach or tradeoff to discuss is...
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: References (optional)
+      description: Link a source revision, existing issue/scenario, sanitized run or public documentation. Share only non-sensitive references; omit private evidence.
+      placeholder: Public URL and what it shows; source revision and execution boundary, if known.
+    validations:
+      required: false
