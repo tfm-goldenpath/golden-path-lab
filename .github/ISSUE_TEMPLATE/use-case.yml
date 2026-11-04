@@ -1,5 +1,5 @@
 name: Use case or feature request
-description: Propose a service, integration, control, laboratory trial or documentation improvement.
+description: Propose a service, integration, security or quality check, test scenario or documentation improvement.
 body:
   - type: markdown
     attributes:
@@ -16,8 +16,8 @@ body:
       options:
         - New service or language
         - Delivery integration
-        - New control
-        - Laboratory coverage
+        - Security or quality check
+        - Test scenario
         - Documentation or operator experience
         - Unsure or general request
     validations:

@@ -3,8 +3,8 @@
 [Índice](README.md) · [English](../EN/use-case-intake.md)
 
 **[Abrir el formulario de casos de uso](https://github.com/tfm-goldenpath/golden-path-lab/issues/new?template=use-case.yml)**
-para proponer un servicio, integración de entrega, control de seguridad, ensayo
-del laboratorio o mejora de documentación. Puedes responder en español o inglés sin conocer el repositorio. Busca primero en
+para proponer un servicio, integración de entrega, control de seguridad o calidad,
+escenario de prueba o mejora de documentación. Puedes responder en español o inglés sin conocer el repositorio. Busca primero en
 las [solicitudes existentes](https://github.com/tfm-goldenpath/golden-path-lab/issues);
 quizá ya exista una similar.
 
@@ -17,7 +17,8 @@ Los tres primeros campos son obligatorios; los dos últimos son opcionales.
 Las etiquetas están en inglés:
 
 - **Request category:** elige la categoría más cercana o “Unsure or general request”
-  si dudas. Cobertura del laboratorio significa añadir una prueba controlada del comportamiento.
+  si dudas. “Security or quality check” corresponde a un control de seguridad o
+  calidad de la entrega; “Test scenario”, a una prueba controlada del comportamiento.
 - **What would you like to do, and what gets in your way?** Explica qué necesitas,
   qué dificultad encuentras hoy y un ejemplo breve.
 - **What would success look like?** Describe algo que otra persona pueda comprobar,
@@ -27,7 +28,7 @@ Las etiquetas están en inglés:
 - **Examples, links or implementation ideas:** añade referencias públicas útiles
   o un posible enfoque, si lo tienes. No hace falta un diseño técnico.
 
-Para controles de seguridad, describe entradas permitidas, rechazadas y una
+Para controles de seguridad o calidad, describe entradas permitidas, rechazadas y una
 comprobación no disponible; esta última es un error, no una detección satisfactoria.
 
 ## Dos ejemplos

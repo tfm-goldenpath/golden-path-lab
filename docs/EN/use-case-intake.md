@@ -3,7 +3,7 @@
 [Guide index](README.md) · [Español](../ES/use-case-intake.md)
 
 **[Open the use-case form](https://github.com/tfm-goldenpath/golden-path-lab/issues/new?template=use-case.yml)**
-to suggest a service, delivery integration, security check, laboratory trial or
+to suggest a service, delivery integration, security or quality check, test scenario or
 documentation improvement. You do not need to understand the repository's internals.
 English or Spanish answers are welcome. Search [existing requests](https://github.com/tfm-goldenpath/golden-path-lab/issues)
 first; a related issue may already describe your need.
@@ -16,7 +16,8 @@ confidential vulnerability reports do not belong in this form.
 The first three fields are required; the last two are optional.
 
 - **Request category:** choose the closest option, including “Unsure or general
-  request” if needed. Laboratory coverage means adding a controlled test of behavior.
+  request” if needed. “Security or quality check” covers a delivery check;
+  “Test scenario” means adding a controlled test of behavior.
 - **What would you like to do, and what gets in your way?** Explain your need,
   the current difficulty and a short example.
 - **What would success look like?** Describe something another person could check,
@@ -26,7 +27,7 @@ The first three fields are required; the last two are optional.
 - **Examples, links or implementation ideas:** add useful public references or a
   possible approach, if you have one. A technical design is unnecessary.
 
-For security-control requests, describe allowed input, rejected input and an
+For security or quality checks, describe allowed input, rejected input and an
 unavailable check; an unavailable check is an error, not successful detection.
 
 ## Two examples
