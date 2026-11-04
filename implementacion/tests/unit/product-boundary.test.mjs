@@ -80,3 +80,10 @@ test('bare entry filenames resolve from their own directories',()=>{
  for(const [cwd,name] of [[join(repository,'bin'),'deliver'],[join(implementation,'scripts'),'deliver.sh']])
   assert.match(pass(run('bash',[name,'--help'],cwd)),/cleanup/);
 });
+
+test('bare compatibility imports need no external path-resolution command',()=>{
+ const script=`set -euo pipefail
+for tool in dirname pwd realpath docker kind kubectl curl node python3 jq mktemp git; do eval "$tool() { echo forbidden-$tool; return 99; }"; done
+for module in context admission lab delivery attestations workload local-delivery; do source "$module.sh"; done`;
+ assert.equal(pass(run('bash',['-c',script],join(implementation,'scripts/lib'))),'');
+});
