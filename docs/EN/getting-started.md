@@ -75,4 +75,4 @@ private security-reporting contact is declared; an owner must choose that route.
 This branch does not invent an address or change licenses/settings. Contribution
 and human review follow [CONTRIBUTING](../../CONTRIBUTING.md).
 
-For new capabilities and operator improvements, use the [use-case intake guide](use-case-intake.md) and its public form; English or Spanish answers are welcome.
+Have an improvement in mind? [Propose a use case](use-case-intake.md).

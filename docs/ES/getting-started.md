@@ -70,4 +70,4 @@ sin secretos. No hay contacto privado de seguridad verificado declarado; queda
 pendiente su elección. Esta rama no inventa direcciones ni cambia licencias o
 ajustes. La contribución y revisión humana siguen [CONTRIBUTING](../../CONTRIBUTING.md).
 
-Para nuevas capacidades y mejoras de operación, usa la [guía de casos de uso](use-case-intake.md) y su formulario público; admite respuestas en español o inglés.
+¿Tienes una mejora en mente? [Propón un caso de uso](use-case-intake.md).

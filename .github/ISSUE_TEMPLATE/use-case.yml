@@ -4,16 +4,15 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this form for a **public, non-sensitive feature/use-case request**. Answers may be in English or Spanish (puedes responder en español).
-        This is not a confidential vulnerability-reporting channel. Do not include credentials, tokens, personal/customer information, private keys or private evidence, full logs or evidence archives.
-        This reminder is guidance, not an automated secret-detection guarantee.
-        Read the [English guide](https://github.com/tfm-goldenpath/golden-path-lab/blob/main/docs/EN/use-case-intake.md) or [guía en español](https://github.com/tfm-goldenpath/golden-path-lab/blob/main/docs/ES/use-case-intake.md).
-        Unknown details are welcome. Submitting a request does not establish support, authorize implementation or prove a control works.
+        English or Spanish answers are welcome (puedes responder en español).
+        Requests are public: omit secrets, personal/customer data and private evidence.
+        Confidential vulnerability reports do not belong in this form.
+        See the [English guide](https://github.com/tfm-goldenpath/golden-path-lab/blob/main/docs/EN/use-case-intake.md) or [guía en español](https://github.com/tfm-goldenpath/golden-path-lab/blob/main/docs/ES/use-case-intake.md).
   - type: dropdown
     id: category
     attributes:
       label: Request category
-      description: Choose the closest fit; no laboratory knowledge is needed.
+      description: Choose the closest fit, or select the unsure option.
       options:
         - New service or language
         - Delivery integration
@@ -26,51 +25,32 @@ body:
   - type: textarea
     id: problem
     attributes:
-      label: Problem and value
-      description: Who encounters this problem, what happens today and what outcome would help?
-      placeholder: As a service developer, I currently have to... It would help if...
-    validations:
-      required: true
-  - type: textarea
-    id: use-case
-    attributes:
-      label: Proposed use case
-      description: Describe the intended service or workflow with one concrete example. Implementation details are optional below.
-      placeholder: When preparing a service for delivery, I want to... For example...
-    validations:
-      required: true
-  - type: textarea
-    id: environment
-    attributes:
-      label: Environment and constraints
-      description: Include language/build tool, local or hosted execution, Kubernetes relevance, resource/network limits and important compatibility needs. Unknown is a valid answer.
-      placeholder: 'Language/build: unknown; execution: local; Kubernetes: undecided; CPU/RAM/disk or network limits: unknown; compatibility: ...'
+      label: What would you like to do, and what gets in your way?
+      description: Describe what you need, the current difficulty and a short example.
+      placeholder: I want to try delivery with a Java service, but I cannot find a starter example for it.
     validations:
       required: true
   - type: textarea
     id: acceptance-criteria
     attributes:
-      label: Observable acceptance criteria
-      description: What could someone observe to show the improvement? For a control, separate permitted input, prohibited input and inability to evaluate (for example, an unavailable registry).
-      placeholder: |
-        Given ... when ... then the observable result should be ...
-        If this is a control: permitted input ...; prohibited input ...; evaluation unavailable ...
-        Open questions: ...
+      label: What would success look like?
+      description: Describe a result someone could check.
+      placeholder: I could follow a short guide to build the example service and confirm which image was deployed.
     validations:
       required: true
   - type: textarea
-    id: implementation-notes
+    id: environment
     attributes:
-      label: Implementation ideas (optional)
-      description: Alternatives or affected components, if known. No architecture design, policy ID or regulatory mapping is required.
-      placeholder: A possible approach or tradeoff to discuss is...
+      label: Where would you use this?
+      description: Include relevant tools, local/cloud setup and important limits. Unknown details are fine.
+      placeholder: Java with Maven on a local Linux machine; cloud setup is undecided.
     validations:
       required: false
   - type: textarea
     id: references
     attributes:
-      label: References (optional)
-      description: Link a source revision, existing issue/scenario, sanitized run or public documentation. Share only non-sensitive references; omit private evidence.
-      placeholder: Public URL and what it shows; source revision and execution boundary, if known.
+      label: Examples, links or implementation ideas
+      description: Add useful public links, a short example or a possible approach.
+      placeholder: A public example project shows the workflow I would like to try.
     validations:
       required: false

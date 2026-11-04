@@ -49,12 +49,13 @@ class UseCaseFormTests(unittest.TestCase):
                 self.assertTrue(attributes['placeholder'].strip())
         required = {key for key, field in fields.items()
                     if field['validations']['required']}
-        self.assertEqual(required, {'category', 'problem', 'use-case',
-                                    'environment', 'acceptance-criteria'})
+        self.assertEqual(set(fields), {'category', 'problem', 'acceptance-criteria',
+                                       'environment', 'references'})
+        self.assertEqual(required, {'category', 'problem', 'acceptance-criteria'})
         self.assertEqual(fields['category']['type'], 'dropdown')
-        for key in required - {'category'}:
+        for key in fields.keys() - {'category'}:
             self.assertEqual(fields[key]['type'], 'textarea')
-        for key in ('implementation-notes', 'references'):
+        for key in ('environment', 'references'):
             self.assertIn(key, fields)
             self.assertFalse(fields[key]['validations']['required'])
 
@@ -78,6 +79,20 @@ class UseCaseFormTests(unittest.TestCase):
                 acceptance['validations']['required'] = False
             with self.subTest(remove=remove), self.assertRaises(AssertionError):
                 self.assert_intake_contract(form)
+
+    def test_redundant_fields_and_required_environment_rejected(self):
+        for identifier in ('use-case', 'implementation-notes'):
+            form = copy.deepcopy(self.form)
+            redundant = copy.deepcopy(form['body'][-1])
+            redundant['id'] = identifier
+            form['body'].append(redundant)
+            with self.subTest(identifier=identifier), self.assertRaises(AssertionError):
+                self.assert_intake_contract(form)
+        form = copy.deepcopy(self.form)
+        environment = next(f for f in form['body'] if f.get('id') == 'environment')
+        environment['validations']['required'] = True
+        with self.assertRaises(AssertionError):
+            self.assert_intake_contract(form)
 
     def test_routing_defaults_rejected(self):
         for key in ('assignees', 'labels', 'projects', 'type'):

@@ -6,12 +6,8 @@ Contributions should keep the laboratory reproducible and its conclusions tracea
 
 ## Propose a use case
 
-For a public, non-sensitive capability or operator improvement, use the
-[use-case form](https://github.com/tfm-goldenpath/golden-path-lab/issues/new?template=use-case.yml)
-and [intake/triage guide](docs/EN/use-case-intake.md) ([español](docs/ES/use-case-intake.md)).
-Answers may be in English or Spanish. Unknown environment details are acceptable;
-include a concrete problem and observable outcome. Submission is a proposal, not
-support, implementation authorization or verified control behavior.
+Have a use case or improvement in mind? Follow the [short request guide](docs/EN/use-case-intake.md)
+([español](docs/ES/use-case-intake.md)).
 
 ## A small, reviewable change
 
