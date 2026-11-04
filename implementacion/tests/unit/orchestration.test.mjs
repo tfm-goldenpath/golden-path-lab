@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { appendFileSync, cpSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -112,12 +112,15 @@ done
 `;
 
 function fixture(t, { stubs = true } = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'gp-orchestration-'));
+  const repositoryRoot = mkdtempSync(join(tmpdir(), 'gp-orchestration-'));
+  const root = join(repositoryRoot,'implementacion');
+  mkdirSync(root);
+  cpSync(join(sourceRoot,'../src'),join(repositoryRoot,'src'),{recursive:true});
   t.after(() => {
     // Delete only the exact temporary directory created by this test.
-    assert.equal(dirname(resolve(root)), resolve(tmpdir()));
-    assert.ok(basename(root).startsWith('gp-orchestration-'));
-    rmSync(root, { recursive: true, force: true });
+    assert.equal(dirname(resolve(repositoryRoot)), resolve(tmpdir()));
+    assert.ok(basename(repositoryRoot).startsWith('gp-orchestration-'));
+    rmSync(repositoryRoot, { recursive: true, force: true });
   });
   for (const relative of [
     'scripts/demo.sh', 'versions.env',
@@ -261,7 +264,7 @@ attestations_authorize_results
       }
       const content = commands[commands.indexOf(command) + 1];
       assert.equal(content[0], 'node');
-      assert.equal(content[1], 'scripts/verified-bundle-statement.mjs');
+      assert.ok(content[1].endsWith('/src/verified-bundle-statement.mjs'));
       assert.equal(content[2], command[command.indexOf('--bundle') + 1]);
       assert.equal(content[3], digest);
       assert.equal(content[4], command[command.indexOf('--type') + 1]);
@@ -272,15 +275,15 @@ attestations_authorize_results
       assert.equal(commands[0].slice(0, 4).join(' '), 'cosign trusted-root create --with-default-services');
       // Fresh native-provenance verification now belongs to the read-only gate.
       assert.equal(provenance, undefined);
-      assert.deepEqual(commands.filter(c => c[1] === 'scripts/ci-verification-gate.mjs').map(c => c.slice(-2)),
+      assert.deepEqual(commands.filter(c => c[1] .endsWith('/src/ci-verification-gate.mjs')).map(c => c.slice(-2)),
         [['CI-delivery','before-results'], ['CI-authorization','before-results'], ['CI-authorized','authorized']]);
     } else {
       assert.equal(provenance, undefined);
       assert.deepEqual(commands[0], ['cosign', 'signing-config', 'create']);
       assert.deepEqual(commands[1], ['cosign', 'trusted-root', 'create']);
     }
-    assert.ok(commands.some(command => command[1] === 'scripts/check-bundle-profile.mjs' && command.at(-1) === 'authorized'));
-    assert.ok(commands.some(command => command[1] === 'scripts/download-bundle-inventory.mjs'
+    assert.ok(commands.some(command => command[1] .endsWith('/src/check-bundle-profile.mjs') && command.at(-1) === 'authorized'));
+    assert.ok(commands.some(command => command[1] .endsWith('/src/download-bundle-inventory.mjs')
       && command[2] === mode && command[3] === image && command.at(-1).endsWith('/registry-inventory-authorized.json')));
   });
 }

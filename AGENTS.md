@@ -25,7 +25,7 @@ with Makefile and GitHub workflows invoking it.
 
 ### Entry points and service
 
-- [deliver.sh](implementacion/scripts/deliver.sh) coordinates one fresh local
+- [bin/deliver](bin/deliver) delegates to [the coordinator](src/run-delivery.sh), which coordinates one fresh local
   quotes-node delivery without scenarios, R/G, measurements or presentation.
   It owns its cleanup trap; [the guide](docs/EN/legitimate-delivery.md) defines
   its internal P03 profile, immutable resource receipts and non-resume boundary.
@@ -48,19 +48,25 @@ with Makefile and GitHub workflows invoking it.
 
 ### Shared automation modules
 
-Shared modules and the local delivery adapter live in [scripts/lib](implementacion/scripts/lib/). They define
+Canonical delivery modules and the local adapter live in [src/lib](src/lib/).
+[scripts/lib](implementacion/scripts/lib/) retains compatibility imports and lab adapters. They define
 functions when sourced; importing them must not create infrastructure, perform
 network operations or start a scenario.
 
 | Module | Owned responsibility and interface |
 |---|---|
 | `context.sh` | Initialize the run; create/restore `state.json`; capture source identity and reload image coordinates. `get`/`put` operate on the selected run's state. |
-| `lab.sh` | Create kind, registry, builder and namespaces; install admission; supply explicit cluster access (`k`) and workload-actor access (`actor`); collect diagnostics, package evidence and clean up owned resources. |
+| `lab.sh` | Adapt shared `src/lib/local-environment.sh` primitives, retain lab readiness probes and cleanup; supply explicit cluster access (`k`) and workload-actor access (`actor`); collect diagnostics, package evidence and clean up owned resources. |
 | `delivery.sh` | Preflight checks, image build/publication, manifest preparation, early policies and Trivy analysis. Save original reports and the resolved digest. |
 | `attestations.sh` | Configure lane-specific trust; sign and verify image/SBOM/provenance evidence; issue and verify successful results authorization after required checks. |
 | `admission.sh` | Strict singleton diagnostic classifier; no scenario dependency. The historical classifier name remains an alias. |
-| `local-delivery.sh` | Local kind/zot/buildx adapter over laboratory provisioning, capacity checks and immutable owned-resource retirement for delivery-v1. |
-| `workload.sh` | Ordinary deployment, rollout, effective digest and HTTP observations; reference and directed laboratory adapters remain here. A functional response and an admission decision are separate observations. |
+| `local-delivery.sh` | Local kind/zot/buildx adapter over neutral `local-environment.sh` provisioning, capacity checks and immutable owned-resource retirement for delivery-v1. |
+| `workload.sh` | Ordinary deployment, rollout, effective digest and HTTP observations; reference and directed adapters remain in `implementacion/scripts/lib/workload.sh`. A functional response and an admission decision are separate observations. |
+
+The fixed delivery profile also records explicit `engine_root`, `service_root`,
+`policies_root`, `schemas_root`, `tooling_root`, `evidence_root` and `private_root`.
+Product code must run with laboratory execution modules absent. Keep source
+capture and sparse-export tests in sync with new runtime dependencies.
 
 The shell variable `root` resolves to `implementacion/`, not the repository root.
 Functions depend on initialized shared context:
@@ -88,12 +94,12 @@ safe to repeat, preserving the first diagnostics/archive and the failure status.
 |---|---|
 | [Conftest rules](implementacion/policies/conftest/) | Workflow/manifest acceptance and vulnerability-report decisions. |
 | [Kyverno renderer](implementacion/policies/kyverno/render.py) | Generated admission policies, protected scope and trust parameters. Edit the renderer, not generated run artifacts. |
-| [lab-contracts.mjs](implementacion/scripts/lab-contracts.mjs) | Manifest/predicate generation and content/subject validation. It also handles CLI/file operations; it is not a cryptographic verifier. |
+| [contracts.mjs](src/contracts.mjs) | Manifest/predicate generation and content/subject validation. It also handles CLI/file operations; it is not a cryptographic verifier. |
 | [verified-bundle-statement.mjs](implementacion/scripts/verified-bundle-statement.mjs), [github-attestation.mjs](implementacion/scripts/github-attestation.mjs) | Interpretation of the same authenticated bundle or the GitHub verifier's output, respectively. |
 | [download-bundle-inventory.mjs](implementacion/scripts/download-bundle-inventory.mjs), [check-bundle-profile.mjs](implementacion/scripts/check-bundle-profile.mjs) | Strict registry retrieval and required evidence types/shape for each phase. Inventory inspection does not authenticate signatures. |
 | [check-missing-results.mjs](implementacion/scripts/check-missing-results.mjs), [check-inventory-consistency.mjs](implementacion/scripts/check-inventory-consistency.mjs) | F13 absence and inventory-consistency checks. Retrieval errors cannot establish absence. |
 | [check-image-rollout.mjs](implementacion/scripts/check-image-rollout.mjs) | Correspondence between replacement digest, Deployment and ready Pods. |
-| [package-evidence.py](implementacion/scripts/package-evidence.py) | Preservable archives, file hashes and exclusion of private material. |
+| [package_evidence.py](src/package_evidence.py) | Shared archive writer, hashes and exclusions; laboratory selection stays in `implementacion/scripts/package-evidence.py`. |
 
 Keep image, CycloneDX SBOM, vulnerability report, provenance and results as
 distinct contracts. When changing predicate types, schemas or required checks,
@@ -113,7 +119,7 @@ legitimate admission, the directed runtime rejection and image replacement.
 Preserve that order when adding a scenario with different evidence prerequisites.
 
 [Scenario modules](implementacion/tests/scenarios/) own controlled alterations and
-their expected outcomes. Common delivery operations stay in `scripts/lib/` and
+their expected outcomes. Common delivery operations stay in `src/lib/` and
 acceptance rules stay in policies/validators. `f13.sh` imports the neutral `scripts/lib/admission.sh` classifier for historical
 scenario callers; paired delivery and audit tools import it directly. Scenario
 modules are not independently executable programs. Review callers before moving a shared helper.

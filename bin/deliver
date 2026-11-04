@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Fixed local quotes-node profile; the coordinator owns one cleanup trap.
+exec bash "${BASH_SOURCE[0]%/*}/../src/run-delivery.sh" "$@"

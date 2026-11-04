@@ -49,11 +49,12 @@ requiere autorización remota deliberada.
 
 ## Plantilla de consumidor: prevista
 
-El [coordinador local P03](legitimate-delivery.md) permite una entrega legítima
+El [comando de entrega local](legitimate-delivery.md) permite una entrega legítima
 con estado nuevo en este checkout. Su interfaz es interna; no hay instalador
 autónomo ni plantilla de consumidor. El runner de una entrega medida conserva
-su finalidad investigadora. Siguen P01b separación física → P03b consolidación
-de interfaz → P04 plantilla y las ramas independientes de actualización; véase el [contrato](../EN/maintainers/repository-map.md#migration-sequence).
+su finalidad investigadora. P01b separa este motor local en `bin/` y `src/`. Siguen
+consolidación de interfaz → plantilla independiente → prueba Java, además del
+mantenimiento separado; véase el [contrato](../EN/maintainers/repository-map.md#migration-sequence).
 
 ## Reutilización y soporte
 

@@ -162,7 +162,7 @@ def catalogue():
 
 
 def source_identity():
-    roots = ['implementacion/services/quotes-node', 'implementacion/scripts', 'implementacion/policies',
+    roots = ['src', 'bin', 'implementacion/services/quotes-node', 'implementacion/scripts', 'implementacion/policies',
              'implementacion/tests', 'implementacion/schemas', 'implementacion/demo', '.github/workflows',
              '.devcontainer', 'implementacion/.devcontainer']
     paths = []

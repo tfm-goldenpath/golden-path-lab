@@ -16,7 +16,7 @@ for (const [mode,codespaces,failure] of [['local','true',0],['local','true',23],
     const result=spawnSync('bash',['--noprofile','--norc','-c',String.raw`
 set -Eeuo pipefail
 source "$LAB"
-private=$FIXTURE;state_dir=$FIXTURE;lock=synthetic-lock
+root="$SOURCE_ROOT"; private=$FIXTURE;state_dir=$FIXTURE;lock=synthetic-lock
 cluster=tfm-demo-run-synthetic;registry=synthetic-registry;builder=synthetic-builder
 image_repo=synthetic-repository;KIND_NODE_IMAGE=synthetic-image
 record() { :; }
@@ -32,11 +32,11 @@ docker() {
 lab_create
 echo unexpected-success
 `],{encoding:'utf8',env:{...process.env,BASH_ENV:'',LAB:resolve(import.meta.dirname,'../../scripts/lib/lab.sh'),
-      FIXTURE:dir,mode,CODESPACES:codespaces,FAILURE:String(failure)}});
+      SOURCE_ROOT:resolve(import.meta.dirname,'../..'),FIXTURE:dir,mode,CODESPACES:codespaces,FAILURE:String(failure)}});
     assert.equal(result.status,failure || 39,result.stderr);
     const trace=readFileSync(resolve(dir,'trace'),'utf8');
     if (mode==='local' && codespaces==='true') {
-      assert.match(trace,/^cluster\nhelper scripts\/codespaces-network.py ensure --cluster tfm-demo-run-synthetic --output .*\/codespaces-network.json\n/);
+      assert.match(trace,/^cluster\nhelper .*\/src\/codespaces-network.py ensure --cluster tfm-demo-run-synthetic --output .*\/codespaces-network.json\n/);
       if (failure) assert.doesNotMatch(trace,/docker/);
     } else assert.doesNotMatch(trace,/helper/);
     assert.doesNotMatch(result.stdout,/unexpected-success/);

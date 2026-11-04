@@ -10,7 +10,7 @@ import {target,remediation} from '../scenarios/vulnerability-evidence.mjs';
 import {syntheticAnalysis,image} from './support/vulnerability-fixture.mjs';
 const root=resolve(import.meta.dirname,'../..');
 function setup(t,name='F03-repaired',options) {const d=mkdtempSync(join(tmpdir(),'vulnerability-unit-'));t.after(()=>rmSync(d,{recursive:true,force:true}));return {d,...syntheticAnalysis(d,name,options)};}
-function shell(d,code,env={}) {return spawnSync('bash',['-c',`set -Eeuo pipefail\nsource scripts/lib/context.sh\nsource scripts/lib/delivery.sh\nsource tests/scenarios/vulnerabilities.sh\nstate_dir="$GP_STATE"; image="$GP_IMAGE"; mode=local; root="$PWD"; port_pid=''\n${code}`],{cwd:root,encoding:'utf8',env:{...process.env,BASH_ENV:'',GP_STATE:d,GP_IMAGE:image,...env},timeout:20000});}
+function shell(d,code,env={}) {return spawnSync('bash',['-c',`set -Eeuo pipefail\nsource scripts/lib/context.sh\nsource scripts/lib/delivery.sh\nsource tests/scenarios/vulnerabilities.sh\nengine_root="$PWD/../src"; state_dir="$GP_STATE"; image="$GP_IMAGE"; mode=local; root="$PWD"; port_pid=''\n${code}`],{cwd:root,encoding:'utf8',env:{...process.env,BASH_ENV:'',GP_STATE:d,GP_IMAGE:image,...env},timeout:20000});}
 for(const name of ['F03-vulnerable','F03-repaired','F04','L02']) test(`actual evaluator and scenario assertion: ${name}`,t=>{
  const f=setup(t,name);const r=shell(f.d,`delivery_evaluate_vulnerabilities\nscenario_vulnerability_assert ${name}`); assert.equal(r.status,0,r.stderr);assert.equal(read(join(f.d,'target-attribution.json')).case,name);
 });
@@ -54,7 +54,7 @@ test('repaired target removal also requires global threshold and compatible beha
 for(const fault of ['sbom','scan','database','evaluator']) test(`actual analysis propagates ${fault} failure`,t=>{
  const f=setup(t);const r=shell(f.d,`
 get() { echo "$state_dir"; }; put() { :; }; contract=synthetic
-node() { if [[ "$1" == scripts/vulnerability-evidence.mjs ]]; then command node "$@"; else echo 1.6; fi; }
+node() { if [[ "$1" == */vulnerability-evidence.mjs ]]; then command node "$@"; else echo 1.6; fi; }
 delivery_database_prepare() { ${fault==='database'?'return 37':':'}; }
 python3() { :; }
 trivy() { case "$*" in *cyclonedx*) ${fault==='sbom'?'return 37':':'} ;; sbom*) ${fault==='scan'?'return 37':':'} ;; esac; }

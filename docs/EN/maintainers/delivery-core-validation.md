@@ -227,3 +227,54 @@ P03 integrations still refer to implementation `e3850a4` and AJV 8.17.1.
 Separate dependency, devcontainer (including optional Codex) and security-toolchain
 refresh branches are specified in TODO and the maintenance sequence. They are
 outside this diff; physical separation and the consumer template remain later work.
+
+## P01b implementation boundary — 4 November 2026
+
+Explicit owner authorization covers physical extraction of the single local
+quotes-node path, compatibility adapters, commit/push and one draft PR. Baseline:
+`1f9cc61d267aeeff1df1f7e9fa88d74cbaeb4211` (fetched main, merged PR #73).
+Untracked root npm files, existing evidence and historical review/custody records
+are preserved. This authorization does not close P00/P01 human gates.
+
+Before editing: extract `bin/deliver` and cohesive `src/` context, delivery, trust,
+workload and local environment modules; retain laboratory source selection,
+scenario readiness, R execution, measurements/manual adapters and archive
+allowlists outside that dependency closure. Neutral contract/authentication,
+source/build capture and archive primitives have one implementation. The current
+service, pinned tooling, policies and schemas remain explicit inputs under
+`implementacion/`; moving all configuration and laboratory files is deferred.
+
+Acceptance: legacy entry points/CWD/statuses and provenance identities remain;
+an isolated genuine sparse checkout runs actual delivery with laboratory
+execution modules absent, followed sequentially by a representative lab run.
+Focused boundary/compatibility tests, doctor/shared suite, inventory and links
+are required. Real execution, package hashes, retirement and limits are recorded
+below when observed; a static dependency check alone is insufficient.
+
+### P01b pre-integration checks
+
+- `doctor` PASS with existing pinned tools (no installation/update). Shared
+  `make test` PASS: 9 environment, 1,007 service/unit, 130 Python policy, real
+  Conftest/Kyverno, offline Cosign, static F01/F02, 153 defense and 22 release tests.
+- Focused affected checks: 169 PASS. New boundary tests execute actual service,
+  policies, build capture, packaging and verification in a lab-free projection;
+  synthetic unit Git identity is explicitly labelled and not integration evidence.
+- Exact inventory: 572 paths; 10 regressions PASS. Local link/anchor check: 473
+  links in 15 changed Markdown files PASS. `git diff --check` PASS.
+- Initial focused/shared failures are retained: isolated harnesses needed the
+  extracted module paths, and committed input verification needed Git executable
+  bits rather than unrelated group-write permission bits. No oracle was relaxed.
+- Logs: `implementacion/evidence/raw/product-core-separation/` (outside Git).
+- PR #73 issue form: read-only URL open attempted; available web access rejected
+  the URL as restricted. No browser runtime is available. The three required/two
+  optional fields and guide links were **not checked in the rendered GitHub form**;
+  no issue was submitted. Existing local form checks remain separate.
+
+Before real integration: 4 CPUs, about 13 GiB available RAM, 8.6 GiB free on the
+shared workspace/Docker filesystem and 108 GiB on separate `/tmp`; no containers,
+three pre-existing volumes preserved. Pinned kind/zot/BuildKit images are cached.
+The existing real `security-refresh-db` (publisher update 28 October 2026) is
+selected through `GP_VULNERABILITY_DB`; each run retains its own immutable
+snapshot on `/tmp`. This is compatibility validation against those identified
+bytes, not a current vulnerability reassessment. Cold 8-GiB and 3-GiB reserve
+checks are unchanged.

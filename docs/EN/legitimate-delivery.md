@@ -1,19 +1,20 @@
-# One legitimate quotes-node delivery (P03)
+# One legitimate quotes-node delivery
 
 [Guide](README.md) · [Español](../ES/legitimate-delivery.md) ·
 [Architecture](../../implementacion/docs/EN/architecture.md) ·
 [Validation](maintainers/delivery-core-validation.md)
 
-The local coordinator `implementacion/scripts/deliver.sh` builds and publishes
+The supported command `bin/deliver` builds and publishes
 one quotes-node image to an ephemeral local zot registry, checks it, signs and
 verifies its separate evidence, authorizes results, then submits the workload
 through the restricted actor to kind. It observes rollout, effective digest in
 the Deployment/ready Pods and real HTTP responses separately. It finally retains
 evidence and removes only its recorded resources.
 
-This is a functional extraction, with internal interfaces and the existing paths.
-It is not a stable consumer API, installer, production-cluster adapter, full L01
-trial or repository separation. It creates no reference R, fault fixture,
+The delivery engine lives in `src/`, with one explicit local kind/zot/buildx
+adapter. This bounded separation covers the local quotes-node path; it does not
+provide a stable consumer API, installer, production-cluster adapter or full L01
+trial. It creates no reference R, fault fixture,
 comparison, campaign measurement or presentation state. L01's independent
 replacement image and the other laboratory scenarios still belong to `demo.sh`.
 
@@ -34,8 +35,9 @@ make -C implementacion test
 Commit the candidate first. The coordinator rejects tracked edits and untracked
 files in its selected source inputs. Unrelated root npm files are not inputs.
 It captures the exact selected service (including its tests and Docker ignore
-rules), policies, schemas, workflows, locks and runtime helpers. Historical
-laboratory snapshot selection and build-fixture checks keep their old meaning.
+rules), policies, schemas, workflows, locks and runtime helpers. New snapshots include `bin/` and `src/`; captured files must match their committed
+bytes and executable modes. Historical hashes are unchanged. Scenario build
+authorizations remain in the laboratory adapter.
 
 Check actual resources before integration, after build/packaging and retirement:
 
@@ -57,7 +59,9 @@ stops the next heavy operation; inventory earlier resources/evidence and obtain
 specific custody/deletion authorization instead of pruning globally.
 
 ```bash
-# Supported from the repository root; the script resolves implementacion itself.
+# From the repository root (an absolute command path also works from any CWD):
+bash bin/deliver local
+# Supported compatibility command:
 bash implementacion/scripts/deliver.sh local
 # Equivalent Make entry:
 make -C implementacion deliver
@@ -81,9 +85,32 @@ owner. State additionally binds the resolved image, public-key hash, DB snapshot
 and immutable resource IDs. `GP_STATE_DIR` and resume are rejected. Retrying is
 a new invocation and identity; it must not overwrite an earlier attempt.
 
+The fixed profile resolves roots from the command, not the caller's directory:
+
+| Input/responsibility | Current location |
+| --- | --- |
+| Entry and coordinator | `bin/deliver` → `src/run-delivery.sh` |
+| Delivery, trust, ordinary workload and local adapter | `src/lib/` |
+| Contracts, authenticated content, source capture and archive tools | `src/` |
+| Selected service and build context | `implementacion/services/quotes-node/` |
+| Enforcement and schema sources | `implementacion/policies/`, `implementacion/schemas/` |
+| Pinned tools and schema dependencies | `implementacion/versions.env`, `tools.lock.json`, `tooling/` |
+| Evidence and private working state | `implementacion/evidence/`, `implementacion/.tmp/` |
+
+These are internal roots, recorded in `delivery-config.json`; symlinked roots are
+rejected. The sparse-checkout integration uses the original candidate commit and
+labels that projection explicitly. Laboratory coordinators consume the shared
+engine through compatibility adapters; the product does not import those adapters.
+Laboratory procedures remain under [laboratory navigation](../../lab/README.md).
+
 ## Decisions and authorization
 
-The seven checks remain the canonical `CHECKS` in `lab-contracts.mjs`:
+Order: committed source → environment/service/workflow checks → build and manifest
+policy → original SBOM and vulnerability policy → authenticated evidence → results
+authorization → admission readiness → deploy/rollout/effective digest/HTTP →
+retirement and archive. A failed mandatory check stops all later protected stages.
+
+The seven checks remain the canonical `CHECKS` in `src/contracts.mjs`:
 `unitTests`, `manifestPolicy`, `workflowPolicy`, `vulnerabilityPolicy`,
 `signature`, `sbom`, `provenance`. No predicate type or `golden-path-v1` policy
 version changes. Source/service/workflow controls are mandatory; laboratory
@@ -94,7 +121,7 @@ Stage receipts bind actual successful commands and evidence hashes to source,
 configuration and, for image checks, the candidate digest. Fresh registry
 retrieval/authentication precedes issuance. The independent image signature,
 SBOM, provenance and results are still four distinct contracts. Local provenance
-names `implementacion/scripts/deliver.sh`, validated against that expected
+retains the authorized producer `implementacion/scripts/deliver.sh`, validated against that expected
 producer in the fresh CI gate. Historic callers retain their old producer value.
 
 Authorized admission waits for policy readiness, current controller Pods and
@@ -131,9 +158,8 @@ repository code, without executing code from the archive:
 
 ```bash
 # Replace delivery-XXXXXXXX with the actual run printed by the coordinator.
-cd implementacion/scripts
-python3 -c 'from lane_a_evidence import verify_package; import sys; verify_package(sys.argv[1])' \
-  ../evidence/packages/delivery-XXXXXXXX.tar.gz
+python3 src/verify_package.py \
+  implementacion/evidence/packages/delivery-XXXXXXXX.tar.gz
 ```
 
 Cleanup checks immutable container IDs and recorded volume metadata/consumers.
@@ -141,7 +167,7 @@ Foreign or changed resources are left intact with an error. First diagnostics
 and packages survive repeated cleanup. If interrupted, from the repository root:
 
 ```bash
-bash implementacion/scripts/deliver.sh cleanup \
+bash bin/deliver cleanup \
   /workspaces/golden-path-lab/implementacion/evidence/raw/delivery-XXXXXXXX
 ```
 

@@ -134,8 +134,11 @@ test('authenticated run identity rejects an earlier run or retry even at the sam
 });
 
 for (const exitStatus of [0,31,43]) test(`protocol wrapper packages exit ${exitStatus} without converting errors to success`,t=>{
-  const root=mkdtempSync(join(tmpdir(),'gp-ghcr-wrapper-'));
-  t.after(()=>rmSync(root,{recursive:true,force:true}));
+  const repositoryRoot=mkdtempSync(join(tmpdir(),'gp-ghcr-wrapper-'));
+  const root=join(repositoryRoot,'implementacion');mkdirSync(root);
+  mkdirSync(join(repositoryRoot,'src'));
+  copyFileSync(new URL('../../../src/package_evidence.py',import.meta.url),join(repositoryRoot,'src/package_evidence.py'));
+  t.after(()=>rmSync(repositoryRoot,{recursive:true,force:true}));
   for(const path of ['tests/integration','scripts','bin']) mkdirSync(join(root,path),{recursive:true});
   copyFileSync(new URL('../integration/f07-ghcr-protocol.sh',import.meta.url),join(root,'tests/integration/probe.sh'));
   copyFileSync(new URL('../../scripts/package-evidence.py',import.meta.url),join(root,'scripts/package-evidence.py'));

@@ -36,7 +36,7 @@ blocking decisions and their evidence.
 | --- | --- |
 | Implemented laboratory | Pinned Linux environment, early policies, image analysis, separate signed evidence, verification, admission and functional checks. |
 | Recorded observations | Local and hosted results at identified historical revisions, plus separate measurement datasets. The [readiness matrix](implementacion/docs/EN/evaluation-readiness.md) records coverage and gaps; the [dated human decision](implementacion/registros/evaluation_acceptance_20261004_ES.md) closes only its stated reduced evaluation scope. |
-| Consumer template: planned | P03 extracts one legitimate local path; the independent consumer template remains future work. See the [migration sequence](docs/EN/maintainers/repository-map.md#migration-sequence). |
+| Consumer template: planned | The local engine is separated in `bin/` and `src/`; the independent consumer template remains future work. See the [migration sequence](docs/EN/maintainers/repository-map.md#migration-sequence). |
 | Unsupported or unverified | No production-readiness, full DORA compliance, SLSA Build L3, complete SBOM inventory or blanket vulnerability-safety claim. Unexecuted hosted negatives remain unexecuted; historical runs do not validate current source. |
 
 ## Getting started

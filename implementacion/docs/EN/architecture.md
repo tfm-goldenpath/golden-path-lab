@@ -4,6 +4,28 @@
 
 [Versión en español](../ES/architecture.md).
 
+## P01b physical local delivery boundary
+
+`bin/deliver` delegates to `src/run-delivery.sh`, which owns the single delivery
+trap. `src/lib/` owns context/source, build/analysis, attestations, ordinary
+workload, admission classification and the explicit local environment adapter.
+Neutral kind/zot/buildx, admission readiness and diagnostics are extracted from
+`lab.sh`; the product does not import `implementacion/scripts/lib/`. Lab readiness
+trials, reference workloads, directed mutations and lab cleanup remain there.
+
+`src/` also owns neutral contracts/authenticated-content helpers, build enumeration,
+source capture, archive writing and verification. Compatibility files preserve
+old CLI/import paths. Fixture/manual build allowlists, F13 absence classification
+and laboratory archive selection/summaries remain in `implementacion/scripts/`.
+The service, policies, schemas and pinned tooling remain explicit selected inputs
+under `implementacion/`; this increment does not migrate the whole repository.
+New laboratory/defense source captures include `src/` and `bin/`; historical
+snapshots and authorized producer/workflow identities remain unchanged.
+
+The [operator guide](../../../docs/EN/legitimate-delivery.md) gives the current
+roots, commands and limitations. The [validation record](../../../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026)
+distinguishes isolated runtime execution from mocked sequencing and human review.
+
 ## Design decision and rationale
 
 The implementation uses a **modular architecture for automation, policies and evidence, with a central laboratory orchestrator**. Modules group responsibilities and define how components communicate and are tested. Makefile and workflows invoke common commands; `scripts/demo.sh` parses arguments, coordinates `scripts/lib/` functions and invokes `tests/scenarios/`. Policies, validation and packaging keep specialized components. Admission rechecks applicable conditions before protected Kubernetes workloads are created or updated.

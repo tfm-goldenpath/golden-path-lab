@@ -50,6 +50,22 @@ permits the additive `docs/use-case-intake` increment independently of pending
 P00/P01 human acceptance. Physical restructuring, evidence custody and broader
 acceptance remain separate gates; earlier dated records retain their conclusions.
 
+## P01b — bounded local product separation (`refactor/product-core-separation`)
+
+Current owner authorization (4 November 2026) explicitly permits extraction,
+relocations and compatibility wrappers for the legitimate local quotes-node path,
+plus commit/push and one draft PR. It does not close P00/P01 custody or human
+review, or rewrite their earlier conclusions. Actual baseline: fetched main
+`1f9cc61d267aeeff1df1f7e9fa88d74cbaeb4211` (PR #73).
+
+- [x] Extract canonical `bin/deliver` / `src/` delivery, evidence/trust, ordinary workload and neutral local lifecycle; keep one shared implementation for laboratory callers.
+- [x] Keep scenario dispatch/mutations, R, measurement/manual adapters and archive allowlists outside the product dependency closure; preserve commands and signing identities.
+- [ ] Complete candidate validation and isolated real delivery plus representative lab integration; see the [existing validation record](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
+- [ ] Human review of this bounded increment. No repository-wide separation claim.
+- Remaining physical/mixed interfaces: neutral policies/schemas/pins/tooling and selected synthetic service still under `implementacion/`; laboratory adapters/tests remain there; shared contracts retain compatibility namespaces/profiles and hosted trust adapters. Configuration is internal, fixed to quotes-node/local.
+- Next: interface consolidation → independent consumer template → Java trial. Separate CLI compatibility work for Dependabot PR #72 remains outside this branch.
+- Admission-selection capability/validation blockers, hosted negative gaps, deferred human calibration, new controls, dashboard and release work remain unchanged. No campaign rerun or publishing dispatch is authorized here.
+
 ## Structured use-case intake (`docs/use-case-intake`)
 
 - [x] Start from fetched main `3e5a41c0d94ab8e68b152cc47991812b61e066f0` (PR #71) in a clean worktree, preserving unrelated work.

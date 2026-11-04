@@ -1,3 +1,4 @@
+import {captureBuildFiles} from '../../src/capture-build-inputs.mjs';
 // Retain the small, explicit fixture/service build contexts, excluding generated dependencies.
 import {readFileSync,readdirSync,lstatSync,realpathSync} from 'node:fs';
 import {join,relative,resolve,dirname} from 'node:path';
@@ -27,20 +28,7 @@ if (!allowed.includes(context)) {
       || authorized?.directory!==root || authorized.commit!==commit || !Array.isArray(authorized.files)) throw new Error('Build context differs from L05 source authorization');
   }
 }
-const files=[];
-function walk(directory) {
-  for(const name of readdirSync(directory).sort()) {
-    if(!authorized && ['node_modules','test'].includes(name)) continue;
-    const path=join(directory,name),stat=lstatSync(path);
-    if(stat.isSymbolicLink()) throw new Error('Symlink in build context');
-    if(stat.isDirectory()) walk(path);
-    else if(stat.isFile()) {
-      const bytes=readFileSync(path);
-      files.push({path:relative(root,path),mode:(0o100000 | (stat.mode & 0o7777)).toString(8),sha256:createHash('sha256').update(bytes).digest('hex'),content:bytes.toString('utf8')});
-    }
-  }
-}
-walk(root);
+const files=captureBuildFiles(root,!!authorized);
 if(authorized) {
   const actual=files.map(({path,mode,sha256})=>({path,mode,sha256})).sort((a,b)=>a.path.localeCompare(b.path));
   const expected=authorized.files.map(({path,mode,sha256})=>({path,mode,sha256})).sort((a,b)=>a.path.localeCompare(b.path));

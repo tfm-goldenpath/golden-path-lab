@@ -4,6 +4,24 @@
 
 [Guía principal en inglés](../EN/architecture.md). Este documento se conserva como apoyo en español; el código, los mensajes operativos y los identificadores de escenarios son comunes a ambos idiomas.
 
+## Frontera física P01b de entrega local
+
+`bin/deliver` delega en `src/run-delivery.sh`, propietario del único trap de
+limpieza. `src/lib/` contiene contexto/fuente, build/análisis, atestaciones, workload
+ordinario, clasificación de admisión y adaptador local. Las primitivas neutrales
+kind/zot/buildx, readiness y diagnósticos se extraen de `lab.sh`; el producto no
+importa `implementacion/scripts/lib/`. Allí quedan adaptadores de compatibilidad,
+pruebas de readiness del laboratorio, R, mutaciones dirigidas y cleanup del lab.
+
+`src/` contiene también contratos, contenido autenticado, captura de inputs y
+escritura/verificación de archivos. Allowlists de fixtures/manuales, clasificación
+de ausencia F13 y selección/resúmenes de paquetes siguen en el laboratorio.
+Servicio, políticas, esquemas y herramientas fijadas permanecen como entradas
+explícitas bajo `implementacion/`. Las nuevas capturas incluyen `src/` y `bin/`;
+no cambian hashes históricos ni identidades autorizadas de productor/workflow.
+Esta separación no cubre todo el repositorio. Véanse la [guía operativa](../../../docs/ES/legitimate-delivery.md)
+y el [registro de validación en inglés](../../../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
+
 ## Decisión de diseño y fundamento
 
 Se adopta una **arquitectura modular de automatización, políticas y evidencias, con un orquestador central del laboratorio**. La modularidad consiste en agrupar responsabilidades y definir cómo se comunican y prueban sus componentes. Makefile y los workflows invocan comandos comunes; `scripts/demo.sh` recibe los argumentos, coordina funciones de `scripts/lib/` e invoca los escenarios de `tests/scenarios/`. Las políticas, validaciones y el empaquetado mantienen sus componentes especializados. La admisión vuelve a comprobar las condiciones aplicables antes de incorporar o actualizar una carga en el ámbito protegido de Kubernetes.

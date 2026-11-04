@@ -11,9 +11,9 @@ solamente recursos identificados como propios.
 
 No ejecuta referencia R, fallos, comparaciones, mediciones ni presentación. Una
 entrega individual no demuestra L01 completo: su sustitución por otro digest y
-verificación independiente siguen perteneciendo al laboratorio. P03 no completa
-la separación física ni ofrece una API pública estable, instalador, template
-consumidor o adaptación a producción.
+verificación independiente siguen perteneciendo al laboratorio. La separación física cubre esta ruta local: motor en `src/` y adaptador explícito
+kind/zot/buildx. No ofrece una API pública estable, instalador, template consumidor
+o adaptación a producción ni separa todo el repositorio.
 
 ## Preparar y ejecutar
 
@@ -30,6 +30,9 @@ free -h
 df -h /workspaces /tmp /var/lib/docker
 df -i /workspaces /tmp /var/lib/docker
 docker system df
+# Entrada actual:
+bash bin/deliver local
+# Compatibilidad conservada:
 bash implementacion/scripts/deliver.sh local
 # Alternativa equivalente:
 make -C implementacion deliver
@@ -63,7 +66,25 @@ privado de recuperación bajo `implementacion/.tmp/private-XXXXXXXX/`.
 confianza, base, recursos y responsable de cleanup. No hay reanudación: se rechaza
 `GP_STATE_DIR`; cada reintento tiene identidad independiente.
 
+Las raíces internas se resuelven desde la entrada y se registran en
+`delivery-config.json`; se rechazan raíces con enlaces simbólicos. `bin/deliver`
+delega en `src/run-delivery.sh`; `src/lib/` contiene contexto, entrega, confianza,
+workload ordinario y adaptador local. Los contratos, capturas y herramientas de
+archivo están en `src/`. Políticas, esquemas, versiones, `tools.lock.json`,
+`tooling/` y el servicio seleccionado permanecen bajo `implementacion/`.
+
+La captura incluye `bin/` y `src/` y verifica bytes y permisos ejecutables contra
+el commit. La prueba aislada usa un checkout disperso del commit real y declara
+esa proyección; no inventa una revisión ni modifica hashes históricos. Los
+coordinadores del laboratorio consumen el motor compartido mediante adaptadores;
+el producto no los importa. Véase la [navegación de laboratorio](../../lab/README.es.md).
+
 ## Interpretar, conservar y retirar
+
+Orden: fuente comprometida → entorno/tests/workflows → build y política de
+manifiesto → SBOM original y vulnerabilidades → evidencia autenticada → resultados
+→ readiness de admisión → despliegue/rollout/digest/HTTP → retirada y archivo.
+Un fallo obligatorio detiene las fases protegidas posteriores.
 
 Siguen vigentes las siete comprobaciones canónicas: `unitTests`, `manifestPolicy`,
 `workflowPolicy`, `vulnerabilityPolicy`, `signature`, `sbom`, `provenance`.
@@ -71,7 +92,7 @@ Las pruebas del servicio deben ejecutarse y producir un resumen TAP satisfactori
 un log no vacío no basta. Los resultados se emiten tras comprobar recibos de
 éxito asociados a fuente/configuración/digest y autenticar nuevamente el registro.
 No cambian `golden-path-v1`, tipos de predicado ni obligaciones de confianza.
-La procedencia identifica `implementacion/scripts/deliver.sh`.
+Se conserva la identidad autorizada de procedencia: `bin/deliver`.
 
 Admisión comprueba políticas, controller, endpoints, inventario autorizado y un
 CREATE real en dry-run del candidato mediante el actor. No provoca antes F13.
@@ -92,15 +113,14 @@ Excluye estado privado, credenciales, kubeconfig y claves privadas. Verificació
 con código confiable del repositorio:
 
 ```bash
-cd implementacion/scripts
-python3 -c 'from lane_a_evidence import verify_package; import sys; verify_package(sys.argv[1])' \
-  ../evidence/packages/delivery-XXXXXXXX.tar.gz
+python3 src/verify_package.py \
+  implementacion/evidence/packages/delivery-XXXXXXXX.tar.gz
 ```
 
 Si una interrupción deja recursos, desde la raíz y sustituyendo el identificador:
 
 ```bash
-bash implementacion/scripts/deliver.sh cleanup \
+bash bin/deliver cleanup \
   /workspaces/golden-path-lab/implementacion/evidence/raw/delivery-XXXXXXXX
 ```
 

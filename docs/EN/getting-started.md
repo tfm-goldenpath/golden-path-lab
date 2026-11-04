@@ -52,11 +52,12 @@ evidence and requires deliberate remote authorization.
 
 ## Consumer template: planned
 
-The [P03 local coordinator](legitimate-delivery.md) supports one fresh legitimate
+The [local delivery command](legitimate-delivery.md) supports one fresh legitimate
 quotes-node delivery in this checkout. It is an internal interface, with no standalone
 installer or consumer template. The measured single-delivery runner remains a research
-interface. Subsequent work is P01b physical separation → P03b interface consolidation
-→ P04 template, plus the separately scoped maintenance refresh branches.
+interface. P01b separates this local engine into `bin/` and `src/`; remaining work
+is interface consolidation → independent consumer template → Java trial, plus
+separately scoped maintenance.
 See the [migration contract](maintainers/repository-map.md#migration-sequence).
 
 ## Reuse and support

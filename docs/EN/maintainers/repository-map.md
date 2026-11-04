@@ -49,18 +49,19 @@ The optional [context retrieval pilot](context-retrieval.md) records a bounded
 A/B/C comparison; it does not change these navigation or ownership rules.
 
 <!-- inventory-summary:start -->
-542 tracked paths; 243 individually enumerated scripts/helpers/tests.
+572 tracked paths; 272 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 164 |
+| developer | 166 |
 | generated | 1 |
 | historical | 63 |
-| laboratory | 267 |
-| product | 13 |
-| shared | 34 |
+| laboratory | 273 |
+| product | 41 |
+| shared | 28 |
 
-106 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
+121 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
+
 <!-- inventory-summary:end -->
 
 Current physical roots are `.github/` (automation and contribution instructions),
@@ -71,10 +72,26 @@ modules, policies, tests, tooling, demo, measurement and laboratory docs).
 There are no tracked composite actions at the base. The unrelated untracked root
 `package.json` and `package-lock.json` are excluded and preserved.
 
+## Current bounded P01b separation
+
+The owner explicitly authorizes physical extraction of the single legitimate local
+quotes-node path on 4 November 2026, based on fetched main `1f9cc61d267aeeff1df1f7e9fa88d74cbaeb4211`.
+This narrower authorization supersedes the physical-move prerequisite for this
+increment only; P00/P01 custody and human-review conclusions remain historical
+facts and pending decisions.
+
+`bin/deliver` delegates to `src/run-delivery.sh`. Cohesive `src/lib/` modules and
+neutral `src/` helpers have no laboratory execution imports. Old script paths
+remain adapters; laboratory source selection, readiness probes, reference/trial
+workloads, fixture/manual build allowlists and package summaries stay with them.
+Policies/schemas/tooling/pins and the selected service retain their explicit
+`implementacion/` roots. The whole repository is not separated. See the
+[operator guide](../legitimate-delivery.md) and [validation](delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
+
 ## Proposed boundaries
 
-These destinations are **future**, not commands or directories promised today.
-Create them only with the extraction/migration that needs them.
+The table retains the broader destination plan. P01b implements `bin/` and `src/`
+for the local delivery path only; other moves still require a bounded increment.
 
 | Proposed root | Responsibility and dependency boundary |
 | --- | --- |
@@ -90,7 +107,7 @@ Create them only with the extraction/migration that needs them.
 Eventually **product code must run without laboratory files**. Laboratory tooling
 may call product modules. Consumer delivery must not require fault fixtures,
 measurement plans, scenario result summaries or presentation state. This property
-is a future integration acceptance criterion, not something P01 establishes.
+is the P01b isolated-runtime criterion; P01 documentation alone did not establish it.
 
 Preserve the five current responsibilities:
 
@@ -118,7 +135,7 @@ is authoritative about current coupling and callers.
 | Refresh A — `chore/dependency-refresh` | Bounded AJV/fast-uri correction and compatibility validation; [record](dependency-refresh-validation.md). Actions and update automation remain separate pending items; fixtures are preserved. |
 | Refresh B — `chore/devcontainer-refresh` | Later reproducible runtimes/images/three profiles and optional official pinned Codex; full rebuild and storage comparison; see TODO. |
 | Refresh C — `chore/security-toolchain-refresh` | Later compatible scanner/policy/crypto/admission versions; real crypto/admission and hosted verification if trust changes; CEL migration stays separate. |
-| P01b — physical repository separation | Move product/lab files only after extraction and the outstanding custody/review gate is resolved. Prove product works with lab files absent; preserve URL/command compatibility and historical evidence interpretation. |
+| P01b — physical repository separation | Bounded local path explicitly authorized on 4 November; broader moves still require their applicable gates. Prove product works with lab files absent; preserve URL/command compatibility and historical evidence interpretation. |
 | P03b — script/interface consolidation | Consolidate proven duplicate behavior behind the supported interface; preserve arguments, status codes and failure classification. Investigate unreferenced/manual helpers before any retirement. |
 | P04 — consumer template | Ship a real consumer starter using the extracted engine, with documented prerequisites and actual independent execution. No fictional install/configuration API beforehand. |
 
