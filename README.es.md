@@ -1,6 +1,7 @@
 # Golden Path Lab
 
-[Ejecutar una entrega legítima local](docs/ES/legitimate-delivery.md)
+[Ejecutar una entrega legítima local](docs/ES/legitimate-delivery.md) ·
+[Proponer un caso de uso](docs/ES/use-case-intake.md)
 
 [English](README.md) · [Español](README.es.md)
 

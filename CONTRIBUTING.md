@@ -4,6 +4,11 @@ For product orientation, start with the [reading guide](docs/EN/getting-started.
 
 Contributions should keep the laboratory reproducible and its conclusions traceable. Start with the [README](README.md), [architecture](implementacion/docs/EN/architecture.md), [delivery contracts](implementacion/docs/EN/delivery-contracts.md) and the relevant scenario record. English is primary for code, tests and contributions; update affected Spanish commands, expectations and explanations alongside the English guide.
 
+## Propose a use case
+
+Have a use case or improvement in mind? Follow the [short request guide](docs/EN/use-case-intake.md)
+([español](docs/ES/use-case-intake.md)).
+
 ## A small, reviewable change
 
 1. Identify the requirement, affected paths and expected acceptance or rejection before implementing it. The contributor owns the test oracle; an assistant may propose it but does not establish its correctness.

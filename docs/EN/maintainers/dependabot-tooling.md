@@ -99,3 +99,20 @@ security PRs and repository-wide alert behavior are a separate concern. No new
 credentials, packages, images or persistent services were created. Codex assisted
 configuration, tests and documentation; human review remains pending. P00/P01,
 admission and experimental acceptance gates remain unchanged.
+
+## First observed service execution — inspected 4 November 2026
+
+Read-only run metadata and logs confirm [Dependabot run 41696607430, job 126128707139](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41696607430/job/126128707139)
+completed successfully on 3 November, at configuration/source
+`3e5a41c0d94ab8e68b152cc47991812b61e066f0` (merged PR #71). The service created
+[PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72), still open at
+`b5d07d3011ac04854f3f1a5f5efedaf4011bce07`, proposing `@devcontainers/cli`
+**0.89.0 → 0.90.0**. Logs report no update needed for `ajv` **8.20.0**,
+`ajv-formats` **3.0.1** or `ajv-formats-draft2019` **1.6.1**.
+[Main CI 41696597287](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41696597287)
+also completed successfully on the same main revision; it does not test #72's
+candidate. This closes the service-observation follow-up above, not compatibility
+validation or acceptance of the proposed dependency change. Those require separate
+checks and human review under the existing version guards. #23 remains open at its
+previously recorded head; neither PR was changed, approved, closed or commented on.
+No update job was dispatched and no dependency was changed for this observation.

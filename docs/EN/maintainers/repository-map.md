@@ -49,15 +49,15 @@ The optional [context retrieval pilot](context-retrieval.md) records a bounded
 A/B/C comparison; it does not change these navigation or ownership rules.
 
 <!-- inventory-summary:start -->
-530 tracked paths; 239 individually enumerated scripts/helpers/tests.
+542 tracked paths; 243 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 154 |
+| developer | 164 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 267 |
-| product | 11 |
+| product | 13 |
 | shared | 34 |
 
 106 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
@@ -122,7 +122,16 @@ is authoritative about current coupling and callers.
 | P03b — script/interface consolidation | Consolidate proven duplicate behavior behind the supported interface; preserve arguments, status codes and failure classification. Investigate unreferenced/manual helpers before any retirement. |
 | P04 — consumer template | Ship a real consumer starter using the extracted engine, with documented prerequisites and actual independent execution. No fictional install/configuration API beforehand. |
 
-`docs/use-case-intake` may proceed independently once P01 is accepted. P15's richer
+Scope clarification — 4 November 2026: the owner explicitly authorizes the bounded
+[use-case intake](../use-case-intake.md) documentation/form increment while P00/P01
+human acceptance remains pending. This supersedes the earlier intake prerequisite
+for this increment only; the dated P01 validation record retains its original
+conclusion. Custody, physical restructuring and broader acceptance remain separate.
+The dependency sequence remains physical separation → interface consolidation →
+independent consumer template → Java trial. Admission-selection implementation
+retains its existing capability and validation blockers.
+
+P15's richer
 control/evidence catalogue, new quality/security/runtime controls, dashboard redesign
 and a future product release remain later work. This inventory does not authorize
 moves, deletions, releases, settings changes or measurement runs.

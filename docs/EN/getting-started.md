@@ -74,3 +74,5 @@ sanitized diagnostics. Do not put secrets or private evidence there. No verified
 private security-reporting contact is declared; an owner must choose that route.
 This branch does not invent an address or change licenses/settings. Contribution
 and human review follow [CONTRIBUTING](../../CONTRIBUTING.md).
+
+Have an improvement in mind? [Propose a use case](use-case-intake.md).

@@ -1,0 +1,56 @@
+name: Use case or feature request
+description: Propose a service, integration, security or quality check, test scenario or documentation improvement.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English or Spanish answers are welcome (puedes responder en español).
+        Requests are public: omit secrets, personal/customer data and private evidence.
+        Confidential vulnerability reports do not belong in this form.
+        See the [English guide](https://github.com/tfm-goldenpath/golden-path-lab/blob/main/docs/EN/use-case-intake.md) or [guía en español](https://github.com/tfm-goldenpath/golden-path-lab/blob/main/docs/ES/use-case-intake.md).
+  - type: dropdown
+    id: category
+    attributes:
+      label: Request category
+      description: Choose the closest fit, or select the unsure option.
+      options:
+        - New service or language
+        - Delivery integration
+        - Security or quality check
+        - Test scenario
+        - Documentation or operator experience
+        - Unsure or general request
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do, and what gets in your way?
+      description: Describe what you need, the current difficulty and a short example.
+      placeholder: I want to try delivery with a Java service, but I cannot find a starter example for it.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: What would success look like?
+      description: Describe a result someone could check.
+      placeholder: I could follow a short guide to build the example service and confirm which image was deployed.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Where would you use this?
+      description: Include relevant tools, local/cloud setup and important limits. Unknown details are fine.
+      placeholder: Java with Maven on a local Linux machine; cloud setup is undecided.
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: Examples, links or implementation ideas
+      description: Add useful public links, a short example or a possible approach.
+      placeholder: A public example project shows the workflow I would like to try.
+    validations:
+      required: false

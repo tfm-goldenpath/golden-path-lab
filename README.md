@@ -1,6 +1,7 @@
 # Golden Path Lab
 
-[Run one legitimate local delivery](docs/EN/legitimate-delivery.md)
+[Run one legitimate local delivery](docs/EN/legitimate-delivery.md) ·
+[Propose a use case](docs/EN/use-case-intake.md)
 
 [English](README.md) · [Español](README.es.md)
 

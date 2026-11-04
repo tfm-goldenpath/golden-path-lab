@@ -69,3 +69,5 @@ preguntas no sensibles y defectos reproducibles, con revisión y diagnósticos
 sin secretos. No hay contacto privado de seguridad verificado declarado; queda
 pendiente su elección. Esta rama no inventa direcciones ni cambia licencias o
 ajustes. La contribución y revisión humana siguen [CONTRIBUTING](../../CONTRIBUTING.md).
+
+¿Tienes una mejora en mente? [Propón un caso de uso](use-case-intake.md).
