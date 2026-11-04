@@ -10,14 +10,17 @@ Estas fases describen código actual, no una nueva API ni nuevas políticas.
 
 ## Fases y puntos de parada
 
-Las rutas citadas parten de `implementacion/`. Los cinco módulos Bash comparten
-contexto; no son servicios aislados.
+Los [módulos canónicos](../../implementacion/docs/ES/architecture.md#organización-implementada-y-dependencias)
+están en `src/` y comparten un contexto Bash. Políticas, servicio y tooling siguen
+bajo `implementacion/`. La tabla sigue entrega local legítima; los adaptadores
+añaden pruebas/escenarios y confianza alojada donde se indica. Véase el
+[alcance actual](legitimate-delivery.md#alcance-actual).
 
 | Fase e input | Responsable/control | Resultado y siguiente paso | Evidencia |
 | --- | --- | --- | --- |
-| Fuente, configuración y entorno | `context.sh`, `lab.sh`, `check-environment.sh`: identidad, estado/recursos propios y herramientas | Contexto válido continúa; herramienta ausente, estado inválido o fallo de entorno detiene. El sentinel local sin commit no es identidad Git. | Estado privado, snapshot, versiones e inputs |
+| Fuente, configuración y entorno | `context.sh`, adaptador local, `check-environment.sh`: fuente confirmada, estado nuevo/recursos y herramientas | Contexto válido continúa; herramienta ausente, estado inválido o fallo de entorno detiene. La entrega local exige un commit real; el sentinel del laboratorio no relaja ese control. | Estado privado, snapshot, versiones e inputs |
 | PR/CI: cambios del repositorio | `ci.yml`, Make y Conftest | Pruebas/política válidas permiten revisión; fallos detienen CI. Errores del runner no prueban detección. El merge depende de reglas externas; aquí no hay admisión/publicación de imagen. | Logs CI y artefacto de workflows estáticos |
-| Preflight de entrega: fuente/workflows | `delivery.sh`: pruebas y política de workflow | PASS permite infraestructura/build; fallo o herramienta incompleta detiene. Es adicional a CI de PR. | `unit-tests.log`, `workflow-policy.json`, logs de políticas |
+| Preflight de entrega: fuente/workflows | `delivery.sh`: pruebas de servicio/workflow; el adaptador añade pruebas del laboratorio | PASS permite infraestructura/build; fallo o herramienta incompleta detiene. Es adicional a CI de PR. | `unit-tests.log`, `workflow-policy.json`, logs de políticas |
 | Build e identidad: fuente/base fijada | Buildx, `delivery.sh`: AMD64 y digest resuelto | Digest válido continúa; base inválida o error de build/registro detiene. Compilar no autoriza. | `build-inputs.json`, `build-metadata.json`, digest/tag |
 | Manifiesto protegido | Contratos y Conftest | Forma/digest/restricciones válidos continúan; rechazo atribuible bloquea; error de parser/evaluador detiene por separado. | `tfm-golden.json`, `manifest-policy.json` |
 | SBOM original de imagen | Trivy, esquema CycloneDX 1.7 y contrato de contenido | Validez permite análisis; documento inválido o generación fallida detiene. No demuestra completitud. | `sbom.cdx.json`, informe de esquema, comando/log/exit |
@@ -27,7 +30,7 @@ contexto; no son servicios aislados.
 | Attestation de resultados | Revalidación de análisis, contrato `golden-path-v1`, firma y nueva verificación | Solo éxitos obligatorios permiten emitir; fallo detiene. Admisión ocurre después, sin requisito circular. | Predicado/bundle de resultados, `CI-authorized.*`, perfil |
 | Admisión de petición real | Kyverno y `actor` restringido; runtime, repositorio, firma, SBOM, procedencia y resultados | Reglas permiten o deniegan; indisponibilidad de webhook/registro/confianza detiene y no demuestra detección. No escanea vulnerabilidades. | Políticas aplicadas, petición, respuesta, inventarios |
 | Despliegue, rollout y HTTP | `workload.sh`, kubectl/curl y comprobación de digest de Pods | Pods listos con digest esperado y respuesta correcta prueban observación funcional acotada. Timeout/digest/HTTP incorrectos fallan aunque hubo admisión. | Deployment/Pods, health/version/quote, reemplazo L01 |
-| Conservación y limpieza | Trap de `demo.sh`, `lab.sh`, `package-evidence.py` | Conserva fallo original y primer archivo/diagnóstico; elimina solo recursos propios validados. Error de limpieza/empaquetado sigue siendo fallo. | Paquete permitido y hashes; sin credenciales/estado privado |
+| Conservación y limpieza | Trap de `src/run-delivery.sh`, adaptador local y `src/package_evidence.py`; el trap del laboratorio sigue en `demo.sh` | Conserva fallo original y primer archivo/diagnóstico; elimina solo recursos propios validados. Error de limpieza/empaquetado sigue siendo fallo. | Paquete permitido y hashes; sin credenciales/estado privado |
 
 La [tabla EN](../EN/how-it-works.md#phases-and-stopping-points) enlaza productores y
 salidas detalladas. [Arquitectura](../../implementacion/docs/ES/architecture.md),

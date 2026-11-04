@@ -1,6 +1,6 @@
 # English documentation
 
-[One legitimate local delivery (P03)](../../../docs/EN/legitimate-delivery.md) ·
+[One legitimate local delivery](../../../docs/EN/legitimate-delivery.md) ·
 [Propose a use case](../../../docs/EN/use-case-intake.md)
 
 [Product guide](../../../docs/EN/README.md) · [Laboratory entry](../../../lab/README.md) · [Current P00 receipt assessment](../../../docs/EN/maintainers/repository-map.md#p00-baseline).

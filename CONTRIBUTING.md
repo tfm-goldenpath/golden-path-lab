@@ -1,6 +1,6 @@
 # Contributing
 
-For product orientation, start with the [reading guide](docs/EN/getting-started.md). Before extraction or path changes, consult the [ownership inventory and migration contract](docs/EN/maintainers/repository-map.md). P01 establishes documentation and inventory only: runtime paths, workflow identities and historical evidence remain unchanged.
+For product orientation, start with the [reading guide](docs/EN/getting-started.md). Before extraction or path changes, consult the [ownership inventory and migration contract](docs/EN/maintainers/repository-map.md). P01 established documentation and inventory. The bounded P01b local path now lives in `bin/` and `src/`; compatibility commands, workflow identities and historical evidence remain supported.
 
 Contributions should keep the laboratory reproducible and its conclusions traceable. Start with the [README](README.md), [architecture](implementacion/docs/EN/architecture.md), [delivery contracts](implementacion/docs/EN/delivery-contracts.md) and the relevant scenario record. English is primary for code, tests and contributions; update affected Spanish commands, expectations and explanations alongside the English guide.
 
@@ -29,7 +29,7 @@ make -C implementacion test
 
 `make test` runs environment, service/unit, policy and offline Cosign checks. Targeted entry points are `test-env`, `test-unit`, `test-policies` and `test-bundles`. There are no `lint` or `format-check` targets yet. Report unavailable tools and unrun checks instead of presenting a partial run as complete.
 
-When the change affects registry access, trust, evidence consumption or admission, follow the [runbook](implementacion/docs/EN/cases/L01-F13/runbook.md) for the relevant real integration. The local entry point is `make -C implementacion demo`; GitHub integration is a separate manual workflow on the exact reviewed revision. Ordinary documentation edits do not require a full cluster run.
+When the change affects registry access, trust, evidence consumption or admission, follow the [runbook](implementacion/docs/EN/cases/L01-F13/runbook.md) for the relevant real integration. Use `bash bin/deliver local` for one legitimate local delivery and the laboratory runbook for `make -C implementacion demo`; GitHub integration is a separate manual workflow on the exact reviewed revision. Ordinary documentation edits do not require a full cluster run.
 
 CI runs the shared tests for pull requests and pushes. Instructions, skills and a passing local command do not enforce merging: required checks and permissions depend on the repository's configured rules. Source files alone do not configure those rules or grant remote access.
 

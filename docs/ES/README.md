@@ -1,15 +1,16 @@
 # Guía del producto y la implementación
 
-[Una entrega legítima local (P03)](legitimate-delivery.md)
-
 [Repositorio](../../README.es.md) · [English](../EN/README.md)
 
-1. [Primeros pasos](getting-started.md): entender e inspeccionar evidencias sin clúster.
-2. [Cómo funciona](how-it-works.md): fases implementadas, decisiones, evidencias y límites.
-3. [Laboratorio](../../lab/README.es.md): ejecución, escenarios, medición y defensa.
-4. [Mapa del repositorio (EN)](../EN/maintainers/repository-map.md): inventario canónico, fronteras propuestas y contrato de migración.
-5. [ADR de selección de atestaciones](maintainers/attestation-selection-contract.md): contrato propuesto de autorización y viabilidad oficial; las políticas activas no cambian.
-6. [Proponer un caso de uso](use-case-intake.md): comparte una necesidad o mejora.
+1. [Entender las etapas y controles de entrega](how-it-works.md).
+2. [Ejecutar una entrega legítima local](legitimate-delivery.md): `bash bin/deliver local`; Linux AMD64, herramientas fijadas, Docker y fuente confirmada en Git, con el perfil local fijo de quotes-node.
+3. [Explorar escenarios y experimentos registrados](../../lab/README.es.md).
+
+Para orientarte sin ejecutar, consulta [primeros pasos](getting-started.md).
+Para mantenimiento: [contrato de módulos](../../implementacion/docs/ES/architecture.md#organización-implementada-y-dependencias),
+[mapa del repositorio](../EN/maintainers/repository-map.md) y [decisiones actuales](../../implementacion/TODO.md#current-decisions-and-actions).
+[Propón un caso de uso](use-case-intake.md) o consulta el
+[ADR propuesto de selección](maintainers/attestation-selection-contract.md).
 
 La [arquitectura](../../implementacion/docs/ES/architecture.md), los
 [contratos](../../implementacion/docs/ES/delivery-contracts.md) y el

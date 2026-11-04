@@ -2,62 +2,54 @@
 
 [Índice](README.md) · [English](../EN/getting-started.md)
 
-## Leer e inspeccionar sin clúster
+## Localizar la implementación
 
-1. Lee [el flujo de entrega](how-it-works.md). Sigue un digest desde el build hasta autorización y admisión; separa el informe de vulnerabilidades del SBOM.
-2. Abre la [matriz de preparación](../../implementacion/docs/ES/evaluation-readiness.md). Elige una observación y anota SHA, carril, ejecución y frontera. Código o CI verde no demuestran ejecución de escenario.
-3. Consulta el [registro A corregido](../../implementacion/registros/lane_a_corrected_91a33e9_ES.md) y su [índice JSON](../../implementacion/registros/lane-a-corrected-91a33e9.json). Los [resultados de campaña](../../implementacion/docs/ES/paired-rg-campaign-results.md) miden tiempos y no repiten el catálogo funcional.
-4. Lee la [declaración canónica](../../implementacion/registros/evaluation_acceptance_20261004_ES.md) con sus fechas. No acepta nuevas revisiones ni negativos alojados sin ejecutar.
-5. Para logs seleccionados y el vídeo silencioso original, abre la [demo grabada](https://tfm-goldenpath.github.io/golden-path-lab/demo/). Es una presentación congelada, no una ejecución activa ni el archivo completo. La [recuperación de release](../../implementacion/docs/ES/lab-release-freeze.md) requiere anclas independientes y capacidad; el [estado P00 (EN)](../EN/maintainers/repository-map.md#p00-baseline) distingue lo verificado.
-
-Estos pasos solo necesitan navegador. En un checkout existente, estos comandos
-solo leen la implementación y el índice pequeño versionado:
+Lee [las etapas y controles](how-it-works.md) y sigue un digest con la
+[tabla de módulos](../../implementacion/docs/ES/architecture.md#organización-implementada-y-dependencias).
+Estos comandos solo leen la implementación canónica y sus entradas conservadas:
 
 ```bash
-git ls-files implementacion/scripts/lib implementacion/policies
-cat implementacion/registros/lane-a-corrected-91a33e9.json
+git ls-files bin src implementacion/services/quotes-node implementacion/policies implementacion/schemas implementacion/tooling
+# Adaptadores de compatibilidad y laboratorio:
+git ls-files implementacion/scripts/lib
 ```
 
-Leer índices/hashes no vuelve a autenticar firmas. Atribuye fallos usando informe
-original, regla y contexto; un código no cero no prueba rechazo de política.
-Usa herramientas revisadas, no código recuperado de los archivos.
+`bin/deliver` es la entrada; `src/run-delivery.sh` ordena el motor compartido y
+es propietario de la limpieza. `implementacion/scripts/lib/` contiene imports
+de compatibilidad y comportamiento de laboratorio, no un segundo motor. Políticas,
+esquemas, servicio seleccionado y herramientas siguen bajo `implementacion/`.
 
-## Ejecutar deliberadamente el laboratorio
+## Ejecutar la entrega local disponible
 
-Sigue la [entrada al laboratorio](../../lab/README.es.md) y su runbook.
-El devcontainer de implementación solicita 4 CPU / 16 GB RAM / 32 GB disco; el entorno
-solicitado para P01 es 4 CPU / 16 GB / 32 GB. Hay que comprobar espacio libre real.
-Ejecutar requiere Linux AMD64, herramientas fijadas, Docker y red.
-Tras preparar el entorno, desde la raíz:
+Sigue [la guía operativa](legitimate-delivery.md): requisitos, capacidad,
+`bash bin/deliver local`, resultados y limpieza. Requiere Linux AMD64,
+herramientas fijadas, Docker, red y fuente confirmada en Git. El devcontainer
+solicita 4 CPU / 16 GB RAM / 32 GB disco; manda el espacio libre real.
+Consulta los [límites actuales](legitimate-delivery.md#alcance-actual).
 
-```bash
-make -C implementacion doctor
-make -C implementacion test
-make -C implementacion demo
-```
+<a id="leer-e-inspeccionar-sin-clúster"></a>
+<a id="ejecutar-deliberadamente-el-laboratorio"></a>
 
-`doctor` comprueba herramientas y Docker. `test` ejecuta pruebas compartidas de
-entorno, servicio/unidad, políticas, criptografía offline, workflows estáticos,
-defensa y release; no es una entrega Kubernetes. `demo` construye imágenes,
-crea kind/registro/builder y namespaces, ejecuta referencia y controles con fallos
-y recuperación, limpia infraestructura propia y conserva evidencias en
-`implementacion/evidence/raw/` y `implementacion/evidence/packages/`.
-Estado privado/claves y bases congeladas tienen reglas de conservación separadas.
-`make reference` es referencia experimental sin controles G, no una alternativa
-segura para consumidores. La integración alojada publica imágenes/evidencias y
-requiere autorización remota deliberada.
+## Explorar la investigación registrada
 
-## Plantilla de consumidor: prevista
+La [ruta del laboratorio](../../lab/README.es.md) contiene ejecución demo/referencia,
+escenarios, mediciones y presentación. Para leer sin clúster, consulta sus registros
+y la [matriz de preparación](../../implementacion/docs/ES/evaluation-readiness.md).
+Identifica SHA, carril, ejecución y frontera antes de interpretar un resultado.
+Código, CI verde o merge no prueban una nueva ejecución ni aceptación humana.
+Leer un hash no reautentica firmas; usa herramientas revisadas, no código recuperado
+del archivo.
 
-El [coordinador local P03](legitimate-delivery.md) permite una entrega legítima
-con estado nuevo en este checkout. Su interfaz es interna; no hay instalador
-autónomo ni plantilla de consumidor. El runner de una entrega medida conserva
-su finalidad investigadora. Siguen P01b separación física → P03b consolidación
-de interfaz → P04 plantilla y las ramas independientes de actualización; véase el [contrato](../EN/maintainers/repository-map.md#migration-sequence).
+<a id="plantilla-de-consumidor-prevista"></a>
+
+## Siguiente implementación
+
+La ruta local funciona hoy. La [consolidación de interfaz propuesta](../../implementacion/TODO.md#next-implementation-increment)
+precede a la plantilla independiente y después a una prueba Java.
 
 ## Reutilización y soporte
 
-En la base P01 no hay `LICENSE` raíz, `SECURITY.md`, `SUPPORT.md` ni SLA declarado.
+En el checkout revisado no hay `LICENSE` raíz, `SECURITY.md`, `SUPPORT.md` ni SLA declarado.
 La visibilidad pública no concede reutilización sin restricciones. El propietario
 debe decidir los términos. Se mantienen las licencias de
 [CycloneDX](../../implementacion/schemas/cyclonedx-1.7/LICENSE) e

@@ -227,3 +227,143 @@ P03 integrations still refer to implementation `e3850a4` and AJV 8.17.1.
 Separate dependency, devcontainer (including optional Codex) and security-toolchain
 refresh branches are specified in TODO and the maintenance sequence. They are
 outside this diff; physical separation and the consumer template remain later work.
+
+## P01b implementation boundary — 4 November 2026
+
+Explicit owner authorization covers physical extraction of the single local
+quotes-node path, compatibility adapters, commit/push and one draft PR. Baseline:
+`1f9cc61d267aeeff1df1f7e9fa88d74cbaeb4211` (fetched main, merged PR #73).
+Untracked root npm files, existing evidence and historical review/custody records
+are preserved. This authorization does not close P00/P01 human gates.
+
+Before editing: extract `bin/deliver` and cohesive `src/` context, delivery, trust,
+workload and local environment modules; retain laboratory source selection,
+scenario readiness, R execution, measurements/manual adapters and archive
+allowlists outside that dependency closure. Neutral contract/authentication,
+source/build capture and archive primitives have one implementation. The current
+service, pinned tooling, policies and schemas remain explicit inputs under
+`implementacion/`; moving all configuration and laboratory files is deferred.
+
+Acceptance: legacy entry points/CWD/statuses and provenance identities remain;
+an isolated genuine sparse checkout runs actual delivery with laboratory
+execution modules absent, followed sequentially by a representative lab run.
+Focused boundary/compatibility tests, doctor/shared suite, inventory and links
+are required. Real execution, package hashes, retirement and limits are recorded
+below when observed; a static dependency check alone is insufficient.
+
+### P01b pre-integration checks
+
+- `doctor` PASS with existing pinned tools (no installation/update). Shared
+  `make test` PASS: 9 environment, 1,007 service/unit, 130 Python policy, real
+  Conftest/Kyverno, offline Cosign, static F01/F02, 153 defense and 22 release tests.
+- Focused affected checks: 169 PASS. New boundary tests execute actual service,
+  policies, build capture, packaging and verification in a lab-free projection;
+  synthetic unit Git identity is explicitly labelled and not integration evidence.
+- Exact inventory: 572 paths; 10 regressions PASS. Local link/anchor check: 473
+  links in 15 changed Markdown files PASS. `git diff --check` PASS.
+- Initial focused/shared failures are retained: isolated harnesses needed the
+  extracted module paths, and committed input verification needed Git executable
+  bits rather than unrelated group-write permission bits. No oracle was relaxed.
+- Logs: `implementacion/evidence/raw/product-core-separation/` (outside Git).
+- PR #73 issue form: read-only URL open attempted; available web access rejected
+  the URL as restricted. No browser runtime is available. The three required/two
+  optional fields and guide links were **not checked in the rendered GitHub form**;
+  no issue was submitted. Existing local form checks remain separate.
+
+Before real integration: 4 CPUs, about 13 GiB available RAM, 8.6 GiB free on the
+shared workspace/Docker filesystem and 108 GiB on separate `/tmp`; no containers,
+three pre-existing volumes preserved. Pinned kind/zot/BuildKit images are cached.
+The existing real `security-refresh-db` (publisher update 28 October 2026) is
+selected through `GP_VULNERABILITY_DB`; each run retains its own immutable
+snapshot on `/tmp`. This is compatibility validation against those identified
+bytes, not a current vulnerability reassessment. Cold 8-GiB and 3-GiB reserve
+checks are unchanged.
+
+### P01b observed execution and handoff
+
+Candidate history: extraction `8eca007ea4873751212a2134ed4ad2e067623955`,
+entry-directory compatibility `185401c2796a3931b28f95c13a2d243119b916e4`, and
+pure shell compatibility imports `6e721a1fcf5d08d763a1e8640525207a6954a2cc`.
+The last correction replaces external `dirname` in **sourced laboratory
+adapters** with Bash expansion. Final documentation follows these tested commits;
+no integration is attributed to a later documentation commit.
+
+| Execution | Exact candidate / result | Preserved evidence |
+| --- | --- | --- |
+| Genuine lab-free sparse checkout; `tests/integration/product-boundary.py --output /tmp/gp-product-core-validation/export-01 --run` | `185401c`; `delivery-UMD8FHsa` PASS including finalization. Original Git HEAD, 61 selected committed inputs (28 under `bin/`/`src/`), actual service/tooling/policies/schemas; no scenario, measurement, manual or defense implementation. All protected stages completed. | `product-core-separation/export-01/verified.json`, original export receipt, raw evidence, console and package |
+| First `make -C implementacion demo` | `185401c`; `run-WKGLaeqZ` ERROR in preflight: strict module-import test detected external `dirname`. Infrastructure, build and scenarios NOT_REACHED. Make exit 2; underlying failure 1. | `product-core-separation/laboratory-01.log`, attempt/package verification receipts; raw `run-WKGLaeqZ` and its archive |
+| Fresh `make -C implementacion demo` after correction | `6e721a1`; `run-M7Hm2UlM` PASS, exit 0. L01 and shared L03/L04 replacement, L06, directed CI/admission checks and F11/F12 rejections completed. Optional L05 NOT_EXECUTED. | `product-core-separation/laboratory-02.log`, raw `run-M7Hm2UlM`, audit/package/retirement receipts |
+
+Paths above are relative to `implementacion/evidence/raw/`; canonical laboratory
+archives are under `implementacion/evidence/packages/`. The product archive/raw
+copy is also retained in `product-core-separation/export-01/`. Original export
+and private recovery remain locally preserved, outside Git; a separate ignored
+private recovery copy is under `.tmp/product-core-separation/`. These are local
+observations, not verified external custody or human acceptance.
+
+The product image is
+`sha256:56e0b30541ada6787b57c1b57fc18e78122bd971cd67de4d046030ef0f5bf37d`;
+source snapshot
+`0f033f26404b31413a1687c7b9ca1265b77e7cca6391bc9862bf2a2c012a91ab`.
+The laboratory initially delivered
+`sha256:0c9d4aeefd7e56f5b42cbc9b77553c7884709415d428fe3eff564f49c7f389ab`
+and replaced it with
+`sha256:c6545a0fc12193911ee926565eed88a33fcfae06c4e48108f6f8d2c03d63705e`;
+source snapshot
+`2f2bbc180e4565f6e8ffab5c4fb81d88ccaac13d641eaa08b26c68f6d6030b0c`.
+`product-input-continuity.json` records an empty diff across every exported
+product input between `185401c` and `6e721a1`. Both integrations use the retained
+DB identified above; original report bytes and DB identities are preserved.
+
+Independent archive verification checked the outer checksum, safe regular
+members and every internal hash using the extracted verifier:
+
+| Archive | SHA-256 | Internal hashes |
+| --- | --- | ---: |
+| `delivery-UMD8FHsa.tar.gz` | `a315cee5b04da42bb39a29e9724a70e85466ee83db1f23f8e7a24219a2d98599` | 160 |
+| Failed `run-WKGLaeqZ.tar.gz` | `6c9db41f63a92862177a91e2a8b96c0bbc8127ab015b61e03a4450c81742edc3` | 5 |
+| `run-M7Hm2UlM.tar.gz` | `7417e9de3c6f7ef3fd02cf69dea6d2cd852d9a3da364aa7c142ee25b17509dc8` | 1,723 |
+| Historical P03 `delivery-FKciP7Y2.tar.gz` | `a8bb11783170711a2ad8e847df964fd01b389f0eaadac4cdda4cf4804a28c6d2` | 163 |
+
+The existing lane-A auditor passes 26 applicable boundaries on the successful
+laboratory run. Its full-catalogue aggregate remains FAIL because it also requires
+the unselected L05 pair; the original report is retained, not relabelled PASS.
+An initial relative-directory audit invocation produced six filename-association
+failures; repeating with canonical absolute evidence paths resolves those six.
+Both audit reports remain available. This is one representative integration,
+not a full scenario catalogue, vulnerability suite, campaign or independent
+sample for each shared L01/L03/L04 observation.
+
+After the import correction, `make -C implementacion test` passes on `6e721a1`:
+9 environment, 1,009 service/unit, 130 Python policy tests, real Conftest/Kyverno,
+offline Cosign, static F01/F02, 153 defense and 22 release tests
+(`shared-third.log`). `doctor` passed earlier with the same pinned environment.
+Focused tests cover bare/absolute/legacy entry directories, pure imports,
+source tampering, ambiguous roots, failure classifications, foreign-resource
+refusal and packaging compatibility. Final documentation checks pass: exact 572-path inventory, 10 inventory
+regressions, 473 local links/anchors across 15 changed Markdown files and
+`git diff --check`. No dependency, policy, schema, Action or
+admission-engine version changed.
+
+Each successful run retired its three recorded containers and two recorded
+volumes. Independent Docker inventory checks confirm all six container IDs and
+four owned volumes absent, with the three pre-existing volumes retained. Repeated
+legacy product cleanup exits 0 and leaves the first diagnostics/archive unchanged.
+The runs were sequential. Lowest observed Docker/workspace free space was about
+6.8 GiB; after retirement it is about 8.5 GiB (32-GiB filesystem), with 103 GiB
+on separate `/tmp`, 12 GiB available RAM and 80% free workspace inodes. The
+3-GiB reserve and operation-specific growth checks were never lowered. Original
+snapshots and recovery files were not pruned.
+
+Hosted workflows and producer identities are unchanged. A retained comparison
+finds the seven relocated trust/contract helpers byte-identical after normalizing
+imports. Local runs do not prove hosted OIDC, certificate or transparency behavior;
+no hosted integration or publishing workflow was dispatched. Hosted readiness
+remains pending its separately authorized real run. PR #72, consumer interfaces,
+Java, admission-selection blockers and P00/P01 human gates remain separate.
+Rollback is a source revert of this bounded PR; retain all original archives,
+raw evidence and private recovery, and use their recorded source versions.
+
+| Activity | AI contribution | Human review | Decision |
+| --- | --- | --- | --- |
+| P01b extraction, compatibility tests, real local integrations and documentation | OpenAI Codex / GPT-6 | Pending | Draft; bounded technical checks do not establish human acceptance or custody |

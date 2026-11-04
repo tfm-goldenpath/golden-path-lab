@@ -1,41 +1,13 @@
 #!/usr/bin/env python3
-"""Package only allow-listed evidence, never credentials, kubeconfig or run state."""
-import base64
-import binascii
+"""Laboratory archive selection; canonical archive writer is shared with delivery."""
 import hashlib
 import json
 import os
 import re
 import sys
-import tarfile
-import tempfile
 from pathlib import Path
-
-def is_public_key_pem(content):
-    # Archive boundary only: actual key validity/trust belongs to Cosign.
-    match = re.fullmatch(
-        rb'-----BEGIN PUBLIC KEY-----\r?\n((?:[A-Za-z0-9+/=]+\r?\n)+)'
-        rb'-----END PUBLIC KEY-----(?:\r?\n)?', content)
-    if not match:
-        return False
-    encoded = match.group(1).replace(b'\r', b'').replace(b'\n', b'')
-    try:
-        decoded = base64.b64decode(encoded, validate=True)
-    except binascii.Error:
-        return False
-    return bool(decoded) and base64.b64encode(decoded) == encoded
-
-def write_metadata(destination, text):
-    if destination.is_symlink():
-        raise ValueError('Refusing symlinked evidence metadata: ' + destination.name)
-    descriptor, temporary = tempfile.mkstemp(dir=destination.parent)
-    try:
-        with os.fdopen(descriptor, 'w', encoding='utf-8', newline='\n') as stream:
-            stream.write(text)
-        os.replace(temporary, destination)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
+from package_evidence import is_public_key_pem, write_metadata, shareable, write_package, package as delivery_package
 
 def scenario_summary(source, files):
     """Report retained observations, never infer success from a directory."""
@@ -108,20 +80,10 @@ def manual_task_files(source):
             raise ValueError('Manual event evidence is missing, unsafe or changed')
     return selected
 
-def shareable(file):
-    allowed = {'.json', '.log', '.txt', '.yaml'}
-    excluded = {'state.json', 'config.json', 'kubeconfig', 'cosign.key', 'SHA256SUMS.txt'}
-    if not file.is_file() or file.is_symlink() or file.name in excluded:
-        return False
-    if file.suffix not in allowed and file.name != 'development-public-key.pem':
-        return False
-    content = file.read_bytes()
-    if re.search(rb'-----BEGIN [^\r\n]*PRIVATE KEY-----', content): return False
-    return file.name != 'development-public-key.pem' or is_public_key_pem(content)
-
 def package(source, output, status, profile="laboratory"):
     if profile not in ("laboratory", "delivery-v1"):
         raise ValueError("Unknown evidence package profile")
+    if profile == 'delivery-v1': return delivery_package(source, output, status, profile)
     source, output = Path(source).resolve(), Path(output).resolve()
     candidates = list(source.iterdir())
     runtime_directories = ['runtime'] + ['runtime/' + case for case in ('F11', 'F12', 'L06')] + [
@@ -149,19 +111,6 @@ def package(source, output, status, profile="laboratory"):
         if name in names.values(): raise ValueError('Conflicting manual evidence archive path')
         if shareable(file): names[file] = name
     files = list(names)
-    output.mkdir(parents=True, exist_ok=True)
-    target = output / (source.name + '.tar.gz')
-    checksum = output / (target.name + '.sha256')
-    for destination in (target, checksum):
-        if profile == "delivery-v1" and destination.exists():
-            raise ValueError("Refusing to replace a delivery package")
-        if destination.is_symlink() or (destination.exists() and not destination.is_file()):
-            raise ValueError('Refusing unsafe evidence output: ' + destination.name)
-    summary = source / 'execution-summary.json'
-    sums = source / 'SHA256SUMS.txt'
-    for metadata in (summary, sums):
-        if metadata.is_symlink():
-            raise ValueError('Refusing symlinked evidence metadata: ' + metadata.name)
     static = source / 'result.json'
     try:
         value = json.loads(static.read_text()) if static in files else {}
@@ -177,44 +126,13 @@ def package(source, output, status, profile="laboratory"):
         measurement_status = json.loads(measurement.read_text()).get('classification', 'indeterminate') if measured else None
     except (ValueError, AttributeError):
         measurement_status = 'INVALID_RECORD'
-    if profile == 'delivery-v1':
-        result = json.loads((source / 'result.json').read_text())
-        if result.get('schema') != 'legitimate-delivery-result/v1' or result.get('status') != status:
-            raise ValueError('Invalid legitimate delivery result')
-        if any(re.match(r'^(?:F[0-9]{2}|L[0-9]{2}|measurement|manual-task|defense-demo)', p.name) for p in files):
-            raise ValueError('Laboratory evidence in delivery profile')
-        write_metadata(summary, json.dumps({
-            'schema': 'legitimate-delivery-package/v1', 'profile': profile,
-            'run': source.name, 'status': status, 'result': 'result.json',
-            'scope': 'One legitimate local quotes-node delivery; no scenario, replacement, measurement or hosted claim',
-            'secretsIncluded': False}, indent=2) + '\n')
-    else:
-        write_metadata(summary, json.dumps({'run': source.name, 'status': status,
+    summary_value = {'run': source.name, 'status': status,
             'scope': 'Directed defense presentation; inspect defense-demo.json; no complete L01 or campaign claim' if source / 'defense-demo.json' in files else 'Provisional automated technical evidence; predefined repair; no human effort or acceptance' if scripted else 'One human-operated lane A manual task; inspect manual-task.json and the separate task event record; human acceptance pending' if manual else 'One legitimate paired R/G measurement arm; inspect measurement.json; no fault trials or campaign acceptance' if measured else 'Shared paired R/G preparation; outside primary delivery intervals' if preparation else 'F01/F02 static workflow evaluation; L01 workflow acceptance only; not campaign measurements' if static_workflow else 'L01/L03/L04 delivery + preissuance F13 and runtime F11/F12/L06; optional local F03/F04/L02 and F05/F06/F07/F08/F09/F10/F13/F14 trials and L05 source deliveries; not the experimental campaign',
             **({k: json.loads((source / 'manual-task.json').read_text())[k] for k in ('executionMode', 'dataset', 'actor', 'humanAcceptance', 'eligibleForHumanCalibration')} if scripted else {}),
             'measurementClassification': measurement_status,
             'F07': 'evidence-retained; inspect F07/recovery.json and attribution.json' if (source / 'F07').is_dir() else 'not-executed',
             'scenarios': scenario_summary(source, files),
-            'secretsIncluded': False}, indent=2) + '\n')
-    files = [p for p in files if p != summary] + [summary]
-    names[summary] = summary.name
-    write_metadata(sums, ''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + names[p] + '\n' for p in files))
-    descriptor, temporary = tempfile.mkstemp(dir=output)
-    try:
-        with os.fdopen(descriptor, 'w+b') as stream:
-            with tarfile.open(fileobj=stream, mode='w:gz') as archive:
-                for file in files + [sums]:
-                    archive.add(file, arcname=source.name + '/' + (sums.name if file == sums else names[file]), recursive=False)
-            stream.seek(0)
-            digest = hashlib.sha256()
-            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
-                digest.update(chunk)
-        os.replace(temporary, target)
-        write_metadata(checksum, digest.hexdigest() + '  ' + target.name + '\n')
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
-    print(target)
+            'secretsIncluded': False}
+    write_package(source, output, status, profile, names, summary_value)
 
-if __name__ == '__main__':
-    package(*sys.argv[1:])
+if __name__ == '__main__': package(*sys.argv[1:])

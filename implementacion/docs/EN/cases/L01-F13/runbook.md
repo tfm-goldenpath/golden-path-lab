@@ -15,6 +15,8 @@ Keep these paths under the same repository root:
 ```text
 repository-root/
 ├── .devcontainer/implementacion/devcontainer.json
+├── bin/
+├── src/
 ├── .github/workflows/
 │   └── golden-path.yml
 └── implementacion/

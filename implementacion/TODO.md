@@ -1,5 +1,67 @@
 # Incremental implementation plan
 
+## Current decisions and actions
+
+As of 4 November 2026, PR #74 is open on `refactor/product-core-separation`;
+reviewed head `2e10d1872ad0f55fc721eb09820a1b38e9274007`. This index separates
+owner decisions, engineering, unexecuted validation and deferred proposals.
+Merge/CI does not establish human acceptance, custody or untested execution.
+Dated checklists below retain their original conclusions; this index supplies
+current navigation, not replacement evidence.
+
+| Item | Current status/type | Decision owner / role | Next action | Blocks | Canonical record |
+| --- | --- | --- | --- | --- | --- |
+| Bounded local separation / PR #74 | Owner review pending; implementation and recorded local checks complete | Repository owner/reviewer | Review exact candidate and bounded acceptance; document the decision | Acceptance of this increment | [PR #74](https://github.com/tfm-goldenpath/golden-path-lab/pull/74), [validation](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026) |
+| Remaining separation, interfaces and consumer scope | Engineering next; scope proposal below | Maintainer proposes; owner approves boundary | Consolidate supported interface before defining an independent consumer template | Consumer/template claims; then Java trial | [Next increment](#next-implementation-increment), [migration map](../docs/EN/maintainers/repository-map.md#migration-sequence) |
+| License and private security route | Owner decisions pending | Repository owner | Select reuse terms and verify a private reporting channel | Declared reuse grant/private reporting instructions | [Reuse/support](../docs/EN/getting-started.md#reuse-and-support) |
+| Full historical dossier custody and detailed release review | Owner verification/review pending; partial custody confirmations retained | Evidence custodian / human reviewer | Complete required-original preservation and detailed review | Complete custody/release-review claims, not accepted reduced evaluation | [P00](#p00--laboratory-release-custody-before-product-restructuring), [custody assessment](../docs/EN/maintainers/repository-map.md#p00-baseline) |
+| PR #72 CLI update | Open; engineering compatibility validation and review pending | Tooling maintainer / reviewer | Check CLI 0.90.0 against three profiles, locks/hooks and required build/startup boundaries in separate work | Adopting #72; not #74 docs | [Update record](../docs/EN/maintainers/dependabot-tooling.md), [PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72) |
+| PR #23 AJV update | Open; superseded proposal, owner disposition pending | Repository owner | Proposed: close as superseded after reviewing main's AJV/fast-uri correction; no action taken here | Disposition of old update only | [Dependency record](../docs/EN/maintainers/dependency-refresh-validation.md), [PR #23](https://github.com/tfm-goldenpath/golden-path-lab/pull/23) |
+| Admission-selection semantics and official capability | Owner semantic decision + engineering/support gate + validation pending | Product/security owner; admission maintainer | Decide statement-byte vs experimental envelope contract; establish supported official engine and same-object binding, then full local/hosted checks | Authorization-selection implementation and CEL adoption | [ADR](../docs/EN/maintainers/attestation-selection-contract.md), [NO_GO](../docs/EN/maintainers/admission-selection-feasibility.md), [INCONCLUSIVE spike](../docs/EN/maintainers/immutable-envelope-authorization.md) |
+| Hosted trust on extracted source | Validation NOT_EXECUTED on this candidate | Owner authorizes; maintainer executes | Separately authorize exact-SHA hosted verification; preserve historical successes | Current-source hosted readiness claim, not local-path evidence | [PR #74 limits](../docs/EN/maintainers/delivery-core-validation.md#p01b-observed-execution-and-handoff) |
+| GitHub form and public Pages bytes | Two distinct validations pending | UI reviewer / release verifier | Read-only rendered form check (three required, two optional, links); independently compare served Pages bytes to preserved anchors | Rendering/public-byte claims only | [Intake checklist](#structured-use-case-intake-docsuse-case-intake), [Pages follow-up](../docs/EN/maintainers/github-actions-refresh.md) |
+| Context retrieval | Optional evaluation; INSUFFICIENT_EVIDENCE, no navigation adoption | Research owner / reviewer | Review protocol/scoring/custody; choose a further pilot only if useful | Adoption claims only; no mandatory benchmark chain | [Pilot](#g-context-retrieval-pilot-perfcodex-context-retrieval) |
+| Maintenance and dated review prompts | Historical/integrated, not future branches | Maintainer | Use merged dependency/devcontainer/security/Actions/updater work; review only remaining items above | No renewed implementation gate | [Maintenance history](#subsequent-maintenance-branches-outside-p03) |
+
+The 2 November review target below is **historical**, not a new scheduled action;
+no fresh engine-release investigation is claimed here. The separate 30 November
+09:00 Europe/Madrid reminder remains unchanged, not a retirement date or upgrade
+authorization. The [accepted reduced evaluation](registros/evaluation_acceptance_20261004_ES.md)
+and deferred manual measurement/calibration scope are not reopened.
+
+### Next implementation increment
+
+Proposed branch: **`refactor/delivery-interface-consolidation`**. Retain the fixed
+local quotes-node path and all legacy commands while clarifying supported inputs,
+results, adapter callbacks and compatibility/deprecation policy. Inspect dynamic
+scope and contract CLI/file coupling; simplify only proven duplication, without
+adding a framework, plugin system or generic configuration API. The
+[module contract](docs/EN/architecture.md#module-contract) identifies candidates.
+Acceptance proposed: preserved arguments/CWD/statuses, trust identities, source
+capture, failure attribution, cleanup and archive behavior; focused interface
+checks plus existing shared checks, with real local/laboratory validation for any
+changed runtime boundary. No new integration is needed for this documentation edit.
+Template scope follows that interface review and requires a real independent
+consumer execution; it is not delivered by consolidation.
+
+### Deferred product requests
+
+These requested directions are **not implemented and do not block this merge**.
+Product/control owners define requirements and oracles; maintainers implement and
+validate. Suggested increments and acceptance boundaries below are proposals,
+not authorizations. Draft pull requests are already the selected AI remediation
+outcome; only their operating requirements remain open.
+
+| Future item | Unanswered requirements | Proposed next increment and acceptance boundary |
+| --- | --- | --- |
+| Java trial | Runtime/build tool, sample API and parity expectations | After independent template, deliver one genuine Java consumer with the same required evidence; no general Java-support claim from one trial. |
+| AI blocker diagnosis → draft PR | Allowed blockers, readable evidence, redaction, credentials, patch scope and retry limits | One opt-in diagnosis/repair case ending in a draft PR with reproducible tests and human review; AI cannot authorize delivery or enter measured manual tasks. |
+| Quality/test-coverage gates | Metrics, thresholds, exclusions, tools and ownership of the oracle | One deterministic gate with known pass/fail/error fixtures and a real service check; do not equate coverage with correctness. |
+| Deployed-image vulnerability reassessment and redeployment freshness | Trigger/cadence, DB/evidence age, exact running digest and reject/revoke/reprepare behavior | Bounded reassessment of one deployed digest plus new-delivery freshness rules; retain original authorization, reports and failure/unreached states. Separate from currently deferred continuous revocation in the [ADR](../docs/EN/maintainers/attestation-selection-contract.md). |
+| Independent SBOM/image inventory comparison | Independent source, matching rules, scope and discrepancy oracle | One genuine image comparison with attributable differences; no inventory-completeness claim from schema validity. |
+| Scoped default Conftest/Kyverno policies | Supported workloads/namespaces, rule catalogue, exceptions and change ownership | One agreed default scope with matching tests per consumer and real admission where required; preserve existing oracles until explicitly changed. |
+| Manager-oriented control/evidence dashboard | Audience decisions, data sources, freshness, access and unknown-state presentation | Read-only view of verified records linking controls to evidence; distinguish PASS/rejection/error/unreached and historical/current data. Existing defense presentation is not this product. |
+
 ## P00 — laboratory release custody before product restructuring
 
 - [ ] Preparation/tooling reviewed: [EN guide](docs/EN/lab-release-freeze.md), [ES guide](docs/ES/lab-release-freeze.md), [validation](registros/lab_release_freeze_EN.md). Implementation alone does not satisfy review.
@@ -50,6 +112,22 @@ permits the additive `docs/use-case-intake` increment independently of pending
 P00/P01 human acceptance. Physical restructuring, evidence custody and broader
 acceptance remain separate gates; earlier dated records retain their conclusions.
 
+## P01b — bounded local product separation (`refactor/product-core-separation`)
+
+Current owner authorization (4 November 2026) explicitly permits extraction,
+relocations and compatibility wrappers for the legitimate local quotes-node path,
+plus commit/push and one draft PR. It does not close P00/P01 custody or human
+review, or rewrite their earlier conclusions. Actual baseline: fetched main
+`1f9cc61d267aeeff1df1f7e9fa88d74cbaeb4211` (PR #73).
+
+- [x] Extract canonical `bin/deliver` / `src/` delivery, evidence/trust, ordinary workload and neutral local lifecycle; keep one shared implementation for laboratory callers.
+- [x] Keep scenario dispatch/mutations, R, measurement/manual adapters and archive allowlists outside the product dependency closure; preserve commands and signing identities.
+- [x] Validate the bounded candidate: real sparse-checkout delivery `delivery-UMD8FHsa` on `185401c`, representative lab `run-M7Hm2UlM` and shared suite on `6e721a1`; verify archives/retirement and retain the failed first lab attempt. Product inputs are identical across those candidates; see the [existing validation record](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
+- [ ] Human review of this bounded increment. No repository-wide separation claim.
+- Remaining physical/mixed interfaces: neutral policies/schemas/pins/tooling and selected synthetic service still under `implementacion/`; laboratory adapters/tests remain there; shared contracts retain compatibility namespaces/profiles and hosted trust adapters. Configuration is internal, fixed to quotes-node/local.
+- Next: interface consolidation → independent consumer template → Java trial. Separate CLI compatibility work for Dependabot PR #72 remains outside this branch.
+- Admission-selection capability/validation blockers, hosted negative gaps, deferred human calibration, new controls, dashboard and release work remain unchanged. No campaign rerun or publishing dispatch is authorized here.
+
 ## Structured use-case intake (`docs/use-case-intake`)
 
 - [x] Start from fetched main `3e5a41c0d94ab8e68b152cc47991812b61e066f0` (PR #71) in a clean worktree, preserving unrelated work.
@@ -77,7 +155,12 @@ of Graphify, Serena or Repomix belongs to this increment.
 
 ## Subsequent maintenance branches (outside P03)
 
-Execute each branch separately with a new baseline. “Latest” means the stable,
+Current summary: dependency refresh (#62), devcontainer refresh (#63), security
+toolchain refresh (#64), Actions refresh (#70), Dependabot setup (#71) and intake
+(#73) are merged. Their dated validation and pending human/custody decisions below
+remain unchanged. These are implemented maintenance records, not future branches.
+
+Historical planning instruction: execute each branch separately with a new baseline. “Latest” means the stable,
 supported release checked on its implementation date, explicitly pinned and
 tested; never floating `latest` or a claim of no vulnerabilities. A real blocker
 requiring a security patch needs a separate bounded patch and restored baseline,
@@ -191,8 +274,11 @@ runner/analyzer, original observations and executed-source hashes.
 
 ### Proposed parallel branch pairs and sequencing
 
-These are coordination proposals, not branches created or additional work started
-by this pilot. Names newly proposed below remain proposals until selected.
+Historical coordination proposals from the pilot follow. The pilot, Actions
+refresh, Dependabot setup and intake are now merged; bounded local separation is
+implemented in open PR #74. The current next branch is
+`refactor/delivery-interface-consolidation` above. The old pairs are not a work
+queue or renewed authorization; unselected future names remain proposals.
 
 | Pair | Scope and acceptance boundary |
 | --- | --- |

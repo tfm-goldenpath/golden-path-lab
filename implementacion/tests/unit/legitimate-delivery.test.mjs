@@ -25,6 +25,7 @@ function directory(t) {
 const stubs=String.raw`
 context_init() {
   contract="$P03_REAL/scripts/lab-contracts.mjs"
+  engine_root="$root/../src"; evidence_root="$root/evidence"
   state_dir=; private=; cluster=; registry=; builder=; port_pid=
 }
 create_delivery_state() {
@@ -38,7 +39,7 @@ perform() {
  if [[ "$1" == "$P03_FAIL" ]]; then false; fi
  echo "$1-completed" >> "$root/events"
 }
-capture_source_context() {
+capture_delivery_source() {
  perform source
  put sourceCommit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
  put sourceSnapshot synthetic
@@ -75,9 +76,11 @@ environment_cleanup() { echo cleanup >> "$root/events"; return "$P03_CLEANUP"; }
 function orchestration(t, fail='', cleanup=0, packageStatus=0) {
  const d=directory(t), implementation=join(d,'implementacion');
  mkdirSync(join(implementation,'scripts/lib'),{recursive:true});
+ cpSync(join(root,'../src'),join(d,'src'),{recursive:true});
+ cpSync(join(root,'../bin'),join(d,'bin'),{recursive:true});
  for(const file of ['deliver.sh',...['context','admission','lab','delivery','attestations','workload','local-delivery'].map(n=>'lib/'+n+'.sh')]) cpSync(join(root,'scripts',file),join(implementation,'scripts',file));
  cpSync(join(root,'versions.env'),join(implementation,'versions.env'));
- writeFileSync(join(implementation,'scripts/lib/local-delivery.sh'),readFileSync(join(root,'scripts/lib/local-delivery.sh'))+'\n'+stubs+(packageStatus?'\ndelivery_package() { return '+packageStatus+'; }\n':''));
+ writeFileSync(join(d,'src/lib/local-delivery.sh'),readFileSync(join(root,'../src/lib/local-delivery.sh'))+'\n'+stubs+(packageStatus?'\ndelivery_package() { return '+packageStatus+'; }\n':''));
  // Package with the real helper; no scenario/fixture/measurement/presentation tree exists.
  cpSync(join(root,'scripts/package-evidence.py'),join(implementation,'scripts/package-evidence.py'));
  const r=spawnSync('bash',['scripts/deliver.sh','local'],{cwd:implementation,encoding:'utf8',env:{...process.env,BASH_ENV:'',GP_STATE_DIR:'',P03_REAL:root,P03_FAIL:fail,P03_CLEANUP:String(cleanup)}});
@@ -124,7 +127,7 @@ test('source capture retains service tests/build controls but reads no laborator
  const paths=captured.files.map(f=>f.path);
  assert.ok(paths.includes('implementacion/services/quotes-node/test/http.test.js'));
  assert.ok(paths.includes('implementacion/services/quotes-node/.dockerignore'));
- assert.ok(paths.includes('implementacion/scripts/lib/attestations.sh'));
+ assert.ok(paths.includes('src/lib/attestations.sh'));
  assert.ok(paths.includes('.github/workflows/golden-path.yml'));
  assert.ok(paths.every(p=>!/^implementacion\/(tests|demo|evidence)\//.test(p) && !p.includes('/defense-demo/')));
 });

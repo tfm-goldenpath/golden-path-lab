@@ -242,7 +242,7 @@ class AutomatedTests(unittest.TestCase):
         before = input_hashes(database)
         script = '''set -Eeuo pipefail
 source scripts/lib/delivery.sh
-root=$1; state_dir=$2; GP_VULNERABILITY_DB=$3
+engine_root="$PWD/../src"; root=$1; state_dir=$2; GP_VULNERABILITY_DB=$3
 manual_execution_mode=scripted; GP_REUSE_VULNERABILITY_DB=1
 get() { jq -er --arg key "$1" '.[$key]' "$state_dir/state.json"; }
 put() { jq --arg key "$1" --arg value "$2" '.[$key]=$value' "$state_dir/state.json" > "$state_dir/next"; mv "$state_dir/next" "$state_dir/state.json"; }

@@ -41,7 +41,7 @@ actor() {
     return 1
   fi
 }
-lab_wait_admission_controller() { echo controller-ready >> "$GP_DIR/events"; echo '{"status":"READY","pods":["new-pod"]}' > "$state_dir/admission-controller-ready.json"; }
+local_wait_admission_controller() { echo controller-ready >> "$GP_DIR/events"; echo '{"status":"READY","pods":["new-pod"]}' > "$state_dir/admission-controller-ready.json"; }
 
 fail() { echo "$*" >&2; exit 1; }
 k() {

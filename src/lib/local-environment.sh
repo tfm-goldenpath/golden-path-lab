@@ -1,0 +1,211 @@
+#!/usr/bin/env bash
+# Local kind/zot/buildx and admission primitives; no laboratory imports.
+# Definitions only; coordinators own traps and choose readiness probes.
+
+k() { kubectl --request-timeout=60s --kubeconfig "$private/kubeconfig" --context "kind-$cluster" "$@"; }
+
+actor() { local ns=$1; shift; k --as="system:serviceaccount:$ns:deployer" "$@"; }
+
+capture_diagnostic() {
+  local destination=$1 temporary status=0
+  shift
+  if [[ -L "$destination" || ( -e "$destination" && ! -f "$destination" ) ]]; then
+    printf 'ERROR: refusing unsafe diagnostic output: %s\n' "$destination" >&2
+    return 1
+  fi
+  temporary=$(mktemp -d "$state_dir/.diagnostic-XXXXXXXX") || return 1
+  "$@" > "$temporary/output" 2>&1 || true
+  mv -fT -- "$temporary/output" "$destination" || status=1
+  rm -f -- "$temporary/output" || status=1
+  rmdir -- "$temporary" || status=1
+  return "$status"
+}
+
+local_check_environment() {
+  local tool
+  for tool in node python3 docker kind kubectl jq curl helm cosign trivy conftest tar sha256sum; do need "$tool"; done
+  [[ "$(uname -s)/$(uname -m)" == Linux/x86_64 ]] || fail 'Run the lab inside the Linux AMD64 devcontainer.'
+  docker info >/dev/null
+}
+
+# Registry and builder only; callers own absence checks and retirement.
+# The early scanner profile needs no Kubernetes cluster.
+
+local_create_registry_builder() {
+  local network=${1:-kind} registry_host attempt
+  printf '{"distSpecVersion":"1.1.1","storage":{"rootDirectory":"/var/lib/registry"},"http":{"address":"0.0.0.0","port":"5000"},"log":{"level":"warn"}}\n' > "$private/zot.json"
+  # docker cp also works when the daemon is reached through a socket from a devcontainer.
+  docker create --name "$registry" --network "$network" --label tfm.lab="$cluster" \
+    "$(jq -r '.images.zot.reference' "$lock")" serve /etc/zot/config.json >/dev/null
+  if declare -F environment_record_container >/dev/null; then environment_record_container "$registry"; fi
+  docker cp "$private/zot.json" "$registry:/etc/zot/config.json"
+  docker start "$registry" >/dev/null
+  registry_host="$(docker inspect -f "{{(index .NetworkSettings.Networks \"$network\").IPAddress}}" "$registry"):5000"
+  image_repo="$registry_host/quotes-node-$id"
+  for attempt in {1..120}; do
+    if curl -fsS --max-time 2 "http://$registry_host/v2/" >/dev/null 2>&1; then break; fi
+    [[ "$(docker inspect -f '{{.State.Running}}' "$registry")" == true ]] || { docker logs "$registry"; fail 'The zot registry stopped running.'; }
+    sleep 1
+  done
+  curl -fsS --max-time 5 "http://$registry_host/v2/" >/dev/null
+  printf '[registry."%s"]\n  http = true\n  insecure = true\n' "$registry_host" > "$private/buildkitd.toml"
+  docker buildx create --name "$builder" --driver docker-container --driver-opt "network=$network" --driver-opt "image=$(jq -r '.images.buildkit.reference' "$lock")" --buildkitd-config "$private/buildkitd.toml" >/dev/null
+  put imageRepository "$image_repo"
+  put registryNetwork "$network"
+}
+
+local_create() {
+  local registry_host kind_node attempt; local -a kind_args=()
+  record 'Create an isolated kind cluster'
+  if [[ "$(docker info --format '{{.CgroupVersion}}')" == 1 ]]; then
+    [[ "${GP_CGROUP_V1_COMPAT:-0}" == 1 ]] || fail 'This engine uses cgroup v1. Use the devcontainer on a cgroup v2 host; see the compatibility troubleshooting guide.'
+    jq -n '{kind:"Cluster",apiVersion:"kind.x-k8s.io/v1alpha4",kubeadmConfigPatches:["kind: KubeletConfiguration\napiVersion: kubelet.config.k8s.io/v1beta1\nfailCgroupV1: false"]}' > "$state_dir/kind-compatibility.json"
+    kind_args+=(--config "$state_dir/kind-compatibility.json")
+    record 'Explicit cgroup v1 compatibility: this is not the campaign environment'
+  fi
+  kind create cluster --name "$cluster" --image "$KIND_NODE_IMAGE" --kubeconfig "$private/kubeconfig" --wait 180s "${kind_args[@]}"
+  if declare -F environment_record_container >/dev/null; then environment_record_container "$cluster-control-plane"; fi
+  if [[ "$mode" == local ]]; then
+    if [[ "${CODESPACES:-}" == true ]]; then
+      python3 "${engine_root:-${root:-$PWD}/../src}/codespaces-network.py" ensure --cluster "$cluster" --output "$state_dir/codespaces-network.json"
+    fi
+    local_create_registry_builder kind
+    registry_host=${image_repo%%/*}
+    printf 'server = "http://%s"\n[host."http://%s"]\n  capabilities = ["pull", "resolve"]\n' "$registry_host" "$registry_host" > "$private/hosts.toml"
+    while read -r kind_node; do
+      docker exec "$kind_node" mkdir -p "/etc/containerd/certs.d/$registry_host"
+      docker cp "$private/hosts.toml" "$kind_node:/etc/containerd/certs.d/$registry_host/hosts.toml"
+    done < <(kind get nodes --name "$cluster")
+
+  else
+    docker buildx create --name "$builder" --driver docker-container --driver-opt "image=$(jq -r '.images.buildkit.reference' "$lock")" >/dev/null
+  fi
+  put imageRepository "$image_repo"
+}
+
+local_prepare_namespaces() {
+  local ns; local -a namespaces=("$@")
+  [[ ${#namespaces[@]} != 0 ]] || namespaces=(tfm-reference tfm-golden)
+  for ns in "${namespaces[@]}"; do
+    k create namespace "$ns"
+    k -n "$ns" create serviceaccount deployer
+    k -n "$ns" create role deployment-writer --verb=get,list,watch,create,update,patch --resource=deployments.apps,pods
+    k -n "$ns" create rolebinding deployment-writer --role=deployment-writer --serviceaccount="$ns:deployer"
+    if [[ "$mode" == github ]]; then
+      k -n "$ns" create secret generic gp-ghcr --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson="$DOCKER_CONFIG/config.json" >/dev/null
+    fi
+  done
+}
+
+# Shared by installation and chart-render compatibility checks. No infrastructure.
+
+local_kyverno_values() {
+  jq -n --arg tag "v$(jq -r '.charts.kyverno.appVersion' "$lock")" \
+    --arg admission "$(jq -r '.images.kyverno.admission.digest' "$lock")" \
+    --arg init "$(jq -r '.images.kyverno.init.digest' "$lock")" \
+    --arg readiness "$(jq -r '.images.kyverno.readiness.digest' "$lock")" \
+    --argjson insecure "$([[ "$mode" == local ]] && echo true || echo false)" \
+    '{global:{image:{registry:"ghcr.io"}},
+      features:{registryClient:{allowInsecure:$insecure}},
+      admissionController:{replicas:1,
+        container:{image:{tag:($tag+"@"+$admission)},extraArgs:{imageVerifyCacheEnabled:"false"}},
+        initContainer:{image:{tag:($tag+"@"+$init)}}},
+      test:{image:{tag:($tag+"@"+$readiness)}},
+      backgroundController:{enabled:false},cleanupController:{enabled:false},
+      reportsController:{enabled:false},reportsServer:{enabled:false},
+      webhooksCleanup:{enabled:false},crds:{migration:{enabled:false}}}'
+}
+
+local_install_admission() {
+  record 'Install mandatory admission checks and trust limited to this lab'
+  curl -fsSL --retry 3 "$(jq -r '.charts.kyverno.url' "$lock")" -o "$private/kyverno.tgz"
+  printf '%s  %s\n' "$(jq -r '.charts.kyverno.sha256' "$lock")" "$private/kyverno.tgz" | sha256sum -c --status
+  k create namespace kyverno
+  if [[ "$mode" == github ]]; then
+    k -n kyverno create secret generic gp-ghcr --type=kubernetes.io/dockerconfigjson --from-file=.dockerconfigjson="$DOCKER_CONFIG/config.json" >/dev/null
+  fi
+  local_kyverno_values > "$state_dir/kyverno-values.json"
+  helm --kubeconfig "$private/kubeconfig" --kube-context "kind-$cluster" upgrade --install kyverno "$private/kyverno.tgz" --namespace kyverno \
+    --values "$state_dir/kyverno-values.json" --wait --timeout 5m
+  local_apply_admission_policies "${1:-initial}"
+}
+
+local_apply_admission_policies() {
+  local lifecycle=${1:-update} pod rejection reason
+  [[ "$lifecycle" == initial || "$lifecycle" == update || "$lifecycle" == prepared || "$lifecycle" == authorized ]] || fail "Invalid admission lifecycle."
+  local -a renderer_args
+  renderer_args=(--mode "$mode" --repository "$repository" --commit "$commit" --image-repository "$image_repo" --sbom-version "$(get sbomVersion)" --output "$state_dir/admission-policies.json")
+  if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
+  python3 "${policies_root:-$root/policies}/kyverno/render.py" "${renderer_args[@]}"
+  k apply -f "$state_dir/admission-policies.json"
+  k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-applied.json"
+  k wait --for=condition=Ready clusterpolicy/tfm-runtime clusterpolicy/tfm-signature clusterpolicy/tfm-sbom clusterpolicy/tfm-provenance clusterpolicy/tfm-results --timeout=120s
+  # Only an existing policy revision needs a fresh cache. Initial installation
+  # must not disrupt the controller immediately before F13.
+  if [[ "$lifecycle" == update ]]; then
+    k -n kyverno rollout restart deployment/kyverno-admission-controller
+  fi
+  k -n kyverno rollout status deployment/kyverno-admission-controller --timeout=180s
+  local_wait_admission_controller
+  while IFS= read -r pod; do
+    k -n kyverno logs "pod/$pod" -c kyverno --timestamps=true > "$state_dir/admission-startup-$pod.log"
+    if grep -Eq 'failed to bootstrap non leader controllers|failed to wait for cache sync' "$state_dir/admission-startup-$pod.log"; then
+      fail 'Admission controller failed to load the policy cache.'
+    fi
+  done < <(jq -r '.pods[]' "$state_dir/admission-controller-ready.json")
+  k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-loaded.json"
+  jq -e -n --slurpfile applied "$state_dir/admission-policy-applied.json" --slurpfile loaded "$state_dir/admission-policy-loaded.json" '
+    def identity: [.items[] | {name:.metadata.name,uid:.metadata.uid,generation:.metadata.generation,spec}] | sort_by(.name);
+    ($applied[0] | identity) == ($loaded[0] | identity) and
+    ($loaded[0].items | length == 5 and all(.[];
+      (.metadata.uid | type == "string" and length > 0) and
+      (.metadata.generation | type == "number" and . > 0) and
+      any(.status.conditions[]?; .type == "Ready" and .status == "True")))
+  ' > "$state_dir/admission-policy-loaded-check.json"
+  [[ "$(actor tfm-golden auth can-i update clusterpolicies.kyverno.io 2>/dev/null || true)" == no ]] || fail 'The delivery actor has permission to change the enforcement barriers.'
+  if [[ "$lifecycle" == authorized ]]; then
+    # A complete, freshly authenticated authorized inventory is prerequisite.
+    # The actual candidate must be accepted; no prior negative request is needed.
+    attestations_ci_gate CI-admission authorized
+    local status=0
+    actor tfm-golden create --dry-run=server -f "$state_dir/tfm-golden.json" > "$state_dir/admission-readiness-probe.log" 2>&1 || status=$?
+    if [[ "$status" != 0 ]]; then
+      admission_record_failure "$state_dir/admission-readiness-probe.log" "$state_dir/admission-failure.json" "$status"
+    fi
+    return "$status"
+  fi
+  # Non-authorized probes belong to the laboratory adapter.
+  declare -F environment_readiness_probe >/dev/null || fail 'A laboratory readiness adapter is required for this lifecycle.'
+  environment_readiness_probe "$lifecycle"
+}
+
+local_wait_admission_controller() {
+  local attempt status prefix
+  for attempt in {1..30}; do
+    prefix="$state_dir/admission-controller-$attempt"
+    k -n kyverno get deployment kyverno-admission-controller -o json > "$prefix-deployment.json"
+    k -n kyverno get replicasets -o json > "$prefix-replicasets.json"
+    k -n kyverno get pods -o json > "$prefix-pods.json"
+    k -n kyverno get endpointslices -l kubernetes.io/service-name=kyverno-svc -o json > "$prefix-endpoints.json"
+    status=0
+    node "${engine_root:-$root/../src}/check-admission-controller.mjs" "$prefix-deployment.json" "$prefix-replicasets.json" "$prefix-pods.json" "$prefix-endpoints.json" > "$prefix-check.json" || status=$?
+    if [[ "$status" == 0 ]]; then
+      cp "$prefix-check.json" "$state_dir/admission-controller-ready.json"
+      return
+    fi
+    [[ "$status" == 2 ]] || fail 'Unable to validate admission controller observations.'
+    sleep 2
+  done
+  fail 'Admission controller Pods and Service endpoints did not converge.'
+}
+
+local_capture_admission_diagnostics() {
+  local pod status=0
+  capture_diagnostic "$state_dir/admission-failure-pods.json" k -n kyverno get pods -o json || status=1
+  capture_diagnostic "$state_dir/admission-failure-endpoints.json" k -n kyverno get endpointslices -l kubernetes.io/service-name=kyverno-svc -o json || status=1
+  # Names are from the owned lab namespace, not Deployment log auto-selection.
+  while IFS= read -r pod; do
+    capture_diagnostic "$state_dir/admission-failure-$pod.log" k -n kyverno logs "pod/$pod" -c kyverno --timestamps=true --tail=500 || status=1
+  done < <(jq -r '.items[]? | .metadata.name | select(test("^kyverno-admission-controller-[a-z0-9-]+$"))' "$state_dir/admission-failure-pods.json" 2>/dev/null)
+  return "$status"
+}

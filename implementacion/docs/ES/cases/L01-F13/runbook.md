@@ -17,6 +17,8 @@ La estructura del repositorio debe conservar estas posiciones:
 ```text
 raíz del repositorio/
 ├── .devcontainer/implementacion/devcontainer.json
+├── bin/
+├── src/
 ├── .github/workflows/
 │   └── golden-path.yml
 └── implementacion/

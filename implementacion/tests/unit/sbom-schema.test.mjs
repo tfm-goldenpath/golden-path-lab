@@ -83,14 +83,14 @@ test('altered local schema bytes fail against the original lock',t=>{
 test('an incompatible installed validator is rejected with its actual version recorded',t=>{
   // Isolate the installed package tree; never mutate the checkout's dependencies.
   const d=mkdtempSync(join(tmpdir(),'unpinned-validator-'));t.after(()=>rmSync(d,{recursive:true,force:true}));
-  cpSync(new URL('../../tooling/',import.meta.url),join(d,'tooling'),{recursive:true});
+  cpSync(new URL('../../tooling/',import.meta.url),join(d,'implementacion/tooling'),{recursive:true});
   // Preserve the module-relative tooling path in this isolated layout.
-  cpSync(new URL('../../scripts/validate-sbom-schema.mjs',import.meta.url),join(d,'scripts','validate-sbom-schema.mjs'),{recursive:true});
-  const installed=join(d,'tooling/node_modules/ajv/package.json');
+  cpSync(new URL('../../../src/validate-sbom-schema.mjs',import.meta.url),join(d,'src','validate-sbom-schema.mjs'),{recursive:true});
+  const installed=join(d,'implementacion/tooling/node_modules/ajv/package.json');
   const metadata=JSON.parse(readFileSync(installed));metadata.version='0.0.0-test-mismatch';
   writeFileSync(installed,JSON.stringify(metadata));
   const input=join(d,'sbom.json'),report=join(d,'report.json');writeFileSync(input,JSON.stringify(valid()));
-  const result=spawnSync(process.execPath,[join(d,'scripts','validate-sbom-schema.mjs'),input,report],{encoding:'utf8'});
+  const result=spawnSync(process.execPath,[join(d,'src','validate-sbom-schema.mjs'),input,report],{encoding:'utf8'});
   assert.equal(result.status,1);assert.match(result.stderr,/Unpinned schema validator/);
   const retained=JSON.parse(readFileSync(report));
   assert.equal(retained.status,'ERROR');assert.equal(retained.validator.version,metadata.version);
