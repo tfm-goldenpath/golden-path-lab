@@ -2,68 +2,57 @@
 
 [Guide index](README.md) · [Español](../ES/getting-started.md)
 
-## Read and inspect without a cluster
+## Find the implementation
 
-1. Read [the delivery flow](how-it-works.md). Follow one image digest from build to authorization and admission; keep the scan report separate from its SBOM.
-2. Open the [readiness matrix](../../implementacion/docs/EN/evaluation-readiness.md). Pick an observation and note its source SHA, lane, run ID and execution boundary. A code path or passing PR check is not a scenario execution.
-3. Inspect the [corrected lane-A record](../../implementacion/registros/lane_a_corrected_91a33e9_EN.md) and [machine-readable index](../../implementacion/registros/lane-a-corrected-91a33e9.json). The separate [campaign results](../../implementacion/docs/EN/paired-rg-campaign-results.md) describe timings, not another functional catalogue run.
-4. Read the [canonical acceptance declaration](../../implementacion/registros/evaluation_acceptance_20261004_ES.md) alongside those dates. Its reduced scope does not accept later source revisions or unsupported hosted negatives.
-5. For selected original logs and the unchanged silent recording, open the existing [recorded demo](https://tfm-goldenpath.github.io/golden-path-lab/demo/). It is a frozen presentation, not a live execution or full evidence archive. Follow [release recovery](../../implementacion/docs/EN/lab-release-freeze.md) only if you need original packages and can satisfy its independent anchors and capacity checks. The [P00 receipt assessment](maintainers/repository-map.md#p00-baseline) states what was actually verified.
-
-All five reading steps work in a browser. In an existing checkout, these read-only
-commands locate the implementation and the small committed evidence index:
+Read [the stages and controls](how-it-works.md), then use the
+[architecture module table](../../implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
+to follow one digest through the engine. These read-only commands locate the
+canonical implementation and its retained inputs:
 
 ```bash
-git ls-files implementacion/scripts/lib implementacion/policies
-cat implementacion/registros/lane-a-corrected-91a33e9.json
+git ls-files bin src implementacion/services/quotes-node implementacion/policies implementacion/schemas implementacion/tooling
+# Compatibility and laboratory adapters:
+git ls-files implementacion/scripts/lib
 ```
 
-Reading an index or hash does not reauthenticate signatures. To investigate a
-recorded failure, use its linked original report, rule ID and run context; do not
-infer a policy rejection from a nonzero exit. Never execute recovered archive code
-as a substitute for the reviewed verification procedure.
+`bin/deliver` is the entry; `src/run-delivery.sh` sequences the shared engine and
+owns cleanup. `implementacion/scripts/lib/` contains compatibility imports and
+laboratory behavior, not a second engine. Policies, schemas, selected service and
+pinned tooling still live under `implementacion/`.
 
-## Deliberately run the laboratory
+## Run the available local delivery
 
-Use the [laboratory entry](../../lab/README.md) and its canonical runbook.
-The implementation devcontainer requests 4 CPUs / 16 GB RAM / 32 GB disk; this P01
-checkout has a requested 4 CPU / 16 GB / 32 GB environment. Free capacity matters
-more than nominal disk size. Execution needs Linux AMD64, pinned tools, Docker and
-network access. Do not run it merely to read results.
+Follow [the operator guide](legitimate-delivery.md) for prerequisites, capacity,
+`bash bin/deliver local`, results and cleanup. Linux AMD64, pinned tools, Docker,
+network access and committed source are required. The devcontainer requests
+4 cores / 16 GB RAM / 32 GB disk; actual free capacity determines whether a run fits.
+See [current scope](legitimate-delivery.md#current-scope) for limitations.
 
-From the repository root, after environment setup:
+<a id="read-and-inspect-without-a-cluster"></a>
+<a id="deliberately-run-the-laboratory"></a>
 
-```bash
-make -C implementacion doctor
-make -C implementacion test
-make -C implementacion demo
-```
+## Explore existing research
 
-`doctor` probes tools and Docker. `test` runs the shared environment, service/unit,
-policy, offline cryptographic, static workflow, defense and release tests; it is
-not a Kubernetes delivery. `demo` builds images, creates kind/registry/builder and
-namespaces, runs reference and protected paths with fault/recovery scenarios, and
-cleans up owned infrastructure while preserving evidence under
-`implementacion/evidence/raw/` and `implementacion/evidence/packages/`.
-Private state/keys and frozen database storage have separate retention rules.
-`make reference` is an experimental reference path without G's evidence controls;
-it is not a secure consumer alternative. Hosted integration publishes images and
-evidence and requires deliberate remote authorization.
+The [laboratory route](../../lab/README.md) owns demo/reference execution,
+scenario runbooks, measurements and presentation procedures. For reading without
+a cluster, follow its [recorded observations](../../lab/README.md) and the
+[readiness matrix](../../implementacion/docs/EN/evaluation-readiness.md).
+Record source SHA, lane, run ID and boundary before interpreting a result.
+A code path, green CI or merge is not a new scenario execution or human acceptance.
+Reading an archive hash does not reauthenticate signatures; use reviewed tools,
+not code recovered from the archive.
 
-## Consumer template: planned
+<a id="consumer-template-planned"></a>
 
-The [local delivery command](legitimate-delivery.md) supports one fresh legitimate
-quotes-node delivery in this checkout. It is an internal interface, with no standalone
-installer or consumer template. The measured single-delivery runner remains a research
-interface. P01b separates this local engine into `bin/` and `src/`; remaining work
-is interface consolidation → independent consumer template → Java trial, plus
-separately scoped maintenance.
-See the [migration contract](maintainers/repository-map.md#migration-sequence).
+## Next implementation step
+
+The local path works today. The proposed [interface consolidation](../../implementacion/TODO.md#next-implementation-increment)
+precedes an independent consumer template and then a Java trial.
 
 ## Reuse and support
 
 No root `LICENSE`, repository `SECURITY.md`, `SUPPORT.md` or declared support SLA
-was found at the P01 base. Public visibility is not a grant of unrestricted reuse.
+is present in the reviewed checkout. Public visibility is not a grant of unrestricted reuse.
 Owner selection of repository reuse terms remains pending. The vendored
 [CycloneDX notices](../../implementacion/schemas/cyclonedx-1.7/LICENSE) and
 [is-number license](../../implementacion/tests/fixtures/l03/is-number/LICENSE)

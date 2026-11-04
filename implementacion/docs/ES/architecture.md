@@ -4,23 +4,16 @@
 
 [Guía principal en inglés](../EN/architecture.md). Este documento se conserva como apoyo en español; el código, los mensajes operativos y los identificadores de escenarios son comunes a ambos idiomas.
 
-## Frontera física P01b de entrega local
+<a id="frontera-física-p01b-de-entrega-local"></a>
 
-`bin/deliver` delega en `src/run-delivery.sh`, propietario del único trap de
-limpieza. `src/lib/` contiene contexto/fuente, build/análisis, atestaciones, workload
-ordinario, clasificación de admisión y adaptador local. Las primitivas neutrales
-kind/zot/buildx, readiness y diagnósticos se extraen de `lab.sh`; el producto no
-importa `implementacion/scripts/lib/`. Allí quedan adaptadores de compatibilidad,
-pruebas de readiness del laboratorio, R, mutaciones dirigidas y cleanup del lab.
+## Frontera entre entrega local y laboratorio
 
-`src/` contiene también contratos, contenido autenticado, captura de inputs y
-escritura/verificación de archivos. Allowlists de fixtures/manuales, clasificación
-de ausencia F13 y selección/resúmenes de paquetes siguen en el laboratorio.
-Servicio, políticas, esquemas y herramientas fijadas permanecen como entradas
-explícitas bajo `implementacion/`. Las nuevas capturas incluyen `src/` y `bin/`;
-no cambian hashes históricos ni identidades autorizadas de productor/workflow.
-Esta separación no cubre todo el repositorio. Véanse la [guía operativa](../../../docs/ES/legitimate-delivery.md)
-y el [registro de validación en inglés](../../../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
+La entrega local disponible de quotes-node entra por `bin/deliver` y usa el motor
+compartido en `src/`. Los coordinadores del laboratorio lo consumen mediante
+adaptadores. Es una ruta separada, no todo el repositorio. Empieza por la
+[guía operativa](../../../docs/ES/legitimate-delivery.md); la
+[tabla y contrato de módulos](#organización-implementada-y-dependencias) explican
+propiedad canónica, rutas internas y compatibilidad.
 
 ## Decisión de diseño y fundamento
 
@@ -86,71 +79,102 @@ La **vía A** ejecuta el laboratorio desde el devcontainer con kind, zot y firma
 
 Una prueba local de la regla no acredita la integración de OIDC ni el comportamiento del servicio alojado. Los workflows están en **`.github/workflows/`, en la raíz del repositorio**, y referencian los componentes de `implementacion/`. CI ejecuta las pruebas en PR y push; la integración de B es manual mediante `workflow_dispatch`. Todavía no se ha convertido en un workflow reutilizable mediante `workflow_call`. El [registro histórico de validación](../../registros/validacion_integracion.md) describe su alcance registrado; la [guía de ejecución](cases/L01-F13/runbook.md) distingue la sustitución de imagen alojada satisfactoria con perfil clásico del candidato bundle, cuya prueba local con recuperación estricta pasó. F07 dirigido local pasó después en `run-xFGRe6X1`; el [registro](../EN/cases/F07/record.md) conserva hashes y límites. F07 alojado sigue pendiente; la guía documenta las observaciones anteriores de OIDC/SCT/transparencia.
 
-Las entradas locales siguen siendo `make demo` y `make reference`. En GitHub se mantiene la secuencia **prepare → actions/attest → finish → cleanup**: la preparación produce la imagen inicial y la de sustitución L01 con estados separados; dos pasos de la acción alojada emiten procedencia nativa para sus respectivos digests. La finalización verifica cada entrega y la limpieza retira los recursos compartidos. No se sustituye la acción alojada por una función local.
+Las entradas del laboratorio son `make demo` y `make reference`; la entrega local ordinaria usa `bash bin/deliver local`. En GitHub se mantiene la secuencia **prepare → actions/attest → finish → cleanup**: la preparación produce la imagen inicial y la de sustitución L01 con estados separados; dos pasos de la acción alojada emiten procedencia nativa para sus respectivos digests. La finalización verifica cada entrega y la limpieza retira los recursos compartidos. No se sustituye la acción alojada por una función local.
 
 ## Organización implementada y dependencias
 
-La [comprobación de capacidades CEL](../../../docs/ES/maintainers/kyverno-cel-migration.md)
-permite ahora las representaciones del verificador oficial si se demuestran las
-garantías obligatorias; el fallback de formato por sí solo ya no es un bloqueo.
-`tests/integration/kyverno-cel-capabilities.py` es un probe optativo con registro
-y clúster desechables, contenido sintético y firmas reales. No sustituye el
-renderer ClusterPolicy activo ni los coordinadores del laboratorio.
+Las rutas parten de la raíz del repositorio. Son módulos en **un proceso Bash
+por ejecución**, con variables y funciones compartidas; no servicios aislados ni
+fronteras de seguridad. Los imports definen funciones sin crear recursos, usar
+la red ni iniciar escenarios.
 
-Las rutas siguientes existen en la base actual. El [plan de la primera base integrada](implementation-plan.md) conserva el diseño inicial; las carpetas `deploy/`, `lab/` y `contracts/` allí propuestas no son módulos separados en esta versión. R/G expresa la configuración de controles; A/B expresa el entorno de ejecución y su modelo de confianza.
-
-| Componente y código | Entrada y salida principales | Comprobación separada |
-|---|---|---|
-| [Servicio](../../services/quotes-node/src) | HTTP/JSON → cotización, salud o versión. `index.js` arranca el proceso; `server.js` adapta HTTP; `quote.js` calcula; `validation.js` valida. | [Pruebas del servicio](../../services/quotes-node/test): cálculo, límites y comportamiento HTTP. |
-| [Orquestador](../../scripts/demo.sh) y [workflows](../../../.github/workflows) | Modo A/B, fase y argumentos → llamadas ordenadas a módulos y escenarios; responsabilidad de retirar la infraestructura. | [Pruebas de orquestación](../../tests/unit/orchestration.test.mjs) con etapas simuladas: fases, interrupción y códigos de salida. La integración completa requiere el ensayo real. |
-| [Contexto](../../scripts/lib/context.sh) | Parámetros y estado conservado → identidad, recursos e información de trazabilidad del intento. | Comprobar inicialización y recuperación de las fases sin mezclar imágenes o intentos. |
-| [Laboratorio](../../scripts/lib/lab.sh) | Contexto y versiones → kind, zot, builder, namespaces y admisión Kyverno; diagnóstico y retirada de recursos. | La creación, conectividad y limpieza requieren el entorno real. |
-| [Entrega](../../scripts/lib/delivery.sh) | Fuentes y contexto → pruebas, políticas tempranas, imagen construida, informes Trivy y manifiestos. | Las pruebas de reglas no sustituyen el análisis de la imagen real. |
-| [Atestaciones](../../scripts/lib/attestations.sh) | Imagen e identidades → firma, verificación y atestación de resultados. | Separar verificación criptográfica, contenido y autorización bajo la política vigente. |
-| [Adaptador de cadena clásica](../../scripts/complete-classic-chain.mjs) | Compatibilidad histórica de v0.1.0: anotaciones Fulcio autenticadas e informes anteriores/posteriores de manifiestos OCI clásicos. | Se conservan código y pruebas hasta completar la aceptación alojada del [candidato bundle](cosign-bundle-migration.md); el recorrido activo no lo invoca ni modifica metadatos de bundles. |
-| [Carga](../../scripts/lib/workload.sh) | Manifiesto e imagen → solicitud de despliegue y comprobación HTTP. | La admisión y la respuesta funcional son observaciones diferentes. |
-| [Comprobación del cambio de imagen](../../scripts/check-image-rollout.mjs) | Referencias inicial y nueva, Deployment y Pods observados → prueba de despliegue completado con otro digest en los Pods preparados. | No sustituye la admisión ni la verificación de firmas. |
-| [Escenarios](../../tests/scenarios) | Contexto de entrega → preparación específica, ejecución y expectativas de L01, F13 y F11. | Un rechazo debe atribuirse a la condición prevista; no cambiar el control para obtenerlo. |
-| [Políticas Conftest](../../policies/conftest) | Workflows, manifiestos o informe Trivy → decisiones por namespace Rego (`workflow`, `manifests`, `trivy`). | [Casos de políticas](../../tests/policies/run_rego.py) y [comprobación de archivos reales](../../scripts/check-policies.sh). |
-| [Contratos](../../scripts/lab-contracts.mjs) | Digest y parámetros → manifiesto o predicado; documentos verificados → validación de sujeto, tipo y contenido. | [Pruebas de contratos](../../tests/unit/contracts.test.mjs). No realizan verificación criptográfica. |
-| [Adaptador GitHub](../../scripts/github-attestation.mjs) y [preparación F13](../../scripts/check-missing-results.mjs) | Salida de GitHub CLI previamente verificada o inventario Cosign → comprobación de origen autorizado o ausencia de resultados. | [Pruebas GitHub](../../tests/unit/github-attestation.test.mjs) y [F13](../../tests/unit/missing-results.test.mjs), con entradas sintéticas. |
-| [Generador Kyverno](../../policies/kyverno/render.py) | Identidad o clave pública, repositorio, commit y formatos → políticas de admisión en JSON. | [Pruebas del generador](../../tests/policies/test_render.py); [pruebas con Kyverno CLI](../../tests/policies/run_kyverno.py) para las reglas de configuración. Firmas y recuperación requieren integración real. |
-| [Empaquetado](../../scripts/package-evidence.py) | Directorio de evidencias y estado → archivo comprimido y hashes. | [Pruebas del paquete](../../tests/unit/packaging.test.mjs), incluyendo repetición y exclusión de credenciales. |
+| Implementación canónica | Operaciones y frontera |
+| --- | --- |
+| [`bin/deliver`](../../../bin/deliver) → [`src/run-delivery.sh`](../../../src/run-delivery.sh) | Entrada pequeña → secuencia local fija, ejecución nueva y propietario único de limpieza/finalización. |
+| [`src/lib/context.sh`](../../../src/lib/context.sh) | `context_init`, crear/cargar estado, `get`/`put`, capturar/revalidar fuente confirmada, registrar etapas y empaquetar. |
+| [`src/lib/delivery.sh`](../../../src/lib/delivery.sh) | Pruebas de servicio/workflow, inputs del build, publicación/digest, manifiestos, SBOM original y análisis/política de vulnerabilidades. |
+| [`src/lib/attestations.sh`](../../../src/lib/attestations.sh) | Confianza por carril, verificación separada de imagen/SBOM/procedencia, consulta fresca y autorización de resultados. Autenticar antes de aceptar campos. |
+| [`src/lib/workload.sh`](../../../src/lib/workload.sh), [`admission.sh`](../../../src/lib/admission.sh) | `workload_deploy`, rollout, imagen efectiva y HTTP; clasificación estricta del diagnóstico de admisión. Salud y admisión son observaciones distintas. |
+| [`src/lib/local-environment.sh`](../../../src/lib/local-environment.sh), [`local-delivery.sh`](../../../src/lib/local-delivery.sh) | Primitivas neutrales kind/zot/buildx, namespaces, `k`/`actor` restringido, readiness y diagnóstico; el adaptador `environment_*` añade capacidad, recibos inmutables y retirada. No importa `lab.sh`. |
+| [Helpers de `src/`](../../../src/) | `contracts.mjs` genera/valida contenido; helpers bundle/GitHub interpretan contenido autenticado; captura de fuente/build, esquemas y escritura/verificación de archivos. Campos e inventario no autentican firmas. |
+| [Adaptadores del laboratorio](../../scripts/lib/), [`demo.sh`](../../scripts/demo.sh) y [escenarios](../../tests/scenarios/) | Reutilizan el motor; conservan selección de fuentes/fixtures, referencia, mutaciones/readiness, hooks de medición/manuales y selección de limpieza/empaquetado. Las rutas antiguas delegan en helpers canónicos. |
+| [Servicio](../../services/quotes-node/), [políticas](../../policies/), [esquemas](../../schemas/) y [tooling](../../tooling/) | Entradas bajo `implementacion/`, junto a `versions.env` y `tools.lock.json`. El servicio no importa el motor. Conftest/Kyverno mantienen implementaciones distintas. |
 
 ```mermaid
-flowchart TB
-    E[Makefile y workflows] --> O[demo.sh: CLI, secuencia y trap]
-    O --> C[context.sh: estado e identidad]
-    O --> L[lab.sh: recursos y admisión]
-    O --> D[delivery.sh: pruebas, imagen e informes]
-    O --> A[attestations.sh: firma y verificación]
-    O --> T[tests/scenarios: L01, F13 y F11]
-    T --> W[workload.sh: despliegue y HTTP]
-    D --> P[Conftest y Trivy]
-    A --> V[Cosign, GitHub CLI y auxiliares de contratos]
-    L --> K[render.py y Kyverno]
-    O --> R[package-evidence.py: conservar evidencias]
+flowchart TD
+    E[bin/deliver] --> C[src/run-delivery.sh]
+    C --> S[src/lib operaciones compartidas y adaptador local]
+    L[Coordinadores del laboratorio] --> A[implementacion/scripts/lib adaptadores]
+    A --> S
+    S --> H[src contratos y helpers de evidencia]
+    S --> I[implementacion servicio, políticas, esquemas y tooling]
+    H --> I
 ```
 
-El diagrama resume responsabilidades e intercambio de datos; las flechas no indican imports ni un aislamiento de seguridad entre componentes. El servicio no importa el pipeline. Los módulos Bash y los escenarios se cargan en el mismo proceso y definen funciones sin crear recursos ni ejecutar controles al importarse. `demo.sh` decide cuándo invocarlas y conserva la responsabilidad de limpieza mediante su `trap`; `lab.sh` implementa las operaciones de retirada. Los auxiliares externos se invocan mediante CLI, archivos y códigos de salida.
+Las flechas indican dependencias. El producto no carga adaptadores del laboratorio.
+`bash implementacion/scripts/deliver.sh local`, su cleanup y
+`make -C implementacion deliver` llegan al mismo motor. El soporte histórico
+[`complete-classic-chain.mjs`](../../scripts/complete-classic-chain.mjs) sigue
+fuera de la ruta bundle activa. El [inventario](../../../docs/EN/maintainers/repository-map.md)
+detalla consumidores e interfaces mixtas restantes.
 
-La validación criptográfica precede a la aceptación del contenido: decodificar un JSON o comprobar sus campos no acredita su firma. La comprobación del inventario F13 también es distinta de verificar criptográficamente las atestaciones.
+<a id="contexto-compartido-de-ejecución"></a>
 
-### Contexto compartido de ejecución
+### Contrato de módulos
 
-El contexto es un conjunto explícito de variables y estado del intento, compartido por las funciones Bash. No es un servicio ni implica que cada módulo se ejecute en un proceso independiente.
+1. **Inicializar.** El coordinador resuelve `root` a `implementacion/`, cambia a
+   ese directorio, fija `mode=local`, `phase`, `execution_profile=delivery-v1`,
+   importa `versions.env` y carga `context`, `admission`, `local-environment`,
+   `delivery`, `attestations`, `workload`, `local-delivery`, en ese orden.
+   `context_init` deriva rutas y vacía el estado. Una ejecución nueva crea
+   directorios de estado/privados; cleanup carga y valida su recibo existente.
+   El coordinador del laboratorio carga sus adaptadores `context`, `lab`,
+   `delivery`, `attestations`, `workload` y los escenarios antes de inicializar.
+2. **Estado compartido.** Se requieren `mode`/`phase`, `state_dir`, `private`;
+   `id`, `cluster`, `registry`, `builder`, `port_pid` identifican recursos propios.
+   `image_repo`, `digest`, `image`, `repository`, `commit`, `sign_args`/`verify_args`
+   vinculan imagen, fuente y confianza. Cargar coordenadas tras build o restauración;
+   nunca reemplazar silenciosamente un digest o ejecución.
+3. **Rutas derivadas.** `engine_root` es `src/`; `service_root` es
+   `implementacion/services/quotes-node`; `policies_root`, `schemas_root`,
+   `tooling_root`, `evidence_root`, `private_root` apuntan al árbol fijo
+   (`tooling_root` es `implementacion/`, con pins y `tooling/`). Son rutas internas
+   registradas en `delivery-config.json`, no una API para servicios, namespaces,
+   registros o clústeres de producción arbitrarios. Varias operaciones requieren
+   todavía el directorio de trabajo de implementación.
+4. **Adaptadores y callbacks.** El laboratorio redefine
+   `delivery_capture_build_inputs` y `delivery_snapshot_database`; este último
+   usa `cache`/`snapshot` locales del llamador mediante alcance dinámico de Bash.
+   `local-environment.sh` llama al hook opcional `environment_record_container`
+   y requiere `environment_readiness_probe` del laboratorio para ciclos distintos
+   de `authorized`. La ruta local autorizada usa evidencia fresca y server dry-run
+   real con actor restringido. `gp_observe` registra opcionalmente observaciones
+   en fronteras de atestación. Son hooks internos, no un sistema de plugins;
+   importa el orden de carga.
+5. **Errores y propiedad.** Invocar directamente etapas protegidas con
+   `set -Eeuo pipefail`; envolver una etapa completa en `if`, `!` o `||` puede
+   suprimir `errexit`. Capturar el rechazo esperado en el comando externo.
+   El coordinador de entrega posee el trap y llama a `environment_cleanup`;
+   `demo.sh` posee trap y limpieza del laboratorio. Los subshells solo retiran
+   sus recursos transitorios. Conservar primer fallo, diagnósticos y archivo;
+   errores de limpieza/empaquetado no producen PASS. Véase [resultado final](../../../docs/ES/legitimate-delivery.md#inspeccionar-resultados-y-evidencias).
+6. **Persistencia.** `get`/`put` usan el `state.json` seleccionado. Las variables
+   no sobreviven entre procesos o pasos Actions: prepare/finish/cleanup alojados
+   restauran estado e imagen explícitamente. Esto no permite reanudar entrega
+   local. La captura incluye `bin/`/`src/`; no reescribe hashes históricos.
 
-| Grupo | Valores principales | Finalidad |
-|---|---|---|
-| Recorrido | `root`, `mode`, `phase` | Resolver rutas y seleccionar vía y fase. |
-| Conservación | `state_dir`, `private` y `state.json` | Mantener evidencias y recuperar estado entre fases, separando material temporal privado. |
-| Recursos | `id`, `cluster`, `registry`, `builder`, `port_pid` | Identificar el intento, sus recursos propios y el proceso de acceso HTTP para diagnóstico y limpieza. |
-| Artefacto | `image_repo`, `digest`, `image` | Conservar la identidad de la imagen a lo largo de análisis, firma y despliegue. |
-| Origen y confianza | `repository`, `commit`, `sign_args`, `verify_args` | Aplicar la identidad de origen y los parámetros de firma/verificación de la vía seleccionada. |
+Las [pruebas de frontera](../../tests/unit/product-boundary.test.mjs) ejercitan
+operaciones aisladas y compatibilidad; la [prueba real de sparse checkout](../../tests/integration/product-boundary.py)
+y el [registro fechado](../../../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026)
+vinculan independencia a revisiones exactas. Sustituir etapas prueba orden, no
+integración. La confianza alojada requiere su ejecución autorizada.
 
-Las funciones que consumen estos valores necesitan el contexto inicializado por el recorrido correspondiente. Un módulo no debe redefinir silenciosamente el digest, las identidades o los directorios del intento. Entre procesos de GitHub se recupera el estado conservado; las variables de un proceso Bash no se transfieren automáticamente al siguiente.
-
-La huella `sourceSnapshot` incluye los archivos de `tests/`, además del servicio, scripts, políticas, versiones y workflows seleccionados. Así, los escenarios separados conservan su relación con la ejecución. Las pruebas de orquestación usan una copia aislada del coordinador y sustituyen las etapas externas; comprueban la continuidad del flujo, pero no acreditan firmas, conectividad o decisiones reales de admisión.
+**Consolidación propuesta:** resultados explícitos del adaptador en vez de
+alcance dinámico; separar validación pura de CLI/archivos cuando aporte valor;
+reducir duplicación demostrada mediante interfaces soportadas; y una política
+explícita de compatibilidad/deprecación. Son candidatos para
+[`refactor/delivery-interface-consolidation`](../../TODO.md#next-implementation-increment),
+no cambios implementados aquí. No se necesita framework ni módulo por etapa.
 
 ### Cómo extender un escenario
 
@@ -190,14 +214,22 @@ de la presentación original; los archivos cerrados entran en el índice/export 
 
 ## Límites y evolución de la modularidad
 
-La separación actual permite probar partes de forma aislada, pero mantiene dependencias deliberadas del laboratorio:
+Los módulos comparten contexto y orden dentro de cada ejecución. El coordinador
+de entrega y el del laboratorio conservan sus propios traps; el producto no
+importa adaptadores del laboratorio. El [contrato de módulos](#contrato-de-módulos)
+explica el acoplamiento interno que aún requiere consolidación.
 
-1. **Contexto compartido y secuencia central.** Infraestructura, entrega, atestaciones, carga y escenarios están separados en archivos, pero sus funciones utilizan el contexto del mismo laboratorio. `demo.sh` conserva el orden, las fases y la responsabilidad de limpieza. Esta separación permite localizar cambios; no convierte los módulos en componentes autónomos, procesos aislados ni un framework portable.
-2. **Contratos agrupados y constantes repetidas.** `lab-contracts.mjs` contiene tanto funciones de validación como comandos de generación y acceso a archivos. El URI del predicado, los controles obligatorios y la versión de política también aparecen en el generador Kyverno y, según el dato, en Bash. Un cambio requiere revisar productores y consumidores. Si esa duplicación provoca cambios frecuentes, conviene introducir una configuración versionada compartida y una comprobación explícita de coherencia entre consumidores; los tests actuales no garantizan por sí solos toda esa coherencia.
-3. **Adaptación a herramientas concretas.** Las reglas de vulnerabilidades consumen el formato de Trivy y las políticas de admisión utilizan la API de Kyverno. La propiedad exigida puede mantenerse al cambiar de herramienta, pero hay que adaptar la representación, el modelo de confianza y la atribución del rechazo, y repetir las pruebas. Conftest y Kyverno no ejecutan una única regla portable.
-4. **Separación pragmática del servicio.** Cálculo, validación y transporte están en archivos distintos, aunque `RequestError` contiene un código HTTP compartido con el adaptador. Es suficiente para el servicio sintético; si se reutilizara el cálculo fuera de HTTP, podría separarse ese mapeo de errores. No constituye una implementación completa de arquitectura hexagonal.
+`src/contracts.mjs` agrupa generación, validación y acceso a archivos; URIs,
+controles y versiones también aparecen en productores/consumidores. Cambiarlos
+exige revisión coordinada y pruebas explícitas de coherencia; las pruebas actuales
+no la garantizan por completo. El [incremento propuesto](../../TODO.md#next-implementation-increment)
+no introduce una API genérica de configuración.
 
-Estas mejoras se introducirán cuando el crecimiento o la reutilización las justifiquen, conservando los contratos y el comportamiento ya comprobado. No es necesario crear carpetas vacías para sostener la justificación arquitectónica.
+Cambiar Trivy o Kyverno requiere adaptar representación, confianza y atribución
+del rechazo, y validarlas. Conftest/Kyverno no ejecutan una única regla portable.
+En el servicio, `RequestError` incluye estado HTTP; separar ese mapeo podría ayudar
+al uso fuera de HTTP. No se afirma una arquitectura plenamente hexagonal.
+Introducir estructura adicional requiere una necesidad concreta, no carpetas vacías.
 
 ## Pruebas de contratos y relación con el catálogo
 
@@ -266,7 +298,7 @@ requiere dos ejecuciones Actions reales, no dos checkouts en una ejecución.
 y controla la restauración F13/F14. `results-evidence.mjs`, en esa misma carpeta,
 reutiliza respaldo, aislamiento y mutación reversible del registro propio; la
 familia de procedencia conserva el comportamiento compartido. La aceptación de
-producción reside en `lab-contracts.mjs`, CI fresco y el renderizador Kyverno.
+producción reside en `src/contracts.mjs`, CI fresco y el renderizador Kyverno.
 P1 procede del código de confianza, no del predicado recibido. `l01.sh` ejecuta
 los ensayos después de emitir resultados y conserva recuperación L01 del mismo
 digest; `demo.sh` mantiene la limpieza compartida. Véase el [procedimiento](cases/F13-F14/runbook.md).
@@ -392,20 +424,13 @@ El visor añade `observations.py`, importador exclusivo de CLI: captura metadato
 
 El perfil [early-security](defense/early-security.md) reutiliza supervisor y coordinador mediante acciones de caso enumeradas. `early.py` gestiona preparación por caso y observaciones independientes; sus adaptadores llaman evaluadores de escenario existentes. `lab_create_registry_builder` extrae registro/builder de `lab_create` para preparar F03 sin kind. `delivery_scan_original_sbom` extrae análisis/asociación de `delivery_scan`: reutiliza la base congelada comprobada y no regenera el SBOM. No cambia políticas, confianza ni expectativas de escenarios.
 
-## Frontera P03 de entrega legítima
+<a id="frontera-p03-de-entrega-legítima"></a>
 
-[`deliver.sh`](../../scripts/deliver.sh) coordina una entrega local con estado nuevo.
-Reutiliza contexto, build/análisis, confianza y workload con selección explícita
-delivery-v1. [`local-delivery.sh`](../../scripts/lib/local-delivery.sh) adapta
-kind/zot/buildx de `lab.sh`, crea solo el namespace protegido y registra IDs de
-recursos para cleanup. No es un framework de plugins ni una API pública estable.
-[`admission.sh`](../../scripts/lib/admission.sh) contiene el clasificador neutral;
-F13 conserva importación compatible y paired/auditoría lo usan directamente.
+## Extracción histórica de entrega
 
-Despliegue, rollout, digest efectivo y HTTP son operaciones separadas. L01 conserva
-comparación R/G y sustitución independiente. La nueva readiness exige inventario
-autenticado y aceptación del candidato autorizado en dry-run; los caminos históricos
-initial/update/prepared conservan su comportamiento. Importar módulos no ejecuta
-operaciones. La [guía canónica](../../../docs/ES/legitimate-delivery.md) explica
-estado, fuente, confianza, propiedad y empaquetado. No se completa separación física
-ni se alteran oráculos, identidad u orden del workflow hosted.
+P03 introdujo el coordinador cuando la infraestructura todavía estaba en
+`lab.sh`. Esa descripción corresponde a la [validación fechada](../../../docs/EN/maintainers/delivery-core-validation.md),
+no a los imports actuales. El [contrato actual](#organización-implementada-y-dependencias)
+usa `src/lib/local-environment.sh` y el adaptador de ciclo de vida; el antiguo
+`deliver.sh` es una entrada de compatibilidad. Se conservan revisiones originales
+e identidades de productor/workflow.

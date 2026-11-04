@@ -1,15 +1,16 @@
 # Product and implementation guide
 
-[One legitimate local delivery (P03)](legitimate-delivery.md)
-
 [Repository](../../README.md) · [Español](../ES/README.md)
 
-1. [Getting started](getting-started.md): understand the project and inspect existing evidence without a cluster.
-2. [How it works](how-it-works.md): implemented phases, decisions, evidence and limitations.
-3. [Laboratory](../../lab/README.md): execution, scenarios, measurements and defense.
-4. [Repository map](maintainers/repository-map.md): canonical ownership inventory, target boundaries and migration contract.
-5. [Attestation selection ADR](maintainers/attestation-selection-contract.md): proposed delivery authorization contract and official-engine feasibility; active policies remain unchanged.
-6. [Propose a use case](use-case-intake.md): share a need or improvement.
+1. [Understand the delivery stages and controls](how-it-works.md).
+2. [Run one legitimate local delivery](legitimate-delivery.md): `bash bin/deliver local`; Linux AMD64, pinned tools, Docker and committed source, with the fixed local quotes-node profile.
+3. [Explore laboratory scenarios and recorded experiments](../../lab/README.md).
+
+For orientation without execution, use [getting started](getting-started.md).
+Maintainers can follow the [module contract](../../implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies),
+[repository map](maintainers/repository-map.md) and [current decisions](../../implementacion/TODO.md#current-decisions-and-actions).
+[Propose a use case](use-case-intake.md) or consult the proposed
+[attestation-selection ADR](maintainers/attestation-selection-contract.md).
 
 Detailed [architecture](../../implementacion/docs/EN/architecture.md),
 [delivery contracts](../../implementacion/docs/EN/delivery-contracts.md) and

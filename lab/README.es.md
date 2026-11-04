@@ -20,8 +20,8 @@ make -C implementacion demo
 
 La demo crea kind, registro, builder y namespaces; construye imágenes inicial/de
 reemplazo, ejercita fallos/positivos, conserva evidencia y limpia infraestructura
-propia. Necesita Docker, red y espacio libre suficiente. La configuración de
-implementación pide 2 CPU / 8 GB / 32 GB; defensa pide 4 CPU / 16 GB / 32 GB.
+propia. Necesita Docker, red y espacio libre suficiente. Las configuraciones
+de raíz, implementación y defensa piden 4 CPU / 16 GB RAM / 32 GB disco.
 Son solicitudes, no garantías de capacidad libre. Leer documentación no requiere
 esos recursos. No borres evidencias ni hagas una limpieza global de Docker.
 

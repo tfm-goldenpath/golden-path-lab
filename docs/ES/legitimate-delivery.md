@@ -1,140 +1,147 @@
-# Una entrega legítima de quotes-node (P03)
+# Una entrega legítima de quotes-node
 
-[Guía](README.md) · [English, guía canónica](../EN/legitimate-delivery.md) ·
-[Validación](../EN/maintainers/delivery-core-validation.md)
+[Guía](README.md) · [English](../EN/legitimate-delivery.md) ·
+[Etapas y controles](how-it-works.md) · [Implementación](../../implementacion/docs/ES/architecture.md#organización-implementada-y-dependencias)
 
-El coordinador local construye y publica una imagen en zot efímero, aplica los
-controles, firma y verifica las evidencias independientes, autoriza resultados y
-solicita el despliegue en kind mediante el actor restringido. Comprueba por separado
-rollout, digest efectivo de Deployment/Pods y HTTP. Conserva evidencias y retira
-solamente recursos identificados como propios.
+`bash bin/deliver local` construye una imagen quotes-node, comprueba y firma sus
+evidencias, autoriza su despliegue en kind local efímero, observa la carga y
+conserva evidencias antes de retirar los recursos propios.
 
-No ejecuta referencia R, fallos, comparaciones, mediciones ni presentación. Una
-entrega individual no demuestra L01 completo: su sustitución por otro digest y
-verificación independiente siguen perteneciendo al laboratorio. La separación física cubre esta ruta local: motor en `src/` y adaptador explícito
-kind/zot/buildx. No ofrece una API pública estable, instalador, template consumidor
-o adaptación a producción ni separa todo el repositorio.
+<a id="preparar-y-ejecutar"></a>
 
-## Preparar y ejecutar
+## Requisitos y capacidad
 
-Desde `/workspaces/golden-path-lab`, con Linux AMD64 y las herramientas fijadas:
+Usa Linux AMD64, el entorno Codespaces/devcontainer fijado, Docker y red. Desde
+la raíz del repositorio, añade las herramientas locales a PATH si hace falta,
+instala las dependencias de esquemas solo si faltan y comprueba el entorno:
 
 ```bash
 export PATH="$PWD/implementacion/.tools/bin:$PATH"
-# Solo si faltan las dependencias de validación fijadas:
-make -C implementacion setup-validation
+make -C implementacion setup-validation  # Solo si faltan las dependencias fijadas.
 make -C implementacion doctor
-make -C implementacion test
-nproc
-free -h
-df -h /workspaces /tmp /var/lib/docker
-df -i /workspaces /tmp /var/lib/docker
-docker info --format '{{.DockerRootDir}}'
-docker system df
-# Entrada actual:
-bash bin/deliver local
-# Compatibilidad conservada:
-bash implementacion/scripts/deliver.sh local
-# Alternativa equivalente:
-make -C implementacion deliver
 ```
 
-Debe existir un commit del candidato sin modificaciones rastreadas; los inputs
-seleccionados tampoco admiten archivos sin seguimiento. Los archivos npm ajenos
-de la raíz quedan fuera. La captura explícita conserva servicio, tests del
-servicio, reglas Docker, políticas, esquemas, workflows, locks y controles usados;
-no lee escenarios, fixtures, planes o estado de presentación.
+Confirma la fuente en Git antes de ejecutar. Se rechazan cambios versionados y
+archivos sin seguimiento en las entradas seleccionadas. Cada entrega recibe una
+identidad nueva; no se admite reanudar ni seleccionar estado con `GP_STATE_DIR`.
+Un reintento debe conservar el anterior.
 
-Comprueba recursos reales, no solo `hostRequirements`. Reserva al menos 3 GiB más
-el crecimiento previsto. La previsión inicial en Docker es 5 GiB adicionales
-(8 GiB libres), y 512 MiB adicionales en el destino de evidencia, más una previsión de 2 GiB para la base antes del análisis; no es garantía
-universal. Repite almacenamiento antes de cada integración, después de build y
-empaquetado, tras cleanup y ante errores de escritura. Ejecuta un solo laboratorio
-activo. No retires recursos anteriores ni borres evidencias para obtener espacio
-sin comprobar propiedad, consumidores y conservación.
+Comprueba capacidad real; usa la raíz de Docker indicada por el comando:
 
-El perfil fija quotes-node, base actual, confianza local, namespace `tfm-golden`
-y actor `system:serviceaccount:tfm-golden:deployer`. `GP_SOURCE_REPOSITORY` selecciona
-el origen HTTPS esperado; por defecto es este repositorio. `GP_VULNERABILITY_DB`
-puede seleccionar una base real existente; se conserva una copia nueva identificada.
-`GP_VULNERABILITY_SNAPSHOT_ROOT` permite ubicarla en un directorio absoluto canónico
-existente. Si es temporal, conserva los bytes originales en almacenamiento duradero
-antes de terminar el Codespace. Nunca actualices un snapshot histórico.
+```bash
+nproc
+free -h
+docker info --format '{{.DockerRootDir}}'
+df -h /workspaces /tmp /var/lib/docker
+df -i /workspaces /tmp /var/lib/docker
+docker system df
+```
 
-Cada intento crea `implementacion/evidence/raw/delivery-XXXXXXXX/` y material
-privado de recuperación bajo `implementacion/.tmp/private-XXXXXXXX/`.
-`delivery-config.json` y el estado identifican configuración, fuente, imagen,
-confianza, base, recursos y responsable de cleanup. No hay reanudación: se rechaza
-`GP_STATE_DIR`; cada reintento tiene identidad independiente.
+Conserva **3 GiB de reserva más crecimiento por operación**: inicialmente 5 GiB
+para Docker en frío (unos **8 GiB libres en total**), 512 MiB para evidencias en
+su filesystem y 2 GiB de trabajo de DB antes del análisis. Estos controles pueden
+detener la ejecución; 32 GB nominales no equivalen a espacio libre. Un `/tmp`
+separado no aumenta `/workspaces`. Ejecuta un solo clúster/integración local a la
+vez. No reduzcas controles ni elimines recursos ajenos para forzar una ejecución.
 
-Las raíces internas se resuelven desde la entrada y se registran en
-`delivery-config.json`; se rechazan raíces con enlaces simbólicos. `bin/deliver`
-delega en `src/run-delivery.sh`; `src/lib/` contiene contexto, entrega, confianza,
-workload ordinario y adaptador local. Los contratos, capturas y herramientas de
-archivo están en `src/`. Políticas, esquemas, versiones, `tools.lock.json`,
-`tooling/` y el servicio seleccionado permanecen bajo `implementacion/`.
+## Ejecutar
 
-La captura incluye `bin/` y `src/` y verifica bytes y permisos ejecutables contra
-el commit. La prueba aislada usa un checkout disperso del commit real y declara
-esa proyección; no inventa una revisión ni modifica hashes históricos. Los
-coordinadores del laboratorio consumen el motor compartido mediante adaptadores;
-el producto no los importa. Véase la [navegación de laboratorio](../../lab/README.es.md).
+Desde la raíz, después de las comprobaciones:
 
-## Interpretar, conservar y retirar
+```bash
+bash bin/deliver local
+```
 
-Orden: fuente comprometida → entorno/tests/workflows → build y política de
-manifiesto → SBOM original y vulnerabilidades → evidencia autenticada → resultados
-→ readiness de admisión → despliegue/rollout/digest/HTTP → retirada y archivo.
-Un fallo obligatorio detiene las fases protegidas posteriores.
+Una ruta absoluta de entrada funciona desde otro directorio. El perfil fijo usa
+quotes-node, confianza local con clave de desarrollo, `tfm-golden` y el actor
+restringido `deployer`. Consulta el [alcance actual](#alcance-actual).
 
-Siguen vigentes las siete comprobaciones canónicas: `unitTests`, `manifestPolicy`,
-`workflowPolicy`, `vulnerabilityPolicy`, `signature`, `sbom`, `provenance`.
-Las pruebas del servicio deben ejecutarse y producir un resumen TAP satisfactorio;
-un log no vacío no basta. Los resultados se emiten tras comprobar recibos de
-éxito asociados a fuente/configuración/digest y autenticar nuevamente el registro.
-No cambian `golden-path-v1`, tipos de predicado ni obligaciones de confianza.
-Se conserva la identidad autorizada de procedencia: `bin/deliver`.
+La secuencia es fuente confirmada → pruebas de servicio/workflow → build → política
+de manifiesto → SBOM original y análisis de vulnerabilidades → evidencia autenticada
+y autorización de resultados → readiness y server dry-run autorizado → despliegue,
+rollout, imagen efectiva y HTTP → limpieza/archivo. Siguen siendo obligatorios
+`unitTests`, `manifestPolicy`, `workflowPolicy`, `vulnerabilityPolicy`, `signature`,
+`sbom`, `provenance`. Un control obligatorio fallido o incompleto detiene las etapas
+protegidas posteriores. Firma independiente, SBOM, procedencia y resultados siguen
+siendo contratos separados.
 
-Admisión comprueba políticas, controller, endpoints, inventario autorizado y un
-CREATE real en dry-run del candidato mediante el actor. No provoca antes F13.
-Después se comprueban solicitud de despliegue, rollout, digest y HTTP.
-`result.json` y `delivery-steps.json` distinguen `PASS`, `POLICY_REJECTED`, `ERROR`
-y fases `NOT_REACHED`. Los fallos devuelven código no cero; un error de transporte,
-registro o autenticación no demuestra rechazo atribuible. Cleanup o empaquetado
-fallidos tampoco producen éxito global; `package-failure.json` identifica este
-último cuando corresponda. `finalization.json`, conservado junto al paquete tras
-cerrarlo, indica el resultado global incluyendo empaquetado; `result.json` archivado
-describe entrega y cleanup anteriores a ese paso. No infieras éxito global de este
-último si falla la finalización.
+<a id="interpretar-conservar-y-retirar"></a>
 
-El paquete `evidence/packages/delivery-XXXXXXXX.tar.gz` usa
-`legitimate-delivery-package/v1`, sin resultados Fxx/Lxx ficticios. Conserva informes
-originales, hashes, versiones, asociación de la base, bundles, admisión, Pods y HTTP.
-Excluye estado privado, credenciales, kubeconfig y claves privadas. Verificación
-con código confiable del repositorio:
+## Inspeccionar resultados y evidencias
+
+El comando muestra `implementacion/evidence/raw/delivery-XXXXXXXX/`.
+Consulta **`finalization.json` como resultado final del comando**, junto a su código
+de salida. `result.json` y `delivery-steps.json` explican entrega/limpieza y estados:
+`PASS`, rechazo atribuible `POLICY_REJECTED`, error operativo `ERROR` y
+`NOT_REACHED`. Un código no cero no prueba detección. Fallos de registro, red,
+verificador o evaluador no son rechazo atribuible; rollout, imagen efectiva y HTTP
+son observaciones separadas de admisión.
+
+El directorio conserva informes originales, bundles, verificaciones, entradas de
+fuente/build y observaciones. El archivo está bajo `implementacion/evidence/packages/`.
+Verifica hash externo y todos los internos con código confiable del checkout,
+sustituyendo el identificador mostrado:
 
 ```bash
 python3 src/verify_package.py \
   implementacion/evidence/packages/delivery-XXXXXXXX.tar.gz
 ```
 
-Si una interrupción deja recursos, desde la raíz y sustituyendo el identificador:
+El `result.json` archivado precede al empaquetado; `finalization.json` se escribe
+junto a la evidencia raw después de cerrar el paquete. No deduzcas PASS final del
+resultado archivado si falla el empaquetado; consulta `package-failure.json` cuando
+exista. Los paquetes públicos excluyen `state.json`, credenciales, kubeconfig y
+claves privadas. Recuperación queda en `implementacion/.tmp/`; no publiques estado
+raw ni archivos privados. Conserva por separado los bytes identificados de la DB.
+
+## Limpieza
+
+La salida normal limpia recursos propios. Tras una interrupción, usa el checkout
+original y la ruta absoluta del directorio raw:
 
 ```bash
 bash bin/deliver cleanup \
   /workspaces/golden-path-lab/implementacion/evidence/raw/delivery-XXXXXXXX
 ```
 
-Se verifican IDs inmutables de contenedores y metadatos/consumidores de volúmenes.
-Los recursos distintos se conservan con error. Repetir cleanup conserva primeros
-diagnósticos y paquete; no reanuda ni vuelve a autorizar. Conserva también fallos,
-bases originales y recuperación privada. No se cierra custodia ni revisión humana
-P00, y no se presupone que la release mutable contenga todos los directorios locales.
+Cleanup solo retira recursos. Valida IDs inmutables de contenedores y propiedad/
+consumidores de volúmenes; rechaza recursos ajenos o modificados y conserva los
+primeros diagnósticos y archivo. Fallos de limpieza o empaquetado no producen PASS.
+Conserva intentos fallidos y material privado de recuperación.
 
-La vía alojada mantiene su coordinador y workflow actuales. Esta nueva invocación
-no tiene modo hosted; kind y claves locales no demuestran OIDC, certificados o
-transparencia GitHub. Consulta el registro de validación para los SHAs, resultados
-reales y comprobaciones pendientes.
+## Alcance actual
 
-El [registro de mantenimiento de dependencias](../EN/maintainers/dependency-refresh-validation.md)
-recoge la compatibilidad actual de AJV y formatos, separada de las ejecuciones históricas de P03.
+La ruta disponible está fijada a **quotes-node local**. No incluye instalador,
+plantilla independiente, API pública estable de configuración ni adaptador de
+producción. Referencia, escenarios, medición y presentación pertenecen al
+[laboratorio](../../lab/README.es.md). Claves locales no acreditan verificación
+alojada OIDC/certificados/transparencia. Una ejecución correcta no establece
+preparación para producción, conformidad DORA completa, SLSA Build L3, inventario
+SBOM completo ni ausencia general de vulnerabilidades. Las ejecuciones históricas
+validan sus revisiones registradas, no un checkout posterior. Véanse
+[decisiones y siguiente incremento](../../implementacion/TODO.md#current-decisions-and-actions).
+
+<details>
+<summary>Avanzado: configuración conservada y compatibilidad</summary>
+
+`GP_SOURCE_REPOSITORY` indica el repositorio HTTPS esperado (por defecto este).
+`GP_VULNERABILITY_DB` selecciona una DB Trivy real existente; en otro caso se descarga
+la del publicador. Cada ejecución conserva un snapshot inmutable nuevo y
+`database-identity.json`. `GP_VULNERABILITY_SNAPSHOT_ROOT` permite ubicarlo en un
+directorio absoluto canónico existente. Si es almacenamiento temporal, conserva
+los bytes originales de forma duradera antes de cerrar Codespaces. No actualices
+snapshots anteriores.
+
+Rutas de motor/servicio/políticas/tooling/evidencias/privados son **rutas internas
+derivadas**, registradas en `delivery-config.json`; se rechazan raíces con symlinks.
+Véase el [contrato de módulos](../../implementacion/docs/ES/architecture.md#contrato-de-módulos).
+`bash implementacion/scripts/deliver.sh local`, su cleanup y
+`make -C implementacion deliver` delegan en la misma implementación. La procedencia
+conserva el productor autorizado `implementacion/scripts/deliver.sh` y sigue
+compatible `legitimate-delivery-package/v1`.
+
+La [validación de mantenimiento](../EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026)
+registra independencia con sparse checkout, revisiones exactas, hashes y
+compatibilidad histórica. No cierra custodia ni revisión humana.
+
+</details>

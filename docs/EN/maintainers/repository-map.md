@@ -4,12 +4,16 @@
 [Current architecture](../../../implementacion/docs/EN/architecture.md) ·
 [Canonical inventory](repository-inventory.json)
 
-P01 is documentation and inventory work on `chore/product-foundation`, based on
-fetched main **`76f93355ba78f3735b5e864970c63ab4e12b2b33`**. It keeps current
+Historical foundation: P01 was documentation and inventory work on `chore/product-foundation`, based on
+fetched main **`76f93355ba78f3735b5e864970c63ab4e12b2b33`**. It kept the then-current
 runtime paths and behavior. No detailed product roadmap was found in the tracked
 checkout; the owner's P01 request supplies the bounded roadmap sequence below.
 This is not a reconstruction of another checkout's roadmap. The newer merged
 release-freeze work remains intact.
+
+Current navigation: the [module contract](../../../implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
+describes the extracted engine; the [decision index](../../../implementacion/TODO.md#current-decisions-and-actions)
+separates current owner actions, engineering and pending validation.
 
 ## Reading the inventory
 
@@ -105,39 +109,28 @@ for the local delivery path only; other moves still require a bounded increment.
 | `docs/` | Product/operator/maintainer guidance, EN primary and synchronized ES entry. Detailed architecture/contracts move only with compatibility links. |
 | `lab/` | Synthetic service, scenarios/fixtures, measurement protocols/runners, defense presentation, historical records and custody tooling. References to old evidence remain interpretable. |
 
-Eventually **product code must run without laboratory files**. Laboratory tooling
-may call product modules. Consumer delivery must not require fault fixtures,
-measurement plans, scenario result summaries or presentation state. This property
-is the P01b isolated-runtime criterion; P01 documentation alone did not establish it.
+The isolated-runtime criterion is demonstrated for the fixed local path on the
+[recorded candidate](delivery-core-validation.md#p01b-observed-execution-and-handoff).
+Laboratory tooling consumes the engine; product delivery does not require fault
+fixtures, measurement plans, scenario summaries or presentation state. This does
+not establish a general consumer template or whole-repository separation.
 
-Preserve the five current responsibilities:
-
-| Current module | Future treatment |
-| --- | --- |
-| `scripts/lib/context.sh` | Extract neutral source/run identity and explicit state contract; keep laboratory resource names/source selections in the lab adapter. |
-| `scripts/lib/lab.sh` | Keep kind/zot/builder setup and experimental namespaces in lab; investigate reusable owned lifecycle/diagnostics/admission interfaces before splitting. |
-| `scripts/lib/delivery.sh` | Extract build, manifest and original-SBOM analysis operations; separate laboratory preflight/fixture contexts and test assumptions. |
-| `scripts/lib/attestations.sh` | Extract trust, fresh authentication and results authorization with explicit expected identity and state; remove no mandatory checks. |
-| `scripts/lib/workload.sh` | Extract ordinary deploy/rollout/HTTP observation where reusable; keep directed fault/recovery object handling in lab. |
-
-These are function-only sourced modules sharing one Bash process. Extraction does
-not justify a framework rewrite, one module per diagram phase, a transport-independent
-service claim or security isolation between modules. Policy/content contracts remain
-separate from cryptographic verification. Reuse each existing boundary before
-adding abstractions. The [architecture guide](../../../implementacion/docs/EN/architecture.md)
-is authoritative about current coupling and callers.
+Use the single current [module table and contract](../../../implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
+for `src/lib/` responsibilities and `implementacion/scripts/lib/` adapters.
+Remaining consolidation must preserve function-only imports, shared-process error
+propagation and the distinction between content checks and authentication.
 
 ## Migration sequence
 
 | Increment | Required result and acceptance boundary |
 | --- | --- |
 | P01 — `chore/product-foundation` | Product-first EN/ES journey, separate lab entry, complete tracked inventory and compatibility contract. Documentation/inventory checks; no Kubernetes. Human review and owner decisions remain explicit. |
-| P03 — `refactor/delivery-core` | Extract neutral delivery while retaining the lab adapter and oracle. Demonstrate a legitimate non-measured delivery without scenario dispatch; inventory mixed helpers before splitting. Linux and representative integration required. |
-| Refresh A — `chore/dependency-refresh` | Bounded AJV/fast-uri correction and compatibility validation; [record](dependency-refresh-validation.md). Actions and update automation remain separate pending items; fixtures are preserved. |
-| Refresh B — `chore/devcontainer-refresh` | Later reproducible runtimes/images/three profiles and optional official pinned Codex; full rebuild and storage comparison; see TODO. |
-| Refresh C — `chore/security-toolchain-refresh` | Later compatible scanner/policy/crypto/admission versions; real crypto/admission and hosted verification if trust changes; CEL migration stays separate. |
-| P01b — physical repository separation | Bounded local path explicitly authorized on 4 November; broader moves still require their applicable gates. Prove product works with lab files absent; preserve URL/command compatibility and historical evidence interpretation. |
-| P03b — script/interface consolidation | Consolidate proven duplicate behavior behind the supported interface; preserve arguments, status codes and failure classification. Investigate unreferenced/manual helpers before any retirement. |
+| P03 — `refactor/delivery-core` | Implemented and merged in #61; [original validation](delivery-core-validation.md) remains revision-specific. Human/custody gates are separate. |
+| Refresh A — `chore/dependency-refresh` | Merged #62: bounded AJV/fast-uri correction; [record](dependency-refresh-validation.md). Actions (#70) and updater setup (#71) are also merged; #72 compatibility and #23 disposition remain separate. |
+| Refresh B — `chore/devcontainer-refresh` | Merged #63: pinned runtimes/images, three profiles and optional Codex; [exact checks and limits](devcontainer-refresh-validation.md), without claiming a Codespaces UI Full Rebuild. |
+| Refresh C — `chore/security-toolchain-refresh` | Merged #64: pinned tools and recorded local/hosted validation; [record](security-toolchain-refresh-validation.md). CEL adoption remains blocked separately. |
+| P01b — physical repository separation | Implemented in open PR #74 with recorded sparse-checkout and lab validation; human review pending. Broader physical moves are not complete. See [validation](delivery-core-validation.md#p01b-observed-execution-and-handoff). |
+| P03b — `refactor/delivery-interface-consolidation` (proposed next) | Clarify supported interface and adapter results, simplify proven duplication and define compatibility/deprecation; [bounded scope and acceptance](../../../implementacion/TODO.md#next-implementation-increment). No consumer API or arbitrary-service support yet. |
 | P04 — consumer template | Ship a real consumer starter using the extracted engine, with documented prerequisites and actual independent execution. No fictional install/configuration API beforehand. |
 
 Scope clarification — 4 November 2026: the owner explicitly authorizes the bounded
@@ -174,8 +167,10 @@ moves, deletions, releases, settings changes or measurement runs.
 ## Unknowns and owner decisions
 
 The inventory proposes responsibility-based destinations; no destination is owner
-approval. Mixed delivery/lab helpers (including `lab-contracts.mjs`, input capture,
-packaging and shared shell modules) require P03 boundary design. Test wrappers may
+approval. The bounded local extraction now puts canonical contracts, capture and archive
+primitives in `src/`, with lab allowlists/adapters retained under `implementacion/`.
+Remaining dynamic-scope callbacks, CLI/validation coupling and compatibility
+policy need interface consolidation; the inventory records broader unknowns. Test wrappers may
 combine contract checks with scenario sequencing; do not move all tests wholesale.
 The retained classic-chain helper is historical support outside the bundle path;
 its manual compatibility use must be investigated before deprecation. A tracked
@@ -249,12 +244,16 @@ Human acceptance remains pending. Repository-wide refactoring is not complete.
 
 ## P03 functional extraction
 
+Historical scope of P03 only; current physical ownership is described
+[above](#current-bounded-p01b-separation). Maintenance branches listed above
+are now merged, with their own original validation boundaries.
+
 The owner explicitly authorizes this bounded extraction from main
 `b00d57b91536a00d3dc99bd1a99f4a82c5bab1ca`. P00 human review/custody gates stay open.
 The [operator guide](../legitimate-delivery.md) and [validation record](delivery-core-validation.md)
 state current behavior and observed checks. Context/source selection, build,
 authentication, authorization and workload operations are shared; environment
 operations remain local adapters. No directory migration, dependency update,
-consumer template or measurement campaign is included. Future refresh branches
-above follow P03 separately and must consult stable supported releases at their
-implementation date, pin them and test compatibility; `latest` is not a pin.
+consumer template or measurement campaign is included. The original maintenance plan required separate refreshes with stable supported
+releases checked at implementation time, pinned and compatibility-tested;
+`latest` is not a pin. Their later records remain separate from P03 evidence.

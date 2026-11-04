@@ -13,7 +13,7 @@ qué se ha entregado, qué controles han pasado ni por qué debe permitirse desp
 Este repositorio implementa ese enfoque en un laboratorio de investigación con el
 servicio sintético `quotes-node`. Permite a desarrolladores inspeccionar controles
 y a responsables de plataforma evaluar cómo se relacionan políticas, firmas y
-evidencias operativas. Actualmente no es un producto autónomo para consumidores.
+evidencias operativas. Hoy se puede ejecutar una entrega legítima local; la plantilla independiente para consumidores sigue prevista.
 
 ## Vista de la entrega
 
@@ -29,24 +29,22 @@ Es el flujo protegido; el laboratorio añade fallos controlados y una entrega de
 referencia. La procedencia alojada se emite entre preparación y finalización.
 [Cómo funciona](docs/ES/how-it-works.md) explica orden, bloqueos y evidencias.
 
+<a id="primeros-pasos"></a>
+
+## Elige una ruta
+
+1. [Entender las etapas y controles](docs/ES/how-it-works.md): qué se comprueba, dónde se detiene la entrega y qué evidencias quedan.
+2. [Ejecutar una entrega legítima local](docs/ES/legitimate-delivery.md): `bash bin/deliver local`, con Linux AMD64, entorno fijado, Docker y fuente confirmada en Git. El perfil fijo entrega quotes-node localmente.
+3. [Explorar el laboratorio](lab/README.es.md): escenarios, entrega de referencia, mediciones y experimentos registrados.
+
 ## Disponibilidad actual
 
-| Disponible o previsto | Frontera |
-| --- | --- |
-| Laboratorio implementado | Entorno Linux fijado, políticas tempranas, análisis de imagen, evidencias firmadas separadas, verificación, admisión y comprobaciones funcionales. |
-| Observaciones registradas | Resultados locales/alojados sobre revisiones históricas identificadas y datasets de medición separados. La [matriz](implementacion/docs/ES/evaluation-readiness.md) conserva cobertura y huecos; la [decisión humana fechada](implementacion/registros/evaluation_acceptance_20261004_ES.md) cierra solo su alcance reducido. |
-| Plantilla de consumidor: prevista | El motor local está separado en `bin/` y `src/`; la plantilla independiente sigue siendo trabajo futuro. Véase la [secuencia de migración](docs/EN/maintainers/repository-map.md#migration-sequence). |
-| Sin soporte o sin verificar | No se afirma preparación para producción, conformidad DORA completa, SLSA Build L3, inventario SBOM completo ni ausencia general de vulnerabilidades. Los negativos alojados no ejecutados siguen sin ejecutarse; las ejecuciones históricas no validan la fuente actual. |
-
-## Primeros pasos
-
-Sigue la [ruta de lectura y evidencias sin clúster](docs/ES/getting-started.md).
-Conecta las fases con resultados versionados y sus fuentes/ejecuciones sin instalar
-herramientas ni crear recursos.
-
-Para ejecutar deliberadamente, entra en el [laboratorio](lab/README.es.md).
-`make -C implementacion demo` crea kind, un registro y un builder, construye imágenes
-y ejercita escenarios. No es un inicio rápido para consumidores.
+El motor local está en `bin/` y `src/`; los adaptadores del laboratorio lo reutilizan.
+La plantilla independiente sigue prevista. Consulta el [alcance y los límites actuales](docs/ES/legitimate-delivery.md#alcance-actual)
+antes de ejecutar y la [guía de navegación del código](docs/ES/getting-started.md)
+para localizar la implementación. La [matriz de preparación](implementacion/docs/ES/evaluation-readiness.md)
+vincula observaciones a revisiones concretas; la [decisión humana fechada](implementacion/registros/evaluation_acceptance_20261004_ES.md)
+acepta solo su alcance reducido.
 
 ## Controles y evidencias
 

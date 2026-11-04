@@ -28,7 +28,7 @@ with Makefile and GitHub workflows invoking it.
 - [bin/deliver](bin/deliver) delegates to [the coordinator](src/run-delivery.sh), which coordinates one fresh local
   quotes-node delivery without scenarios, R/G, measurements or presentation.
   It owns its cleanup trap; [the guide](docs/EN/legitimate-delivery.md) defines
-  its internal P03 profile, immutable resource receipts and non-resume boundary.
+  its fixed local profile, immutable resource receipts and non-resume boundary.
 
 - [Makefile](implementacion/Makefile) exposes the local/test commands.
   [CI](.github/workflows/ci.yml) runs shared checks;
@@ -53,15 +53,12 @@ Canonical delivery modules and the local adapter live in [src/lib](src/lib/).
 functions when sourced; importing them must not create infrastructure, perform
 network operations or start a scenario.
 
-| Module | Owned responsibility and interface |
-|---|---|
-| `context.sh` | Initialize the run; create/restore `state.json`; capture source identity and reload image coordinates. `get`/`put` operate on the selected run's state. |
-| `lab.sh` | Adapt shared `src/lib/local-environment.sh` primitives, retain lab readiness probes and cleanup; supply explicit cluster access (`k`) and workload-actor access (`actor`); collect diagnostics, package evidence and clean up owned resources. |
-| `delivery.sh` | Preflight checks, image build/publication, manifest preparation, early policies and Trivy analysis. Save original reports and the resolved digest. |
-| `attestations.sh` | Configure lane-specific trust; sign and verify image/SBOM/provenance evidence; issue and verify successful results authorization after required checks. |
-| `admission.sh` | Strict singleton diagnostic classifier; no scenario dependency. The historical classifier name remains an alias. |
-| `local-delivery.sh` | Local kind/zot/buildx adapter over neutral `local-environment.sh` provisioning, capacity checks and immutable owned-resource retirement for delivery-v1. |
-| `workload.sh` | Ordinary deployment, rollout, effective digest and HTTP observations; reference and directed adapters remain in `implementacion/scripts/lib/workload.sh`. A functional response and an admission decision are separate observations. |
+Use the canonical [module table and contract](implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
+for initialization order, operations, adapter callbacks and required shared state.
+Change delivery behavior in `src/lib/`; change scenario/reference/measurement
+adapters in `implementacion/scripts/lib/`. In particular, `lab.sh` adapts
+`src/lib/local-environment.sh`; it is not a product dependency. The legacy
+[`deliver.sh`](implementacion/scripts/deliver.sh) delegates to `bin/deliver`.
 
 The fixed delivery profile also records explicit `engine_root`, `service_root`,
 `policies_root`, `schemas_root`, `tooling_root`, `evidence_root` and `private_root`.
@@ -82,7 +79,7 @@ Use local variables for temporary values. Persist cross-phase values through the
 existing state helpers and restore them explicitly; shell variables do not
 survive separate Actions steps. Do not silently replace the active digest, trust
 identity or evidence directory. Keep resource deletion tied to validated run
-state. `demo.sh` owns laboratory cleanup and `deliver.sh` owns legitimate-delivery cleanup; a scenario subshell may clean up only its
+state. `demo.sh` owns laboratory cleanup and `src/run-delivery.sh` owns legitimate-delivery cleanup; a scenario subshell may clean up only its
 own transient resources without replacing that owner.
 Submit scenario workload changes through `actor` under the restricted service
 account; reserve `k` for laboratory administration and observation. Keep cleanup
@@ -95,11 +92,16 @@ safe to repeat, preserving the first diagnostics/archive and the failure status.
 | [Conftest rules](implementacion/policies/conftest/) | Workflow/manifest acceptance and vulnerability-report decisions. |
 | [Kyverno renderer](implementacion/policies/kyverno/render.py) | Generated admission policies, protected scope and trust parameters. Edit the renderer, not generated run artifacts. |
 | [contracts.mjs](src/contracts.mjs) | Manifest/predicate generation and content/subject validation. It also handles CLI/file operations; it is not a cryptographic verifier. |
-| [verified-bundle-statement.mjs](implementacion/scripts/verified-bundle-statement.mjs), [github-attestation.mjs](implementacion/scripts/github-attestation.mjs) | Interpretation of the same authenticated bundle or the GitHub verifier's output, respectively. |
-| [download-bundle-inventory.mjs](implementacion/scripts/download-bundle-inventory.mjs), [check-bundle-profile.mjs](implementacion/scripts/check-bundle-profile.mjs) | Strict registry retrieval and required evidence types/shape for each phase. Inventory inspection does not authenticate signatures. |
-| [check-missing-results.mjs](implementacion/scripts/check-missing-results.mjs), [check-inventory-consistency.mjs](implementacion/scripts/check-inventory-consistency.mjs) | F13 absence and inventory-consistency checks. Retrieval errors cannot establish absence. |
-| [check-image-rollout.mjs](implementacion/scripts/check-image-rollout.mjs) | Correspondence between replacement digest, Deployment and ready Pods. |
-| [package_evidence.py](src/package_evidence.py) | Shared archive writer, hashes and exclusions; laboratory selection stays in `implementacion/scripts/package-evidence.py`. |
+| [verified-bundle-statement.mjs](src/verified-bundle-statement.mjs), [github-attestation.mjs](src/github-attestation.mjs) | Interpretation of the same authenticated bundle or the GitHub verifier's output, respectively. |
+| [download-bundle-inventory.mjs](src/download-bundle-inventory.mjs), [check-bundle-profile.mjs](src/check-bundle-profile.mjs) | Strict registry retrieval and required evidence types/shape for each phase. Inventory inspection does not authenticate signatures. |
+| [check-missing-results.mjs](implementacion/scripts/check-missing-results.mjs), [check-inventory-consistency.mjs](implementacion/scripts/check-inventory-consistency.mjs) | Laboratory F13 absence and inventory-consistency checks. Retrieval errors cannot establish absence. |
+| [check-image-rollout.mjs](src/check-image-rollout.mjs) | Correspondence between replacement digest, Deployment and ready Pods. |
+| [package_evidence.py](src/package_evidence.py), [verify_package.py](src/verify_package.py) | Shared archive writer/verifier, hashes and exclusions; laboratory selection stays in `implementacion/scripts/package-evidence.py`. |
+
+Legacy helpers under `implementacion/scripts/` delegate to canonical `src/`
+implementations where extracted. `lab-contracts.mjs` is the compatibility name
+for `src/contracts.mjs`; scenario-specific selection/allowlists stay with the lab.
+Do not edit wrappers as though they were a second implementation.
 
 Keep image, CycloneDX SBOM, vulnerability report, provenance and results as
 distinct contracts. When changing predicate types, schemas or required checks,

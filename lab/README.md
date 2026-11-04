@@ -22,8 +22,8 @@ make -C implementacion demo
 The demo creates kind, registry, builder and namespaces, builds initial/replacement
 images, exercises fault and positive scenarios, then preserves evidence and removes
 owned temporary infrastructure. It needs Docker, network and adequate free disk.
-The implementation configuration requests 2 CPU / 8 GB RAM / 32 GB; the defense
-configuration requests 4 CPU / 16 GB / 32 GB. Those are requests, not free-capacity
+The root, implementation and defense configurations each request
+4 CPU / 16 GB RAM / 32 GB disk. Those are requests, not free-capacity
 guarantees. Read-only documentation work needs none of these laboratory resources.
 Do not delete retained evidence or globally prune Docker to make room.
 

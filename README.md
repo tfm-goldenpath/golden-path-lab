@@ -13,7 +13,7 @@ which checks passed, or why deployment should be allowed.
 This repository implements that approach in a research laboratory using the synthetic
 `quotes-node` service. It is useful to developers inspecting delivery controls and
 platform maintainers evaluating how policy, signatures and operational evidence fit
-together. It is not a standalone consumer delivery product today.
+together. One legitimate local delivery is available today; an independent consumer template is still planned.
 
 ## Delivery overview
 
@@ -30,24 +30,22 @@ and a reference delivery. Hosted provenance is issued between preparation and
 finalization. See [how it works](docs/EN/how-it-works.md) for actual ordering,
 blocking decisions and their evidence.
 
+<a id="getting-started"></a>
+
+## Choose a route
+
+1. [Understand the stages and controls](docs/EN/how-it-works.md): what is checked, where delivery stops and what evidence remains.
+2. [Run one legitimate local delivery](docs/EN/legitimate-delivery.md): `bash bin/deliver local`, using Linux AMD64, the pinned environment, Docker and committed source. The fixed profile delivers quotes-node locally.
+3. [Explore the laboratory](lab/README.md): scenarios, reference delivery, measurements and recorded experiments.
+
 ## Current availability
 
-| Available or planned | Boundary |
-| --- | --- |
-| Implemented laboratory | Pinned Linux environment, early policies, image analysis, separate signed evidence, verification, admission and functional checks. |
-| Recorded observations | Local and hosted results at identified historical revisions, plus separate measurement datasets. The [readiness matrix](implementacion/docs/EN/evaluation-readiness.md) records coverage and gaps; the [dated human decision](implementacion/registros/evaluation_acceptance_20261004_ES.md) closes only its stated reduced evaluation scope. |
-| Consumer template: planned | The local engine is separated in `bin/` and `src/`; the independent consumer template remains future work. See the [migration sequence](docs/EN/maintainers/repository-map.md#migration-sequence). |
-| Unsupported or unverified | No production-readiness, full DORA compliance, SLSA Build L3, complete SBOM inventory or blanket vulnerability-safety claim. Unexecuted hosted negatives remain unexecuted; historical runs do not validate current source. |
-
-## Getting started
-
-Start with the [no-cluster reading and evidence route](docs/EN/getting-started.md).
-It takes you from the delivery phases to committed results and their source/run
-identities without installing tools or creating resources.
-
-For deliberate execution, use the separate [laboratory entry](lab/README.md).
-The existing `make -C implementacion demo` creates kind, a registry and a builder,
-builds images and exercises scenarios. It is not a consumer quickstart.
+The local delivery engine lives in `bin/` and `src/`; laboratory adapters reuse it.
+The independent consumer template is planned. Read the [current scope and limits](docs/EN/legitimate-delivery.md#current-scope)
+before running, and use the [code-navigation guide](docs/EN/getting-started.md)
+to find the implementation. The [readiness matrix](implementacion/docs/EN/evaluation-readiness.md)
+binds research observations to exact revisions; the [dated human decision](implementacion/registros/evaluation_acceptance_20261004_ES.md)
+accepts only its stated reduced evaluation scope.
 
 ## Controls and evidence
 
