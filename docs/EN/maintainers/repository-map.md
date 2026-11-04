@@ -64,9 +64,10 @@ A/B/C comparison; it does not change these navigation or ownership rules.
 
 <!-- inventory-summary:end -->
 
-Current physical roots are `.github/` (automation and contribution instructions),
-`.devcontainer/` (workspace configurations) and `implementacion/` (service,
-modules, policies, tests, tooling, demo, measurement and laboratory docs).
+Current physical roots include `bin/` (delivery entry), `src/` (shared delivery
+engine), `.github/` (automation and contribution instructions), `.devcontainer/`
+(workspace configurations) and `implementacion/` (selected service, policies,
+schemas, pinned tooling, laboratory adapters, tests, demo and measurements).
 `docs/` and `lab/` added by P01 are navigation/maintenance guidance. Historical
 `registros/`, release inputs/notes and the Pages lock are retained in place.
 There are no tracked composite actions at the base. The unrelated untracked root

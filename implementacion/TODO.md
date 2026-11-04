@@ -60,7 +60,7 @@ review, or rewrite their earlier conclusions. Actual baseline: fetched main
 
 - [x] Extract canonical `bin/deliver` / `src/` delivery, evidence/trust, ordinary workload and neutral local lifecycle; keep one shared implementation for laboratory callers.
 - [x] Keep scenario dispatch/mutations, R, measurement/manual adapters and archive allowlists outside the product dependency closure; preserve commands and signing identities.
-- [ ] Complete candidate validation and isolated real delivery plus representative lab integration; see the [existing validation record](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
+- [x] Validate the bounded candidate: real sparse-checkout delivery `delivery-UMD8FHsa` on `185401c`, representative lab `run-M7Hm2UlM` and shared suite on `6e721a1`; verify archives/retirement and retain the failed first lab attempt. Product inputs are identical across those candidates; see the [existing validation record](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
 - [ ] Human review of this bounded increment. No repository-wide separation claim.
 - Remaining physical/mixed interfaces: neutral policies/schemas/pins/tooling and selected synthetic service still under `implementacion/`; laboratory adapters/tests remain there; shared contracts retain compatibility namespaces/profiles and hosted trust adapters. Configuration is internal, fixed to quotes-node/local.
 - Next: interface consolidation → independent consumer template → Java trial. Separate CLI compatibility work for Dependabot PR #72 remains outside this branch.

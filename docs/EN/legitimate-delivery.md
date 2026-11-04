@@ -46,6 +46,7 @@ nproc
 free -h
 df -h /workspaces /tmp /var/lib/docker
 df -i /workspaces /tmp /var/lib/docker
+docker info --format '{{.DockerRootDir}}'
 docker system df
 ```
 

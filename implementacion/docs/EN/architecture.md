@@ -28,7 +28,7 @@ distinguishes isolated runtime execution from mocked sequencing and human review
 
 ## Design decision and rationale
 
-The implementation uses a **modular architecture for automation, policies and evidence, with a central laboratory orchestrator**. Modules group responsibilities and define how components communicate and are tested. Makefile and workflows invoke common commands; `scripts/demo.sh` parses arguments, coordinates `scripts/lib/` functions and invokes `tests/scenarios/`. Policies, validation and packaging keep specialized components. Admission rechecks applicable conditions before protected Kubernetes workloads are created or updated.
+The implementation uses a **modular architecture for automation, policies and evidence, with separate delivery and laboratory coordinators**. Modules group responsibilities and define how components communicate and are tested. Makefile and workflows invoke common commands. `bin/deliver` coordinates the extracted `src/` engine; `scripts/demo.sh` coordinates laboratory adapters in `scripts/lib/`, the same shared engine and `tests/scenarios/`. Policies, validation and packaging keep specialized components. Admission rechecks applicable conditions before protected Kubernetes workloads are created or updated.
 
 This describes the selected organization, not a new architectural standard. [NIST SP 800-204D](https://csrc.nist.gov/pubs/sp/800/204/d/final) discusses supply-chain controls across CI/CD. [Tekton Tasks and Pipelines](https://tekton.dev/docs/pipelines/) illustrate task composition with inputs/outputs, while [Konflux Enterprise Contract](https://konflux-ci.dev/architecture/core/enterprise-contract/) separates building from policy-based attestation verification before release. These precedents support separated responsibilities without requiring those platforms in this laboratory.
 
@@ -39,7 +39,7 @@ A practical rule is that a check should be understandable and testable without r
 | Component | Responsibility | Boundary |
 |---|---|---|
 | `quotes-node` | Deterministic synthetic API; separate HTTP, validation and calculation. | Not an insurer's production system or actuarial model. |
-| Orchestration | Order tasks, pass parameters/results, stop protected steps and preserve evidence. | `demo.sh` owns sequencing and one cleanup `trap`; modules share context rather than isolated stages. |
+| Orchestration | Order tasks, pass parameters/results, stop protected steps and preserve evidence. | `src/run-delivery.sh` owns local delivery sequencing/cleanup; `demo.sh` owns laboratory sequencing/cleanup. Each execution has one cleanup `trap` and shared module context. |
 | Early policies | Conftest configuration checks and laboratory rules over scanner reports. | Accepted configuration does not prove later image integrity. |
 | Build and analysis | Build, identify by digest and generate Trivy inventory/report. | The report must refer to the delivered object; an unchecked rebuild is insufficient. |
 | Evidence and trust | Produce, sign, retrieve and verify evidence; relate subject, issuer, execution and policy. | Valid signatures alone do not prove absence of vulnerabilities or malware. |

@@ -18,9 +18,9 @@ in the thesis repository linked from the scenario template.
 ## Modular implementation structure
 
 Use the existing modular architecture for **automation, policies and evidence**,
-coordinated by one laboratory entry point. The modules share a Bash process and
-run context; these boundaries organize responsibilities rather than provide
-process or security isolation. Keep reusable behavior in the implementation,
+coordinated by separate legitimate-delivery and laboratory entry points. Within
+each execution, the modules share a Bash process and run context; these boundaries
+organize responsibilities rather than provide process or security isolation. Keep reusable behavior in the implementation,
 with Makefile and GitHub workflows invoking it.
 
 ### Entry points and service
