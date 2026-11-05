@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One legitimate quotes-node delivery; no scenario dispatch or measurements.
 set -Eeuo pipefail
-root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../implementacion" && pwd -P)
+root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../implementation" && pwd -P)
 engine_root="$root/../src"
 cd "$root"
 if [[ "${1:-}" == --help ]]; then

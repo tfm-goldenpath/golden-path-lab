@@ -1,9 +1,9 @@
 # Local tooling and generated data.
-node_modules/
+node_modules
 __pycache__/
 *.py[cod]
 .tmp/
-.tools/
+.tools
 coverage/
 
 # Credentials and local configuration.
@@ -14,11 +14,15 @@ coverage/
 *.pem
 
 # Generated evidence and local working drafts.
-/implementacion/evidence/raw/
-/implementacion/evidence/packages/
-/implementacion/evidence/environment/
-/implementacion/pendiente/
+/implementation/evidence/raw/
+/implementation/evidence/packages/
+/implementation/evidence/environment/
+/implementation/pendiente/
 
 # Opt-in context retrieval pilot (never ordinary CI inputs).
 /.context-retrieval/
 graphify-out/
+
+# Historical evidence stays at its original location after the English rename.
+/implementacion/evidence/
+/implementacion/pendiente/

@@ -235,7 +235,7 @@ reserva de 3 GiB conservada. Ambos registros temporales propios fueron retirados
 con ausencia comprobada; no se crearon clústeres ni se copiaron DB/imágenes/históricos.
 Se conservaron los volúmenes e imágenes preexistentes y el trabajo ajeno.
 Paquete pequeño fuera de Git:
-`implementacion/evidence/packages/attestation-selection-design-e0fbe64-20261030.tar.gz`,
+`implementation/evidence/packages/attestation-selection-design-e0fbe64-20261030.tar.gz`,
 849.839 bytes, 180 entradas, SHA-256
 `42caf36666c2fea6d0bd60c9c9b1361e893dec3534b2a73bf7b6141148e2b47d`.
 Se compararon todas sus entradas con los originales. No contiene claves privadas,

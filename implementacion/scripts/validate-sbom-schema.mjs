@@ -1,9 +1,1 @@
-// Compatibility imports and CLI; implementation is canonical in src/.
-export * from '../../src/validate-sbom-schema.mjs';
-import {pathToFileURL, fileURLToPath} from 'node:url';
-import {spawnSync} from 'node:child_process';
-if (process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
-  const r=spawnSync(process.execPath,[fileURLToPath(new URL('../../src/validate-sbom-schema.mjs',import.meta.url)),...process.argv.slice(2)],{stdio:'inherit'});
-  if(r.error) throw r.error;
-  if(r.signal) process.kill(process.pid,r.signal); else process.exitCode=r.status;
-}
+../../implementation/scripts/validate-sbom-schema.mjs

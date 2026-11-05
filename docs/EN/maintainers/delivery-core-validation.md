@@ -367,3 +367,270 @@ raw evidence and private recovery, and use their recorded source versions.
 | Activity | AI contribution | Human review | Decision |
 | --- | --- | --- | --- |
 | P01b extraction, compatibility tests, real local integrations and documentation | OpenAI Codex / GPT-6 | Pending | Draft; bounded technical checks do not establish human acceptance or custody |
+
+## Interface consolidation and English layout — 5 November 2026
+
+Base: fetched `origin/main`, exactly merged PR #74 commit
+`e0f2f56980ffbb00b926521ecf58eed64c713f1b`; no additional main commits.
+Owner authorization covers the interface refactor, tracked English path migration,
+local tests/integrations, commit/push and one draft PR. Historical custody and
+broader acceptance remain separate. Untracked root npm files and ignored originals
+are preserved. The inventory before migration is retained at
+`implementacion/evidence/raw/delivery-interface-consolidation/preservation-inventory.json`.
+
+Interface commit `2ce8473` removes caller-local DB selection, documents capture
+validation ownership and checks required readiness adapters before side effects.
+Focused tests: 106 PASS. The separate migration makes `implementation/` canonical,
+retains Linux source aliases/Make delegation and recognizes exact historical
+cleanup roots. Local provenance producer identifiers stay unchanged; old Git
+source selection and archive verification retain their original path semantics.
+No policy, pin, scenario oracle or hosted identity is changed. `contracts.mjs`
+needs no split for these callers.
+
+Environment: 4 cores, 15 GiB RAM, 32-GiB workspace/Docker filesystem with 8.5 GiB
+initially free; separate `/tmp` had 109 GiB free. Three pre-existing Docker volumes
+and cached images are preserved. The existing 3-GiB reserve and operation growth
+checks are retained. Validation logs after migration use
+`implementation/evidence/raw/delivery-interface-consolidation/`; earlier logs
+remain at their original spelling.
+
+The historical `implementacion/evidence/packages/delivery-FKciP7Y2.tar.gz` passes
+read-only current verification: SHA-256
+`a8bb11783170711a2ad8e847df964fd01b389f0eaadac4cdda4cf4804a28c6d2`, 163 internal
+hashes. The retained real DB input is `implementacion/.tmp/security-refresh-db`,
+publisher update `2026-10-28T13:01:10.618103814Z` (about eight days old), DB hash
+`faa015429c6ebd9c9a672be99cfbd5aecec2eade21d1d6e59d4dc091dc752ff3`, metadata hash
+`75ccefb55d36ea911801b1cdb555f4d022f0fc8a813e061b0d491fe9752dc706`.
+Using these identified bytes tests compatibility, not a current vulnerability
+assessment. Each ordinary delivery still creates its own snapshot.
+
+The results below record exact committed runtime revisions and original attempts.
+Hosted OIDC integration is NOT_EXECUTED; no publishing workflow is dispatched.
+Human review remains pending. Next: independent consumer template after review.
+Rollback reverts source changes while retaining all evidence and original paths.
+
+### Pre-integration checks
+
+- `make -C implementation doctor`: PASS with existing pinned tools.
+- `make -C implementation test`: PASS, 9 environment, 1,029 service/unit,
+  130 Python policy, actual Conftest/Kyverno, offline Cosign, static workflows,
+  153 defense and 22 release tests (`shared-02.log`).
+- Migrated focused checks: 167 PASS; subsequent capture/recovery/dependency checks:
+  89 PASS. Inventory: 816 tracked paths including 244 compatibility entries;
+  11 validator regressions PASS. Changed-guide check: 1,115 links in 87 files
+  passed before the final runbook/navigation additions. `git diff --check` PASS.
+- The first shared attempt stopped after 1,026 passing unit tests and one failure:
+  copying a symlinked installed-dependency tree let the synthetic version-mismatch
+  test modify the original installed AJV metadata. The original metadata was
+  restored from a fresh installation of the unchanged lock, with semantic equality
+  checked apart from the deliberate test version. Canonical dependencies now have
+  their own installation; the test copies dereferenced files. Original failure,
+  install and restoration receipts are retained; no dependency pin was changed.
+- 65 historical source artifacts are byte-identical to the base; 25 selected
+  service/policy/schema/pin files are byte-identical after relocation. Inventory
+  checks confirm all 62,357 pre-existing ignored evidence/private files retain
+  their original size and modification time (dependency/cache files excluded).
+
+The source migration uses compatibility links around ignored directories rather
+than moving those originals. Git configuration files themselves are canonical
+regular files, since Git deliberately refuses symlinked ignore/attribute files.
+New tools/dependencies, raw evidence and private recovery remain ignored.
+
+### Committed runtime integrations and preservation
+
+Both real integrations ran sequentially on
+**`ff8d3fca5d8a9e3fada437a915df8047830b76e1`**. The shared suite above tested the
+working-tree bytes subsequently committed at that revision; the demo's own
+service/unit/policy preflight also ran on the committed revision. The final
+handoff changes documentation only, with selected executable/configuration
+inputs compared to this execution revision. No execution is attributed to a
+later documentation SHA.
+
+| Execution | Actual result | Original evidence |
+| --- | --- | --- |
+| `python3 implementation/tests/integration/product-boundary.py --output /tmp/gp-delivery-interface-20261105-knhva0vs/product-export --run` | PASS, exit 0, `delivery-nvqUQ9k6`; all 21 protected stages and finalization PASS. Genuine sparse checkout at the original commit with lab execution files absent. Authenticated gates, restricted-actor admission, Deployment/ready-Pod digest and HTTP responses checked. | Original export remains at that absolute path; retained raw/package/console/export receipt under `implementation/evidence/raw/delivery-interface-consolidation/product-01/`. |
+| `make -C implementation demo` | PASS, exit 0, `run-CeZOMzLD`; initial delivery, directed rejection/recovery and independently analyzed/signed replacement completed. Optional L05 NOT_EXECUTED; separate F03/F04/L02 suite not run. | `implementation/evidence/raw/run-CeZOMzLD/`; console `delivery-interface-consolidation/laboratory-attempt-01.log`. |
+| Actual scripted DB adapter with the preserved real DB | PASS; explicitly selected original DB path, no destination copy, repeated identity checks pass. No manual tasks or measurement campaign. | `delivery-interface-consolidation/scripted-reuse/` and `scripted-reuse.log`. |
+
+The existing lane-A auditor passes **26 applicable boundaries**. Its complete
+catalogue aggregate remains **FAIL** solely because L05 requires an unselected
+explicit source pair. `laboratory-audit.json`, its exit status and original log
+retain that outcome; this is not a complete twenty-scenario campaign. Static
+F01/F02 receipts are under `delivery-interface-consolidation/workflows/`, on the
+same committed source. No hosted OIDC execution is claimed.
+
+The current verifier checked outer checksums, safe members and every internal
+hash, including the retained product copy and the historical archive above:
+
+| Archive | SHA-256 | Internal hashes |
+| --- | --- | ---: |
+| `delivery-nvqUQ9k6.tar.gz` | `fc2b4eaf7dc6170f64cf8cadc63728ba6c5f3fc2c295c9885aab329c762af94c` | 160 |
+| `run-CeZOMzLD.tar.gz` | `489ddc385ff6b3a5be896d81a1e66e29511edce48f37078a17e94fdbd8d92910` | 1,725 |
+
+Product source snapshot:
+`7c4544cd89d68b8ffc513cc59d424fb88864f61fdc6173a44f7dd3d39f223777`;
+image `sha256:191716910814dbb76a22b24333f2cba136b4938bccbd7db6d0eacbf7f9ba3329`.
+Laboratory source snapshot:
+`1bf168bb8ece0506add35f19687ae622dc67d8d4df70664d6f7e7923886e79b2`;
+initial image `sha256:e704d50353dc39977941fecb6e58c090b927eb2b5aa8a717d5a6a7b0598504a6`,
+replacement `sha256:d98d74ddf70c8f27ecb5f2055cf437c99e8f70c9c4771fcd2118f0eadc9c2ec9`.
+Each run's independent immutable snapshot is retained under
+`/tmp/gp-delivery-interface-20261105-knhva0vs/snapshots/`; both match the original
+DB/metadata hashes above and pass the current identity check after execution.
+
+All six observed immutable container IDs and four owned volumes are retired;
+`product-verified.json` and `laboratory-retirement.json` record identity/metadata
+checks and the unchanged three pre-existing volumes. Repeated product cleanup
+from an unrelated CWD passes and preserves the first result, finalization, log,
+diagnostics and package hashes. Private recovery copies are under
+`implementation/.tmp/delivery-interface-consolidation/`; they are excluded from
+public packages. Originals, failed development checks and the sparse checkout
+remain preserved. No global prune, evidence cleanup, tag substitution or external
+custody claim is made.
+
+Lowest observed workspace/Docker free capacity was **6.7 GiB**; after retirement
+it is **8.5 GiB**, with **102 GiB** free on separate `/tmp`, about **13 GiB** RAM
+available and **80%** free workspace inodes. Capacity logs cover pre-creation,
+build/scanning and packaging/retirement. Guards were never reduced. Existing
+Kyverno deprecation warnings remain a separate admission-selection decision.
+
+Remaining old spelling is intentional: Linux compatibility entries, stable local
+provenance identifiers, exact historical recovery roots, old immutable Git-tree
+selection (L05, frozen paired warmup and release specification), and dated records,
+fixtures and generated historical bytecode. No historical claim is assigned to
+renamed bytes. Legacy JS export identities and Python verifier access pass their
+read-only checks. Symlink support is limited to the supplied Linux environment;
+canonical commands work without the legacy source tree in the product export.
+Historical manual/defense sessions use their recorded revision in the original
+repository location; this branch adds no cross-revision resume contract.
+
+| Activity | AI contribution | Human review | Decision |
+| --- | --- | --- | --- |
+| Adapter contracts, English migration, regressions, local integrations and handoff | OpenAI Codex / GPT-6 | Pending | Draft for review; no acceptance, custody or measurement decision inferred |
+
+Final documentation checks: **1,100 links/anchors in 87 changed guides PASS**,
+exact 816-path inventory and 11 inventory regressions PASS, and diff whitespace
+checks PASS. `final-source-continuity.json` compares all 61 product file contents
+and Git executable classifications with the actual sparse export, plus the
+unchanged laboratory source snapshot. The first whole-snapshot comparison found
+filesystem permission differences between sparse checkout and workspace; the
+existing capture includes those bits. Both original hashes and that observation
+are retained, rather than normalizing historical receipts. No file contents or
+Git executable classifications differ, and the final source delta is documentation
+only, so the runtime integrations remain applicable to their recorded boundary.
+Private recovery verification derives each retained key's public key and matches
+it to the run's retained public anchor; kubeconfig contexts match their run owner.
+Final push/PR CI URLs and status are reported in the PR handoff on its exact head.
+
+## PR #75 review fixes — 5 November 2026
+
+The review of `ed654393bf678146fc84bead9d3acab4ac2f4f4c` found two migration
+defects. No later commits existed when work resumed on the same branch/PR.
+Runtime fixes and regressions are committed at
+**`e3008cb077b09e36002c0581738725618ceee94d`**; the subsequent handoff changes
+only documentation. Human review remains pending.
+
+1. Paired bootstrap incorrectly requested the new directory spelling from the
+   frozen warmup commit. `paired-delivery.sh` now resolves each commit's service
+   path separately, requires commit/service/`src` object types, compares the
+   application trees and exports from the repository root. The change report
+   compares those same trees. Rename-only revisions fail the application-change
+   requirement. The frozen SHA, protocol, measured Dockerfile/base overlay,
+   R/G cache isolation and timing boundaries are unchanged. Existing L05/release
+   immutable-path selection informed the bounded resolver; no migration framework
+   or new public interface was introduced.
+2. Direct legacy `demo.sh` followed directory ancestry but not its file symlink,
+   selecting `implementacion/` and failing the strict canonical-root check.
+   The coordinator now resolves its invoked file first. The same confirmed
+   startup pattern is corrected in paired delivery/cleanup/dependencies,
+   environment/policy/install/smoke entries and defense entry/adapters: eleven
+   shell entries total. `deliver.sh` already delegates correctly; the manual
+   session template and F11 static helper use their documented Git-root lookup.
+   Context validation, imports, saved-state roots, downstream operations and
+   coordinator cleanup ownership are unchanged.
+
+### Executable regressions and historical export
+
+Evidence is retained under
+`implementation/evidence/raw/pr75-review-fixes-20261105/`. Before the runtime
+fix, new uncommitted regressions ran against the reviewed implementation:
+`paired-red.log` records the historical lookup/CWD failures,
+`legacy-red.log` the actual coordinator's wrong-root failures, and
+`aliases-red.log` the other startup-root mismatches. These are observed failures,
+not a reconstructed TDD history. Synthetic fixtures are labelled unit tests.
+
+- `test_paired_measurements.py`: **57 tests PASS** on the fixed runtime. The
+  warmup regression executes the actual production preparation block in real
+  temporary Git repositories, covering old→new, old→old and new→new layouts,
+  implementation/unrelated CWDs, original application/package bytes, the measured
+  Dockerfile, tree reports, rename-only rejection, missing service/`src` trees,
+  blobs where trees are required and a non-commit revision object.
+- Focused product-boundary, legitimate-delivery, orchestration and L05 tests:
+  **133 PASS** during development. The final legacy-only rerun has **14 PASS**,
+  including real coordinator/context initialization with bounded stage stubs,
+  argument/environment/status forwarding, repository/implementation/entry/unrelated
+  CWDs, canonical and historical cleanup roots, foreign state and private-root
+  mismatches. Cleanup only prints the synthetic saved state; no historical
+  resources are reachable. Import-purity and protected-stage failures remain
+  covered by the existing suite.
+- One development rerun omitted the pinned-tool PATH and could not find Conftest
+  (`paired-all-02.log`). The corrected run (`paired-all-03.log`) passes; no pin or
+  policy changed. Earlier failed output remains preserved.
+- Actual frozen warmup **`7243334fe4ee7073801a86b25c90986b7d3c5ece`**:
+  read-only production lookup/export **PASS**, from implementation and unrelated
+  CWDs, on fix source `e3008cb`. Both retained exports contain ten verified files;
+  application/package bytes match their original Git blobs. Only the intended
+  measured Dockerfile differs. `historical-export.json` records exact trees,
+  file hashes and original paths under
+  `/tmp/gp-pr75-historical-export-uo9o85oh/`. Console logs, the executed production
+  block and export receipts remain retained. This is not cache warming, hosted
+  execution or a measurement campaign.
+
+The canonical shared checks passed against committed runtime `e3008cb`, with
+these documentation updates present in the working tree:
+
+| Check | Result |
+| --- | --- |
+| `make -C implementation doctor` | PASS |
+| `make -C implementation test` | PASS: 9 environment, 1,043 service/unit, 130 Python policy, Conftest/Kyverno, offline Cosign, static workflows, 153 defense and 22 release tests |
+| `python3 docs/EN/maintainers/check_inventory.py` | PASS: exact 816 tracked paths |
+| `python3 -I -S -m unittest discover -s docs/EN/maintainers -p 'test_inventory.py'` | PASS: 11 tests |
+| Existing documentation link/anchor procedure, scoped to the six affected guides | PASS: 303 relative links/anchors |
+| `git diff --check` | PASS |
+
+`doctor.log`, `shared-01.log`, inventory logs and `links.log` retain the outputs.
+Checks ran sequentially; existing tool/dependency pins were reused. Final push
+and PR CI results are recorded on the exact final commit in the PR handoff.
+
+### Integration applicability and preservation
+
+Both prior real integration receipts remain attributed solely to
+**`ff8d3fca5d8a9e3fada437a915df8047830b76e1`**, with the original observations,
+source snapshots and limitations above. No integration is relabelled as a run of
+this fix. `integration-impact.json` compares all **61 product inputs**: none
+changed. The laboratory capture changes in the eleven shell entries listed
+above and two regression files; the exact path list is retained in that report.
+The runtime delta is entry resolution and immutable warmup lookup/report/export,
+so focused executable compatibility tests cover the affected behavior. No
+product or representative laboratory integration was rerun; downstream build,
+scan, trust, admission, workload and cleanup implementations did not change.
+Hosted OIDC and paired workflow execution remain **NOT_EXECUTED**. No workflow
+was dispatched, no twenty-scenario/measurement campaign was started, and optional
+L05 in the earlier demo remains NOT_EXECUTED.
+
+The retained product and laboratory package hashes still match
+`fc2b4eaf7dc6170f64cf8cadc63728ba6c5f3fc2c295c9885aab329c762af94c` and
+`489ddc385ff6b3a5be896d81a1e66e29511edce48f37078a17e94fdbd8d92910`, respectively.
+Original evidence, archives, database snapshots, private recovery and the two
+unrelated untracked package files remain in place. No Docker resources were
+created by these fixes; the three pre-existing volumes remain untouched. Owned
+synthetic test directories are retired by their existing test teardown; the two
+historical exports are deliberately retained. Workspace/Docker capacity remains
+**8.5 GiB free**, with **102 GiB** free on separate `/tmp`, above the unchanged
+3 GiB reserve. `task-receipt.json` records retained hashes, volumes and capacity.
+
+Compatibility guidance is corrected in EN/ES. No inventory paths were added or
+moved. Custody, human acceptance, admission-selection and license/private-reporting
+remain pending. The independent consumer template is still a proposed next branch
+after review, not work performed by this fix. Rollback reverts source changes
+while retaining all original evidence and recovery material.

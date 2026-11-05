@@ -1,0 +1,953 @@
+# Incremental implementation plan
+
+## Current decisions and actions
+
+As of 5 November 2026, PR #74 is merged at
+`e0f2f56980ffbb00b926521ecf58eed64c713f1b`. The owner authorizes the bounded
+interface consolidation and English directory migration on
+`refactor/delivery-interface-consolidation`, including local integration and a draft PR.
+This index separates
+owner decisions, engineering, unexecuted validation and deferred proposals.
+Merge/CI does not establish human acceptance, custody or untested execution.
+Dated checklists below retain their original conclusions; this index supplies
+current navigation, not replacement evidence.
+
+| Item | Current status/type | Decision owner / role | Next action | Blocks | Canonical record |
+| --- | --- | --- | --- | --- | --- |
+| Bounded local separation / PR #74 | Merged at `e0f2f569`; broader acceptance/custody remain separate | Repository owner/reviewer | Use merged local engine; review this interface increment separately | Acceptance of this increment | [PR #74](https://github.com/tfm-goldenpath/golden-path-lab/pull/74), [validation](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026) |
+| Remaining separation, interfaces and consumer scope | Integrations at `ff8d3fc`; PR #75 entry/source-path review fixes at `e3008cb`, human review pending | Maintainer proposes; owner approves boundary | Review explicit interfaces, English migration and [compatibility fixes](../docs/EN/maintainers/delivery-core-validation.md#pr-75-review-fixes--5-november-2026) before defining an independent consumer template | Consumer/template claims; then Java trial | [Next increment](#next-implementation-increment), [migration map](../docs/EN/maintainers/repository-map.md#migration-sequence) |
+| License and private security route | Owner decisions pending | Repository owner | Select reuse terms and verify a private reporting channel | Declared reuse grant/private reporting instructions | [Reuse/support](../docs/EN/getting-started.md#reuse-and-support) |
+| Full historical dossier custody and detailed release review | Owner verification/review pending; partial custody confirmations retained | Evidence custodian / human reviewer | Complete required-original preservation and detailed review | Complete custody/release-review claims, not accepted reduced evaluation | [P00](#p00--laboratory-release-custody-before-product-restructuring), [custody assessment](../docs/EN/maintainers/repository-map.md#p00-baseline) |
+| PR #72 CLI update | Open; engineering compatibility validation and review pending | Tooling maintainer / reviewer | Check CLI 0.90.0 against three profiles, locks/hooks and required build/startup boundaries in separate work | Adopting #72; not #74 docs | [Update record](../docs/EN/maintainers/dependabot-tooling.md), [PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72) |
+| PR #23 AJV update | Open; superseded proposal, owner disposition pending | Repository owner | Proposed: close as superseded after reviewing main's AJV/fast-uri correction; no action taken here | Disposition of old update only | [Dependency record](../docs/EN/maintainers/dependency-refresh-validation.md), [PR #23](https://github.com/tfm-goldenpath/golden-path-lab/pull/23) |
+| Admission-selection semantics and official capability | Owner semantic decision + engineering/support gate + validation pending | Product/security owner; admission maintainer | Decide statement-byte vs experimental envelope contract; establish supported official engine and same-object binding, then full local/hosted checks | Authorization-selection implementation and CEL adoption | [ADR](../docs/EN/maintainers/attestation-selection-contract.md), [NO_GO](../docs/EN/maintainers/admission-selection-feasibility.md), [INCONCLUSIVE spike](../docs/EN/maintainers/immutable-envelope-authorization.md) |
+| Hosted trust on extracted source | Validation NOT_EXECUTED on this candidate | Owner authorizes; maintainer executes | Separately authorize exact-SHA hosted verification; preserve historical successes | Current-source hosted readiness claim, not local-path evidence | [PR #74 limits](../docs/EN/maintainers/delivery-core-validation.md#p01b-observed-execution-and-handoff) |
+| GitHub form and public Pages bytes | Two distinct validations pending | UI reviewer / release verifier | Read-only rendered form check (three required, two optional, links); independently compare served Pages bytes to preserved anchors | Rendering/public-byte claims only | [Intake checklist](#structured-use-case-intake-docsuse-case-intake), [Pages follow-up](../docs/EN/maintainers/github-actions-refresh.md) |
+| Context retrieval | Optional evaluation; INSUFFICIENT_EVIDENCE, no navigation adoption | Research owner / reviewer | Review protocol/scoring/custody; choose a further pilot only if useful | Adoption claims only; no mandatory benchmark chain | [Pilot](#g-context-retrieval-pilot-perfcodex-context-retrieval) |
+| Maintenance and dated review prompts | Historical/integrated, not future branches | Maintainer | Use merged dependency/devcontainer/security/Actions/updater work; review only remaining items above | No renewed implementation gate | [Maintenance history](#subsequent-maintenance-branches-outside-p03) |
+
+The 2 November review target below is **historical**, not a new scheduled action;
+no fresh engine-release investigation is claimed here. The separate 30 November
+09:00 Europe/Madrid reminder remains unchanged, not a retirement date or upgrade
+authorization. The [accepted reduced evaluation](registros/evaluation_acceptance_20261004_ES.md)
+and deferred manual measurement/calibration scope are not reopened.
+
+### Next implementation increment
+
+Current branch: **`refactor/delivery-interface-consolidation`**. Explicit database
+selection and documented capture/context contracts retain the fixed local path.
+`implementation/` is canonical; legacy Linux source access and Make commands
+remain supported, with ignored historical evidence/private state left in place.
+Focused/shared checks and real isolated-product/laboratory integration validate
+the committed runtime layout; see the [dated record](../docs/EN/maintainers/delivery-core-validation.md#interface-consolidation-and-english-layout--5-november-2026).
+Human review remains pending. This authorization does not close dated custody,
+measurement, admission-selection, license or private-reporting decisions.
+
+Recommended next bounded branch after interface review:
+**`feat/independent-consumer-template`**, defining one independent consumer and
+validating its actual execution. This branch delivers no template or Java support.
+
+### Deferred product requests
+
+These requested directions are **not implemented and do not block this merge**.
+Product/control owners define requirements and oracles; maintainers implement and
+validate. Suggested increments and acceptance boundaries below are proposals,
+not authorizations. Draft pull requests are already the selected AI remediation
+outcome; only their operating requirements remain open.
+
+| Future item | Unanswered requirements | Proposed next increment and acceptance boundary |
+| --- | --- | --- |
+| Java trial | Runtime/build tool, sample API and parity expectations | After independent template, deliver one genuine Java consumer with the same required evidence; no general Java-support claim from one trial. |
+| AI blocker diagnosis → draft PR | Allowed blockers, readable evidence, redaction, credentials, patch scope and retry limits | One opt-in diagnosis/repair case ending in a draft PR with reproducible tests and human review; AI cannot authorize delivery or enter measured manual tasks. |
+| Quality/test-coverage gates | Metrics, thresholds, exclusions, tools and ownership of the oracle | One deterministic gate with known pass/fail/error fixtures and a real service check; do not equate coverage with correctness. |
+| Deployed-image vulnerability reassessment and redeployment freshness | Trigger/cadence, DB/evidence age, exact running digest and reject/revoke/reprepare behavior | Bounded reassessment of one deployed digest plus new-delivery freshness rules; retain original authorization, reports and failure/unreached states. Separate from currently deferred continuous revocation in the [ADR](../docs/EN/maintainers/attestation-selection-contract.md). |
+| Independent SBOM/image inventory comparison | Independent source, matching rules, scope and discrepancy oracle | One genuine image comparison with attributable differences; no inventory-completeness claim from schema validity. |
+| Scoped default Conftest/Kyverno policies | Supported workloads/namespaces, rule catalogue, exceptions and change ownership | One agreed default scope with matching tests per consumer and real admission where required; preserve existing oracles until explicitly changed. |
+| Manager-oriented control/evidence dashboard | Audience decisions, data sources, freshness, access and unknown-state presentation | Read-only view of verified records linking controls to evidence; distinguish PASS/rejection/error/unreached and historical/current data. Existing defense presentation is not this product. |
+
+## P00 — laboratory release custody before product restructuring
+
+- [ ] Preparation/tooling reviewed: [EN guide](docs/EN/lab-release-freeze.md), [ES guide](docs/ES/lab-release-freeze.md), [validation](registros/lab_release_freeze_EN.md). Implementation alone does not satisfy review.
+- [x] Owner confirms downloaded frozen-0002 custody/hash on 24 October 2026; recorded separately from local automated verification.
+- [x] Administrative read access resolved with stored user authentication; immutable releases disabled, no setting changed.
+- [ ] Complete historical evaluation-dossier custody remains unverified; the frozen-0002 confirmation does not cover the full dossier.
+- [x] Record the owner report of the four-pair timing pilot backup as **COPIED** on 25 October 2026; no personal identity or storage location is recorded.
+- [x] Owner confirms pilot-backup verification **COMPLETE** on 25 October 2026. This is owner-reported verification, not an independent assistant audit; it does not establish custody of the complete historical dossier.
+- [ ] Complete the required-original preservation record, with the above scope and private recovery details retained by the owner.
+- [ ] Candidate verified and reviewed with its exact source and limitations.
+- [x] Final merged source selected: `76f93355ba78f3735b5e864970c63ab4e12b2b33`; retained source/check receipt binds PR #59 and successful CI `40136532287`. See the [P01 receipt assessment](../docs/EN/maintainers/repository-map.md#p00-baseline).
+- [x] `lab-v2026.10.24` published after explicit owner authorization; release `423007376`, tag at `76f93355ba78f3735b5e864970c63ab4e12b2b33`, `immutable=false`. Publication does not imply human release review.
+- [x] Published tag and all 19 independently downloaded assets verified on 24 October; retained `published-receipt.json` is `PUBLISHED_BYTES_VERIFIED`, bound to the independently recorded manifest anchor. P01 rechecked receipt/source/specification binding without downloading the assets again.
+- [ ] Ready for repository refactor. Until every gate is met: LAB_RELEASE_NOT_YET_VERIFIED / REPOSITORY_REFACTOR_BLOCKED.
+
+
+Current P00 clarification (25 October): the later publication handoff still records
+`LAB_RELEASE_NOT_YET_VERIFIED` / `REPOSITORY_REFACTOR_BLOCKED`. Detailed human
+release review and complete evaluation-dossier custody have not been recovered as
+closed decisions. The owner authorizes non-behavioral P01 documentation/inventory;
+physical restructuring is not authorized by inference. Frozen-0002 custody does
+not cover the full dossier. Original silent video remains unchanged; narration
+and presentation-computer playback were excluded from the release task by the
+owner and are not P00/P01 blockers. Historical entries below retain their dates.
+
+## P01 — product foundation (`chore/product-foundation`)
+
+- [x] Product-first [EN](../README.md) / [ES](../README.es.md) entries and matching small user-guide indexes.
+- [x] Honest implemented laboratory / historical observation / planned consumer / unsupported-property distinction; no fictional consumer CLI or quickstart.
+- [x] Source-inspected phase/control explanation, stopping outcomes, evidence, existing rule IDs and links to canonical contracts/tests ([EN](../docs/EN/how-it-works.md), [ES](../docs/ES/how-it-works.md)).
+- [x] Separate [EN laboratory](../lab/README.md) / [ES laboratorio](../lab/README.es.md) navigation for scenarios, lanes/configurations, measurements, acceptance, defense and recovery.
+- [x] Whole tracked-repository [ownership inventory](../docs/EN/maintainers/repository-inventory.json), including each script/helper/test, docs/configuration and explicit generated/custody patterns; unresolved migration questions remain explicit.
+- [x] [Target modular/dependency contract and compatibility sequence](../docs/EN/maintainers/repository-map.md): P01 → P03 → P01b → P03b → P04. Current runtime paths and signing workflow identities unchanged.
+- [x] Inspect actual reuse/support situation: no repository license or declared private security route; enabled Issues for non-sensitive questions; third-party terms preserved.
+- [ ] Owner selects repository reuse terms and verified private security-reporting route; no license/settings changes made here.
+- [x] Complete documentation/inventory validation: exact 500-path coverage, 10 focused validator tests, relative links/anchors, EN/ES navigation, command dry-run and protected-path comparison. See the [validation record](../docs/EN/maintainers/validation.md).
+- [ ] Human review and acceptance of P01. AI assistance: OpenAI Codex / GPT-6; no human review inferred.
+- [x] P03 `refactor/delivery-core`: bounded functional implementation and both Linux integrations on `e3850a4`; human PR review remains pending below.
+- [ ] P01b physical product/laboratory file separation, after applicable custody/review gates.
+- [ ] P03b script/interface consolidation or deletion after caller/compatibility review.
+- [ ] P04 real consumer template; new controls, dashboard redesign, P15 richer catalogue and future product release remain later work.
+
+P01 can be developed locally or in Codespaces without Kubernetes. Its validation
+is documentation/inventory validation, not a new laboratory run. Later runtime
+refactors require Linux and representative registry/trust/admission integration.
+Current scope clarification — 4 November 2026: the owner's explicit request
+permits the additive `docs/use-case-intake` increment independently of pending
+P00/P01 human acceptance. Physical restructuring, evidence custody and broader
+acceptance remain separate gates; earlier dated records retain their conclusions.
+
+## P01b — bounded local product separation (`refactor/product-core-separation`)
+
+Current owner authorization (4 November 2026) explicitly permits extraction,
+relocations and compatibility wrappers for the legitimate local quotes-node path,
+plus commit/push and one draft PR. It does not close P00/P01 custody or human
+review, or rewrite their earlier conclusions. Actual baseline: fetched main
+`1f9cc61d267aeeff1df1f7e9fa88d74cbaeb4211` (PR #73).
+
+- [x] Extract canonical `bin/deliver` / `src/` delivery, evidence/trust, ordinary workload and neutral local lifecycle; keep one shared implementation for laboratory callers.
+- [x] Keep scenario dispatch/mutations, R, measurement/manual adapters and archive allowlists outside the product dependency closure; preserve commands and signing identities.
+- [x] Validate the bounded candidate: real sparse-checkout delivery `delivery-UMD8FHsa` on `185401c`, representative lab `run-M7Hm2UlM` and shared suite on `6e721a1`; verify archives/retirement and retain the failed first lab attempt. Product inputs are identical across those candidates; see the [existing validation record](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
+- [ ] Human review of this bounded increment. No repository-wide separation claim.
+- Remaining physical/mixed interfaces: neutral policies/schemas/pins/tooling and selected synthetic service still under `implementacion/`; laboratory adapters/tests remain there; shared contracts retain compatibility namespaces/profiles and hosted trust adapters. Configuration is internal, fixed to quotes-node/local.
+- Next: interface consolidation → independent consumer template → Java trial. Separate CLI compatibility work for Dependabot PR #72 remains outside this branch.
+- Admission-selection capability/validation blockers, hosted negative gaps, deferred human calibration, new controls, dashboard and release work remain unchanged. No campaign rerun or publishing dispatch is authorized here.
+
+## Structured use-case intake (`docs/use-case-intake`)
+
+- [x] Start from fetched main `3e5a41c0d94ab8e68b152cc47991812b61e066f0` (PR #71) in a clean worktree, preserving unrelated work.
+- [x] Add one public EN-labelled form accepting EN/ES answers, three required inputs (category, problem and success), two optional inputs (environment and references/ideas) and non-sensitive guidance; no routing defaults or automation. [EN guide](../docs/EN/use-case-intake.md) / [ES](../docs/ES/use-case-intake.md) explain observable outcomes and maintainer triage.
+- [x] Distinguish proposed, implemented and revision/boundary-verified capabilities; Java/template and vulnerability reassessment examples are illustrative and unimplemented. Preserve all twenty Fxx/Lxx expectations.
+- [x] Initial validation at `655a1f8` (4 November 2026): pinned YAML parsing and 5 form contract tests; affected policy target passes (129 Python tests, 62 Conftest decisions, 16 Kyverno checks and existing workflow/manifest checks). Exact 542-path inventory, 10 inventory regressions and 402 relative links/anchors pass. Assistant walkthrough of both unimplemented examples finds all five answers actionable with explicit unknowns; this is not a human usability study. Initial policy attempt lacked installed AJV in the new worktree; reuse of existing pinned modules resolved it without dependency changes.
+- [x] Refine the form to five fields (three required, two optional) and shorten both public guides. Six focused form tests, exact inventory/10 regressions and 243 relative links/anchors including all incoming guide links pass; no links target removed headings. PR records final refinement CI separately from the initial validation above.
+- [ ] Human review and acceptance of this increment; assistant walkthrough is not a human usability study. PR records exact checks and final-source CI.
+- [ ] After merge, open the form from New issue, inspect fields/required inputs/guide links and leave without submitting. Local parsing does not establish GitHub rendering.
+
+Physical separation → interface consolidation → independent consumer template →
+Java trial remains the dependency sequence. Admission-selection implementation
+stays blocked by existing capability and validation requirements. No new scenario,
+consumer template, dependency/policy change, evidence-custody decision or adoption
+of Graphify, Serena or Repomix belongs to this increment.
+
+
+## P03 — legitimate delivery core (`refactor/delivery-core`)
+
+- [x] Bounded owner-authorized functional extraction from main `b00d57b91536a00d3dc99bd1a99f4a82c5bab1ca`; unrelated root npm files and original evidence preserved.
+- [x] Fresh-only local quotes-node coordinator, explicit source/configuration/profile, neutral admission classifier and authorized readiness, ordinary workload operations and versioned delivery package. Existing laboratory/paired/defense/manual interfaces retain their historical defaults.
+- [x] Final candidate shared/focal checks and both sequential real integrations PASS on `e3850a4b59f4cea198d89902285078875457668c`; legitimate delivery `delivery-FKciP7Y2` and laboratory `run-20rUZlEe`, including independent L01 replacement. Hashes verified; exact scope and remaining checks are in the [validation record](../docs/EN/maintainers/delivery-core-validation.md).
+- [ ] Human review of implementation and PR; no P00 custody/review or historical acceptance gate is closed by this extraction.
+- [ ] Physical separation, script consolidation and independent consumer template remain their subsequent increments.
+
+## Subsequent maintenance branches (outside P03)
+
+Current summary: dependency refresh (#62), devcontainer refresh (#63), security
+toolchain refresh (#64), Actions refresh (#70), Dependabot setup (#71) and intake
+(#73) are merged. Their dated validation and pending human/custody decisions below
+remain unchanged. These are implemented maintenance records, not future branches.
+
+Historical planning instruction: execute each branch separately with a new baseline. “Latest” means the stable,
+supported release checked on its implementation date, explicitly pinned and
+tested; never floating `latest` or a claim of no vulnerabilities. A real blocker
+requiring a security patch needs a separate bounded patch and restored baseline,
+not an update hidden in P03. Preserve DB snapshots and frozen packages unchanged;
+a new vulnerability DB has its own identity.
+
+### A. `chore/dependency-refresh`
+
+Current bounded implementation and evidence: [dependency refresh validation](../docs/EN/maintainers/dependency-refresh-validation.md). AJV 8.20.0 and compatible fast-uri 3.1.9 address the observed audit; delivery `delivery-ZxZX3rpM` passes on `7fe7a76`, while human review remains pending. This is not completion of all Actions/automation refresh work.
+
+- [x] Correct AJV to 8.20.0 and its compatible fast-uri transitive to 3.1.9; synchronize manifest/lock, explicit validator guard, regressions and schema README. Focal/shared tests and a real legitimate delivery pass on `7fe7a760454900caec08737f93c632168596e4eb`. [Dependabot #23](https://github.com/tfm-goldenpath/golden-path-lab/pull/23) remains open; no merge/closure is performed. Historical P03 reports still describe AJV 8.17.1.
+- [x] Inventory all 13 tracked npm manifests/locks; quotes-node has no application dependencies. Review tooling/plugins/CLI and transitives: only AJV and fast-uri change; format plugins and CLI already match the consulted stable versions.
+- [x] Implement `chore/github-actions-refresh` from merged PR #69 (`0b2ab83`): recheck eight official releases and update setup-node 7.1.0, upload-artifact 7.0.2, upload-pages-artifact 5.0.0, configure-pages 6.0.0 and deploy-pages 5.0.1 with full SHAs. Preserve the official nested upload-artifact 7.0.0 pin; disable implicit setup-node caching; update the exact Pages policy pins and add non-deploying CI packaging coverage. See [EN](../docs/EN/maintainers/github-actions-refresh.md) / [ES](../docs/ES/maintainers/github-actions-refresh.md).
+- [x] Validate executable commit `3bae814` in ordinary push CI [41668073074](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41668073074) and download both artifacts: GitHub ZIP digests, 18 workflow-evidence file hashes, source/run association and 3 synthetic Pages file hashes match. Final record-only head checks remain linked in PR #70; no historical observations are reassigned.
+- [x] Record owner-dispatched post-merge Pages [run 41672595733](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41672595733), source `9e68811`: `validate` and `deploy` succeeded. Metadata/logs inspected read-only; the earlier NOT_EXECUTED record remains historical. No new dispatch.
+- [ ] Human acceptance and independently recorded verification of publicly served Pages bytes; successful deployment does not establish either. No manual delivery/paired/launcher dispatch is inferred.
+- [x] Historical dependency-refresh inspection: no tracked configuration, existing Dependabot #23, administrative security-update query 403. A future configuration should target only `/implementacion/tooling`, group AJV/formats conservatively, cap PRs and retain review/checks.
+- [x] Implement `chore/dependabot-tooling` from merged PR #70 (`9e68811`): one npm schedule at `/implementacion/tooling`, Monday 08:00 Europe/Madrid, three open version PRs, `increase`; only AJV/plugins minor/patch version updates grouped. No dependency changes, second updater, automerge, fixture inclusion or alert suppression. Do not use `npm audit fix --force` or floating versions. See [EN](../docs/EN/maintainers/dependabot-tooling.md) / [ES](../docs/ES/maintainers/dependabot-tooling.md).
+- [x] Validate the configuration locally: 5 updater contract tests (including negative mutations), 13 SBOM and 16 Lane A tests, doctor/shared suite, inventory and links. Final-head ordinary CI results are recorded in the implementation PR, separately from service execution.
+- [ ] Human review of this increment; configuration correctness does not prove dependency compatibility.
+- [x] First actual Dependabot service observation, inspected 4 November: [run 41696607430 / job 126128707139](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41696607430/job/126128707139) succeeded on `3e5a41c`; logs proposed CLI 0.89.0 → 0.90.0 in open [PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72), with no update needed for AJV/formats. [Main CI 41696597287](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/41696597287) also succeeded on that baseline. This establishes service operation, not #72 compatibility or acceptance; those remain separate review work. No new job dispatched; existing security updates/alerts remain separate.
+- [ ] Owner review of superseded Dependabot #23: its AJV 8.20.0 manifest equals main, but its lock retains fast-uri 3.1.8 versus main 3.1.9. Recommend closure as superseded; no closure, merge or comment performed here.
+- [x] Retain separate successful-query audit reports: initial exit 1 with AJV and fast-uri findings, final exit 0 with no tooling findings reported. Preserve real scan warnings, source/digest/DB/package identities and all logs; see the canonical maintenance record.
+- [ ] Human review of this dependency PR and outstanding automation updates; no P00 custody or acceptance gate is closed.
+- [x] Preserve deliberately vulnerable fixtures and their oracles in this diff. Renewal remains separate scenario work; only owner-authorized redundant P03 DB copies were retired after verified byte-preserving archival, as recorded in maintenance evidence.
+
+### B. `chore/devcontainer-refresh`
+
+Current bounded implementation: [refresh validation](../docs/EN/maintainers/devcontainer-refresh-validation.md).
+
+- [x] Update Node LTS/npm and both Node image digests, signed Debian snapshots, Docker/feature and Buildx. Retain kind/Kubernetes within Kyverno 1.19 support; general security tooling and Actions remain separate.
+- [x] Synchronize all three profiles at minimum 4 cores / 16 GB / 32 GB, shared installation, correct root/nested hooks and pinned CLI-generated feature locks. Record actual machine/filesystems and authorized local retirement; do not reinterpret historical runs.
+- [x] Install optional official Codex CLI 0.164.0 through a separate exact npm manifest/lock. Verify version/help as non-root without credentials; add official openai.chatgpt identifier, without claiming an extension version pin.
+- [x] Preserve authentication-independent delivery/doctor/CI, personal configuration and security boundaries. Document optional browser/device authentication; no login or model request performed.
+- [x] Clean shared image build and implementation-profile startup using Dev Containers CLI 0.89.0; parse all three configurations and test root/nested hook repetition. This is not a Codespaces UI Full Rebuild.
+- [x] Updated-environment shared suite, successful smoke after a preserved capacity interruption, 43 actual service-image tests, legitimate delivery `delivery-h7LTCVTP` and local Docker/admission regression `run-luDIixP6` on `5f0ec8f`. Packages/DB hashes and owned cleanup verified; final source/digest/retention in the validation record. L05 revision-pair and hosted OIDC execution are not claimed.
+- [ ] Human PR review and acceptance; interactive extension/authentication remain user-owned. No merge, release or hosted publishing validation.
+
+### C. `chore/security-toolchain-refresh`
+
+Current candidate and exact validation limits: [maintenance record](../docs/EN/maintainers/security-toolchain-refresh-validation.md).
+
+- [x] Pin and verify Trivy 0.76.1, Conftest 0.71.1, Cosign 3.1.4, Kyverno 1.19.2/chart 3.9.2 and Helm 4.3.1; clean installer and shared devcontainer Dockerfile build. Retain PR #63 platform pins, act, zot and BuildKit.
+- [x] Verify Kubernetes 1.35.8, CycloneDX 1.7 full schemas, v0.3 bundles and exact chart images/values. ClusterPolicy → CEL remains a separate policy branch.
+- [x] Shared tests and real local integrations on `041f391`: legitimate delivery `delivery-Juza7mF4`, demo `run-hRUtsdlZ`, vulnerabilities `run-q3FVez06`. Verify package hashes and owned cleanup; retain failed preflight `delivery-6iEXPup3`. L05 and unsupported hosted negatives are not claimed.
+- [x] Preserve historical records and new original observations; retain one verified fresh DB byte copy with explicit mappings for retired duplicates. No campaign or human acceptance claim.
+- [x] Authorized hosted `golden-path.yml` run `40722150890` on `a1ec5de`: both native provenances, exact branch identity, certificate/transparency, preissuance F13, F11/F12, legitimate admission and L01 verified. Artifact/inner hashes and eight downloaded evidence bundles verified. Cleanup step succeeded; native finalization/per-resource absence receipts are not emitted, as documented. This does not establish execution on main.
+- [ ] Human review and final acceptance.
+
+### D. Kyverno CEL compatibility research (PR #65)
+
+Research branch: `refactor/kyverno-cel-policies`; PR scope: **tests/documentation**,
+not an active migration. [Decision, upstream review, matrix and unsent report](../docs/EN/maintainers/kyverno-cel-migration.md).
+
+- [x] Inspect official 1.19.2 source/CRDs and preserve the original capability observations, including the superseded format-only blocker. Owner permits official admission representations subject to demonstrated authenticity/authorization; bundles remain canonical in production/CI/custody.
+- [x] Reproduce authenticated-content selection dependence with official CLI and restricted-actor CEL admission. Preserve the synthetic/full-contract and CLI/admission distinctions; no signature forgery, missing-all-results or general Kyverno vulnerability claim.
+- [x] Inspect issue #18023 and final PR #18049: merged newest-candidate selection is absent from inspected 1.19.0/1.19.1/1.19.2 and rc.5; no published corrected release identified on 29 October. Verify official CLI archive/member, tag source, release-branch history and main implementation; closed issue/publication date alone is insufficient.
+- [x] Provide a reduced same-reference, unchanged-bundle order reproducer and separate execution/observation/contract/adoption outcomes; original evidence and NOT_EXECUTED cases remain intact. Preserve active policies/producers and normal delivery/demo entry points.
+- [x] Compare all/any/current authorization contracts and recommend explicit current authorization for a future product decision, with authenticated context, supersession, freshness, tie/conflict and replay rules. This does not approve or implement new semantics.
+- [ ] Human review of the bounded research PR. Research can be accepted independently; **CEL migration remains unimplemented and blocked**.
+
+### E. Attestation selection design before CEL adoption
+
+The design started independently from main `e0fbe6490794b0da679777d465117a43bdb482ad`
+while [PR #65](https://github.com/tfm-goldenpath/golden-path-lab/pull/65) was open.
+After #65 merged on 30 October at 20:19:06 UTC, this branch incorporates main
+`2b654f94e9c1bbb42ee3a6e75e788bc167407787`. Its
+[research record](../docs/EN/maintainers/kyverno-cel-migration.md) is now incorporated;
+original commit-pinned observations remain unchanged. Research integration is not
+active CEL migration or approval of this design.
+
+- [x] Prepare `design/attestation-selection-contract`: canonical [EN ADR](../docs/EN/maintainers/attestation-selection-contract.md) / [ES explanation](../docs/ES/maintainers/attestation-selection-contract.md). Recommend exact authenticated statement contents selected by existing trusted preparation for a concrete delivery; defer continuous revocation/supersession. Human approval remains pending.
+- [x] Refresh official release/history/artifact inspection on 30 October 2026 UTC: latest stable 1.19.2, chart 3.9.2, Kubernetes 1.35.8 supported; embedded controller Cosign 3.1.2 differs from CLI 3.1.4. #18049 is on main, not the inspected release/branch, and its newest selector is insufficient for the proposed contract. No pins changed.
+- [x] Bounded new CLI feasibility: signed-subject ID filtering isolates different IDs, but same-ID contradictions remain order-dependent. Nine synthetic observations; test COMPLETED, ID-only contract FAIL, adoption BLOCKED. No new Kubernetes/hosted/full delivery execution or production changes.
+- [ ] Approve the ADR's semantic scope/version, four exact-content bindings and explicit freshness limits; do not reinterpret `golden-path-v1` or historical evidence.
+- [ ] **Review 2 November 2026, or earlier on the 1.20 announcement.** Upcoming as of 30 October. [Official support](https://kyverno.io/docs/installation/releases/#community-patch-support) keeps 1.19 supported until 1.20 release (November estimated); [API schedule](https://kyverno.io/docs/policy-types/overview/#deprecation-schedule-for-legacy-types) announces ClusterPolicy removal in 1.20. No confirmed retirement day, automatic upgrade or policy removal.
+- [ ] Exit 1: identify and prove an official release with exact authenticated-content selection/collection and same-byte binding. Publication of #18049 alone is not sufficient.
+- [ ] Exit 2: after design approval and capability proof, implement `feat/delivery-authorization-selection` with versioned preparations, renderer/CI consumers, readiness/RBAC/snapshots/diagnostics, complete decision matrix, sequential local integrations and a newly authorized exact-SHA hosted run. No custom verifier, fork or authority service.
+- [x] Exit 3 capability investigation, 1 November 2026: [EN feasibility report](../docs/EN/maintainers/admission-selection-feasibility.md) / [ES](../docs/ES/maintainers/admission-selection-feasibility.md). Kyverno 1.19.2 fails the source/API gate; official policy-controller 0.15.1's indirect envelope binding fails the exact-statement-identity gate in five real CLI evaluations. Both are **NO_GO for the four-hash contract**; no admission/hosted execution or adoption is inferred. Original failed fixture attempt is retained.
+- [ ] Human review of the feasibility result and selection mechanism: either approve a distinct immutable-envelope artifact contract with explicit statement association/re-preparation semantics, or require official authenticated raw-byte/hash selection. `feat/delivery-authorization-selection` remains blocked; no additional engine, custom verifier or authorization service is introduced.
+- [ ] CEL migration remains **not implemented**. Consider runtime-only ValidatingPolicy separately only if its maintenance benefit justifies mixed APIs; retaining legacy image verification does not solve ClusterPolicy retirement.
+- [x] Keep general Actions maintenance separate; implementation is recorded above in `chore/github-actions-refresh`. Preserve the existing 30 November 2026 09:00 Europe/Madrid reminder unchanged; it is not a retirement date or update authorization.
+
+### F. `spike/inmutable-envelope-authorization`
+
+- [x] Record PR #67 merged as `7ba200fd1119082b93d49dd80bee960e4709244b`; no migration approval or undocumented human review is inferred. Preserve its four-statement-hash NO_GO and original observations.
+- [x] Define a separate experimental immutable DSSE-envelope OCI blob identity, including explicit re-preparation after repacking/re-signing and same-object authentication/content association. [EN report](../docs/EN/maintainers/immutable-envelope-authorization.md) / [ES](../docs/ES/maintainers/immutable-envelope-authorization.md).
+- [x] Gate 1: inspect official policy-controller 0.15.1, formats, trust, cache/scope and support on 1 November 2026. Local key + native bundle remains unsupported. **Admission eligibility INCONCLUSIVE**: support table reaches Kubernetes 1.29, release E2E reaches 1.34 (EOL 27 October); no currently maintained combination established. This is not proof of incompatibility.
+- [x] Partial gate 2: ten real CLI evaluations on final executed harness bytes; selected PASS/FAIL contradictions in both orders, duplicate, internal rejection, absent/repacked artifact and new binding, plus actual Cosign sign/v1 producer. Fourteen harness regressions cover association, evaluation/classification, order, unfavorable evidence and owned cleanup. All three sequential registry attempts retained/removed.
+- [ ] Complete full local SBOM/provenance/results contracts and remaining matrix only after eligibility is established; no early full results PASS, no synthetic F13 claim. Gate 3 real admission, actor/RBAC, tags, cache E1→E2, Deployment/Pod operations, rollout and HTTP are **NOT_EXECUTED**. Hosted validation is separately authorized and NOT_EXECUTED.
+- [x] Close this bounded investigation as **INCONCLUSIVE**, not GO_LOCAL. Archive the reproducible prototype; do not start `feat/delivery-authorization-selection` or another documentation-only PR chain. The concrete prerequisite is official support for a published controller/currently maintained Kubernetes combination, then the already-defined contract/admission tests. Adoption remains pending human review.
+- [x] Address both PR #67 review comments in this spike: invalid tester checksum exits 1; owned-resource cleanup continues after diagnostic/removal failures, retains per-step errors and always produces ERROR/INCONCLUSIVE on cleanup failure. Four new regressions (18 total); preserve prior engine observations/package and record follow-up checks separately. No engine/admission rerun or adoption change.
+
+### G. Context retrieval pilot: `perf/codex-context-retrieval`
+
+PR #68 merged at `a6cda3203f0ab39ac5d37569d851ae35f9d4068c`; this does not
+close human review or adopt admission changes. Admission remains **INCONCLUSIVE**.
+The 2 November pilot is recorded in [EN](../docs/EN/maintainers/context-retrieval.md)
+and [ES](../docs/ES/maintainers/context-retrieval.md), with its frozen protocol,
+runner/analyzer, original observations and executed-source hashes.
+
+- [x] A: current navigation; rg/jq already available, no deliberately poor baseline.
+- [x] B: same mandatory rules plus brief names/paths-first, scoped rg/jq, inventory/caller/test/source confirmation, relevant excerpts and explicit workflow/policy/test scope; no index.
+- [x] C attempted: B plus optional official Graphify 0.9.100, verified wheel and isolated venv; local code-only, backend none, logging disabled, no cluster/community processing, at most two workers. No integration installer, LLM, cloud, MCP, watcher, embeddings or personal hooks.
+- [x] Freeze main source, CLI 0.166.0 / gpt-6-astra / high, three code-verified rubrics and two independent repetitions. Execute one excluded smoke plus 18 measured sessions sequentially, 180 seconds each, fixed alternating order and no retries.
+- [x] Preserve 16 complete answers and two pre-command timeouts (Q1-2-C, Q3-2-B). Codex rubric review gives all completed answers 2/2 accuracy, coverage and traceability; this is not human review. Timeout usage is unknown. No outside-corpus answer access observed.
+- [x] Record input/output/cache/reasoning aggregates without double-counting cache or cumulative events; keep time, quality and tool costs separate. No monetary/productivity saving claimed.
+- [x] Measure isolated installation, extraction, query and incremental update on a separate source copy; record memory/space and missing download-time/instruction-token data. Document absent Rego nodes and incomplete shell/Makefile/Dockerfile coverage.
+- [x] Decision: **INSUFFICIENT_EVIDENCE; keep current navigation**. B shows no stable advantage; none of six C sessions queried the optional graph, and a post-run probe found the original venv interpreter invisible in the sandbox. Exclude all C configurations from valid graph comparisons. Canonical Python/`--copies` and a pre-model sandbox preflight now pass locally; no model runs were repeated. Retain the bounded reproducer/report, retire owned optional tools after verified packaging, and do not change AGENTS.md or the default image. No mandatory follow-up benchmark chain.
+- [ ] Human review of protocol, answer scoring, evidence custody and this decision. Source/tests remain authoritative; no AI navigation enters Golden Path security decisions.
+
+### Proposed parallel branch pairs and sequencing
+
+Historical coordination proposals from the pilot follow. The pilot, Actions
+refresh, Dependabot setup and intake are now merged; bounded local separation is
+merged in PR #74 at `e0f2f569`. Interface consolidation and the English migration
+are implemented on the current branch above; an independent consumer template
+is the next bounded proposal after review. The old pairs are not a work
+queue or renewed authorization; unselected future names remain proposals.
+
+| Pair | Scope and acceptance boundary |
+| --- | --- |
+| Immediate: `perf/codex-context-retrieval` + `chore/github-actions-refresh` | Pilot merged in PR #69 without navigation adoption. Actions refresh implemented separately with full SHAs, explicit cache policy and artifact/Pages checks; actual publication and human review remain separate gates. |
+| Later light pair: `chore/dependabot-tooling` + `docs/use-case-intake` | Updater configuration merged in PR #71; first actual service observation is recorded above, with dependency compatibility and human review separate. The 4 November owner request authorizes bounded intake documentation/form work while P00/P01 human acceptance remains pending. Non-sensitive inputs, triage outcomes and observable criteria are defined in the linked intake guide; no physical restructuring or broader capability is authorized. |
+| Conditional future pair: physical product/lab separation + AI assistance design for blocks | Branch names not fixed; pairing proposed only. Separation retains custody/review gates and proves product operation without laboratory files. AI assistance must remain outside deterministic security/acceptance decisions. |
+| Conditional future pair: consumable template + control-catalogue documentation | Branch names not fixed; pairing proposed only after interfaces stabilize. A real independent consumer execution is required; no fictional supported template beforehand. |
+
+Keep the dependency sequence **physical separation → script/interface
+consolidation → consumable template → Java trial depending on that template**.
+Delivery-authorization implementation remains blocked by its documented support,
+format/admission and hosted-validation requirements; this navigation pilot does
+not unlock it. The independent 30 November reminder is unchanged.
+
+Rules for pairs:
+
+- Each agent uses its own checkout/worktree or Codespace, branch, outputs and resource names. Never switch branches in a directory shared by two agents.
+- Do not copy complete evidence, vulnerability databases or caches between worktrees. Coordinate TODO, inventory and shared navigation edits explicitly.
+- During measurement, suspend other Codex sessions/heavy workloads; do not rebuild the devcontainer or update tools midway.
+- Develop independently, then merge and validate sequentially. After the first merge, update the second branch and recheck conflicts/tests; two independently green PRs do not establish combined compatibility.
+
+
+## Lane A shared-test dependency repair — 19 October 2026
+
+- [x] Preserve and inspect run `39310363244`, attempts 1/2: both suites fail before scenarios because the Pages policy test imports undeclared PyYAML.
+- [x] Reproduce without Python site packages, replace the import with pinned Conftest parsing, and isolate the normal Python policy-test target. Positive real-workflow and negative permission checks remain enforced.
+- [x] Local doctor and complete shared suite pass, including 951 service/unit, 45 Python policy and 153 defense tests; 46 focused lane A regressions also pass.
+- [ ] New lane A integration on the corrected revision and human review. Historical failures remain unchanged; see [diagnosis and validation](registros/lane_a_pages_parser_EN.md).
+
+## Recorded demo Pages preparation — 19 October 2026
+
+- [x] Recover the existing local frozen-0002 without regeneration; verify historical anchors, both checksum inventories and exact portable bytes against the authenticated archive.
+- [x] Prepare immutable public staging and a 24,870,638-byte transport pinned by lock; exclude full archive/private material, preserve selected portable originals and three unchanged backups.
+- [x] Add manual main-only Pages workflow and narrow structural permission exception; local transport, policy, browser/offline/prefix, download hash, historical L01 context and visual checks pass. [Validation](registros/demo_github_pages_EN.md), [EN procedure](docs/EN/defense/github-pages.md), [ES procedure](docs/ES/defense/github-pages.md).
+- [ ] Human review; upload dedicated technical asset, configure Pages if needed, dispatch after merge and verify the actual public URL. Nothing is published by this PR. Human narrated rehearsal remains pending.
+
+
+## Portable static freeze — 18 October 2026
+
+- [x] Deterministic selected references, complete small F02/F12/F03/F11/F13 logs and four F13 inventories; FULL/EXCERPT/NOT_EMBEDDED, bounded HTML and relative static originals. No automatic global imports/session inventory.
+- [x] New real browser session `freeze-20261018t205939z`: common preparation 409.381 s, main sequence 43.853 s; optional early comparisons measured separately. Runtime source 38e7228, static follow-ups e54eb91; no source guard bypass.
+- [x] Shared suite in preparation, final 140 defense / 20 model tests, real file:// zero-network and prefixed static HTTP, original hashes/downloads, missing/corrupt detection, historical L01 digest separation, desktop/narrow/native-200% review.
+- [x] Continuous recorded-evidence video 159.92 s, H.264 full decode, original WebM retained; consolidated freeze has 546 verified files. [Validation, exact paths and limits](registros/demo_static_freeze_EN.md); [EN](docs/EN/defense/static-freeze.md) / [ES](docs/ES/defense/static-freeze.md) runbook.
+- [ ] Human-narrated rehearsal and review; verify playback on the presentation computer. Installed test Chromium lacks H.264 decoding; local ffplay and WebM browser playback were checked.
+- [ ] A new live presentation on the final/merged revision needs new compatible preparation; the measured original sequence is consumed. No full L01/F11/L06 or independent-F13 acceptance is inferred.
+
+
+## Combined demo profile — 18 October 2026
+
+- [x] Add `defense-all`: unchanged defense ordering through F13 recovery, followed by authorized R/G comparison and partial L06; independently prepared early cases in the same bound viewer.
+- [x] Preserve existing profiles, per-case immutable evidence, source/resource checks and readable original logs.
+- [x] Shared suite (131 defense regressions), 19 model checks, real F02/F12 browser comparisons/repeat and 428-file zero-network offline backup verified for the combined profile.
+- [x] Unified selector and real browser rehearsal `all-20261018t194405z`: common preparation, F11/F13 recovery, controlled R, directed F11, partial L06, all three early comparisons and new F11 attempts; safe owned retirement restored capacity without reducing safeguards.
+- [x] Prioritize all early-control logs in bounded combined HTML exports; closed by the static-freeze validation below, without rewriting the historical export.
+- [x] Human acceptance communicated by the requester on 18 October 2026; see [acceptance record](registros/demo_combined_profile_EN.md#human-acceptance-and-pr-handoff).
+- [ ] Human-narrated rehearsal remains pending; acceptance does not establish its duration.
+
+## Early security dashboard — 18 October 2026
+
+- [x] Separate early-security profile using existing workflow/manifest/vulnerability oracles, per-case preparation, linked immutable observations and the current web supervisor. No Kubernetes requirement for early gates.
+- [x] Audience wording uses informe instead of recibo; original formats and historical records remain unchanged.
+- [x] Real F02/F12/F03 browser comparisons, immutable repeats, active-scan cancellation/recovery and a verified 610-file offline package. Final shared suite and 123 defense regressions pass; existing browser-layout/import assumptions remain separately documented in [validation](registros/demo_early_security_EN.md).
+- [x] Human acceptance communicated by the requester on 18 October 2026; see the current handoff in [validation](registros/demo_early_security_EN.md#human-acceptance-and-pr-handoff).
+- [ ] Narrated rehearsal remains pending; no new campaign sample or full-scenario coverage claimed.
+
+## Real browser rehearsal — 18 October 2026
+
+- [x] Number duplicate case executions and expose a capability-gated F11 repeat selector. A later compatible dirty-source session was prepared and checked from the browser, with its presentation left pending; see the follow-up in the validation record. Publication changes the bound SHA and requires a new preparation.
+
+- [x] Create `test/demo-web-rehearsal` from main after PR #53; preserve unrelated npm files and all prior evidence. Fix the observed fixed-port CLI-test collision and console crowding, without changing policies or action semantics.
+- [x] Fresh source `41ce80a`: browser preparation, two independent environment checks, initial F11/F13/recovery sequence, both F11 repeats, real safe-check cancellation and a subsequent successful check. Original six live receipts and 2,603 closed artifact hashes are unchanged.
+- [x] Shared suite in preparation: 951 service/unit, 43 policy and 114 defense checks pass. Actual preparation 404.79 s and continuous automatic sequence 25.16 s are separate from navigation and unmeasured human narration.
+- [x] Verify the real 5,500-file offline package, full F11/F13 logs, original bundle documents and zero-network HTML navigation. Review desktop, narrow and native 200% zoom; closed-evidence console has 400 px visible at 1366×768.
+- [ ] Independent F13 fixture acceptance: authenticated resource refusal retained; fewer than the required 8 GiB free after the main laboratory. Initial F13 does not validate this repeat.
+- [ ] Remaining strict geometry check: completed live-action console with the action selector measures 395.17 px against the test's 400 px threshold; readable 15 px text, no execution failure.
+- [ ] Human review and narrated 160-second rehearsal remain pending. See the [validation matrix and limitations](registros/demo_web_rehearsal_EN.md), [EN procedure](docs/EN/defense/web-rehearsal.md) and [ES script](docs/ES/defense/web-rehearsal.md). Earlier pending records below retain their historical meaning.
+
+## Independent demo cases and authentic lane A bundles — 18 October 2026
+
+- [x] Enumerated F11 repeat actions with isolated inputs/new receipts, sealed-readiness checks and immutable original timing; isolated F13 fixture preparation/recovery/retirement through the existing coordinator.
+- [x] Explicit disabled read-only controls, full-height live console, accessible blue workflow tabs and digest/context grouping.
+- [x] Import real run 37353632299 demo/vulnerabilities artifacts: 24 canonical bundles, exact associated historical receipts, checked nested hashes; no databases or remote dispatch.
+- [ ] Full new Kubernetes repeat/fixture rehearsal: current free workspace is below the unchanged 8 GiB cold-preparation safeguard; actual authenticated web request was stopped and retained.
+- [ ] Human review and narrated rehearsal; no acceptance inferred from earlier reviews. See [validation and proposed PR](registros/demo_repeatable_cases_EN.md).
+
+## Latest workflow captures and paired attestations — 18 October 2026
+
+- [x] Import the latest CI, hosted Golden Path and lane A validation metadata without running workflows; retain source and capture dates.
+- [x] Add explicit bounded paired-artifact inspection and original G bundles/verifier outputs; keep historical verification separate from current integrity checks.
+- [x] Order captures by execution/attempt/date; document EN/ES refresh commands. Preserve partial imports and the 3 GiB reserve.
+- [x] Doctor, shared suite, 82 defense regressions, browser/zoom checks and real offline export pass; see the [follow-up record](registros/workflow_refresh_20261018_EN.md).
+- [ ] Human review of this follow-up; no new cryptographic verification or laboratory execution claimed.
+
+## Browser control and observed evidence — 18 October 2026
+
+- [x] Preserve the pending Trivy correction on the new branch; keep unrelated root npm files.
+- [x] Extend existing bound controls with next-operation status and a full-height provisional console; retain source, state and action safeguards.
+- [x] Capture one GitHub run at a time, compare published summary hashes, and distinguish historical R/G timing and local attestation receipts. No remote execution.
+- [x] Organize the four defense guides under [EN](docs/EN/defense/README.md) / [ES](docs/ES/defense/README.md), preserving compatibility anchors.
+- [x] Shared suite, final 75 defense regressions, 11 model tests, ten browser checks, actual offline export and link/anchor checks pass; see the [handoff](registros/demo_control_and_evidence_EN.md). No new laboratory execution.
+- [ ] Human review and human-narrated rehearsal; no new laboratory run or acceptance inferred.
+
+
+## Technical journey navigation — 18 October 2026
+
+- [x] Start `feat/demo-technical-journey` from merged PR #50 on main (`b5d0a27`), preserving the separate uncommitted Trivy correction and unrelated files.
+- [x] Expose the fifteen-phase control map and recorded receipt sequence with context filters, global operation details and return navigation. Keep attribution, recovery and captured artifact origins distinct.
+- [x] Explain incomplete preparation without inventing a cause, execution time or successful rejection; update EN/ES usage.
+- [x] Shared suite, 61 defense regressions, 11 model tests and eight browser checks pass; visually reviewed at 1366×768, 1920×1080, 390 px and native 200% zoom. Console visible height: 412.5 px. See the [handoff](registros/demo_technical_journey_EN.md); no new laboratory execution.
+- [x] Human review of this navigation change completed, as confirmed by the requester on 18 October 2026; PR creation and closure authorized. This does not constitute a GitHub approval submitted by the assistant.
+- [ ] Narrated timing remains unmeasured; no new laboratory execution or campaign sample.
+
+## Preparation database retrieval correction — 18 October 2026
+
+- [x] Diagnose `rehearsal-06`: default Trivy mirror layer returned HTTP 404; no scan or policy rejection occurred. Preserve the failed session.
+- [x] Select the publisher database repository explicitly for fresh retrieval, retaining operator overrides and immutable snapshot checks. Surface a bounded original diagnostic on command failure without masking its exit status.
+- [x] Add regressions for repository selection, snapshot reuse and failure propagation; document recovery in EN/ES.
+- [x] `doctor`, `test-defense` (61), shared `test` and isolated real-image analysis pass; see the [validation record](registros/trivy_download_fix_20261018_EN.md).
+- [ ] Human review of this retrieval correction; no new complete demo or narrated rehearsal claimed.
+
+## Full-height demo evidence detail — local correction, October 2026
+
+- [x] Continue the uncommitted dashboard implementation on `fix/demo-evidence-layout`,
+  created from `feat/demo-navigation-and-catalogue` / `0f2d623`; preserve unrelated files.
+- [x] Supersede the bottom inspector with hash navigation: Demostración, Escenarios,
+  Workflows, Sesiones and dependent attempt detail with direct original consoles.
+- [x] Preserve scenario/blocker badges, independent attempts/recovery, source identity,
+  read-only isolation, server action gates and self-contained offline navigation.
+- [x] Adapt keyboard/reflow, reading-state preservation, console wrapping/copy and
+  compact operator controls; update the [EN](docs/EN/defense/demo-workspace.md) /
+  [ES](docs/ES/defense/demo-workspace.md) navigation guides.
+- [x] Final doctor, 61 defense regressions, shared suite and seven browser checks
+  pass on the corrected source; console visibility measured at 412.5 px online/offline.
+- [ ] Human review: see the [correction handoff](registros/demo_evidence_layout_handoff_EN.md).
+  No new runtime claim, narrated rehearsal, campaign sample or remote publication.
+
+## Demo presentation workspace — local branch, October 2026
+
+The bottom-inspector layout below is superseded by the full-height correction
+above; this checklist retains the preceding implementation history.
+
+- [x] Build on merged PR #49 (`0f2d623`), preserving its scenario identities,
+  source guards, trust, observations and historical human reviews.
+- [x] Replace primary multi-view navigation/cards with one presentation workspace,
+  independent attempt tracks and a single evidence inspector; retain blocker badges
+  and exact original log/attribution links.
+- [x] Add server-authoritative action capabilities, bounded read-only local inventory,
+  secondary searchable catalogue and captured workflow exploration; no remote actions.
+- [x] Validate defense regressions, shared checks, browser interaction and offline
+  rendering over retained evidence / labelled synthetic UI fixtures; see the
+  [handoff](registros/demo_navigation_handoff_EN.md).
+- [ ] Human review of this branch; narrated duration remains unmeasured. No new
+  Kubernetes scenario, campaign, GitHub import/dispatch or Pages publication.
+
+
+## Current human acceptance — 4 October 2026
+
+- [x] Francisco accepted the ten-pair exploratory campaign and the functional observations, six automated repairs and pilot within their respective sources and execution boundaries. The experimental evaluation is closed within the documented reduced scope. See the [canonical Spanish declaration](registros/evaluation_acceptance_20261004_ES.md) and its [English translation](registros/evaluation_acceptance_20261004_EN.md): dossier `20261004T153508Z`, measured source `895a3bde79089b7544c1dad76a6cd8f48eede0a8`, reviewed documentation `ad7be26dc94a90c3a1c72245b2522ce344d2d0cb`.
+- [ ] **Deferred:** human-effort measurement; automated repairs remain separate from human-work measurement.
+- [ ] **External preservation — responsible: Francisco:** record the location of the complete external copy and verify its checksums.
+- [x] Incorporate results and limitations into the local Spanish thesis chapters 4–6, including the concise conclusions and reduced-scope acceptance. This is a manuscript update outside this repository; final editorial review and deposit remain separate.
+
+The declaration supplements the original dossier without changing its evidence, results or hashes. It does not establish execution of unsupported hosted negatives or repetition of the complete catalogue on the campaign source. Earlier pending-acceptance wording and checklists below retain their historical status; this dated declaration records the current human decision.
+
+This plan organizes incremental adoption, tasks and completion criteria. Checkboxes distinguish implemented files, observed execution and pending acceptance; one does not imply the others. Measured campaign source: `895a3bde79089b7544c1dad76a6cd8f48eede0a8` (merged PR #45); the results documentation is a later change. The PR #15 baseline at `dd381d3` and **v0.2.0 prerelease** remain historical milestones. Implementation, observed runs and final evaluation acceptance remain distinct.
+
+The [modular architecture](docs/EN/architecture.md) separates orchestration, policies and evidence through verifiable contracts.
+
+The [first integrated baseline plan](docs/EN/implementation-plan.md) defines the functional contract and H0–H6 acceptance conditions behind increments 0–3. This checklist tracks implementation and acceptance separately.
+
+## Current evaluation results
+
+- [x] Prepare clean main `895a3bd`: pinned `doctor` and shared `make test` exit 0. Review fresh development RG `37199309814` and GR `37200632844`, using RG's retained database; both technical reviews PASS, neither is a campaign sample.
+- [x] Retain Francisco's explicit authorization of ten exploratory pairs, seed `final-campaign-895a3bd-v1`, order RG/RG/RG/RG/GR/GR/GR/RG/GR/GR. Freeze that exact plan and publish through plan-only run `37202322661`.
+- [x] Execute all ten positions sequentially with automated technical review between them. Existing analysis: 10/10 favorable pairs, zero exclusions/retries/interruptions, median G−R 55.090 s and 55.717 observed pair-job minutes; billed cost unknown. Preserve the position-4 review-only cleanup assertion and its correction, without changing originals or controls.
+- [x] Publish original evidence and derived reviews/analysis in the dedicated evidence prerelease at the measured source. See matching [EN](docs/EN/paired-rg-campaign-results.md) / [ES](docs/ES/paired-rg-campaign-results.md) results, retrieval commands, limitations and hashes. Keep raw evidence out of Git and earlier failures/revisions intact.
+- [x] Record Francisco's human acceptance on 4 October 2026 for dossier `20261004T153508Z`: campaign, functional observations, six automated repairs and pilot accepted within their respective sources and the reduced scope. See the [declaration](registros/evaluation_acceptance_20261004_ES.md). This decision does not authorize another campaign or supply unexecuted coverage.
+- [ ] Review the publication changes and English translation in the human-acceptance documentation PR; the experimental acceptance above does not pre-approve this new editorial change.
+- [ ] **Deferred:** human-effort measurement, eligible manual calibration and human-task limits. Known repairs remain permanently ineligible. Functional trials, scripted repairs, the historical four-pair pilot and the ten-pair campaign are separate datasets. Thesis alignment is listed in the results guide; no thesis edits here.
+
+## Complementary catalogue attempt — 5 October 2026
+
+- [x] Create `test/catalogue-campaign-source` from clean updated main `c2b403cd436449b1b2818f5fe92983ecf946d072`; verify the existing tag points exactly to campaign source `895a3bde79089b7544c1dad76a6cd8f48eede0a8`.
+- [x] Dispatch the one authorized `lane-a-validation.yml` run `37342413975`, attempt 1, on that tag. An initial integration-token HTTP 403 created no run; existing saved-user authentication created the identified run. No experimental retry or paired workflow dispatch.
+- [x] Preserve both failed suites, four original ZIPs, separate NOT_CREATED database indexes, Actions logs and metadata. Verify four GitHub ZIP digests, 28 outer hashes per suite, exact manifest membership, source/main/configuration and failure attribution. Originals and derived reports remain separate and ignored. See [EN](registros/catalogue_campaign_source_895a3bd_EN.md), [ES](registros/catalogue_campaign_source_895a3bd_ES.md) and [index](registros/catalogue-campaign-source-895a3bd.json).
+- [ ] **Catalogue repetition remains incomplete: 0/20 executed in this attempt.** Both suites pass doctor but fail shared-tests (928/930 unit checks pass) because `paired-rg.py::restore_database` uses `TarFile.extractall(filter='data')`, unsupported by the pinned Python build. Static F01/F02, smoke, real scenarios, scans, signatures, admission and recoveries are not reached. No suite database exists to compare with the campaign.
+- [x] Implement the subsequently requested Python 3.11.2 compatibility correction: copy only the four allowlisted regular archive members, reject unsafe members/destinations and retain all checksum/identity checks. The 55 measurement and 37 campaign regressions, doctor and full shared suite pass using the same Debian Python packages as the failed jobs on Codespaces (not a full devcontainer reproduction); see [EN](registros/lane_a_python_compatibility_EN.md) / [ES](registros/lane_a_python_compatibility_ES.md).
+- [x] Execute the subsequently user-authorized corrected-source validation: run `37353632299`, attempt 1, source `91a33e910ee2ba9ded5391393b06ca70005de4d4`. Both suites PASS; independent artifact review confirms 20/20 lane A scenarios (F01/F02 static). Retain failed `37342413975` unchanged; this new source cannot be credited to `895a3bd`. See [EN](registros/lane_a_corrected_91a33e9_EN.md), [ES](registros/lane_a_corrected_91a33e9_ES.md) and [identity/hash index](registros/lane-a-corrected-91a33e9.json).
+- [x] Preserve both actual databases and four original artifacts; verify 151 outer/2,312 scenario hashes, existing scenario audits, 14 isolation boundaries, 27 authentic bundles plus expected F08 rejection, 24 authenticated positive contracts, both real database restorations, four offline scan replays and L05's original application pair. Database hashes differ from the campaign; no timing rerun, oracle/version changes or experimental retries. Preserve two reconciled reviewer-only assertion errors.
+- [x] Publish and freshly download the corrected-source evidence ZIP v2 with both real databases, original logs/metadata and EN/ES analysis. Verify exact byte equality, GitHub digests, CRC and all 168 internal hashes; preserve the nine pre-task assets and initial supplement. The index records the publication-only F04 filename correction; experimental bytes/results are unchanged.
+- [ ] Human review of the correction and acceptance of this new live evidence; technical success does not amend the 4 October declaration or establish complete catalogue execution on `895a3bd`.
+- [x] Publish the requested downloadable definition, analysis and evidence supplement on the existing evidence prerelease, with a separate SHA-256 file and [publication index](registros/lane-a-catalogue-publication-20261005.json). Verify all 165 internal file hashes, both original manifests, both failed-suite exports and a fresh download against exact local bytes. The seven prior release assets are unchanged; corrected code `b0d330e` is distinct from experimental source `895a3bd`.
+- [ ] Human review/acceptance of this complementary evidence. Human-effort evaluation and unsupported lane B negatives remain pending; the later resource-based economic assessment is recorded below. The 4 October declaration, campaign, historical records and thesis files are unchanged.
+
+## Resource-based economic evaluation — 5 October 2026
+
+- [x] Add matching [EN](docs/EN/economic-evaluation.md) / [ES](docs/ES/economic-evaluation.md) resource assessment and a [calculation/identity index](registros/economic-evaluation-20261005.json), using existing evidence only. Keep 55.717 campaign job minutes, 11.633 development minutes, 0.400 plan-publication minutes, 5.350 failed-catalogue minutes and 21.567 corrected-catalogue minutes separate.
+- [x] Verify 46 preserved small inputs, source/run/attempt identities and independent Python/Node arithmetic for 17 allocated jobs plus thirteen skipped jobs. Relate the original median 55.090 s G−R primary increment to its boundary; report artifact payloads and the corrected catalogue's 98.044% database share. Preserve all failures and experimental originals.
+- [x] Apply the user's scope correction: no monetary amounts, tariffs or assumed costs. No profitability, human-time-saving or total-project-resource claim; no new workflow, timing campaign, thesis edit or retrospective acceptance change.
+- [x] Publish the small resource-calculation supplement on the existing evidence release, preserve all thirteen previous assets, verify a fresh download and all 57 internal hashes, and reproduce the JSON/CSV byte for byte offline. No monetary amounts or billing data are included.
+- [ ] Human review of this complementary resource interpretation. Human-effort measurement and unsupported hosted negatives remain pending; monetary valuation is excluded from this task by request.
+
+## Readiness implementation history (PR #45)
+
+The following checklist records the PR45 handoff before its merge and subsequent
+execution. Its then-pending actions are historical; current outcomes are above.
+
+- [x] Start `fix/evaluation-readiness` from clean current main containing PR #44. Reproduce campaign archive rejection of legitimate incomplete producer records before fixing behavior; preserve the initial test-helper failure and the subsequent targeted reproduction logs.
+- [x] Validate mandatory arm identity and full archive/pair agreement with phase-aware image/timer requirements. Preserve incomplete/invalid/unfavorable classifications, null durations, original bytes and retry restrictions; reject false success and corrupt/mismatched archives. Tests use labelled synthetic observations and actual temporary checksummed packages through the producer and analysis CLI.
+- [x] Consolidate exactly twenty scenario rows in matching [EN](docs/EN/evaluation-readiness.md) / [ES](docs/ES/evaluation-readiness.md) readiness guides. Cite historical lane-A, pilot and PR44 records; distinguish prior reviews, supplied reports and missing originals from a new audit. Shared controls and six scripted repairs do not increase the catalogue or independent sample count.
+- [x] Reconcile scope and the [EN](docs/EN/paired-rg-campaign.md) / [ES](docs/ES/paired-rg-campaign.md) final-source handoff: fresh RG/GR with one retained DB, explicit draft count/seed, human-only authorization, plan publication, approved positions and analysis of every retained attempt. Ten pairs remains provisional. List thesis alignment items without editing thesis files.
+- [x] Pass 37 campaign and 51 measurement regressions, pinned `doctor`, shared `make test` (six environment, 930 service/unit cases, 43 Python policy cases, Conftest/Kyverno, offline Cosign and static workflows), 464 local links, 26 executable Bash blocks, seven CLI help interfaces and workflow inputs. Both matrices contain exactly twenty rows. Retain failures and passing logs in `evidence/environment/evaluation-readiness/`; see the [handoff record](registros/evaluation-readiness.md). No hosted execution or human authorization occurred.
+- [ ] Review this fix and readiness matrix; after merge, establish clean final-source identity and successful pinned environment/shared checks. Retain exact check results in the [handoff record](registros/evaluation-readiness.md).
+- [ ] Separately authorize fresh hosted development RG/GR on that final source, review originals, then decide campaign count/seed/readiness and authorization. Final-source runs, plan publication, campaign execution and overall acceptance are **NOT_EXECUTED/pending** here; merging this PR supplies none of those decisions.
+- [ ] **Deferred:** human-effort measurement, eligible manual calibration and human-task limit freezing. Known repairs measure scripted execution and remain permanently ineligible for human calibration/productivity. Functional scenario trials, scripted remediation, the completed four-pair timing pilot and the forthcoming timing campaign remain separate datasets.
+
+The sections below preserve implementation history and observations at their
+original revisions. Their previously planned human calibration steps are deferred
+by the current reduced scope; they are not current campaign prerequisites or
+claims of completion. Historical failures and acceptance declarations stay intact.
+
+## Recorded automated remediation validation (PR #44)
+
+- [x] Start `feat/automated-remediation-validation` from main `387c75d15e3b0f50d343f6f32b1d6895ab3529dd`, containing merged PR #43. Add the separate [EN](docs/EN/automated-remediation.md) / [ES](docs/ES/automated-remediation.md) unattended F03/F10/F11 × R/G evaluation, reusing the task controller, delivery/scenario oracles, packaging and owned cleanup.
+- [x] Record scripted execution in core task records, operations, archives and reports. Require G automatic detection and R delivery before scripted diagnostics; apply only the three predefined repairs. Keep human acceptance pending and permanently exclude automated records from human calibration, measurement and limit freezing, including after later review.
+- [x] Implement deterministic ordering, operation safety timeouts, verified continuation, interruption retention, explicit cleanup retry, storage reserves and canonical frozen DB reuse. Preserve original inputs and repair hashes; report technical validation, integrity, human intervention, failures and partial coverage separately. No runtime AI or human review automation.
+- [x] Validate focused synthetic regressions and shared checks; record exact results, limitations and proposed PR description in the [development handoff](registros/automated-remediation-validation.md). Preserve the initial source-drift/storage probes, including the honest 0/6 NOT_EXECUTED storage report.
+- [x] Execute and automatically verify all six live local combinations in `automated-six-01` on unchanged commit `ea790781990766a3cb20bae5a302e1175edd3bd0`, seed `automated-six-v1`: **6/6 VALIDATED**, completion/owned cleanup/archive integrity PASS, exit 0, no retries/interventions/interruptions. User-authorized deletion of two verified redundant DB copies reclaimed about 2.70 GiB; earlier evidence and the canonical DB remain. Register exact timings, identities and package/report hashes in the linked result record. This is provisional technical evidence, not human acceptance.
+- [ ] Human review of this increment. **Human-effort evaluation and eligible manual calibration are deferred**, not completed by automation. This technical evaluation provisionally replaces the immediate manual exercise in the execution schedule. Historical sections below retain their original observations and plans; guided rehearsals and the separate PR #43 paired campaign remain intact. Overall pilot acceptance and any hosted campaign authorization remain pending. Assistance: OpenAI Codex; no human acceptance supplied.
+
+## Recorded paired lane B timing pilot
+
+- [x] Independently review development RG `36926824792` and GR `36927943550` at `02674a57d290083648a9af44c48fd049808b2d70`: original ZIP/outer/internal/database hashes, eight unique authenticated bundles, independent images/caches, fresh CREATE, rollout/HTTP, timing endpoints and cleanup pass. G provenance runs only in G's position; GR correctly skips the second-position native step. See the [EN](docs/EN/paired-rg-pilot-review.md) / [ES](docs/ES/paired-rg-pilot-review.md) review.
+- [x] Record completed development job consumption on separate analysis copies: 5.650 and 5.983 minutes. Keep development runs outside the pilot sample and preserve historical preparation failure `36924958484`.
+- [x] Execute and independently review the four authorized pilot pairs GR/GR/RG/RG: `36964061878`, `36964593732`, `36965104583`, `36965606734`. Each used the exact source and `database_run=36926824792`; each artifact was reviewed before the next dispatch. Remote `main` matched before all four launches and after the series. Preserve the initial HTTP 403 launch request, which created no job; saved-user authentication resolved access without bypassing guards or retrying a pair.
+- [x] Verify the pilot's four ZIP digests, 140 outer/808 internal package hashes, four database archives/12 internal hashes, eight independent images, 16 unique authenticated bundles, cache reuse/rebuild, fresh CREATE, rollout/HTTP, timing endpoints and cleanup. All four attempts are valid-favorable; 4 included, 0 excluded/incomplete, 0 retries. No slow observation was discarded.
+- [x] Analyze all four pilot attempts together: median G−R 55.339 s, median relative overhead 908.023%, difference MAD 6.759 s and range 44.494–62.124 s; 22.050 observed Actions job minutes. Billed minutes and monetary expenditure remain unknown. See the linked EN/ES report and local JSON/CSV analysis.
+- [x] Break down G's phases and Deployment admission from all four retained attempts. Delivery verification and results authorization account for 58.4% of G's primary time; individual admission evidence checks average 1.86–2.01 s. The EN/ES report recommends finer operation timing and evaluating bounded parallel verification in a separate reviewed revision; savings remain unmeasured.
+- [x] The user reports downloading the pilot review, including the four pilot and three development/failure runs. At their explicit request, remove the local `evidence/measurements/pilot-review/` copies and duplicate `paired-pilot-review.tar.gz` from the handoff to free disk space. The downloaded external copy has not been independently verified here; historical results and failures remain recorded.
+- [ ] Human decision on the provisional ten campaign pairs. The review recommends retaining ten balanced pairs for an exploratory comparison, with observed variability and a rough 52.5–58.3 job-minute extrapolation for ten equivalent timing runs. This does not establish required precision or total campaign effort.
+- [ ] Close the overall pilot after separate manual-task calibration, scenario readiness review and human acceptance. The automated timing series is complete; overall pilot acceptance remains pending. Campaign remains NOT_EXECUTED. Assistance: OpenAI Codex / GPT-6. Historical entries below retain the observations of their original increments.
+
+## Campaign support history (PR #43, implementation only)
+
+- [x] Start `feat/paired-rg-campaign` from clean main `ca97f67768788eb02ed50c11c36095a6a3779f1e`, containing merged PR #42. Preserve the completed lane B pilot, guided manual rehearsals and historical failures. No campaign observations or human declarations were produced by this increment.
+- [x] Extend the existing paired runner/workflow with `dataset=campaign`, deterministic balanced drafts with explicit even counts/seeds, final-source binding and separate human authorization. Bind protocol/configuration/source, ordered positions, the preserved database and fresh successful development RG/GR receipts. Reuse the delivery modules and current controls/timers; ten pairs remain an unapproved example.
+- [x] Use a separate plan-only job in the existing workflow to validate final-source development metadata/artifacts and retain the checksummed frozen plan without delivery. Campaign runs require that publication run and its expected control identity; reject missing authorization, source/configuration/database drift and pair/order mismatch before infrastructure. Reviewer/authorization are human declarations, not independently authenticated facts.
+- [x] Extend analysis to verify original artifacts, arm package associations and retained database bytes; export exact control, records, input manifests, retry diagnostics and job metadata separately from originals. Report missing/duplicated/retried/unresolved positions and every unfavorable/incomplete observation with exclusions. Reject pooled datasets/plans/sources/databases. Keep completed Actions job consumption separate from delivery time; billing and monetary expenditure stay unknown.
+- [x] Add 26 explicitly synthetic campaign regressions covering drafts, binding/publication, authorization, original retention, source/database/configuration guards, package association, partial/duplicate inputs and bounded retries with exact retained originals/diagnostics. The 51 existing measurement regressions also pass. Local `doctor` and shared `make test` pass: six environment, 929 service/unit cases (including Python wrappers), 43 Python policy cases, Conftest/Kyverno, offline Cosign and local workflow checks. The final focused rerun covers the last analysis guard changes. Check syntax of 20 new guide Bash blocks and 168 local links in eight affected guides. Evidence: `evidence/environment/paired-rg-campaign/`. These tests establish no hosted campaign execution or human approval.
+- [ ] Human review of this implementation and decision on pair count/seed/order, readiness and authorization. Follow the exact [EN](docs/EN/paired-rg-campaign.md) / [ES](docs/ES/paired-rg-campaign.md) commands after all preparation PRs are merged: clean final main, shared checks, separately authorized fresh development RG and GR with the same exported DB, evidence review, binding and person-entered freeze. Hosted plan publication and campaign integration remain untested. Historical pilot DB `36926824792` cannot substitute for final-source development evidence.
+- [ ] Separately authorize any campaign execution and review every original before the next pair. Retain all attempts; only the existing single full-pair retry for an evidenced external failure is allowed. No automated campaign dispatch, release, human review, manual task or merge occurred here. Manual calibration/limits, scenario readiness, overall pilot acceptance and campaign execution remain pending. AI contribution: OpenAI Codex implementation, synthetic tests and EN/ES handoff; human acceptance pending.
+
+## Manual task calibration history (human measurement now deferred)
+
+- [x] Implement a human-operated lane A interface for independent F03/F10/F11 tasks in R/G: prepare, start, activity events, conventional tool invocation, completion check, interruption recovery and cleanup. Reuse the shared modules through `demo.sh`; preserve controls and the completed lane B pilot. See the [EN](docs/EN/manual-task-calibration.md) / [ES](docs/ES/manual-task-calibration.md) operator guides and separate participant instructions.
+- [x] Retain versioned task/event records, source/configuration/database identities, attributed automatic/manual detection, active diagnosis/correction, waiting and verification, incomplete attempts and safe packages under ignored evidence directories. Distinguish detection latency, resolution since detection and total duration; window exhaustion is censored, never a zero time.
+- [x] Prepare a reproducible six-task plan with seed and a randomized two-pairs/one-pair RG/GR balance. Calibration and measurement records remain separate; scenario limits start unset and require completed real human calibrations and an explicit review before freezing one equal R/G limit per scenario.
+- [x] Verify synthetic event ordering, clocks, interruptions, subprocess deadlines, timing calculations, six-position ordering, input restoration, source/build guards and evidence retention at `1b06e01`. Shared `make test` passed: 896 service/unit cases (including the wrapper for 29 synthetic Python manual-task cases), six environment cases, 43 Python policy cases, Conftest/Kyverno, offline Cosign and workflow checks. These establish instrumentation and control behavior, not human calibration or live task execution. Initial local `doctor` rejected kubectl 1.37.0 against pinned 1.35.8. Logs: `evidence/raw/manual-task-development/`.
+- [x] Align the Codespace's installed tools with existing repository pins; `doctor` now passes. Preserve the initial failure above and the environment evidence in `evidence/environment/doctor-alignment-4qhIRRLp/`. This environment repair changes no repository tool version or control.
+- [x] Confirm and address [Copilot's PR #40 finding](https://github.com/tfm-goldenpath/golden-path-lab/pull/40#discussion_r4169081711): completion checks now require an explicit decision with matching evidence to continue an unresolved correction; integration/evaluator failures close the attempt as `INCOMPLETE`. Follow-up `make test` passes: 905 service/unit cases (including the wrapper for 29 synthetic Python manual-task cases), six environment cases, 43 Python policy cases, Conftest/Kyverno, offline Cosign and workflow checks; `doctor` passes. Preserve the reproduced failures and subsequent synthetic regression logs in `evidence/raw/manual-task-copilot-review/`. Contribution: GitHub Copilot automated review (model not disclosed); OpenAI Codex / GPT-6 implementation, tests and EN/ES documentation. Human review and final acceptance remain pending.
+- [x] Address the [second Copilot review of PR #40](https://github.com/tfm-goldenpath/golden-path-lab/pull/40#pullrequestreview-5396408905): require a recorded operation before recovery, retain owned controller records and resolvable event/receipt evidence in the safe archive, reject blank reviewer/rationale values, and reconcile EN/ES environment wording with the observed passing `doctor`. Preserve the initial failures and original packages; the final task directory retains cleanup events recorded after the archive snapshot. Follow-up `make test` passes (907 service/unit cases, including the wrapper for 31 synthetic Python manual-task cases, plus the remaining shared suite); `doctor` passes. Synthetic regression evidence: `evidence/raw/manual-task-copilot-followup/`. Contributions: GitHub Copilot automated review (model not disclosed), OpenAI Codex / GPT-6 corrections and tests. Human acceptance and live task validation remain pending.
+- [ ] Validate the new harness in the pinned lane A environment, then have a person calibrate all six tasks using conventional tools, declare prior knowledge/learning effects and retain every attempt. No human observations or durations were generated by the assistant.
+- [x] Repair the manual cleanup check after the real Codespaces preparation failure `run-RVfY5kCh` / `task-3d9c85ed4f47` at `29f099f`: Docker Hub DNS timed out before readiness, then `buildx ls` recreated the deleted private Docker configuration during cleanup verification. Inspect owned containers/cache volumes directly and retain inventory errors. The corrected `0003-cleanup` returns `CLEANUP_COMPLETE`; all 31 original files checked retain their hashes, including the failed preparation, `0002-cleanup`, first archive and original plan. The attempt remains `INCOMPLETE`, with no timer start or human calibration. Nine synthetic cleanup cases, the targeted 86-case suite, shared `make test` (916 service/unit cases plus the remaining shared suite) and `doctor` pass. A real Docker inventory probe rejects a retained container and volume, then accepts absence; its container was never started. Evidence: `evidence/raw/manual-task-cleanup-review/`. Live scenario acceptance remains pending. Source changes require a separately identified plan. Assistance: OpenAI Codex / GPT-6; human review pending.
+- [ ] Choose and freeze the three total-duration limits from that calibration, review scenario readiness and human acceptance, and separately authorize any measured session. The overall pilot remains open; this increment does not run the campaign, change tool versions or optimize signing/verification. Assistance: OpenAI Codex / GPT-6; human review pending.
+
+### Manual session usability and requested reset
+
+- [x] At the user's explicit request, remove the previous manual calibration sessions and plans after cleanup: DNS-failed preparation `task-3d9c85ed4f47` and interrupted preparations `task-96758a54ecac` / `task-8cb7468403a0`. None started a task timer. The 31-file preservation check above was observed before the requested deletion; direct attempt evidence is no longer retained. Keep the frozen database and concise deletion records in `evidence/environment/manual-task-reset-20261002/`. These failed observations do not become completed human tasks.
+- [x] Provide an [EN](docs/EN/manual-calibration-session.md) / [ES](docs/ES/manual-calibration-session.md) command file with editable inputs outside frozen source. Reuse compatible plans with `plan --reuse`, save task paths in `current-task.json` even on preparation failure, display preparation output with `--follow`, and reject `start` outside `READY` before reading missing preparation evidence. The helper stops after preparation; it does not generate human events, repair inputs or run the six tasks automatically. Shared `make test` passes: 921 service/unit cases, including the wrapper for 36 synthetic controller cases, plus the remaining shared suite; `doctor`, guide links and Bash syntax pass. Evidence: `evidence/raw/manual-task-session-guide/`. Assistance: OpenAI Codex / GPT-6; live preparation and human acceptance remain pending.
+
+- [x] Review real F11/G `task-a400cfbcaa31` in `calibracion-red-01`: check correctly rejected the retained prohibited privileges and left `REVIEW`; explicit cleanup closed it as `INCOMPLETE`. Preserve the task and literal example notes without inferring real correction work. Improve `check` feedback to print `CORRECTION_REJECTED`, continuing state, receipt path and the consequence of cleanup. Separate human editing/check/cleanup in EN/ES instructions and clarify helper help text. Controls, timer, exit behavior and human acceptance are unchanged. The 42 targeted tests (including 36 synthetic Python controller cases), guide/shell checks and original task checksums pass. Evidence: `evidence/environment/manual-check-feedback/`; see the F11 operational record. No live task was rerun; new source requires a new session/plan. Assistance: OpenAI Codex; human acceptance pending.
+
+### Guided rehearsal and explicit human review
+
+- [x] Preserve and audit F11/G `task-b069656237fc` (`run-2g86oSnT`) at exact source `54b7fa8864291aa86ddd32aaf15b5f2da71b5856`. Initial correction check rejected the remaining privileges; the later two-field correction passed authenticated evidence, admission, rollout and HTTP checks, then cleanup. Verify all 52 final task hashes, six event-evidence links, the original archive/263 internal hashes, four signed bundles, source/database identity and unchanged policy/namespace snapshots. Preserve all three review notes and original task bytes. See the [EN](docs/EN/cases/F11-F12-L06/record.md#guided-functional-rehearsal-reviewed-2026-10-03) / [ES](docs/ES/cases/F11-F12-L06/record.md#ensayo-funcional-guiado-revisado-el-2026-10-03) record.
+- [x] Record Francisco's explicit acceptance at `2026-10-03T12:28:23Z` as a **guided functional rehearsal**. The `12:27:20Z` note expressly excludes calibration-limit selection because AI guidance and example activity notes influenced the session. Preserve raw times and the prior rejected check; this supplies one functional rehearsal and zero eligible calibration/measurement results. The sealed task's `humanAcceptance: pending` is unchanged. The user subsequently reported downloading `evidence/packages/manual-review-task-b069656237fc/`; that local download copy was removed on request. The external copy has not been independently checked. Original task/run evidence and review notes remain locally available. PR #40 merged at `f5eb8dd528b1b26a49f31cf81915963e0bb166c8`; overall pilot acceptance remains pending.
+- [x] Implement the requested human-review follow-up below. The earlier sealed task/package bytes and free-text review notes remain unchanged; supported acceptance requires a new explicit human review command, with the current timestamp.
+
+### Human review and calibration eligibility
+
+#### Guided six-position session on the PR #42 source
+
+- [x] Retain and audit all eight `calibration-final-01` attempts at `b4d056c65f156867d3c41e0102330fe8e3282ca4`: seven completed attempts covering F03/F10/F11 in R/G, including a second F03/G, plus the F03/R disk-exhaustion preparation failure before timing. All eight cleanup receipts pass. Francisco's seven `accepted / rehearsal / ai` reviews and one `rejected / calibration / ai` review remain unchanged. See the [EN](docs/EN/manual-task-rehearsal-review.md) / [ES](docs/ES/manual-task-rehearsal-review.md) report. These are seven guided functional observations and zero eligible calibrations, not six-task calibration completion.
+- [x] Verify 373 final task-file hashes, eight original package checksums/ownership checks and 2,369 internal hashes, eight review histories and report/plan/source/configuration consistency. Preserve original bytes and modification times, separate audit and downloadable evidence under ignored `evidence/packages/calibration-final-01-review-20261003.tar.gz`. This retrospective check does not repeat signature verification, admission or live execution. The user subsequently reports downloading the evidence; the external copy has not been independently verified and the original export remains unchanged.
+- [ ] Francisco to clarify the F03/R/manual-scan rationale on sealed F03/G/automatic-scan `task-530013f5da12`; preserve the accepted rehearsal review and its calibration exclusion until any explicit superseding review. Human review of the summary/final correction, six eligible unaided calibrations, three shared R/G limits, scenario readiness and overall pilot acceptance remain pending. Source changes require a fresh plan; the completed lane B pilot and campaign NOT_EXECUTED status are unchanged. Assistance: OpenAI Codex evidence audit and documentation; existing human task decisions attributed to Francisco.
+
+#### Correction after PR #41 merged
+
+- [x] Confirm local/remote main `c59afcda3c7dab76e5a5b43948145c0fae328747` has the original `21be955` tree and both reported gaps. Reuse reviewed local commits `28ce727` (archive ownership), `81fc08a` (measurement purpose) and `b31c92c` (historical human-result documentation) on `fix/manual-review-archive-binding`, retaining cherry-pick provenance and the original branch. No duplicate controller or dependency on the ignored validation helper.
+- [x] Reproduce the defects against main before applying the fixes: foreign/missing/ambiguous archive records were accepted, downstream validation failed to reject the substitution, and the CLI rejected measurement purpose. The valid cleanup-snapshot counterpart passed. Retain the labelled synthetic run in `evidence/environment/manual-review-archive-binding-c59afcd/baseline-red.log`.
+- [x] Strengthen reused regression fixtures so path/JSON tests have otherwise matching task identity, the failed-preparation case has no package, and both foreign-root and foreign-identity cases fail direct calibration selection and frozen-plan reuse. Valid legacy review/frozen-binding bytes remain unchanged. All 35 review regressions pass; no synthetic fixture is a human observation.
+- [x] Complete focused review/controller/session-helper checks, `make doctor` and shared `make test`: 928 service/unit cases (including the Python wrappers), six environment cases, 43 Python policy cases, Conftest/Kyverno, offline Cosign and local workflow checks pass. Check 108 local documentation links and syntax of 18 Bash blocks. Retained logs and read-only compatibility/retention results are in `evidence/environment/manual-review-archive-binding-c59afcd/`; 585 historical files retain their hashes and modification times. Live integration and human validation of this correction were not run. No workflow was dispatched.
+- [x] Read-only compatibility validation finds both `task-b069656237fc` and `task-c861ec432f94` completed and cleaned up, with intact original packages and accepted rehearsal reviews. Both remain calibration-ineligible. Their `assistance: none` declarations and the documented guidance discrepancy are preserved; no human review command was run. Six eligible calibrations and all limits remain outstanding.
+- [ ] Human review of this post-merge correction. After it is merged, start a fresh six-task calibration session on the exact merged source with a new plan, then explicit human reviews and three shared R/G limits. Do not reuse these guided rehearsals or rewrite old source identities. Scenario readiness, overall pilot acceptance and campaign execution remain separate. See [EN](docs/EN/manual-task-review.md#correction-after-merged-pr-41) / [ES](docs/ES/manual-task-review.md#corrección-tras-integrar-la-pr-41) for exact validation commands. Assistance: OpenAI Codex; this correction's human acceptance pending.
+
+#### Original implementation and retained observations
+
+- [x] Start `feat/manual-task-review` from updated main after PR #40 merged at `f5eb8dd528b1b26a49f31cf81915963e0bb166c8`. Add `review` for closed, cleaned-up attempts, requiring a nonblank reviewer/rationale, decision, purpose and assistance declaration. Assign UTC time automatically. Store separate immutable, hash-named review files; require explicit `--supersedes` for revisions. Bind the final task manifest, records and original archive/sidecar without rewriting evidence. Historical reviews do not require the current source; new execution guards remain strict. See [EN](docs/EN/manual-task-review.md) / [ES](docs/ES/manual-task-review.md).
+- [x] Derive displayed acceptance and calibration eligibility separately. Guided rehearsals may be accepted but remain ineligible; unknown assistance is ineligible. `status` exposes purpose, assistance, reasons, review path/hash and the next procedural action. Reviewer identity and assistance are declarations, not automatically authenticated facts. No acceptance is inferred from tests, cleanup, an assistant or old free-text notes.
+- [x] Require exactly six unambiguous, explicitly accepted unaided calibrations under the same plan/source/database/tools/environment to freeze limits. Reject missing/rejected reviews, rehearsals, synthetic/incomplete/uncleaned attempts and invalid integrity. Retain selected record/review hashes in the decision; revalidate them on plan use and block changed, missing or superseded reviews. Legacy limits without review bindings are rejected. Source changes require a new formal calibration plan and new tasks.
+- [x] Observe the initial synthetic failures before implementation, including the old behavior allowing unreviewed limit freezing; retain the log. The final 20 review regression cases, 36 existing manual-controller cases and six helper cases pass. Shared `make -C implementacion test` passes: 928 service/unit cases (including the Python wrappers), six environment cases, 43 Python policy cases, Conftest/Kyverno, offline Cosign and workflow checks. `doctor` passes. Evidence: `evidence/environment/manual-task-review-development/`. Synthetic fixtures establish no human calibration or live task execution.
+- [x] At the initial development handoff, a read-only integrity check of retained `task-b069656237fc` confirmed its completed/cleaned-up record, original checksums/archive and all three original human notes remained available and unchanged. Supported review was then pending and no review command had been run on the person's behalf. Francisco's later explicit review is recorded below; the earlier text acceptance and guided-rehearsal exclusion remain historical evidence.
+- [x] On the user's request after reported download, free approximately 6.0 GiB by removing duplicate run Trivy databases, regenerable scanner cache and downloaded evidence copies. Confirm no active containers and completed cleanup of the retained manual attempts first; verify the three run DB copies match the preserved canonical snapshot. Keep original manual task/run evidence, review notes and the canonical DB. Retain removal details and small handoff manifests in `evidence/environment/disk-cleanup-20261003-review/`. Free space increased from 1.9 to 7.9 GiB; the downloaded external evidence has not been independently checked.
+- [x] Francisco confirmed human validation and live use of the demonstrated review procedure on 2026-10-03; see the bounded results below. The development assistant did not perform the human task or issue either review. Tool versions, delivery/trust controls, timing definitions and scenario oracles are unchanged.
+- [ ] Six eligible unaided calibrations, human-selected limits, scenario readiness and overall pilot acceptance remain pending. Preserve the declaration discrepancy below; confirmation of this review flow does not resolve it or approve the campaign.
+
+#### PR #41 archive association follow-up
+
+- [x] Confirm the archive/task association gap at reviewed head `21be9558739fb0570461e264af62bff03b91a215`. Retain outer/internal checksum verification and require the expected run root, one safe root `manual-task.json` and matching stable task/source/configuration identity. Allow cleanup snapshot differences in events, cleanup and running operation. Apply the check to new reviews, effective history and frozen selections without changing their hash-binding format. Failed preparation without a run archive remains reviewable and calibration-ineligible.
+- [x] Reproduce the defect with labelled synthetic packages before the fix. Upgrade positive fixtures to archived task records; cover foreign roots/identities, missing/ambiguous/unsafe records, links, corruption, legitimate cleanup snapshots and legacy review/frozen-selection rejection. Focused results are retained in `evidence/environment/pr41-review-fixes/`; these are development tests, not human calibration.
+- [x] Francisco supplied and confirmed live review results on local source `81fc08aa4d563e8796564c139361a84f17fd0947`, including this fix. Both retained task/archive associations and effective review histories pass read-only validation. Original historical files and notes remain unchanged. The live exclusion is by rehearsal purpose; the assistance declaration discrepancy remains below. Assistance: OpenAI Codex audited/documented the supplied human decisions.
+
+#### PR #41 measurement review purpose
+
+- [x] Confirm the missing measurement purpose at reviewed head `21be9558739fb0570461e264af62bff03b91a215`. Add explicit `--purpose measurement` only for measurement datasets, with the same required human declarations and evidence validation on creation/history. Measurement remains calibration-ineligible regardless of acceptance. Preserve existing review purposes and archived records; revisions still require explicit supersession. Update CLI help and EN/ES instructions, including person-entered historical rehearsal declarations.
+- [x] Reproduce the missing CLI/validator support in labelled synthetic tests, then pass 33 review regressions including measurement decisions, dataset restriction, original preservation, evidence/declaration failures and calibration exclusion. Retain the intermediate synthetic fixture-name collision and its correction with the development logs in `evidence/environment/pr41-review-fixes/`.
+- [x] Validate both PR #41 fixes: focused review/controller/helper regressions, `doctor`, and shared `make test` pass (928 service/unit cases including Python wrappers, six environment cases, 43 Python policy cases, Conftest/Kyverno, offline Cosign and local workflow validation). Check links and Bash syntax in the four affected EN/ES guides. Read-only validation of the available original F11/G task/package passes the association check; 636 retained task/run/export/notes/archive files keep their bytes and modification times. Supported human review remains pending. This Codespaces checkout cannot access the supplied Windows-only review file or raw export path; the findings supplied in the request and the retained managed evidence were used. No archived scripts were executed.
+- [x] Francisco confirmed the demonstrated human-validation flow on the implementation including this fix; recorded live reviews used `rehearsal`, not `measurement`. Explicit measurement-purpose behavior remains supported by synthetic regressions; no measured task or live measurement-purpose review is claimed. Six eligible calibrations, limits and overall pilot acceptance remain pending.
+
+#### Human validation confirmed, 2026-10-03
+
+- [x] Record Francisco's explicit confirmation and two accepted rehearsal reviews: historical `task-b069656237fc` at `19:12:29.046453Z`, and new F11/G `task-c861ec432f94` / `run-qwxVqqLS` at `19:36:42.016925Z`. Both are technically completed and cleaned up; effective acceptance is `accepted`, sealed original acceptance remains `pending`, and both are calibration-ineligible. See exact sources, review hashes and results in the [EN](docs/EN/cases/F11-F12-L06/record.md#human-validation-of-pr-41-2026-10-03) / [ES](docs/ES/cases/F11-F12-L06/record.md#validación-humana-de-la-pr-41-2026-10-03) records.
+- [x] Preserve new F11/G times: total 414.302996476 s, detection 13.162436636 s, resolution 401.140559840 s. Read-only audit verifies 50 final task hashes and 261 internal archive hashes for the new attempt, and 52/263 for the historical one, plus outer checksums, archive-task association and review histories. Retained completion/cleanup receipts support the technical result. Do not include these rehearsal times in calibration-limit selection or measured analysis. Audit: `evidence/measurements/pr41-human-review-confirmation-20261003/`.
+- [x] Record the supplied successful preflight, 33 review/36 controller/six session-helper regressions and 14 optional validation-kit tests as synthetic checks, with zero human observations added. The post-completion `wait` was rejected without an event; `freeze` refused zero eligible coverage. All three retained limits remain unset. No suite or human task was rerun for this documentation update.
+- [ ] Resolve the assistance declarations through the person's explicit clarification/revision: both sidecars say `none`, while historical notes establish AI guidance and the new review rationale mentions AI guidance/example notes. Preserve the current reviews; only the person may issue `review --supersedes`. Effective exclusion currently reports `purpose:rehearsal`; live exclusion through `assistance:ai` has not been demonstrated by these reviews.
+- [ ] Six eligible unaided calibrations (all F03/F10/F11 × R/G), human-selected limits, scenario readiness and overall pilot acceptance remain pending. Source changes, including these documentation edits, require a new plan and new tasks for formal calibration. The remote PR was still at `21be955` during this confirmation; local fixes were not pushed. No campaign, release or merge. Assistance: OpenAI Codex; human validation confirmed by Francisco for the scope above.
+
+### Repeatable Codespaces network recovery
+
+- [x] At the user's request, invoke a shared environment helper from local `lab_create` when `CODESPACES=true`, before registry/BuildKit and outside the manual timer. Diagnose the observed legacy/nft conflict, verify local daemon namespace and dynamic bridge/subnet, reject other workloads/unknown policies, and install only the missing owned IPv4 pair. Retain diagnostics/removal commands, roll back new rules on failure, and keep successful rules across sequential preparations until explicit removal or environment restart. See [EN](docs/EN/kind-network-firewall.md) / [ES](docs/ES/kind-network-firewall.md).
+- [x] Preserve another actual DNS-failed preparation, `run-E5wAPDEL` / `task-3f6b2c31609e`, as `INCOMPLETE` with no timer start; cleanup completes. Audit its original archive (17 internal hashes) and unchanged frozen database. The boot identity changed and the previous temporary rules were absent. Real helper probes restore DNS/registry HTTPS; repeated ensure adds no rules. Exact removal restores the prior FORWARD chain; repeated removal and subsequent restoration pass. A bounded build with the pinned BuildKit/service base and its cleanup pass. A concurrent diagnostic call was refused by the lock and then run sequentially; this was not a human-task retry. Evidence: `evidence/environment/codespaces-network-development/`.
+- [x] Verify 14 synthetic Python recovery cases and four local/hosted hook cases, including failure propagation, unknown-policy/namespace/workload guards, partial rollback and repeated use. Preserve the initial suite failure on iptables argument serialization; the corrected final `make test` passes all 926 service/unit cases (including the recovery wrapper), six environment cases, 43 Python policy cases, Conftest/Kyverno, offline Cosign and workflow checks. `doctor`, guide links/Bash syntax and a packaging-only retention probe pass. These checks do not establish human calibration.
+- [ ] Human review of the recovery helper remains pending. The later F11/G guided rehearsal above successfully prepared on the committed source; full manual-scenario validation, campaign and hosted negative coverage remain separate. No human task was performed by the original network repair. The permanent Docker startup correction remains separate and untested. Assistance: OpenAI Codex; acceptance pending.
+
+## Available increment: L01/L04, F13, local F07/F08 and F11 checks
+
+- [x] Implement `quotes-node`, policies, evidence validators and pinned tools, detailed in increments 0–3.
+- [x] Provide `make demo`, `make reference`, CI and manual hosted integration, with digest-based delivery, L01/F13, directed F11 checks and evidence packages.
+- [x] Successfully run the included unit and contract tests; keep their scope distinct from real integration.
+- [x] Complete an end-to-end lane A execution: `run-8N59m8xw`, L01 admitted and functional, F13 and F11 rejected by their rules, and package verified. This used a local compatibility environment; review by the responsible person and repetition in Codespaces remain pending.
+- [x] Observe complete classic-profile lane B, including independent L01 image replacement, in [run 36314305654](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36314305654), commit `4f8fe77`, included in v0.1.0. This does not validate the later bundle profile.
+- [x] Implement hosted classic certificate-chain completion from authenticated Fulcio TUF material, preserving root trust and signed content, with regression coverage.
+- [x] Observe the corrected chains and results verified in hosted admission in [run 36303967179](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36303967179), commit `1ae111fc6e1614b32ee86461771836ada60e1d42`: F13 correctly rejected, L01 admitted and healthy, F11 correctly denied by Kyverno. The overall run failed because the rejection parser counted kubectl's preamble `to:` as an extra policy; the final legitimate update was not reached.
+- [x] Review the downloaded hosted bundle package at `82728c5`: archive checksum, 103 internal hashes and eight independently verified bundles. Preserve that scope in the [review record](registros/pr15_review_EN.md); the latest main-run package still needs its own audit.
+
+Current commands are in the [README](README.md) and [execution guide](docs/EN/cases/L01-F13/runbook.md); the [delivery contracts](docs/EN/delivery-contracts.md) distinguish each lane's guarantees. Executable scenario modules cover L01/L04, F13, local early CI and directed admission F07/F08, and F11 checks. Hosted F07/F08 remain NOT_EXECUTED. Policy tests and cryptographic probes do not complete the twenty scenario records, establish TDD history or constitute pilot measurements.
+
+## 0. Preparation and environment
+
+- [x] Statically review the reference proposal and identify reusable components.
+- [x] Identify reusable ideas, incompatibilities with current decisions and automation that should not be copied.
+- [x] Organize technical documentation, the template and the incremental plan.
+- [x] Define responsibilities, verifiable contracts and modular pipeline organization, with documented technical precedents.
+- [x] Pin Node/npm, Docker, Buildx, kind and kubectl, with references and integrity checks.
+- [x] Create the devcontainer and environment diagnostic and smoke-test commands.
+- [x] Check the configuration and probe with automated tests.
+- [x] Define the integrated baseline plan with the proposed quotes-node contract, R/G paths and acceptance criteria.
+- [ ] Build and open the devcontainer in Docker Linux or Codespaces.
+- [ ] Obtain a real `PASS` from `make smoke-env` and review its evidence.
+
+## 1. Minimum functional baseline
+
+- [x] Implement the minimum `quotes-node` contract: health, version and a deterministic quotation operation using synthetic data, with input-validation and regression tests.
+- [x] Separate HTTP transport, validation and functional logic; provide reusable commands with explicit parameters.
+- [x] Use pinned Node LTS and `node:test`; retain the dependency-free service's package manifest and lockfile.
+- [ ] Link the contract to the operational story and record human acceptance. Preserve available TDD evidence without reconstructing an undocumented red-green history; use test-first changes for subsequent behavior.
+- [ ] Confirm initial environment resources and Codespaces quotas if used; add tools according to each increment's needs.
+- [x] Build the `linux/amd64` service from verified references and retain its digest; observed integration includes image analysis, deployment and functional checks.
+- [x] Prepare kind and dedicated namespaces; exercise healthy creation and independently verified image replacement in L01.
+- [x] Implement zot-backed R: publish and pull by digest, deploy to `tfm-reference`, then verify health, version and quotation. The functional demonstration shares its initial image with G; this is not a measured R/G pair.
+- [x] Give the service its own Docker context and `.dockerignore`; keep the environment probe separate.
+
+**Outcome:** a tested minimal service and automated R path, with an identified image, a real registry pull and a verified functional response. This does not constitute the complete L01 scenario or pilot completion.
+
+## 2. Early provenance and admission integration
+
+- [x] Implement Kyverno in `tfm-golden` with development-key trust and demonstrate signed delivery plus registry access from the client, node and controller.
+- [x] Exercise the isolated **local directed admission** check F07: `run-xFGRe6X1` rejected only the missing independent image signature, restored the original artifact, admitted the identical digest with L01 HTTP/rollout checks, then passed F11 and image replacement. Both successful and failed-run packages were audited; see the [F07 operational record](docs/EN/cases/F07/record.md). Human acceptance remains pending.
+- [ ] Complete hosted negative F07/GHCR compatibility. Local early CI and directed acceptance do not establish hosted coverage or campaign measurements.
+- [x] Bound the initial hosted F07 investigation: official documentation does not establish precise OCI removal/restoration with the existing workflow token. Prepared an inactive, run-scoped protocol probe and focused regressions; no hosted operation performed. See [findings and prepared commands](docs/EN/cases/F07/hosted-compatibility.md).
+- [x] Implement `test/f07-ci-verification-l04`: read-only registry gate, isolated pre-results replacement fault, exact restoration and shared L01/L04 replacement record. See the [L04/early F07 record](docs/EN/cases/L04/record.md) for actual checks and remaining acceptance. Do not expand package permissions or substitute package-version deletion to force hosted F07.
+- [x] Observe early CI F07 and shared L01/L04 acceptance in fresh `run-I3PWZFUO`: exact recovery, current-registry verification, admission/rollout/HTTP, preserved F13/directed F07/F11, 278 package hashes and 25 retained gate bundles independently reverified. The earlier guard failure `run-TC8SeiUE` remains archived as FAIL. Full suite: 401 service/unit tests plus environment, policy and real Cosign checks. Human acceptance and hosted gate/L04 execution remain pending.
+- [ ] Finalize the relevant scenario records before testing: acceptance of valid provenance, missing provenance F09 and unauthorized origin F10; distinguish partial checks from complete scenarios.
+- [x] Prepare pinned Kyverno configuration and root `.github/workflows/` orchestration with repository-specific identities and reusable commands in `implementacion/`. The hosted entry point is manual `workflow_dispatch`, not a reusable `workflow_call` interface.
+- [x] Implement image/provenance contracts for format, retrieval, signature, issuer, source, workflow, commit and digest, with positive and negative contract tests.
+- [x] Configure hosted permissions/OIDC and observe native provenance consumed by actual Kyverno in the recorded hosted runs. See the migration section for exact revisions and remaining evidence review.
+- [ ] Exercise the remaining F09/F10 acceptance/rejection records with matching digests and attributable causes; format, network or API errors do not count as detection.
+- [ ] If a material incompatibility appears, document it and assess the BuildKit + Cosign alternative before changing the solution. Do not implement both by default or automatically claim SLSA L3.
+
+**Outcome:** verified critical integration or a specific incompatibility that supports a decision about adaptation. `act` and local signing do not replace this hosted verification.
+
+## 3. Complete controls through small increments
+
+Prepare the scenario record and tests for each behavior first. Include acceptance, rejection and regression checks without postponing testing until the end.
+
+- [x] Exercise lane A with zot, kind and a development key in the documented compatibility environment, keeping its trust model distinct from lane B.
+- [ ] Exercise compatible workflow portions with `act` and record their limits; local signing and `act` do not establish hosted OIDC behavior.
+- [x] Add Conftest workflow/manifest policies, legitimate inputs and independently mutated policy fixtures; exercise early and directed F11 rejection.
+- [x] Complete operational F01/F02 static records and inert injections; see the workflow family below.
+- [x] Implement F11/F12 runtime records and manifest injections with shared L06 checks; supplied hosted review and pending local validation are recorded below.
+- [ ] Assess optional local hooks once the preceding commands work and have tests. Introduce them only for useful early feedback; mandatory controls remain in CI, and skipping a hook must not bypass them. Hooks are not a pilot prerequisite.
+- [x] Integrate Trivy with separate original CycloneDX JSON and real scan reports, tool/database identification, synthetic policy tests and observed image scans.
+- [x] Implement offline official CycloneDX 1.7 JSON Schema validation before signing and after authenticating the exact bundle; retain separate lab checks and reports. This does not establish inventory completeness.
+- [ ] Confirm the selected F03/F04/L02 package fixtures in real images. Direct production npm candidates, package scans, inventories and harmless compatibility checks are prepared; image-level severity, remediation and service compatibility remain pending in the new family record.
+- [x] Sign and verify image/SBOM bundles with explicit identity, predicate, content and digest checks; retain actual cryptographic negative probes, including signature-byte alteration.
+- [ ] Complete operational F05–F08, including hosted negative F07/F08; local F07 passed in `run-xFGRe6X1` and controlled F08 CI/admission passed in `run-IIWR8RLL` (see the F08 record). Synthetic cryptographic probes do not complete these scenario executions.
+- [x] Issue a signed versioned results predicate only after successful mandatory pre-admission controls, retain report hashes and record the later admission response separately.
+- [x] Implement direct admission and results checks for the protected namespace and selected CREATE/UPDATE operations; observe L01/F13 and F11 in the recorded integrations.
+- [ ] Complete remaining F13/F14 operational acceptance and scope checks; retain the same-digest positive control and distinguish attributable rejection from operational failure.
+- [x] Test image, SBOM, scan, provenance, results and decision contracts, including unauthorized identity/key, wrong digest, unsuccessful results, unsupported types and missing fields at their documented test levels.
+- [ ] Complete remaining live negative guarantees and link each to its evidence; parser, policy-construction and offline cryptographic tests cannot substitute for admission checks.
+- [ ] Check properties shared by Conftest and Kyverno with consistent inputs and expectations adapted to each tool; do not assume equivalence merely because rule names match.
+- [x] Test mandatory-stage failure propagation and implement directed F11/F13 checks with strict rejection attribution; retain operational tests separately from the corpus count.
+- [ ] Complete the remaining directed barriers and operational failures in the scenario records, including F07/F09/F10. Do not infer a later barrier was reached from an earlier rejection.
+
+**Outcome:** a complete verifiable path with the selected controls and observable causes of acceptance/rejection. Favorable results for every scenario in the future corpus are not required.
+
+## F08 bounded increment
+
+- [x] Fix the [F08 operational oracle](docs/EN/cases/F08/record.md) on base `1369a0c`, then implement local signature-only OCI replacement, fresh CI attribution, guarded recovery and directed admission using shared L04.
+- [x] Retain and audit fresh local F08 `run-IIWR8RLL`: CI and directed Kyverno rejection, exact recovery and shared L04 acceptance; 452 package hashes, 44 valid bundles and two rejected variants audited. Preserve DNS-failed `run-lnUGtdTB` (12 hashes audited). Final suite: 443 service/unit tests plus environment, policy and Cosign checks; see the F08 record.
+- [ ] Human review and final acceptance of F08.
+- [ ] Retain a successful hosted normal gate/L04 run and audit its evidence before closing hosted acceptance. Hosted negative F07 and F08 remain **NOT_EXECUTED**, with no new mutation permissions or workflow activation.
+
+## 4. Next milestone: Scenario coverage and pilot
+
+Use small PRs in this order; sections 1–3 retain the detailed control and acceptance gaps. The thesis already defines F01–F14/L01–L06: operationalize that catalogue rather than creating a second academic catalogue.
+
+- [x] **1. Prepare lightweight AI collaboration guidance:** `AGENTS.md`, Copilot instructions, one scenario-change skill, `CONTRIBUTING.md`, PR template, [EN/ES guidance](docs/EN/ai-assisted-development.md) and CI triggers covering their changes. Files are prepared locally; runtime loading and human review remain below.
+- [ ] Verify instruction/skill loading in the intended tools and record human review of the guidance; file availability alone does not establish runtime behavior or approval.
+- [ ] **2. Fix operational records and close migration acceptance:** complete the 20 records in one catalogue using the [template](templates/ficha_escenario.md) and the identified thesis revision. Set actor capabilities, injection, expected detection phase, latest blocking point and evidence before measurement; review the [F07/L04 CI increment](docs/EN/cases/L04/record.md); hosted F07 remains gated on GHCR compatibility.
+- [ ] **3. Complete control-family PRs:** evidence/provenance/results, workflow/runtime, then real vulnerability/remediation inputs, with legitimate counterparts and attributable negative cases. Reuse existing L01/F11/F13 modules and policy tests; complete all twenty operational cases without counting directed checks as extra scenarios.
+- [x] **4. Implement paired R/G instrumentation:** one independent legitimate delivery per arm, exact lane B workflow trust, prepared isolated caches, persisted timing and safe evidence. See the [protocol](docs/EN/paired-rg-measurements.md) and [completed automated timing pilot review](docs/EN/paired-rg-pilot-review.md). Manual calibration, scenario readiness and human acceptance remain separate.
+- [ ] Identify tool, policy, image and vulnerability database versions and comparable cache conditions. Record infrastructure preparation separately from the main measurement interval.
+- [ ] Check result classification: valid favorable/unfavorable, invalid for an evidenced cause, or indeterminate. Apply one retry to evidenced external failures according to the protocol without removing unfavorable results.
+- [ ] Verify measurement of total time to the admission response, phases, detection and blocking. Distinguish elapsed time from summed job minutes and applicable monetary cost.
+- [ ] Extend existing Actions artifacts and checksummed packages to measurement data, associate the reviewed package with its release, and preserve a local copy outside Codespaces. Verify download and table reconstruction; current functional archives do not contain campaign measurements.
+- [ ] Document disclosure risks associated with SBOMs, vulnerabilities and logs; review the files to be shared. Do not add encryption or a custody service.
+- [x] **5. Run four timing pilot pairs** in the stored balanced GR/GR/RG/RG order and keep them separate from development. All four attempts are included in the [review](docs/EN/paired-rg-pilot-review.md); its recommendation keeps ten campaign pairs provisional pending a human decision.
+- [ ] Calibrate the six manual tasks: F03/F10/F11 in R/G, conventional tools during measurement, equal per-scenario limits in both configurations and an approximately balanced order.
+- [x] Implement the [supporting lane A procedure](docs/EN/manual-task-calibration.md), with operator/participant separation and synthetic instrumentation checks. Actual calibration and the resulting limits remain pending above.
+- [ ] **6. Review and close the pilot**, then freeze the campaign candidate, provisionally **v0.3.0**. Require operational readiness and traceability; fix instrumentation defects that prevent interpretation, while preserving genuine control failures as unfavorable results.
+
+**Outcome:** an executable, interpretable protocol with identified versions and preservable data. Perfect detection and satisfaction of a fixed time threshold are not required.
+
+## 5. Campaign and documentation completion
+
+- [ ] Fix versions, corpus, execution order and revised parameters before the campaign.
+- [ ] Run the campaign and evaluate subsequent corrections separately.
+- [ ] Analyze overhead, detection, blocking, manual tasks and Actions consumption using observed costs and benefits; state the laboratory and sample-size limitations.
+- [ ] Relate European insurance-sector needs to controls, scenarios, evidence and limitations. Do not treat a documentary mapping as compliance certification.
+- [ ] Integrate design, implementation, results and review evidence into the thesis.
+
+## Bundle migration: observed integration and remaining acceptance
+
+- [x] Preserve v0.1.0 and prepare `feat/cosign-bundles` with default Cosign bundles, predicate-specific verification and Kyverno `SigstoreBundle` consumers. Keep the pinned versions.
+- [x] Preserve distinct local and hosted trust profiles, raw bundles, public verification material, verifier outputs and EN/ES documentation.
+- [x] Require strict OCI referrer retrieval before attributing missing results; unreadable evidence and changing inventories are integration failures.
+- [x] Run regression and actual Cosign cryptographic checks, including SBOM/results substitution, altered signatures, wrong digests and unauthorized development keys.
+- [x] Record a fresh local end-to-end run with strict retrieval, F13/F11 attribution, L01 creation and independent image replacement, and verified archive checksums: [run-De88fpWy](registros/cosign_bundles_validation_EN.md), on the documented cgroup-v1 compatibility host. This is not a campaign measurement.
+- [x] Run and review the published migration branch in real GitHub Actions at `82728c5`: [run 36321115827](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36321115827), including native provenance, exact identity, certificate/SCT, transparency and L01/F13/F11. See the [review record](registros/pr15_review_EN.md); later source corrections require their own run.
+- [x] Merge PR #15 into `main` at `dd381d3` and publish the [v0.2.0 prerelease](https://github.com/tfm-goldenpath/golden-path-lab/releases/tag/v0.2.0). Release availability does not close the remaining acceptance checks.
+- [x] Observe all steps successful in main [run 36332256483](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36332256483) at `dd381d3`, with artifact `golden-path-36332256483-1` available. This is hosted integration of the merged review corrections, not a local repeat or a package-content audit.
+- [ ] Download, preserve and audit that exact main-run package: verify its checksum, internal hashes, bundle verification, F13 consistency report and L01 replacement evidence; record the observed result and synchronize current-status paragraphs in migration/runbooks while preserving historical observations.
+- [ ] Repeat affected local integration on the adopted revision and retain its environment and evidence. Earlier compatibility runs do not establish current local or Codespaces acceptance.
+- [ ] Complete the remaining directed admission checks in the [migration acceptance list](docs/EN/cosign-bundle-migration.md), including valid attestations without the independent image-signature predicate. Cryptographic and policy-construction tests alone do not complete these live checks.
+- [ ] Review the remaining migration acceptance with the responsible person and carry affected checks into pilot validation before campaign freeze.
+
+The [migration guide](docs/EN/cosign-bundle-migration.md) ([Spanish](docs/ES/cosign-bundle-migration.md)) retains the classic compatibility history. Run R/G from the same frozen revision; R omits the declared additional controls. Do not pool classic development timings with bundle campaign measurements. Kyverno's deprecated policy API remains separate future work; the classic chain helper is inactive historical support, whose removal should be assessed after the remaining acceptance review.
+
+## Extensions, only after completing and reviewing the baseline
+
+The proposed order prioritizes additional coverage of the prototype's guarantees, the consequences of incorrect acceptance and preparation effort. It is not an industry attack-frequency ranking. Unit or integration tests needed to support guarantees already claimed belong to the baseline; the extension consists of turning these conditions into independent measured scenarios in a later campaign.
+
+| Priority | Campaign extension | Rationale |
+|---|---|---|
+| 1 | Valid signature from an unauthorized identity. | Isolates authorization from cryptographic validity; complements F08 and F10 without automatically attributing this coverage to them. |
+| 2 | Authentic attestation with an unsuccessful result while keeping the image and policy correct. | Checks that signed evidence does not authorize merely because it is authentic. Preparing test evidence does not change the rule that issues real authorization only after successful results. |
+| 3 | Signed attestation with an unsupported predicate type or schema. | Isolates contract interpretation from issuer authenticity and artifact identity. |
+| 4 | Authentic signature for another image, as an extension of F08. | Examines correspondence with the delivered object while keeping the signature valid in its original context. |
+| 5 | SBOM that omits a known component. | Adds semantic inventory quality; requires an independent reference and goes beyond the current authenticity and association checks. |
+
+The cryptographic basis for extensions 1 and 4 is documented in the [Cosign verification documentation](https://docs.sigstore.dev/cosign/verifying/verify/). The pilot will review whether the planned tests provide distinguishable information and an attributable rejection reason.
+
+Java, ARM, additional trusted providers, SARIF and Dependency Review, malware/secret detection and remediation assistance, code mutation and extended observability may be considered afterwards. These extend portability, capabilities or use of results and have their own requirements. Syft + Grype remains a documented alternative if Trivy proves unsuitable during the pilot, without a mandatory execution comparison.
+
+## Lightweight tracking
+
+Use existing stories as the primary record, a suggested work-in-progress limit of two tasks and a brief decision/evidence note when relevant. Do not create an hourly diary or duplicate results in this TODO. Mark a task complete only when the evidence specified by its outcome condition exists.
+
+## F05 / F06 / L03 bounded increment
+
+- [x] Fix operational records on base `b380836f0264698c0cdd8e5e8f750427def63761` using supplied approved oracles and the locally available academic catalogue.
+- [x] Implement pinned offline schema validation, isolated local SBOM faults, early mismatch evidence, recovery, and a real pinned L03 component fixture.
+- [x] Pass the full suite and independently observe real host-built L03 images, Trivy component difference, schema validity, unchanged vulnerability policy and offline digest-bound SBOM signatures; audit the 35-file supplementary archive.
+- [x] Complete fresh local registry/admission integration in `run-nWpDa9ZN`: F05/F06 CI and directed SBOM admission rejection, exact recovery, and shared L01/L03/L04 acceptance. Audited 776 package hashes, 108 valid bundles and two expected F08 rejections. The approved temporary kind-forwarding rules were removed; failed runs remain preserved. See [per-boundary observations](registros/f05_f06_l03_validation_EN.md).
+- [ ] Human review and final acceptance.
+- [ ] Hosted normal delivery validation on reviewed source; hosted negative F05/F06 remain **NOT_EXECUTED**.
+
+See the [EN procedure](docs/EN/cases/F05-F06-L03/runbook.md) and [ES procedure](docs/ES/cases/F05-F06-L03/runbook.md). L01/L03/L04 share one execution, with no additional campaign observations.
+
+## F09 / F10 / L05 bounded increment
+
+- [x] Define the [operational oracle](docs/EN/cases/F09-F10-L05/record.md) and initial failing contract/gate checks before implementing on base `38631e1`.
+- [x] Align explicit provenance repository, revision, build type and builder requirements in CI/admission; add isolated local F09/F10 preparation, attribution and exact recovery.
+- [x] Add opt-in L05 using two explicit immutable main-history commits, actual exported application source, separate tests/builds/evidence and exact revision authorization.
+- [ ] Complete and review fresh local F09/F10 CI and directed admission plus L05 rollout/HTTP. Consult the [validation record](registros/f09_f10_l05_validation_EN.md) for actual results and outstanding boundaries.
+- [x] Retain and audit the [main `80c12bc` local preflight](registros/f09_f10_l05_integration_validation_EN.md): distinct source pair exported; environment pins and real BuildKit DNS failed. Diagnostic checksum and 15 internal hashes verified. No full demo launched; rejection/recovery, both L05 deliveries and update/restart remain **NOT_EXECUTED**.
+- [ ] Demonstrate hosted L05 across two authorized actual Actions run revisions and audit both packages. Hosted F09/F10 negatives remain **NOT_EXECUTED**.
+- [x] Address the five PR #24 comments locally and audit the supplied CI/hosted logs and package; see the [review record](registros/pr24_review_EN.md). Hosted run `36631562615` checked baseline `38631e1`, not PR head `d337a3c` or the review fixes.
+- [ ] Human review and final acceptance; no campaign measurements claimed.
+
+## Merged-run admission readiness correction
+
+- [x] Reproduce the readiness regression and implement initial/update separation, current Pod/endpoint checks, explicit logs and server dry-run; see the [record](registros/kyverno_readiness_fix_EN.md).
+- [ ] Complete readiness validation: user reports hosted `36640544300` passed normal delivery/initial readiness at `80c12bc`; not independently audited in this follow-up. L05 policy update/restart remains **NOT_EXECUTED** after the blocked local preflight. Failed run `36636319864` attempts 1/2 remain integration errors, not F13 detections.
+
+## F13/F14 results authorization
+
+- [x] Define post-issuance F13 removal, authentic laboratory P0 replay F14 and same-digest L01 recovery; preserve separate preissuance F13/readiness checks. See [oracle](docs/EN/cases/F13-F14/record.md).
+- [x] Add fresh authorized CI attribution, fixed P1 agreement with Kyverno, isolated owned-registry trials, exact recovery and evidence packaging; retain the custom versioned results predicate.
+- [x] Add actual-function regressions and real offline P0 signing/authentication probes. See [verification record](registros/f13_f14_results_authorization_EN.md).
+- [ ] Execute local F13/F14 CI, directed admission and same-digest recovery in the pinned devcontainer; npm is now pinned to 11.19.0, but the retry stops at kubectl v1.37.0 versus v1.35.8; Docker and Buildx also differ from their pins. Historical BuildKit DNS blocker is not retested. See [commands](docs/EN/cases/F13-F14/runbook.md).
+- [ ] Hosted negative trials remain NOT_EXECUTED; no GHCR mutation permissions added.
+- [ ] Human review and final acceptance. PR #26's F09/F10/L05 gaps remain open; no campaign measurements or VSA-conformance claim.
+
+## PR #27 hosted OIDC response failure
+
+- [x] Audit hosted `36741081776` at `d39086c`: initial delivery, preissuance F13, L01 and directed F11 reached their expected observations; replacement signing failed while parsing the GitHub OIDC response. Verify package checksum and 153 internal hashes. See [record](registros/pr27_hosted_oidc_failure_EN.md).
+- [x] Add a bounded retry only for malformed ambient-OIDC responses before signing, retain attempts, and preserve mandatory verification and failure propagation.
+- [ ] Audit the user-reported successful hosted run `36746422169` at `d66d223` and complete human review. Hosted F13/F14 negatives were skipped; the failed run does not establish their coverage.
+
+## F01 / F02 static workflow family
+
+- [x] Define the [operational oracle](docs/EN/cases/F01-F02/record.md) on main `d66d223`; retain the L01 workflow-only counterpart and inert inputs outside active workflows.
+- [x] Add a shared pinned Conftest evaluator, exact diagnostic attribution, isolated alterations, evidence and ordinary CI execution while preserving checks of actual workflows.
+- [x] Correct event lookup for the pinned YAML parser's unquoted `on` → `true` representation. Keep Action-reference scope unchanged.
+- [x] Observe actual static L01 acceptance and isolated F01/F02 rejection; retain the initial unexpected F01 acceptance and subsequent checks in the [validation record](registros/f01_f02_workflows_EN.md).
+- [ ] Human review and final acceptance; no campaign measurements or new complete delivery execution.
+
+User-provided context reports hosted run `36746422169` succeeded at `d66d223` after
+the OIDC correction. This increment does not independently audit that package.
+Hosted F13/F14 negatives were skipped; F09/F10/L05 and F13/F14 live gaps remain
+open. F11/F12/L06 runtime work is outside this increment.
+
+
+## F11 / F12 / L06 runtime family
+
+- [x] Define the [operation matrix and oracle](docs/EN/cases/F11-F12-L06/record.md) on main `d864654`; retain coordinated API-valid F11 fields and exact structured diagnostics.
+- [x] Persist the original build tag, resolve it read-only around F12 trials and preserve digest authentication, repository restriction and disabled automatic conversion.
+- [x] Add Deployment CREATE/legal template UPDATE and isolated Pod CREATE trials; prove NotFound or unchanged UID/generation/spec after rejection. Share L01 creation with L06 and require a real annotation update, rollout, Ready Pods and HTTP.
+- [x] Add function, state, tag, packaging and real policy regressions; wire both lanes through shared modules without new permissions. See [checks, evidence and commands](docs/EN/cases/F11-F12-L06/runbook.md).
+- [ ] Execute local runtime admission in the pinned environment: doctor still stops at kubectl v1.37.0 versus v1.35.8. Smoke/BuildKit/demo were not reached; the previous network blocker is not resolved by this work.
+- [x] Record the user-supplied review of hosted `36768108684` for the runtime increment merged at `eed5aad2828a7156e4c49bf2e2f3d9c2b0476137`: 449 verified internal hashes, eight authenticated original/replacement bundles, attributable F11/F12 and successful L06. This increment did not independently repeat that audit. Local validation remains pending; historical observations and F09/F10/L05, F13/F14 gaps are preserved.
+- [ ] Human review and final acceptance. Preserve F09/F10/L05 and F13/F14 live gaps; shared observations do not change the twenty-scenario denominator.
+
+## F03 / F04 / L02 vulnerability family
+
+- [x] Define post-build oracles and isolated npm candidates; real filesystem scans confirm the target CRITICAL/HIGH/MEDIUM findings and minimist target removal. See [record](docs/EN/cases/F03-F04-L02/record.md).
+- [x] Implement original image SBOM → real Trivy SBOM scan → production Conftest with image association, frozen DB checks, strict target attribution and separate positive authorization.
+- [x] Add local `make vulnerabilities`, isolated build contexts/locks, function regressions and explicit package directories; normal hosted delivery remains the regression path.
+- [x] Complete and independently audit real fixture image scans, F03 reference HTTP comparison and positive admission/rollout/HTTP in lane A run `36881119588` at `b8eb603e7965e4d58cc9f58ec78f74971944a547`. Local Codespaces doctor still rejects kubectl 1.37.0 versus 1.35.8; preserve that separate blocker.
+- [ ] Run normal hosted regression for the changed analysis sequence after separate publication/dispatch authorization. Additional hosted F03/F04/L02 execution is unsupported and NOT_EXECUTED.
+- [ ] Human review and final acceptance. No campaign measurements or change to the twenty-scenario denominator.
+
+## Reproducible lane A integration validation
+
+- [x] Add independent demo + opt-in L05 and vulnerability suites through shared Make/Python orchestration and a manual devcontainer workflow. Retain read-only permissions, full-SHA actions, unpersisted checkout credentials and disabled remote image publication. See [EN](docs/EN/lane-a-validation.md) / [ES](docs/ES/lane-a-validation.md).
+- [x] Record a fetched local `main` in disposable Actions checkouts and retain the fixed L05 source pair; preserve existing ancestry/source checks.
+- [x] Add prerequisite stopping, effective versions, shared checks, smoke and the bounded delivery-configured BuildKit probe, with original failure status and owned-builder cleanup.
+- [x] Add required-result audits and safe evidence retention, including separate allowlisted archives of each frozen Trivy database and explicit drift failures. Regression fixtures are synthetic, not integration evidence.
+- [x] Attempt both local entrypoints. Initial PATH lacked kind; retries using the existing `.tools/bin` stop at doctor: kubectl v1.37.0 versus v1.35.8. Both retain original Make status 2 and retention status 0 in `evidence/lane-a/local-{demo,vulnerabilities}-tools`. No tool pins, networking or trust were changed.
+- [x] Run shared checks with the existing `.tools/bin` on PATH: environment tests, 823 service/unit tests, 43 Python policy tests, real Conftest/Kyverno checks, offline Cosign checks and F01/F02 static trials pass. Initial shared attempt without that PATH failed five evaluator tests; both logs are preserved in `evidence/raw/lane-a-development/`. Final focused runner/audit regressions also pass.
+- [x] Complete both functional suites in the pinned environment: independently reviewed lane A run `36881119588` passes smoke, BuildKit, real image scans, admission and both L05 deliveries. The original increment was prerequisite-blocked; preserve its historical local failures. Human acceptance remains separate below.
+- [x] Validate the merged manual workflow on ephemeral runners in `36881119588`: demo and vulnerabilities both PASS at `b8eb603`. The assistant reviewed this user-supplied run without dispatching another. Lane A does not establish hosted OIDC/GHCR mutation coverage.
+- [ ] Human launcher/source review and final acceptance. Assistance: OpenAI Codex / GPT-6; see the linked runbook. No campaign measurements or change to the twenty-scenario denominator.
+
+### Lane A first runner attempt and parser regression
+
+- [x] Independently inspect run [36829165325](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/36829165325) at `6b9e303`: both devcontainers and doctor pass; shared tests fail on undeclared PyYAML in the new workflow test. Verify 28 artifact hashes per suite; scenarios NOT_EXECUTED and databases NOT_CREATED.
+- [x] Reproduce with Python site packages disabled; replace the test's PyYAML import with the existing pinned Conftest parser and enforce `python3 -S` in its Node wrapper. Focused regression passes without changing environment/tool pins or acceptance assertions.
+- [x] Full shared suite passes after the fix: 825 service/unit tests, 43 Python policy tests, 62 Conftest decisions, Kyverno, offline Cosign and static F01/F02. Log: `evidence/raw/lane-a-run-36829165325/shared-tests-fix.log`.
+- [ ] Rerun remotely after review/publication authorization and complete actual scenario acceptance. No assistant dispatch; historical local blockers remain. See the EN/ES validation guide for retained evidence. AI assistance: OpenAI Codex / GPT-6; human review pending.
+
+### Lane A run 36830599263: fresh directed admission
+
+- [x] Inspect run `36830599263` at `5255c7f`: both suites pass doctor/shared tests/smoke/BuildKit. Vulnerabilities finishes with all required boundaries PASS, including F03 remediation, real image scans and repaired/L02 admission/rollout/HTTP. Inspect originals and verify 348 internal package hashes plus the frozen DB archive; independent reauthentication of every bundle was not repeated.
+- [x] Preserve demo failure: postissuance F13 rejects and recovers; F14 CI detects P0 but admission returns `quotes-node unchanged`. Original scenario status 1 survives successful restoration. Verify 1,081 package hashes and the separate DB archive. Later directed F05/F06/F08/F09/F10 and L05 remain unreached in this run.
+- [x] Replace the shared unchanged-apply pattern in directed F05/F06/F08/F09/F10/F13/F14 with isolated, zero-replica Deployment CREATE, explicit absence, fresh positive CREATE after restoration and owned cleanup. Retain exact diagnostics, normal workload probes and original failure statuses; policies/tool pins/trust are unchanged.
+- [x] Final shared checks pass: 842 service/unit tests, 43 Python policy tests, 62 Conftest decisions, Kyverno, offline Cosign and static F01/F02. Preserve the intermediate F06 harness failure and final log in `evidence/raw/lane-a-run-36830599263/`.
+- [ ] Complete the corrected live demo after publication and separate dispatch authorization. Local doctor still rejects kubectl 1.37.0 versus 1.35.8. Human review/acceptance pending; no new scenario IDs or measurements. See [EN](docs/EN/lane-a-validation.md) / [ES](docs/ES/lane-a-validation.md).
+- [x] Address PR #34 Copilot review: require raw initial NotFound and successful server dry-run CREATE for the expected resource. All 30 focused audit tests pass, including 11 new regressions that failed before the fix. AI contribution: GitHub Copilot review (model not disclosed), OpenAI Codex / GPT-6 implementation; human review pending. This follow-up does not establish live execution.
+- [x] Address contributor-supplied Copilot recovery warning on PR #34: audit Deployment type/namespace, UID, request ownership, zero replicas, isolated selector/Pod labels and image. All 45 focused audit tests pass; 15 new cases include 11 reproduced gaps and four existing rejections. Codex / GPT-6 implementation; human review and live validation pending.
+
+### Lane A run 36877044496: controller termination convergence
+
+- [x] Inspect demo at `7548dcb`: prerequisites pass; L05-from readiness stops on validating-webhook timeout. Verify 74 outer/1,814 internal hashes and the frozen database archive. Preserve failure and uncompleted L05; vulnerability job success is GitHub-reported, without an independent package audit here.
+- [x] Reproduce premature readiness with terminating controller Pods/replicas; require their removal within the existing bounded wait. All 33 focused tests pass; original snapshot becomes PENDING. This fixes an observed readiness gap, not a proven timeout root cause.
+- [ ] Corrected live demo and human acceptance. Local doctor still rejects kubectl v1.37.0 vs v1.35.8. No workflow dispatch. AI assistance: OpenAI Codex / GPT-6; human review pending.
+- [x] Shared suite passes after the convergence change: 873 service/unit tests, 43 Python policy tests, Conftest/Kyverno, offline Cosign and static F01/F02. Log: `evidence/raw/lane-a-run-36877044496/shared-tests.log`.
+
+### Lane A run 36881119588: independently reviewed success
+
+- [x] Confirm `.github/workflows/lane-a-validation.yml` on merged `main`, commit `b8eb603e7965e4d58cc9f58ec78f74971944a547`; both matrix jobs and scenario/retention stages pass. Independently rerun all 27 demo and 12 vulnerability audit rows against original evidence.
+- [x] Preserve both artifacts, Actions logs and both separate frozen database archives outside Git. Verify 76/75 outer and 1,960/348 internal hashes; DB allowlists/checksums and all per-image identities match. Shared DB bytes are identical; download timestamps differ between suites, without within-suite drift.
+- [x] Verify lane A signature/SBOM faults, F09/F10, distinct preissuance/postissuance F13 and F14, F11/F12 CREATE/legal UPDATE/direct Pod checks, L01/L03/L04/L06 recovery and both actual authorized L05 revisions. Directed/shared observations retain the twenty-scenario denominator. This closes those lane A execution gaps, not lane B negative coverage.
+- [x] Recheck eight image-analysis receipts; replay four original vulnerability SBOM scans with preserved DB and identical results after input-path relocation. F03 CRITICAL target removed after correction with functional compatibility; F04 HIGH blocked within documented no-fix scope; L02 two MEDIUM findings and no HIGH/CRITICAL, followed by authorized admission/rollout/HTTP.
+- [x] Independently verify 28 unique bundles (27 authentic, one expected F08 corruption), 24 positive content contracts/evidence hashes, 14 inventory isolation/restoration boundaries and L05 source ancestry/hashes. No implementation repair required. See [EN](docs/EN/lane-a-validation.md#first-successful-end-to-end-lane-a-run-36881119588) / [ES](docs/ES/lane-a-validation.md).
+- [ ] Human launcher/source review and final acceptance. Evidence supports beginning paired R/G runner development, not campaign acceptance or measurements. Local Codespaces version/network blockers and historical failed runs remain recorded. Private state hashes cannot be recomputed from deliberately excluded state files. AI: OpenAI Codex / GPT-6; review pending. No push, merge, dispatch or measurement implementation in this review.
+
+
+### First paired R/G measurement instrumentation
+
+- [x] Implement separate single-delivery prepare/native-provenance/finish/cleanup orchestration over shared modules; retain existing functional entry points and twenty scenario IDs.
+- [x] Define versioned protocol/records, exact new workflow identity, common/G controls, separate prepared caches, immutable warmup and measured current source, frozen per-pair Trivy data and retained phase/failure evidence.
+- [x] Store reproducible balanced four-pair plan (seed `paired-rg-pilot-v1-2026-10-01`, order GR/GR/RG/RG); add paired absolute/relative statistics, dispersion, denominators and manual evidenced single-retry limits. Job consumption is separate from delivery time; no monetary estimate.
+- [x] Run focused synthetic timing/order/cache/source/classification/partial-record regressions and shared environment/unit/policy/offline-cryptographic checks. Validation logs are stored locally outside Git.
+- [x] Development RG `36926824792` and GR `36927943550` were subsequently authorized, executed and reviewed at `02674a57d290083648a9af44c48fd049808b2d70`, including native provenance, independent images/caches, fresh CREATE, rollout/HTTP, preserved DB and consumption. The original instrumentation handoff preceded those executions; see the [merged review](docs/EN/paired-rg-pilot-review.md).
+- [x] Review development evidence and hold source/database conditions fixed for the four authorized GR/GR/RG/RG pilot pairs. The automated timing pilot is complete; ten campaign pairs, manual calibration and overall human acceptance remain separate pending decisions.
+- [ ] Human review and acceptance. AI assistance: OpenAI Codex / GPT-6. Supplied lane A success `36885654089` at `5ae6f84a01407789933bd36bcdb05250a6d6c4f5` supports the requested next implementation; its package was not independently reaudited here. Historical lane A records and local blockers remain unchanged.
+
+- [x] Address PR #37 review: preserve the normalized retry diagnostic reference and require a successful development artifact for database reuse. Reproduce both defects before correction; add three initialization regressions. Focused validation evidence is stored locally. Live smoke was pending at this follow-up and subsequently completed as recorded above; human acceptance remains pending.
+
+- [x] Address the second PR #37 Copilot review: align paired bootstrap and post-analysis guards with the production CycloneDX 1.7 contract; reproduce both version failures before fixing them. Restore historical lane A attribution from main. GitHub Copilot review (model not disclosed), OpenAI Codex / GPT-6 corrections; human review pending. Live smoke was pending at this follow-up and subsequently completed as recorded above. Validation evidence is stored locally.
+
+
+### Paired development run 36924958484: preparation failure
+
+- [x] Inspect run `36924958484`, source `6fc297929254ba4472d6b3b9f95ebaca667dd508`: dependencies/shared tests/readiness pass; first cache warmup fails with missing source/lockfile. Both deliveries remain NOT_EXECUTED; cleanup succeeds and final status preserves failure.
+- [x] Verify 20 outer and 42 internal package hashes plus the frozen database archive and identity. Evidence is stored locally outside Git.
+- [x] Reproduce the empty warmup archive from the implementation cwd; export from repository root without changing the immutable source or cache recipe. Actual-command regression fails before correction; all 51 measurement tests pass afterward.
+- [x] The correction was merged through PR #38, followed by successful fresh development RG/GR and the four-pair pilot recorded in the [merged report](docs/EN/paired-rg-pilot-review.md). Preserve `36924958484` as its original preparation failure; it was not an external-failure retry or a pilot observation. OpenAI Codex / GPT-6 assistance; human acceptance remains pending.
+
+- [x] Fix PR #38 CI test setup after run `36926144447`: use isolated synthetic Git history for the export regression. Reproduce failure in a depth-1 clone; all 51 measurement tests pass after correction, and the original production bug still fails the regression. No checkout-depth or production-source changes. Logs stored locally; Codex / GPT-6 assistance, human review pending.
+
+
+### Local F11 comparison profile (17 October 2026)
+
+- [x] Add the bounded local A profile over the existing defense coordinator, R privilege trial, independent directed F11 UPDATE and extracted legitimate L06 template UPDATE. Both catalogue scopes remain partial.
+- [x] Add authenticated web controls, per-attempt evidence/console, provisional resource margins and owned cleanup with low-space export recovery; retain historical profiles.
+- [x] Run unit/policy/offline-crypto checks and real-browser/offline rendering. See the [validation record](registros/f11_comparison_validation_EN.md) for original failures, exact source, 948 unit tests and final defense regressions.
+- [x] Restore the base profile and align actual Docker CLI/engine to 29.8.0. Complete shared suite passes; session `f11-20261017t193938z` prepares in 423.02 s and confirms the partial R/F11/L06 comparison in 19.01 s. Earlier failures remain preserved. A subsequent CSS/browser-test correction is documented separately; delivery controls are unchanged.
+- [ ] Record the human-narrated rehearsal duration (target 160 s, maximum 180 s); the supplied automation log does not measure speech.
+- Full catalogue F11/L06 coverage is outside this iteration; preserve the explicit partial labels.
+- [x] Human review and acceptance of the bounded PR scope at `e675325`, explicitly confirmed by Xylons in the conversation on 17 October 2026. OpenAI Codex assistance; no new campaign sample. [EN guide](docs/EN/defense/f11-comparison.md) / [ES guide](docs/ES/defense/f11-comparison.md).
+
+- [x] Add safe viewer-only stop and preflight port checks; explain the reported rehearsal-01/defense-01 conflict. Improve scenario/result hierarchy and hide unrelated profile operations. These follow-up changes require their own review; earlier acceptance is not reassigned to them.
+
+### Web action lifecycle (18 October 2026)
+
+- [x] Reproduce the retained check/zombie incident and a harmless real-subprocess regression; reap owned children before trusting persisted controller identity.
+- [x] Add independent command IDs, terminal receipts, correlated readiness operations, bounded check deadlines and a persistent action/console view; retain existing trust, action allowlist and source guards.
+- [x] On operator request, retire three obsolete owned laboratories and six exclusively associated volumes, preserving verified exports, raw evidence and private material; recover about 5 GiB (8.99 GiB free at closure). Fix retirement of a stopped registry without weakening readiness or immutable-ID checks.
+- [ ] Complete a new-source Kubernetes rehearsal of check → check → F11 → cancellation. It was blocked by disk margin during the initial validation; subsequent recovery does not constitute that rehearsal. Recheck available space before preparation.
+- [ ] Human review of this correction. Earlier PR review is not reassigned. See [validation](registros/demo_action_lifecycle_EN.md).
+
+## Final pending roadmap: `spike/serena-repomix-evaluation`
+
+Keep this evaluation at the end of the pending plan, after the functional/security
+work and `perf/codex-context-retrieval`; it must not block those improvements.
+This PR plans it only and installs neither tool.
+
+- [ ] Compare Serena and Repomix with the best measured alternative from the preceding context-retrieval evaluation, using the same protocol above.
+- [ ] At execution time verify official repositories, maintenance, licenses, compatibility and available integration mechanisms; do not assume today's capabilities or versions.
+- [ ] Evaluate Serena for semantic navigation only where supported languages and their language servers add value.
+- [ ] Evaluate Repomix for bounded, reproducible context packages; never package the entire repository or private material by default.
+- [ ] Measure observed tokens, answer quality, time, maintenance, storage and memory, including context added by tools, instructions and metadata. Preserve unknown token counters instead of estimating billing.
+- [ ] Neither installing both tools nor adding either to the default image is mandatory. Adoption depends on comparative results and human review.

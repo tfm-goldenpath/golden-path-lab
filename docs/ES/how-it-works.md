@@ -1,7 +1,7 @@
 # Cómo funciona la entrega implementada
 
 [Índice](README.md) · [English](../EN/how-it-works.md) ·
-[Contratos canónicos](../../implementacion/docs/ES/delivery-contracts.md)
+[Contratos canónicos](../../implementation/docs/ES/delivery-contracts.md)
 
 El flujo protegido vincula controles y evidencias a un digest y origen autorizado.
 Un control obligatorio que no termina detiene la entrega. Rechazo de política,
@@ -10,9 +10,9 @@ Estas fases describen código actual, no una nueva API ni nuevas políticas.
 
 ## Fases y puntos de parada
 
-Los [módulos canónicos](../../implementacion/docs/ES/architecture.md#organización-implementada-y-dependencias)
+Los [módulos canónicos](../../implementation/docs/ES/architecture.md#organización-implementada-y-dependencias)
 están en `src/` y comparten un contexto Bash. Políticas, servicio y tooling siguen
-bajo `implementacion/`. La tabla sigue entrega local legítima; los adaptadores
+bajo `implementation/`. La tabla sigue entrega local legítima; los adaptadores
 añaden pruebas/escenarios y confianza alojada donde se indica. Véase el
 [alcance actual](legitimate-delivery.md#alcance-actual).
 
@@ -33,9 +33,9 @@ añaden pruebas/escenarios y confianza alojada donde se indica. Véase el
 | Conservación y limpieza | Trap de `src/run-delivery.sh`, adaptador local y `src/package_evidence.py`; el trap del laboratorio sigue en `demo.sh` | Conserva fallo original y primer archivo/diagnóstico; elimina solo recursos propios validados. Error de limpieza/empaquetado sigue siendo fallo. | Paquete permitido y hashes; sin credenciales/estado privado |
 
 La [tabla EN](../EN/how-it-works.md#phases-and-stopping-points) enlaza productores y
-salidas detalladas. [Arquitectura](../../implementacion/docs/ES/architecture.md),
-[contratos](../../implementacion/docs/ES/delivery-contracts.md) y
-[políticas](../../implementacion/policies/README.md) siguen siendo las fuentes
+salidas detalladas. [Arquitectura](../../implementation/docs/ES/architecture.md),
+[contratos](../../implementation/docs/ES/delivery-contracts.md) y
+[políticas](../../implementation/policies/README.md) siguen siendo las fuentes
 canónicas. Integridad del paquete no repite verificación criptográfica ni acepta resultados.
 
 ## Orden explícito del laboratorio
@@ -59,17 +59,17 @@ medición tampoco es el futuro motor consumidor.
 
 Son ejemplos de navegación con IDs existentes; no duplican una lista normativa.
 El catálogo ampliado P15 queda previsto. Conftest y Kyverno requieren pruebas
-separadas por ser implementaciones distintas.
+separadas por ser implementationes distintas.
 
 | Riesgo/valor | Lugar e ID existente | Válido → inválido | Evidencia, pruebas y límite |
 | --- | --- | --- | --- |
-| Dependencias mutables/permisos de workflow | Conftest `ACTION_SHA`, `PR_WRITE`, `PULL_REQUEST_TARGET` | Action SHA completo → tag; PR lectura → escritura | [F01/F02](../../implementacion/docs/ES/cases/F01-F02/runbook.md). Análisis estructural, no flujo de datos general. |
-| Imagen mutable/privilegios | Conftest `DIGEST`, `PRIVILEGED`; Kyverno `authorized-image-repository`, `restricted-containers` | Digest autorizado/no privilegiado → tag o privilegio | [Runtime](../../implementacion/docs/ES/cases/F11-F12-L06/record.md). Namespace/operaciones protegidos, no toda la seguridad del clúster. |
-| Vulnerabilidad severa conocida | Conftest `VULNERABILITY_BLOCK`, `TRIVY_REPORT_INVALID` | MEDIUM permitido → HIGH/CRITICAL | [Análisis](../../implementacion/docs/ES/cases/F03-F04-L02/runbook.md). Depende de DB y detección; admisión no vuelve a escanear. |
-| Firma independiente ausente/alterada | Gate `MISSING_IMAGE_SIGNATURE`; `tfm-signature` / `require-image-signature` | `cosign/sign/v1` auténtico → ausente aunque haya SBOM | [F07 (EN)](../../implementacion/docs/EN/cases/F07/record.md), [F08](../../implementacion/docs/ES/cases/F08/record.md). Firma válida no garantiza seguridad de vulnerabilidades. |
-| SBOM ausente/ajeno | Esquema/contenido y `tfm-sbom` / `require-sbom` | CycloneDX auténtico del digest → donante ajeno | [SBOM](../../implementacion/docs/ES/cases/F05-F06-L03/runbook.md). Esquema completo en CI, campos seleccionados en admisión; ninguno prueba completitud. |
-| Origen no autorizado | `tfm-provenance` / `require-provenance`; `PROVENANCE_REPOSITORY`, `PROVENANCE_REVISION`, `PROVENANCE_BUILD_TYPE`, `PROVENANCE_BUILDER` | Origen/revisión/builder configurados → repositorio distinto firmado | [Procedencia](../../implementacion/docs/ES/cases/F09-F10-L05/runbook.md). A no demuestra OIDC B ni SLSA L3. |
-| Autorización ausente/obsoleta | Gate `MISSING_RESULTS`, `RESULTS_POLICY_VERSION_MISMATCH`; `tfm-results` / `require-results`, `RESULTS_POLICY_VERSION` | PASS `golden-path-v1` → ausente o replay P0 de laboratorio | [Resultados](../../implementacion/docs/ES/cases/F13-F14/record.md). Contrato propio, no conformidad VSA; salud separada. |
+| Dependencias mutables/permisos de workflow | Conftest `ACTION_SHA`, `PR_WRITE`, `PULL_REQUEST_TARGET` | Action SHA completo → tag; PR lectura → escritura | [F01/F02](../../implementation/docs/ES/cases/F01-F02/runbook.md). Análisis estructural, no flujo de datos general. |
+| Imagen mutable/privilegios | Conftest `DIGEST`, `PRIVILEGED`; Kyverno `authorized-image-repository`, `restricted-containers` | Digest autorizado/no privilegiado → tag o privilegio | [Runtime](../../implementation/docs/ES/cases/F11-F12-L06/record.md). Namespace/operaciones protegidos, no toda la seguridad del clúster. |
+| Vulnerabilidad severa conocida | Conftest `VULNERABILITY_BLOCK`, `TRIVY_REPORT_INVALID` | MEDIUM permitido → HIGH/CRITICAL | [Análisis](../../implementation/docs/ES/cases/F03-F04-L02/runbook.md). Depende de DB y detección; admisión no vuelve a escanear. |
+| Firma independiente ausente/alterada | Gate `MISSING_IMAGE_SIGNATURE`; `tfm-signature` / `require-image-signature` | `cosign/sign/v1` auténtico → ausente aunque haya SBOM | [F07 (EN)](../../implementation/docs/EN/cases/F07/record.md), [F08](../../implementation/docs/ES/cases/F08/record.md). Firma válida no garantiza seguridad de vulnerabilidades. |
+| SBOM ausente/ajeno | Esquema/contenido y `tfm-sbom` / `require-sbom` | CycloneDX auténtico del digest → donante ajeno | [SBOM](../../implementation/docs/ES/cases/F05-F06-L03/runbook.md). Esquema completo en CI, campos seleccionados en admisión; ninguno prueba completitud. |
+| Origen no autorizado | `tfm-provenance` / `require-provenance`; `PROVENANCE_REPOSITORY`, `PROVENANCE_REVISION`, `PROVENANCE_BUILD_TYPE`, `PROVENANCE_BUILDER` | Origen/revisión/builder configurados → repositorio distinto firmado | [Procedencia](../../implementation/docs/ES/cases/F09-F10-L05/runbook.md). A no demuestra OIDC B ni SLSA L3. |
+| Autorización ausente/obsoleta | Gate `MISSING_RESULTS`, `RESULTS_POLICY_VERSION_MISMATCH`; `tfm-results` / `require-results`, `RESULTS_POLICY_VERSION` | PASS `golden-path-v1` → ausente o replay P0 de laboratorio | [Resultados](../../implementation/docs/ES/cases/F13-F14/record.md). Contrato propio, no conformidad VSA; salud separada. |
 
 La [tabla EN con enlaces de código y pruebas](../EN/how-it-works.md#finding-a-blocking-control)
 permite ir de cada ejemplo a implementación y validación. Atribuye fallos por fase,

@@ -47,10 +47,10 @@ están en la [decisión completa](../../EN/maintainers/kyverno-cel-migration.md#
 El mismo reproducer incorpora `--selection-only`, sin otra colección de scripts:
 
 ```bash
-export PATH="$PWD/implementacion/.tools/bin:$PATH"
-python3 -I -S implementacion/tests/integration/kyverno-cel-capabilities.py \
+export PATH="$PWD/implementation/.tools/bin:$PATH"
+python3 -I -S implementation/tests/integration/kyverno-cel-capabilities.py \
   --selection-only --admission \
-  --output implementacion/evidence/environment/kyverno-cel/fresh-selection
+  --output implementation/evidence/environment/kyverno-cel/fresh-selection
 ```
 
 Solo cambia el orden de referrers sobre **la misma referencia y bytes firmados**;
@@ -145,12 +145,12 @@ Con las herramientas fijadas, sin otro laboratorio activo y un directorio de
 salida nuevo:
 
 ```bash
-export PATH="$PWD/implementacion/.tools/bin:$PATH"
+export PATH="$PWD/implementation/.tools/bin:$PATH"
 export GP_SOURCE_REPOSITORY=https://github.com/tfm-goldenpath/golden-path-lab
-make -C implementacion setup-validation
-make -C implementacion doctor
-python3 -I -S implementacion/tests/integration/kyverno-cel-capabilities.py \
-  --admission --output implementacion/evidence/environment/kyverno-cel/fresh-probe
+make -C implementation setup-validation
+make -C implementation doctor
+python3 -I -S implementation/tests/integration/kyverno-cel-capabilities.py \
+  --admission --output implementation/evidence/environment/kyverno-cel/fresh-probe
 ```
 
 El código **2** identifica ahora una expectativa de selección de contenido incumplida.
@@ -166,7 +166,7 @@ migración CEL. Tampoco se afirma L01/L05, catálogo completo o aceptación huma
 Una futura validación alojada necesita autorización concreta y el SHA/ref exacto;
 la ejecución de PR64 no sirve como evidencia CEL.
 
-La suite compartida `make -C implementacion test` pasó, incluidas 51 pruebas
+La suite compartida `make -C implementation test` pasó, incluidas 51 pruebas
 Python stdlib-only de políticas; no sustituye las integraciones CEL pendientes.
 El paquete nuevo tiene 383.819 bytes y 606 entradas, con SHA-256
 `88455c12d27cf65c2e768d684a5258e11dfef7b17b579d3db375bc5c77e44e3d`.

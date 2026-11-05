@@ -26,7 +26,7 @@ def verify(tools, run=subprocess.run):
 
 
 if __name__ == "__main__":
-    lock = Path(__file__).resolve().parents[1] / "implementacion" / "tools.lock.json"
+    lock = Path(__file__).resolve().parents[1] / "implementation" / "tools.lock.json"
     try:
         tools = json.loads(lock.read_text(encoding="utf-8"))["tools"]
         if sys.argv[1:] == ["--delivery"]:

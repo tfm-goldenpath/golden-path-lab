@@ -43,8 +43,8 @@ blocking decisions and their evidence.
 The local delivery engine lives in `bin/` and `src/`; laboratory adapters reuse it.
 The independent consumer template is planned. Read the [current scope and limits](docs/EN/legitimate-delivery.md#current-scope)
 before running, and use the [code-navigation guide](docs/EN/getting-started.md)
-to find the implementation. The [readiness matrix](implementacion/docs/EN/evaluation-readiness.md)
-binds research observations to exact revisions; the [dated human decision](implementacion/registros/evaluation_acceptance_20261004_ES.md)
+to find the implementation. The [readiness matrix](implementation/docs/EN/evaluation-readiness.md)
+binds research observations to exact revisions; the [dated human decision](implementation/registros/evaluation_acceptance_20261004_ES.md)
 accepts only its stated reduced evaluation scope.
 
 ## Controls and evidence
@@ -54,7 +54,7 @@ signature/content verification or admission. A later rollout or HTTP failure is 
 functional observation, not proof that admission rejected the workload. Inspect
 the retained structured decision and original log before attributing a failure.
 The [phase and control guide](docs/EN/how-it-works.md) links rule IDs, examples,
-implementation and tests; [delivery contracts](implementacion/docs/EN/delivery-contracts.md)
+implementation and tests; [delivery contracts](implementation/docs/EN/delivery-contracts.md)
 define the distinct image, SBOM, scan, provenance and results requirements.
 
 ## Laboratory
@@ -68,7 +68,7 @@ and research chronology remain in their canonical guides.
 
 Use [CONTRIBUTING.md](CONTRIBUTING.md), the [documentation index](docs/EN/README.md),
 [repository inventory and migration contract](docs/EN/maintainers/repository-map.md)
-and [current TODO](implementacion/TODO.md). English is primary; affected Spanish
+and [current TODO](implementation/TODO.md). English is primary; affected Spanish
 entry guidance is maintained alongside it. People own requirements and review;
 deterministic tools make delivery decisions.
 
@@ -92,8 +92,8 @@ for non-sensitive questions and reproducible defects; no support SLA is declared
 <a id="repository-structure"></a>
 [Repository structure](docs/EN/maintainers/repository-map.md).
 <a id="github-integration-and-repository-protection"></a>
-[GitHub integration and protection](implementacion/docs/EN/github-configuration.md).
+[GitHub integration and protection](implementation/docs/EN/github-configuration.md).
 <a id="implementation-status-and-next-increments"></a>
-[Status and next increments](implementacion/TODO.md).
+[Status and next increments](implementation/TODO.md).
 
 </details>

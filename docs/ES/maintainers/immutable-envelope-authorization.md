@@ -150,6 +150,6 @@ la propiedad, no se elimina el recurso. Se conserva también el error original.
 Cuatro nuevas pruebas de regresión (18 en total, con subcasos de fallo) reprodujeron
 los defectos antes de corregirlos. Pasaron las 18 pruebas focalizadas, la suite
 compartida, doctor y el inventario sobre los archivos corregidos. Los resultados se conservan
-por separado en `implementacion/evidence/raw/inmutable-envelope-review-20261101/`
+por separado en `implementation/evidence/raw/inmutable-envelope-review-20261101/`
 y PR #68. Las diez observaciones del motor, su código ejecutado y el paquete
 anterior no cambian; no hubo otra ejecución del motor ni de admisión con las correcciones.

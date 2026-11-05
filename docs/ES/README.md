@@ -7,15 +7,15 @@
 3. [Explorar escenarios y experimentos registrados](../../lab/README.es.md).
 
 Para orientarte sin ejecutar, consulta [primeros pasos](getting-started.md).
-Para mantenimiento: [contrato de módulos](../../implementacion/docs/ES/architecture.md#organización-implementada-y-dependencias),
-[mapa del repositorio](../EN/maintainers/repository-map.md) y [decisiones actuales](../../implementacion/TODO.md#current-decisions-and-actions).
+Para mantenimiento: [contrato de módulos](../../implementation/docs/ES/architecture.md#organización-implementada-y-dependencias),
+[mapa del repositorio](../EN/maintainers/repository-map.md) y [decisiones actuales](../../implementation/TODO.md#current-decisions-and-actions).
 [Propón un caso de uso](use-case-intake.md) o consulta el
 [ADR propuesto de selección](maintainers/attestation-selection-contract.md).
 
-La [arquitectura](../../implementacion/docs/ES/architecture.md), los
-[contratos](../../implementacion/docs/ES/delivery-contracts.md) y el
-[índice técnico](../../implementacion/docs/ES/README.md) conservan sus URLs.
-[TODO](../../implementacion/TODO.md) recoge trabajo actual; los registros históricos
+La [arquitectura](../../implementation/docs/ES/architecture.md), los
+[contratos](../../implementation/docs/ES/delivery-contracts.md) y el
+[índice técnico](../../implementation/docs/ES/README.md) conservan sus URLs.
+[TODO](../../implementation/TODO.md) recoge trabajo actual; los registros históricos
 mantienen fechas y estados originales. El [repositorio del TFM](https://github.com/tfm-goldenpath/golden-path)
 conserva el catálogo académico y las decisiones de investigación.
 

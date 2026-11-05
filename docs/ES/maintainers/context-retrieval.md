@@ -14,10 +14,10 @@ No se acredita ahorro económico ni productividad y no se propone otra cadena
 obligatoria de ensayos.
 
 [Informe principal, cifras y reproducción](../../EN/maintainers/context-retrieval.md) ·
-[Protocolo y rúbricas](../../../implementacion/tests/fixtures/context-retrieval/protocol.json) ·
-[Ejecutor/analizador](../../../implementacion/tests/integration/context-retrieval.py) ·
-[Pruebas sintéticas](../../../implementacion/tests/policies/test_context_retrieval.py) ·
-[TODO](../../../implementacion/TODO.md)
+[Protocolo y rúbricas](../../../implementation/tests/fixtures/context-retrieval/protocol.json) ·
+[Ejecutor/analizador](../../../implementation/tests/integration/context-retrieval.py) ·
+[Pruebas sintéticas](../../../implementation/tests/policies/test_context_retrieval.py) ·
+[TODO](../../../implementation/TODO.md)
 
 Para quien entra al repositorio, las instrucciones y herramientas habituales
 permanecen iguales. Se añade un ensayo explícito, sin servicio ni índice por
@@ -149,7 +149,7 @@ inventó ni repitió ninguna revisión. Los 274 hashes originales y el paquete
 histórico se verificaron sin cambios antes y después.
 
 Solo se escribieron derivados en
-`implementacion/evidence/raw/context-quality-reanalysis-20261103/`: `analysis.json`,
+`implementation/evidence/raw/context-quality-reanalysis-20261103/`: `analysis.json`,
 `comparison.json` y registros/hashes de validación. SHA-256 del análisis nuevo:
 `d8081810eebfa6ce34d8fe66a75c5bd83fa07d4c94f1d443f2a898b97c58d9af`.
 El comando EN usa `analyze --analysis-output` con un archivo nuevo y rechaza
@@ -204,7 +204,7 @@ como limpieza incompleta. Su alcance es el grupo creado, no un supervisor genera
 no garantiza recibos sin almacenamiento escribible ni finalización tras SIGKILL.
 
 El nuevo reanálisis offline queda en
-`implementacion/evidence/raw/context-runner-robustness-20261103/`, con
+`implementation/evidence/raw/context-runner-robustness-20261103/`, con
 `analysis.json`, `parser-replay.json`, `comparison.json`, código de reproducción
 y logs. Los **19 streams originales** (18 intentos y smoke excluido) conservan
 clasificación, consumo, respuestas y diagnósticos. El análisis es idéntico byte a
@@ -218,7 +218,7 @@ bytes; no se atribuyen las ejecuciones históricas al nuevo código.
 
 Pasan 32 pruebas focalizadas, `doctor`, `make test`, inventario exacto, sus
 10 pruebas, enlaces locales afectados y `git diff --check`. Doctor y suite usan
-`PATH="$PWD/implementacion/.tools/bin:$PATH"`. Capacidad efectiva: 4 CPUs,
+`PATH="$PWD/implementation/.tools/bin:$PATH"`. Capacidad efectiva: 4 CPUs,
 15 GiB RAM y aproximadamente 8,6 GiB libres en workspace, sobre la reserva de
 3 GiB. Las regresiones de interrupción solo crean y retiran sus propios procesos
 Python temporales.
@@ -260,7 +260,7 @@ intencionadamente. Se mantienen las regresiones de interrupción, streams
 malformados, carrera de salida y calidad desfavorable. Pasan doctor, suite
 compartida, inventario/sus 10 pruebas, 10 enlaces locales afectados y diff checks.
 Los nuevos registros y cualquier análisis derivado quedan separados del piloto
-inmutable en `implementacion/evidence/raw/context-stdin-cleanup-20261103/`.
+inmutable en `implementation/evidence/raw/context-stdin-cleanup-20261103/`.
 
 No hubo sesiones de modelo, instalación/índices de Graphify ni Kubernetes.
 Estas correcciones no prueban rendimiento de navegación: **evidencia insuficiente
@@ -301,7 +301,7 @@ Kubernetes.
 Se comprueba el impacto desde **los 19 streams JSONL originales**, no solo los
 resultados normalizados. Los resultados nuevos conservan configuraciones,
 revisiones y exclusiones en
-`implementacion/evidence/raw/context-token-validation-20261103/`: `replay.py`,
+`implementation/evidence/raw/context-token-validation-20261103/`: `replay.py`,
 `stream-comparison.json`, `comparison.json`, `replayed/` y `replay-analysis.json`.
 No se encontró uso malformado; no cambian clasificación, consumo, elegibilidad ni
 agregados. El análisis conserva SHA-256
@@ -331,8 +331,8 @@ y trazas se revisan después. La validación ordinaria usa fixtures sintéticos 
 nunca consume cuota ni construye un grafo. No se ejecutó Kubernetes ni integración
 alojada: no son verificaciones pertinentes para esta herramienta de navegación.
 
-Evidencia ignorada: `implementacion/evidence/raw/context-retrieval-20261102/` y
-`implementacion/evidence/packages/context-retrieval-20261102.tar.gz`.
+Evidencia ignorada: `implementation/evidence/raw/context-retrieval-20261102/` y
+`implementation/evidence/packages/context-retrieval-20261102.tar.gz`.
 SHA-256: **b6c62a1ffd9896057c0fbd00b606ac8f6451f3f1504f86398665b3a4796932df**. Incluye originales, fallos, revisiones,
 métricas, fuente/hashes, grafo público y recibos; excluye credenciales, binarios,
 venv, caché del proveedor y directorios personales. Los hashes del código sin

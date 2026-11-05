@@ -42,8 +42,8 @@ referencia. La procedencia alojada se emite entre preparación y finalización.
 El motor local está en `bin/` y `src/`; los adaptadores del laboratorio lo reutilizan.
 La plantilla independiente sigue prevista. Consulta el [alcance y los límites actuales](docs/ES/legitimate-delivery.md#alcance-actual)
 antes de ejecutar y la [guía de navegación del código](docs/ES/getting-started.md)
-para localizar la implementación. La [matriz de preparación](implementacion/docs/ES/evaluation-readiness.md)
-vincula observaciones a revisiones concretas; la [decisión humana fechada](implementacion/registros/evaluation_acceptance_20261004_ES.md)
+para localizar la implementación. La [matriz de preparación](implementation/docs/ES/evaluation-readiness.md)
+vincula observaciones a revisiones concretas; la [decisión humana fechada](implementation/registros/evaluation_acceptance_20261004_ES.md)
 acepta solo su alcance reducido.
 
 ## Controles y evidencias
@@ -53,7 +53,7 @@ vulnerabilidades, verificación de firmas/contenido o admisión. Un fallo poster
 de rollout o HTTP no demuestra rechazo de admisión. Revisa la decisión estructurada
 y el log original para atribuir la causa. La [guía de fases y controles](docs/ES/how-it-works.md)
 enlaza identificadores, ejemplos, implementación y pruebas; los
-[contratos](implementacion/docs/ES/delivery-contracts.md) separan imagen, SBOM,
+[contratos](implementation/docs/ES/delivery-contracts.md) separan imagen, SBOM,
 análisis, procedencia y resultados.
 
 ## Laboratorio
@@ -67,7 +67,7 @@ Las instrucciones de presentación y la cronología conservan sus guías canóni
 
 Consulta [CONTRIBUTING.md](CONTRIBUTING.md), el [índice](docs/ES/README.md),
 [inventario y contrato de migración](docs/EN/maintainers/repository-map.md) y
-[TODO actual](implementacion/TODO.md). El inglés es primario y se sincroniza la
+[TODO actual](implementation/TODO.md). El inglés es primario y se sincroniza la
 entrada española. Las personas asumen requisitos y revisión; las herramientas
 deterministas deciden la autorización de entrega.
 

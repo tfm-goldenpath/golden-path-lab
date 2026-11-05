@@ -12,7 +12,9 @@ put() { jq --arg key "$1" --arg value "$2" '.[$key]=$value' "$state_dir/state.js
 record() { printf '\n== %s ==\n' "$1"; }
 
 context_init() {
+  [[ -n "${root:-}" && ( "${mode:-}" == local || "${mode:-}" == github ) ]] || fail 'Initialize root and mode before context_init.'
   delivery_roots
+  cd -- "$root"
   lock="$tooling_root/tools.lock.json"
   contract="$engine_root/contracts.mjs"
   results_type=https://tfm-goldenpath.dev/attestations/verification-results/v1
@@ -29,7 +31,7 @@ load_delivery_context() {
 
 create_delivery_state() {
   repository_root=$(git -C "$root" rev-parse --show-toplevel)
-  [[ "$root" == "$repository_root/implementacion" ]] || fail 'Unexpected implementation root.'
+  [[ "$root" == "$repository_root/implementation" ]] || fail 'Unexpected implementation root.'
   mkdir -p "$evidence_root/raw" "$evidence_root/packages" "$private_root"
   state_dir=$(mktemp -d "$evidence_root/raw/delivery-XXXXXXXX")
   private=$(mktemp -d "$private_root/private-XXXXXXXX")
@@ -45,6 +47,7 @@ create_delivery_state() {
 load_delivery_state() {
   [[ "$1" == /* ]] || fail 'Cleanup requires an absolute delivery directory.'
   state_dir=$(realpath -e -- "$1")
+  recovery_roots "$state_dir"
   [[ "$(dirname "$state_dir")" == "$evidence_root/raw" && "$(basename "$state_dir")" =~ ^delivery-[A-Za-z0-9]+$ && -f "$state_dir/state.json" && ! -L "$state_dir/state.json" ]] || fail 'Not an owned delivery directory.'
   [[ "$(get profile)" == delivery-v1 && "$(get mode)" == local ]] || fail 'Not a local legitimate delivery.'
   id=$(basename "$state_dir" | tr '[:upper:]' '[:lower:]')
@@ -55,6 +58,16 @@ load_delivery_state() {
     '.ownedContainers | type=="object" and all(to_entries[]; (.key==$node or .key==$registry or .key==$builder) and (.value|test("^[a-f0-9]{64}$")))' "$state_dir/state.json" >/dev/null
   jq -e --arg builder "buildx_buildkit_${builder}0_state" '.ownedVolumes // {} | type=="object" and all(to_entries[]; (.key==$builder or (.key|test("^[a-f0-9]{64}$"))) and .value.Name==.key)' "$state_dir/state.json" >/dev/null
   export DOCKER_CONFIG="$private/docker"
+}
+
+# Recovery alone can select the retained pre-rename evidence/private roots.
+# Never redirect new execution or accept arbitrary roots/symlink aliases.
+recovery_roots() {
+  local legacy="$repository_root/implementacion"
+  if [[ "$(dirname -- "$1")" == "$legacy/evidence/raw" ]]; then
+    [[ "$(realpath -e -- "$legacy/evidence/raw")" == "$legacy/evidence/raw" && "$(realpath -e -- "$legacy/.tmp")" == "$legacy/.tmp" ]] || fail 'Ambiguous historical recovery roots.'
+    evidence_root="$legacy/evidence"; private_root="$legacy/.tmp"
+  fi
 }
 
 capture_delivery_source() {
@@ -112,7 +125,7 @@ delivery_package() {
 # Explicit internal roots for the fixed local profile; no environment API yet.
 delivery_roots() {
   repository_root=$(cd -- "$root/.." && pwd -P)
-  [[ "$root" == "$repository_root/implementacion" && ! -L "$root" ]] || fail 'Unexpected implementation root.'
+  [[ "$root" == "$repository_root/implementation" && ! -L "$root" ]] || fail 'Unexpected implementation root.'
   engine_root="$repository_root/src"
   service_root="$root/services/quotes-node"
   policies_root="$root/policies"; schemas_root="$root/schemas"

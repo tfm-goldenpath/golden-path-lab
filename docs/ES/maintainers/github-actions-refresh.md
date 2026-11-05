@@ -48,7 +48,7 @@ devcontainers/ci junto con la definición real de la Action.
 
 ## Política y empaquetado
 
-La excepción privilegiada de [workflow.rego](../../../implementacion/policies/conftest/workflow.rego)
+La excepción privilegiada de [workflow.rego](../../../implementation/policies/conftest/workflow.rego)
 solo cambia los dos SHAs exactos revisados. Las pruebas siguen rechazando refs
 incorrectas/flotantes, pasos arbitrarios, permisos ampliados, variables extra y
 bypass de guardas/dependencias. Se conserva ejecución manual desde main, validación
@@ -56,7 +56,7 @@ previa, entorno GitHub Pages y prohibición de habilitar Pages. Se usa el parser
 Conftest existente, sin añadir PyYAML.
 
 Se descargó el transporte congelado existente y se validó **antes de extraerlo**
-con [pages.py](../../../implementacion/scripts/defense-demo/pages.py). Su SHA-256
+con [pages.py](../../../implementation/scripts/defense-demo/pages.py). Su SHA-256
 sigue siendo `deba74a10eb63503cfbe58b1e447f3d1cbb06a2ed9f404ddd0c2519c4cbf7a92`.
 Los **541 archivos / 60.567.916 bytes** no tienen componentes ocultos. El tar local
 con el comando Linux del composite conserva todos sus hashes y tamaños; se
@@ -67,7 +67,7 @@ No se regeneró el sitio, el lock, los checksums ni ninguna evidencia histórica
 
 CI ordinaria añade un smoke sintético de tres archivos y marcadores ocultos
 inofensivos, asociado al SHA/run/intento. Usa el composite fijado, sin permisos
-Pages ni despliegue. El [helper](../../../implementacion/tests/integration/actions-artifact-smoke.py)
+Pages ni despliegue. El [helper](../../../implementation/tests/integration/actions-artifact-smoke.py)
 valida ZIP/tar descargado sin extraer, comparando con hashes calculados a partir
 de la entrada esperada y la identidad del run elegida externamente. Rechaza
 faltantes, extras, corrupción, identidades incorrectas, enlaces y rutas ambiguas.
@@ -77,12 +77,12 @@ estática mantiene sus 14 días y subida `always()`, incluidos fallos.
 ## Validación y límites
 
 Salidas originales y recibos en
-`implementacion/evidence/raw/github-actions-refresh-20261103/`, ignorado por Git.
+`implementation/evidence/raw/github-actions-refresh-20261103/`, ignorado por Git.
 Las pruebas locales registran SHA base y hashes de archivos modificados; no se
 atribuyen a commits posteriores. Entorno inicial: 4 cores, 15 GiB RAM observados,
 8,6 GiB libres en workspace y 108 GiB en `/tmp`, sistemas distintos. Se conserva
 reserva ≥3 GiB; no hubo builds, clúster, registro, bases de escáner, benchmark ni
-instalaciones. Validación local PASS con `PATH="$PWD/implementacion/.tools/bin:$PATH"`:
+instalaciones. Validación local PASS con `PATH="$PWD/implementation/.tools/bin:$PATH"`:
 `doctor`, suite compartida (9 entorno, 1.000 servicio/unitarias, 119 políticas Python,
 153 defensa, 22 release, Cosign local, F01/F02 y Rego/Kyverno); 4 pruebas de workflow,
 5 de artefactos, 112 contratos alojados/fuente, 16 Lane A y 13 publicación congelada;
@@ -120,13 +120,13 @@ gh workflow run demo-pages.yml --repo tfm-goldenpath/golden-path-lab --ref main
 
 El comando consulta la configuración existente, sube el sitio verificado y
 **publica GitHub Pages**; no habilita Pages. Después, seguir la
-[verificación pública](../../../implementacion/docs/ES/defense/github-pages.md).
+[verificación pública](../../../implementation/docs/ES/defense/github-pages.md).
 No requiere crear una release ni reconstruir el sitio; no relajar la guarda main.
 No se despacharon golden-path, paired-rg ni lane-a-validation. Attest y el launcher
 no cambian: no se atribuye nueva integración OIDC/procedencia o devcontainer.
 Las regresiones conservan dos procedencias por digest, emisión solo G, fuentes
 restringidas, retirada de credenciales y evidencias fallidas. Cambios futuros de
-esas implementaciones exigirían su validación alojada; cualquier comprobación
+esas implementationes exigirían su validación alojada; cualquier comprobación
 pareada posterior usaría desarrollo y main exacto, nunca repetir la campaña.
 
 Para revertir, retirar conjuntamente los commits de esta actualización: refs e
@@ -148,4 +148,4 @@ explícito tras fusionar PR #70; esta inspección no inició otra ejecución.
 Esto acredita ejecución alojada satisfactoria en esa revisión, no aceptación humana
 ni verificación independiente de los bytes servidos públicamente. No se atribuyen
 esas comprobaciones. Metadatos/logs de solo lectura conservados en
-`implementacion/evidence/raw/dependabot-tooling-20261103/pages-*`.
+`implementation/evidence/raw/dependabot-tooling-20261103/pages-*`.
