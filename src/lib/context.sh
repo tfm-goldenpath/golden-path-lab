@@ -12,7 +12,9 @@ put() { jq --arg key "$1" --arg value "$2" '.[$key]=$value' "$state_dir/state.js
 record() { printf '\n== %s ==\n' "$1"; }
 
 context_init() {
+  [[ -n "${root:-}" && ( "${mode:-}" == local || "${mode:-}" == github ) ]] || fail 'Initialize root and mode before context_init.'
   delivery_roots
+  cd -- "$root"
   lock="$tooling_root/tools.lock.json"
   contract="$engine_root/contracts.mjs"
   results_type=https://tfm-goldenpath.dev/attestations/verification-results/v1

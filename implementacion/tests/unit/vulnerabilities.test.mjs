@@ -184,3 +184,40 @@ echo forbidden`,{TRIVY_CACHE_DIR:join(f.d,'cache'),GP_VULNERABILITY_DB:'',GP_VUL
  assert.equal(read(join(f.d,'state.json')).vulnerabilityDatabase,undefined);
  assert.ok(!existsSync(join(f.d,'storage',`vulnerability-db-${f.d.split('/').at(-1)}`)));
 });
+
+for (const reuse of [false,true]) test(`explicit database adapter result and caller isolation; reuse=${reuse}`,t=>{
+ const f=setup(t);mkdirSync(join(f.d,'input/db'),{recursive:true});
+ writeFileSync(join(f.d,'input/db/trivy.db'),'synthetic database');
+ f.put('input/db/metadata.json',{Version:2,UpdatedAt:'2026-10-16'});
+ const r=shell(f.d,`
+manual_execution_mode=scripted
+invoke() {
+ local unrelated=untouched
+ unset cache snapshot
+ selected=$(delivery_snapshot_database "$state_dir/input" "$state_dir/selected")
+ [[ ! -v cache && ! -v snapshot && "$unrelated" == untouched ]]
+ printf '%s\\n' "$selected"
+}
+invoke
+cache=caller-cache; snapshot=caller-snapshot
+# A separate destination allows the second copy while testing caller variables.
+delivery_snapshot_database "$state_dir/input" "$state_dir/second" > /dev/null
+[[ "$cache" == caller-cache && "$snapshot" == caller-snapshot ]]
+`,{GP_REUSE_VULNERABILITY_DB:reuse?'1':'',GP_VULNERABILITY_DB:join(f.d,'input')});
+ assert.equal(r.status,0,r.stderr);
+ const selected=join(f.d,reuse?'input':'selected');assert.equal(r.stdout.trim(),selected);
+ assert.equal(readFileSync(join(selected,'db/trivy.db'),'utf8'),'synthetic database');
+ assert.equal(existsSync(join(f.d,'selected')),!reuse);
+});
+for(const fault of ['copy','directory','identity','existing']) test(`database ${fault} failure cannot continue to authorization`,t=>{
+ const f=setup(t);f.put('state.json',{});mkdirSync(join(f.d,'input/db'),{recursive:true});mkdirSync(join(f.d,'storage'));
+ writeFileSync(join(f.d,'input/db/trivy.db'),'synthetic database');f.put('input/db/metadata.json',fault==='identity'?{}:{Version:2,UpdatedAt:'2026-10-16'});
+ if(fault==='existing') mkdirSync(join(f.d,'storage','vulnerability-db-'+f.d.split('/').at(-1)));
+ const r=shell(f.d,`
+${fault==='copy'?'cp() { return 37; }':fault==='directory'?'mkdir() { return 38; }':''}
+delivery_database_prepare
+echo forbidden-authorization`,{GP_VULNERABILITY_DB:join(f.d,'input'),GP_VULNERABILITY_SNAPSHOT_ROOT:join(f.d,'storage')});
+ assert.notEqual(r.status,0);assert.doesNotMatch(r.stdout,/forbidden/);
+ assert.equal(read(join(f.d,'state.json')).vulnerabilityDatabase,undefined);
+ if(fault==='copy') assert.equal(r.status,37);if(fault==='directory') assert.equal(r.status,38);
+});

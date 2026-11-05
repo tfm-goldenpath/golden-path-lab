@@ -117,6 +117,7 @@ local_kyverno_values() {
 }
 
 local_install_admission() {
+  [[ "${1:-initial}" == authorized ]] || declare -F environment_readiness_probe >/dev/null || fail 'A laboratory readiness adapter is required for this lifecycle.'
   record 'Install mandatory admission checks and trust limited to this lab'
   curl -fsSL --retry 3 "$(jq -r '.charts.kyverno.url' "$lock")" -o "$private/kyverno.tgz"
   printf '%s  %s\n' "$(jq -r '.charts.kyverno.sha256' "$lock")" "$private/kyverno.tgz" | sha256sum -c --status
@@ -133,6 +134,7 @@ local_install_admission() {
 local_apply_admission_policies() {
   local lifecycle=${1:-update} pod rejection reason
   [[ "$lifecycle" == initial || "$lifecycle" == update || "$lifecycle" == prepared || "$lifecycle" == authorized ]] || fail "Invalid admission lifecycle."
+  [[ "$lifecycle" == authorized ]] || declare -F environment_readiness_probe >/dev/null || fail 'A laboratory readiness adapter is required for this lifecycle.'
   local -a renderer_args
   renderer_args=(--mode "$mode" --repository "$repository" --commit "$commit" --image-repository "$image_repo" --sbom-version "$(get sbomVersion)" --output "$state_dir/admission-policies.json")
   if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
@@ -175,7 +177,6 @@ local_apply_admission_policies() {
     return "$status"
   fi
   # Non-authorized probes belong to the laboratory adapter.
-  declare -F environment_readiness_probe >/dev/null || fail 'A laboratory readiness adapter is required for this lifecycle.'
   environment_readiness_probe "$lifecycle"
 }
 

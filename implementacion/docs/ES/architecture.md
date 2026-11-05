@@ -144,7 +144,7 @@ detalla consumidores e interfaces mixtas restantes.
    todavía el directorio de trabajo de implementación.
 4. **Adaptadores y callbacks.** El laboratorio redefine
    `delivery_capture_build_inputs` y `delivery_snapshot_database`; este último
-   usa `cache`/`snapshot` locales del llamador mediante alcance dinámico de Bash.
+   devuelve explícitamente la ruta seleccionada (contrato siguiente).
    `local-environment.sh` llama al hook opcional `environment_record_container`
    y requiere `environment_readiness_probe` del laboratorio para ciclos distintos
    de `authorized`. La ruta local autorizada usa evidencia fresca y server dry-run
@@ -169,12 +169,31 @@ y el [registro fechado](../../../docs/EN/maintainers/delivery-core-validation.md
 vinculan independencia a revisiones exactas. Sustituir etapas prueba orden, no
 integración. La confianza alojada requiere su ejecución autorizada.
 
-**Consolidación propuesta:** resultados explícitos del adaptador en vez de
-alcance dinámico; separar validación pura de CLI/archivos cuando aporte valor;
-reducir duplicación demostrada mediante interfaces soportadas; y una política
-explícita de compatibilidad/deprecación. Son candidatos para
-[`refactor/delivery-interface-consolidation`](../../TODO.md#next-implementation-increment),
-no cambios implementados aquí. No se necesita framework ni módulo por etapa.
+**Contratos internos de adaptadores.** `delivery_snapshot_database SOURCE DESTINATION`
+devuelve una sola ruta por stdout, diagnósticos por stderr y estado distinto de
+cero ante fallos. El destino debe ser nuevo, también al reutilizar. Por defecto
+copia DB y metadatos; solo el adaptador de laboratorio puede devolver SOURCE sin
+copiar cuando `manual_execution_mode=scripted`, `GP_REUSE_VULNERABILITY_DB=1` y
+`GP_VULNERABILITY_DB` es explícito. El llamador conserva bytes e identidad y
+verifica antes de usar y después de escanear. Las copias parciales se conservan
+como diagnóstico, nunca como autorización. La sustitución de comandos propaga
+explícitamente fallos; no lee ni modifica variables locales del llamador.
+
+`delivery_capture_build_inputs CONTEXT BASE COMMIT [AUTHORIZATION_FILE EXECUTION PROFILE]`
+emite JSON `{context, base, commit, files}`; cada fichero contiene `path` relativo,
+`mode` Git, `sha256` y `content` UTF-8. Los contextos ordinarios son relativos al
+CWD de implementación; los exports autorizados usan su ruta explícita. BASE y
+COMMIT identifican base y fuente; PROFILE distingue `delivery-v1` y `laboratory`.
+El producto exige `services/quotes-node` sin argumentos de autorización. Fixtures,
+manual y L05 permanecen en laboratorio. La captura comprueba selección e integridad
+autorizada; los validadores existentes de fuente/contratos/provenance comprueban
+fuente comprometida y claims firmados. `delivery_build` posee `build-inputs.json`;
+el fallo detiene antes del build. No se añade esquema ni autenticación alternativos.
+`contracts.mjs` mantiene CLI y exports; estos llamadores no justifican dividirlo.
+
+Se mantienen imports y funciones compatibles, además del estado compartido aún
+necesario. El siguiente paso acotado es la plantilla de consumidor independiente
+tras revisión de estas interfaces.
 
 ### Cómo extender un escenario
 

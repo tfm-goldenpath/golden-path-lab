@@ -127,7 +127,8 @@ for per-file callers and residual mixed interfaces.
    changes to it, sets `mode=local`, `phase` and `execution_profile=delivery-v1`,
    sources `versions.env`, then loads `context`, `admission`, `local-environment`,
    `delivery`, `attestations`, `workload`, `local-delivery` in that order.
-   `context_init` derives paths and clears run state. A fresh invocation creates
+   `context_init` requires `root` and a valid `mode`, derives paths, establishes
+   the implementation CWD and clears run state. A fresh invocation creates
    state/private directories; cleanup loads and validates its existing receipt.
    The laboratory coordinator loads its `context`, `lab`, `delivery`,
    `attestations`, `workload` adapters, then scenarios, before initialization.
@@ -145,10 +146,10 @@ for per-file callers and residual mixed interfaces.
    Several operations still require the implementation working directory.
 4. **Adapters and callbacks.** The laboratory delivery adapter overrides
    `delivery_capture_build_inputs` and `delivery_snapshot_database`; the latter
-   currently uses caller-local `cache`/`snapshot` through Bash dynamic scope.
+   returns its selected path explicitly (contract below).
    `local-environment.sh` calls optional `environment_record_container` for
    ownership receipts and requires the lab's `environment_readiness_probe` for
-   non-authorized lifecycle modes. The authorized local path uses fresh evidence
+   non-authorized lifecycle modes before installation or policy side effects. The authorized local path uses fresh evidence
    and the actual restricted-actor server dry-run. Optional `gp_observe` records
    laboratory observations at attestation boundaries. These hooks are internal,
    not a plugin system; loading order matters.
@@ -171,12 +172,36 @@ and [dated validation](../../../docs/EN/maintainers/delivery-core-validation.md#
 record runtime independence on exact revisions. Orchestration substitutes stages
 and establishes order only. Hosted trust still requires its own authorized run.
 
-**Proposed consolidation:** explicit adapter results instead of dynamic-scope
-outputs; pure contract validation separated from CLI/file orchestration where
-useful; removal of demonstrated duplication behind supported interfaces; and an
-explicit compatibility/deprecation policy. These are candidates for
-[`refactor/delivery-interface-consolidation`](../../TODO.md#next-implementation-increment),
-not changes implemented here. No framework or per-stage module expansion is needed.
+**Internal adapter contracts.** `delivery_snapshot_database SOURCE DESTINATION`
+returns exactly one selected path on stdout, with diagnostics on stderr and a
+nonzero exit on failure. Both inputs are explicit paths; the destination must be
+fresh, including for scripted reuse. The default copies the DB and metadata to
+that destination. Only the laboratory adapter may return SOURCE without copying,
+when `manual_execution_mode=scripted`, `GP_REUSE_VULNERABILITY_DB=1` and an explicit
+`GP_VULNERABILITY_DB` are selected. The caller owns retention and identity checking
+before use and after scanning. Failed partial copies remain diagnostic material;
+they cannot become an authorized database. Command substitution explicitly checks
+the adapter status, and copy operations propagate their own failures. No caller
+variable is read or mutated to select the result.
+
+`delivery_capture_build_inputs CONTEXT BASE COMMIT [AUTHORIZATION_FILE EXECUTION PROFILE]`
+emits one JSON object `{context, base, commit, files}`. Each file has relative
+`path`, Git-style `mode`, `sha256` and UTF-8 `content`. CONTEXT is relative to the
+implementation CWD for ordinary service/fixture contexts; authorized laboratory
+exports use their explicitly selected path. BASE is the pinned base identity,
+COMMIT the selected source revision, and PROFILE distinguishes `delivery-v1` from
+`laboratory`. The product requires `services/quotes-node` and empty authorization
+arguments; fixture/manual/L05 selection and authorization stay in the laboratory.
+The capture helper owns context selection and authorized-file integrity checks;
+existing source capture and contract/provenance validators own committed-source
+and signed-claim validation. `delivery_build` owns `build-inputs.json`; a capture
+failure stops before Docker build. Partial output is never authorization. No new
+schema or cryptographic claim is introduced. `contracts.mjs` retains its existing
+CLI and exports: these callers justify no additional split.
+
+Compatibility imports and exported functions remain supported. These contracts
+remove the demonstrated snapshot coupling, not all shared-process state. The
+next bounded step is an independent consumer template after interface review.
 
 ### Extending a scenario
 

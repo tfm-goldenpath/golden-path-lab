@@ -20,10 +20,13 @@ delivery_preflight() {
 # Explicit laboratory source/measurement adapters; product never loads these.
 delivery_capture_build_inputs() { node "$root/scripts/capture-build-inputs.mjs" "$@"; }
 delivery_snapshot_database() {
+  [[ $# == 2 && -n "$1" && -n "$2" ]] || { printf 'ERROR: database source and destination required.\n' >&2; return 2; }
+  [[ ! -e "$2" && ! -L "$2" ]] || { printf 'ERROR: Database snapshot already exists; use a fresh run.\n' >&2; return 1; }
   if [[ "${manual_execution_mode:-manual}" == scripted && "${GP_REUSE_VULNERABILITY_DB:-}" == 1 && -n "${GP_VULNERABILITY_DB:-}" ]]; then
-    snapshot=$cache
+    # Only scripted lab runs may borrow the explicitly selected input. The
+    # caller still identifies/checks it and owns preservation; no fallback.
+    printf '%s\n' "$1"
   else
-    mkdir -p "$2/db"
-    cp --reflink=auto "$1/db/trivy.db" "$1/db/metadata.json" "$2/db/"
+    delivery_copy_database "$@"
   fi
 }

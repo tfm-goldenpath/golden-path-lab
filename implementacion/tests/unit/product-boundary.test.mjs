@@ -87,3 +87,34 @@ for tool in dirname pwd realpath docker kind kubectl curl node python3 jq mktemp
 for module in context admission lab delivery attestations workload local-delivery; do source "$module.sh"; done`;
  assert.equal(pass(run('bash',['-c',script],join(implementation,'scripts/lib'))),'');
 });
+
+test('initialization rejects missing context and establishes the implementation CWD',()=>{
+ const missing=run('bash',['-c',`source "${repository}/src/lib/context.sh"; context_init`],'/tmp');
+ assert.notEqual(missing.status,0);assert.match(missing.stderr,/Initialize root and mode/);
+ const r=run('bash',['-c',`set -Eeuo pipefail; source "${repository}/src/lib/context.sh"; root="$1"; mode=local; context_init; pwd -P`,'test',implementation],'/tmp');
+ assert.equal(pass(r).trim(),implementation);
+});
+for(const operation of ['local_install_admission','local_apply_admission_policies']) test(`${operation} rejects missing required callback before side effects`,()=>{
+ const r=run('bash',['-c',`set -Eeuo pipefail
+source "${repository}/src/lib/context.sh"
+source "${repository}/src/lib/local-environment.sh"
+for tool in curl helm k python3; do eval "$tool() { echo forbidden; return 99; }"; done
+${operation} initial`],'/tmp');
+ assert.notEqual(r.status,0);assert.match(r.stderr,/readiness adapter/);assert.doesNotMatch(r.stdout,/forbidden/);
+});
+test('build capture failure stops before image build and subsequent authorization',t=>{
+ const d=temporary(t);
+ const r=run('bash',['-c',`set -Eeuo pipefail
+source "${repository}/src/lib/context.sh"
+source "${repository}/src/lib/delivery.sh"
+state_dir="$1"; engine_root="${repository}/src"; commit=${'a'.repeat(40)}; SERVICE_NODE_IMAGE=node@sha256:${'b'.repeat(64)}
+printf '{}' > "$state_dir/state.json"
+docker() { echo forbidden-build; }
+delivery_build tests/fixtures/l03 '' '' '' delivery-v1
+echo forbidden-authorization`,'test',d],implementation);
+ assert.notEqual(r.status,0);assert.match(r.stderr,/requires the quotes-node/);assert.doesNotMatch(r.stdout,/forbidden/);
+});
+for(const variable of ['GP_REUSE_VULNERABILITY_DB','DELIVERY_CACHE_FROM']) test(`product rejects laboratory control ${variable} before creating state`,()=>{
+ const r=spawnSync('bash',[join(repository,'bin/deliver'),'local'],{cwd:'/tmp',encoding:'utf8',env:{...process.env,[variable]:'1',GP_STATE_DIR:''}});
+ assert.notEqual(r.status,0);assert.match(r.stderr,/Measurement\/manual/);
+});

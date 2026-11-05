@@ -98,7 +98,9 @@ delivery_database_prepare() {
       delivery_analysis_command database-download trivy image --cache-dir "$cache" \
         --db-repository "${TRIVY_DB_REPOSITORY:-ghcr.io/aquasecurity/trivy-db:2}" --download-db-only
     fi
-    delivery_snapshot_database "$cache" "$snapshot"
+    # Command substitution does not inherit errexit: the adapter explicitly
+    # propagates failures and emits only its selected path on stdout.
+    snapshot=$(delivery_snapshot_database "$cache" "$snapshot") || return $?
     python3 "${engine_root:-${root:-$PWD}/../src}/vulnerability-database.py" identify "$snapshot" > "$state_dir/database-identity.json"
     put vulnerabilityDatabase "$snapshot"
   fi
@@ -153,8 +155,24 @@ delivery_analyze() {
   node "${engine_root:-${root:-$PWD}/../src}/vulnerability-evidence.mjs" authorize "$state_dir" "$image" > "$state_dir/analysis-authorization.json"
 }
 
+# CONTEXT BASE COMMIT [AUTHORIZATION_FILE EXECUTION PROFILE]. stdout is the
+# capture JSON; delivery_build owns build-inputs.json. Capture validates context
+# selection; existing content/provenance validators validate the signed claims.
 delivery_capture_build_inputs() { node "${engine_root:-${root:-$PWD}/../src}/capture-build-inputs.mjs" "$@"; }
+
+# SOURCE DESTINATION -> selected path on stdout, diagnostics on stderr.
+# The caller owns both paths and retains the original bytes. Never overwrite a
+# destination. Identification/checking remains in delivery_database_prepare.
 delivery_snapshot_database() {
-  mkdir -p "$2/db"
-  cp --reflink=auto "$1/db/trivy.db" "$1/db/metadata.json" "$2/db/"
+  delivery_copy_database "$@"
+}
+
+delivery_copy_database() {
+  [[ $# == 2 && -n "$1" && -n "$2" ]] || { printf 'ERROR: database source and destination required.\n' >&2; return 2; }
+  [[ ! -e "$2" && ! -L "$2" ]] || { printf 'ERROR: Database snapshot already exists; use a fresh run.\n' >&2; return 1; }
+  mkdir -p -- "${2%/*}" || return $?
+  mkdir -- "$2" || return $?
+  mkdir -- "$2/db" || return $?
+  cp --reflink=auto -- "$1/db/trivy.db" "$1/db/metadata.json" "$2/db/" || return $?
+  printf '%s\n' "$2"
 }
