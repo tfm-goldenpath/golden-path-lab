@@ -28,15 +28,17 @@ export function canonical(root) {
   return root;
 }
 // Snapshot every selected byte, including ignored/untracked additions, plus modes.
-// Only node_modules is excluded; the fixed Docker allowlist cannot copy it.
-export function snapshot(root,selection) {
+// Consumer root node_modules is excluded by the fixed Docker allowlist.
+// Engine-generated Python caches are outside committed runtime inputs.
+export function snapshot(root,selection,engine=false) {
+  const excluded=name=>(engine && name.split('/').includes('__pycache__')) || (!engine && (name==='service/node_modules' || name.startsWith('service/node_modules/')));
   const files=[];
   function walk(name) {
     const file=path.join(root,name), stat=fs.lstatSync(file);
     if(stat.isSymbolicLink()) throw new Error('Symlink in selected input: '+name);
     if(stat.isDirectory()) {
       for(const child of fs.readdirSync(file).sort()) {
-        if((name==='service' && child==='node_modules') || (name.startsWith('implementation/policies') && child==='__pycache__')) continue;
+        if(excluded(name+'/'+child)) continue;
         walk(name+'/'+child);
       }
     } else if(stat.isFile()) {
@@ -48,7 +50,7 @@ export function snapshot(root,selection) {
     } else throw new Error('Nonregular selected input: '+name);
   }
   selection.forEach(walk);
-  const tracked=git(root,'ls-files','-z','--',...selection).split('\0').filter(Boolean).filter(n=>!n.startsWith('service/node_modules/') && !n.includes('/__pycache__/'));
+  const tracked=git(root,'ls-files','-z','--',...selection).split('\0').filter(Boolean).filter(n=>!excluded(n));
   if(tracked.some(n=>!files.some(f=>f.path===n))) throw new Error('Selected committed input is missing');
   files.sort((a,b)=>a.path.localeCompare(b.path,'en'));
   return {sha256:hash(JSON.stringify(files)),files};
@@ -56,7 +58,7 @@ export function snapshot(root,selection) {
 export function verifyEngine(engine,expected) {
   engine=canonical(engine);
   if(git(engine,'rev-parse','HEAD')!==expected.commit || git(engine,'config','--get','remote.origin.url')!==expected.repository) throw new Error('Engine checkout repository or commit mismatch');
-  return snapshot(engine,engineSources);
+  return snapshot(engine,engineSources,true);
 }
 export function captureConsumer(engine,consumer) {
   engine=canonical(engine); consumer=canonical(consumer);
