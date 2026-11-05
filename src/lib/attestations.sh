@@ -20,7 +20,7 @@ attestations_verify_bundle() {
       --digest "${digest#sha256:}" --digestAlg sha256 --type "$type" > "$state_dir/$report" 2>&1; then
     # Validate and retain the payload from the same authenticated file. OCI
     # verify-attestation can fall back to classic evidence on retrieval errors.
-    node "${engine_root:-${root:-$PWD}/../src}/verified-bundle-statement.mjs" "$state_dir/$file" "$digest" "$type" "$repository" "$commit" > "$state_dir/$content"
+    node "${engine_root:-${root:-$PWD}/../src}/verified-bundle-statement.mjs" "$state_dir/$file" "$digest" "$type" "$repository" "$commit" "$state_dir/state.json" > "$state_dir/$content"
   else
     status=$?; cat "$state_dir/$report" >&2; return "$status"
   fi
@@ -74,7 +74,7 @@ attestations_issue_delivery() {
     fi
     [[ -f "$private/cosign.key" && -f "$private/cosign.pub" ]] || fail 'Incomplete local signing key pair.'
     cp "$private/cosign.pub" "$state_dir/development-public-key.pem"
-    if [[ "${execution_profile:-laboratory}" == delivery-v1 ]]; then
+    if [[ "${execution_profile:-laboratory}" == delivery-v1 || "${execution_profile:-laboratory}" == consumer-v1 ]]; then
       put trustPublicKeySha256 "$(sha256sum "$state_dir/development-public-key.pem" | cut -d ' ' -f 1)"
     fi
     # Local keys are the trust anchor. Empty service/root configurations prevent
@@ -83,7 +83,7 @@ attestations_issue_delivery() {
     cosign trusted-root create > "$state_dir/local-trusted-root.json"
     sign_args+=(--key "$private/cosign.key" --signing-config "$state_dir/local-signing-config.json" --trusted-root "$state_dir/local-trusted-root.json" --allow-insecure-registry)
     verify_args+=(--key "$private/cosign.pub" --trusted-root "$state_dir/local-trusted-root.json" --insecure-ignore-tlog --allow-insecure-registry)
-    node "$contract" provenance "$repository" "$commit" "$(get sourceSnapshot)" "$(basename "$state_dir")" "$state_dir/provenance.json" "${delivery_producer:-implementacion/scripts/demo.sh}"
+    node "$contract" provenance "$repository" "$commit" "$(get sourceSnapshot)" "$(basename "$state_dir")" "$state_dir/provenance.json" "${delivery_producer:-implementacion/scripts/demo.sh}" "${execution_profile:-laboratory}" "$state_dir"
   else
     # Cosign authenticates this material through its TUF client. Do not replace
     # it with an unauthenticated CA download or add intermediates as trust roots.
@@ -125,7 +125,7 @@ attestations_verify_delivery() {
 }
 
 attestations_authorize_results() {
-  if [[ "${execution_profile:-laboratory}" == delivery-v1 ]]; then
+  if [[ "${execution_profile:-laboratory}" == delivery-v1 || "${execution_profile:-laboratory}" == consumer-v1 ]]; then
     delivery_source_recheck
     [[ "$(sha256sum "$state_dir/development-public-key.pem" | cut -d ' ' -f 1)" == "$(get trustPublicKeySha256)" ]] || fail 'Delivery trust anchor changed.'
     cmp "$private/cosign.pub" "$state_dir/development-public-key.pem"

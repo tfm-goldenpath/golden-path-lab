@@ -3,18 +3,35 @@
 set -Eeuo pipefail
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../implementation" && pwd -P)
 engine_root="$root/../src"
+if [[ "${1:-}" == init ]]; then
+  shift
+  exec node "$engine_root/consumer.mjs" init "$root/.." "$@"
+fi
+consumer_root=''
+if [[ ( "${1:-}" == local || "${1:-}" == check ) && $# == 3 && "$2" == --consumer ]]; then
+  consumer_root=$(realpath -e -- "$3")
+  [[ "$(realpath -m -s -- "$3")" == "$consumer_root" ]] || { echo 'Symlinked consumer root' >&2; exit 2; }
+  if [[ "$1" == check ]]; then
+    node "$engine_root/consumer.mjs" capture "$root/.." "$consumer_root"
+    exec bash "$engine_root/check-environment.sh" --delivery
+  fi
+  set -- local
+fi
 cd "$root"
 if [[ "${1:-}" == --help ]]; then
-  printf 'Usage: bash bin/deliver local | cleanup ABSOLUTE_DELIVERY_DIRECTORY\nLocal quotes-node delivery only. Fresh state required; resume is unsupported.\n'
+  printf 'Usage: bash bin/deliver local | cleanup ABSOLUTE_DELIVERY_DIRECTORY\ninit DEST --repository HTTPS_URL --engine-commit FULL_SHA\ncheck | local --consumer PATH\nLocal delivery only. Fresh state required; resume is unsupported.\n'
   exit 0
 fi
 [[ $# == 1 && "$1" == local || $# == 2 && "$1" == cleanup ]] || { echo 'Use --help for supported invocation.' >&2; exit 2; }
 mode=local; phase=$1; execution_profile=delivery-v1
+[[ -z "$consumer_root" ]] || execution_profile=consumer-v1
 source "$root/versions.env"
 for module in context admission local-environment delivery attestations workload local-delivery; do
   source "$engine_root/lib/$module.sh"
 done
 context_init
+build_context=services/quotes-node
+if [[ -n "$consumer_root" ]]; then service_root="$consumer_root/service"; build_context="$service_root"; fi
 if [[ "$phase" == cleanup ]]; then
   load_delivery_state "$2"
   cleanup_code=0
@@ -70,7 +87,7 @@ delivery_step workflowPolicy delivery_workflow_policy
 delivery_step versions delivery_versions
 delivery_step environmentCreate environment_create
 delivery_step buildSource delivery_source_recheck
-delivery_step build delivery_build services/quotes-node '' '' '' delivery-v1
+delivery_step build delivery_build "$build_context" '' '' '' "$execution_profile"
 load_delivery_context
 delivery_step storageAfterBuild environment_capacity after-build
 delivery_step namespaces environment_namespaces

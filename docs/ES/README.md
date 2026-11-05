@@ -4,7 +4,8 @@
 
 1. [Entender las etapas y controles de entrega](how-it-works.md).
 2. [Ejecutar una entrega legítima local](legitimate-delivery.md): `bash bin/deliver local`; Linux AMD64, herramientas fijadas, Docker y fuente confirmada en Git, con el perfil local fijo de quotes-node.
-3. [Explorar escenarios y experimentos registrados](../../lab/README.es.md).
+3. [Crear un consumidor Node independiente](consumer-quickstart.md).
+4. [Explorar escenarios y experimentos registrados](../../lab/README.es.md).
 
 Para orientarte sin ejecutar, consulta [primeros pasos](getting-started.md).
 Para mantenimiento: [contrato de módulos](../../implementation/docs/ES/architecture.md#organización-implementada-y-dependencias),

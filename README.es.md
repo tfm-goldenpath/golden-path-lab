@@ -13,7 +13,7 @@ qué se ha entregado, qué controles han pasado ni por qué debe permitirse desp
 Este repositorio implementa ese enfoque en un laboratorio de investigación con el
 servicio sintético `quotes-node`. Permite a desarrolladores inspeccionar controles
 y a responsables de plataforma evaluar cómo se relacionan políticas, firmas y
-evidencias operativas. Hoy se puede ejecutar una entrega legítima local; la plantilla independiente para consumidores sigue prevista.
+evidencias operativas. Hoy se puede ejecutar una entrega legítima local; la plantilla Node independiente utiliza ese mismo motor desde otro repositorio.
 
 ## Vista de la entrega
 
@@ -35,12 +35,13 @@ referencia. La procedencia alojada se emite entre preparación y finalización.
 
 1. [Entender las etapas y controles](docs/ES/how-it-works.md): qué se comprueba, dónde se detiene la entrega y qué evidencias quedan.
 2. [Ejecutar una entrega legítima local](docs/ES/legitimate-delivery.md): `bash bin/deliver local`, con Linux AMD64, entorno fijado, Docker y fuente confirmada en Git. El perfil fijo entrega quotes-node localmente.
-3. [Explorar el laboratorio](lab/README.es.md): escenarios, entrega de referencia, mediciones y experimentos registrados.
+3. [Crear un consumidor Node independiente](docs/ES/consumer-quickstart.md): repositorio separado y pin exacto del motor.
+4. [Explorar el laboratorio](lab/README.es.md): escenarios, entrega de referencia, mediciones y experimentos registrados.
 
 ## Disponibilidad actual
 
 El motor local está en `bin/` y `src/`; los adaptadores del laboratorio lo reutilizan.
-La plantilla independiente sigue prevista. Consulta el [alcance y los límites actuales](docs/ES/legitimate-delivery.md#alcance-actual)
+La [guía del consumidor Node](docs/ES/consumer-quickstart.md) define su contrato acotado. Consulta el [alcance y los límites actuales](docs/ES/legitimate-delivery.md#alcance-actual)
 antes de ejecutar y la [guía de navegación del código](docs/ES/getting-started.md)
 para localizar la implementación. La [matriz de preparación](implementation/docs/ES/evaluation-readiness.md)
 vincula observaciones a revisiones concretas; la [decisión humana fechada](implementation/registros/evaluation_acceptance_20261004_ES.md)

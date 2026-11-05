@@ -38,7 +38,7 @@ create_delivery_state() {
   chmod 700 "$private"
   id=$(basename "$state_dir" | tr '[:upper:]' '[:lower:]')
   cluster="tfm-$id"; registry="tfm-zot-$id"; builder="tfm-build-$id"
-  jq -n --arg profile delivery-v1 --arg mode "$mode" --arg private "$private" --arg cluster "$cluster" --arg registry "$registry" --arg builder "$builder" \
+  jq -n --arg profile "$execution_profile" --arg mode "$mode" --arg private "$private" --arg cluster "$cluster" --arg registry "$registry" --arg builder "$builder" \
     '{profile:$profile,mode:$mode,private:$private,cluster:$cluster,registry:$registry,builder:$builder,ownedContainers:{}}' > "$state_dir/state.json"
   export DOCKER_CONFIG="$private/docker"; mkdir -p "$DOCKER_CONFIG"
   node "$contract" delivery-init "$state_dir"
@@ -49,7 +49,7 @@ load_delivery_state() {
   state_dir=$(realpath -e -- "$1")
   recovery_roots "$state_dir"
   [[ "$(dirname "$state_dir")" == "$evidence_root/raw" && "$(basename "$state_dir")" =~ ^delivery-[A-Za-z0-9]+$ && -f "$state_dir/state.json" && ! -L "$state_dir/state.json" ]] || fail 'Not an owned delivery directory.'
-  [[ "$(get profile)" == delivery-v1 && "$(get mode)" == local ]] || fail 'Not a local legitimate delivery.'
+  [[ ( "$(get profile)" == delivery-v1 || "$(get profile)" == consumer-v1 ) && "$(get mode)" == local ]] || fail 'Not a local legitimate delivery.'
   id=$(basename "$state_dir" | tr '[:upper:]' '[:lower:]')
   private=$(get private); cluster=$(get cluster); registry=$(get registry); builder=$(get builder)
   [[ "$cluster" == "tfm-$id" && "$registry" == "tfm-zot-$id" && "$builder" == "tfm-build-$id" ]] || fail 'Delivery resource identity mismatch.'
@@ -71,6 +71,10 @@ recovery_roots() {
 }
 
 capture_delivery_source() {
+  if [[ "${execution_profile:-}" == consumer-v1 ]]; then
+    capture_consumer_source
+    return
+  fi
   repository_root=$(git -C "$root" rev-parse --show-toplevel)
   git -C "$repository_root" diff --quiet HEAD -- . || fail 'Commit tracked changes before a legitimate delivery.'
   commit=$(git -C "$root" rev-parse HEAD)
@@ -98,6 +102,14 @@ capture_delivery_source() {
 }
 
 delivery_source_recheck() {
+  if [[ "${execution_profile:-}" == consumer-v1 ]]; then
+    node "$engine_root/consumer.mjs" capture "$repository_root" "$consumer_root" > "$private/source-recheck.json"
+    cmp "$state_dir/consumer-inputs.json" "$private/source-recheck.json"
+    jq -e --slurpfile expected "$private/source-recheck.json" '.consumerBinding==$expected[0].binding' "$state_dir/state.json" >/dev/null
+    jq -e --slurpfile expected "$private/source-recheck.json" '.==$expected[0].binding' "$state_dir/consumer-binding.json" >/dev/null
+    [[ "$(sha256sum "$state_dir/delivery-config.json" | cut -d ' ' -f 1)" == "$(get configurationSha256)" ]] || fail 'Delivery configuration changed.'
+    return
+  fi
   [[ "$(git -C "$root" rev-parse HEAD)" == "$(get sourceCommit)" ]] || fail 'Source revision changed.'
   node "$engine_root/delivery-source.mjs" "$root" "$(get sourceSnapshot)" > /dev/null
   [[ "$(sha256sum "$state_dir/delivery-config.json" | cut -d ' ' -f 1)" == "$(get configurationSha256)" ]] || fail 'Delivery configuration changed.'
@@ -134,4 +146,24 @@ delivery_roots() {
   for path in "$engine_root" "$service_root" "$policies_root" "$schemas_root" "$tooling_root" "$evidence_root" "$private_root"; do
     [[ "$(realpath -m -- "$path")" == "$path" ]] || fail 'Ambiguous or symlinked delivery root.'
   done
+}
+
+# Separate identities; the engine owns tools/policies, the consumer owns all app inputs.
+capture_consumer_source() {
+  node "$engine_root/consumer.mjs" capture "$repository_root" "$consumer_root" > "$state_dir/consumer-inputs.json"
+  repository=$(jq -er .repository "$state_dir/consumer-inputs.json")
+  commit=$(jq -er .commit "$state_dir/consumer-inputs.json")
+  delivery_producer=bin/deliver:node-http-consumer/v1
+  put sourceRepository "$repository"; put sourceCommit "$commit"
+  put sourceSnapshot "$(jq -er .source.sha256 "$state_dir/consumer-inputs.json")"
+  put identity local-development-key; put producer "$delivery_producer"
+  jq '.source' "$state_dir/consumer-inputs.json" > "$state_dir/source-inputs.json"
+  jq '.engine' "$state_dir/consumer-inputs.json" > "$state_dir/engine-inputs.json"
+  jq '.binding' "$state_dir/consumer-inputs.json" > "$state_dir/consumer-binding.json"
+  cp "$consumer_root/golden-path.json" "$state_dir/consumer-config.json"
+  jq -n --slurpfile binding "$state_dir/consumer-binding.json" --arg consumerRoot "$consumer_root" --arg engineRoot "$repository_root" \
+    '{schema:"legitimate-consumer-delivery/v1",profile:"consumer-v1",consumerRoot:$consumerRoot,engineRoot:$engineRoot,binding:$binding[0]}' > "$state_dir/delivery-config.json"
+  jq --slurpfile binding "$state_dir/consumer-binding.json" '.consumerBinding=$binding[0]' "$state_dir/state.json" > "$state_dir/state.next"
+  mv "$state_dir/state.next" "$state_dir/state.json"
+  put configurationSha256 "$(sha256sum "$state_dir/delivery-config.json" | cut -d ' ' -f 1)"
 }

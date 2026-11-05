@@ -173,6 +173,21 @@ def render(config):
         condition("source.repository", config["repository"]), condition("source.commit", config["commit"]),
         condition("result", "PASS"), *[condition("checks." + check, "PASS") for check in CHECKS],
     ])
+    binding = config.get("consumer_binding")
+    if binding is not None:
+        fields = {"profile", "producer", "engineRepository", "engineCommit", "engineSnapshot", "configurationSha256", "consumerSnapshot"}
+        if (config["mode"] != "local" or not isinstance(binding, dict) or set(binding) != fields
+                or binding["profile"] != "node-http-consumer/v1"
+                or binding["producer"] != "bin/deliver:node-http-consumer/v1"
+                or binding["engineRepository"] != "https://github.com/tfm-goldenpath/golden-path-lab"
+                or not re.fullmatch(r"[a-f0-9]{40}", binding["engineCommit"])
+                or any(not re.fullmatch(r"[a-f0-9]{64}", binding[k]) for k in ("engineSnapshot", "configurationSha256", "consumerSnapshot"))):
+            raise ValueError("Invalid expected consumer authorization")
+        for item, prefix in ((provenance, "buildDefinition.externalParameters.goldenPath."), (results, "goldenPath.")):
+            conditions = item["spec"]["rules"][0]["verifyImages"][0]["attestations"][0]["conditions"][0]["all"]
+            conditions.extend(condition(prefix + key, binding[key], "CONSUMER_BINDING_" + key) for key in sorted(fields))
+        provenance["spec"]["rules"][0]["verifyImages"][0]["attestations"][0]["conditions"][0]["all"].append(
+            condition("buildDefinition.externalParameters.workflow.path", binding["producer"], "PROVENANCE_PRODUCER"))
     return {"apiVersion": "v1", "kind": "List", "items": [runtime, signature, sbom, provenance, results]}
 
 
@@ -187,6 +202,7 @@ def main():
     parser.add_argument("--identity")
     parser.add_argument("--policy-version", default="golden-path-v1")
     parser.add_argument("--registry-secret")
+    parser.add_argument("--consumer-binding", type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     if args.mode == "local" and not args.public_key:
@@ -194,6 +210,7 @@ def main():
     if args.mode == "github" and not args.identity:
         parser.error("--identity is required in github mode")
     config = vars(args).copy()
+    config["consumer_binding"] = json.loads(args.consumer_binding.read_text()) if args.consumer_binding else None
     config["public_key"] = args.public_key.read_text(encoding="utf-8") if args.public_key else ""
     try:
         rendered = render(config)

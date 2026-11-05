@@ -44,8 +44,9 @@ del archivo.
 
 ## Siguiente implementación
 
-La ruta local funciona hoy. La [consolidación de interfaz propuesta](../../implementation/TODO.md#next-implementation-increment)
-precede a la plantilla independiente y después a una prueba Java.
+La [guía del consumidor Node independiente](consumer-quickstart.md) utiliza el
+motor compartido desde otro repositorio. El siguiente [incremento acotado](../../implementation/TODO.md#next-implementation-increment)
+es la prueba de consumidor Java; el soporte general sigue separado.
 
 ## Reutilización y soporte
 

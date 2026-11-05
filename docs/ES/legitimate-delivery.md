@@ -111,9 +111,9 @@ Conserva intentos fallidos y material privado de recuperación.
 
 ## Alcance actual
 
-La ruta disponible está fijada a **quotes-node local**. No incluye instalador,
-plantilla independiente, API pública estable de configuración ni adaptador de
-producción. Referencia, escenarios, medición y presentación pertenecen al
+El comando sin `--consumer` sigue fijado a **quotes-node local**. Para otro
+repositorio, utilice la [guía del consumidor Node](consumer-quickstart.md).
+Configuración general y adaptadores de producción siguen fuera de alcance. Referencia, escenarios, medición y presentación pertenecen al
 [laboratorio](../../lab/README.es.md). Claves locales no acreditan verificación
 alojada OIDC/certificados/transparencia. Una ejecución correcta no establece
 preparación para producción, conformidad DORA completa, SLSA Build L3, inventario

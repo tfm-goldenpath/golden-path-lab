@@ -225,3 +225,27 @@ class RenderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class ConsumerBindingTests(unittest.TestCase):
+    config = RenderTests.config
+    def test_explicit_local_profile_adds_identical_required_bindings_to_both_contracts(self):
+        binding = dict(profile='node-http-consumer/v1', producer='bin/deliver:node-http-consumer/v1',
+                       engineRepository='https://github.com/tfm-goldenpath/golden-path-lab',
+                       engineCommit='b'*40, engineSnapshot='c'*64,
+                       configurationSha256='d'*64, consumerSnapshot='e'*64)
+        config = self.config()
+        config['consumer_binding'] = binding
+        items = renderer.render(config)['items']
+        self.assertEqual(len(items), 5)
+        for item, prefix in ((items[3], 'buildDefinition.externalParameters.goldenPath.'), (items[4], 'goldenPath.')):
+            conditions = item['spec']['rules'][0]['verifyImages'][0]['attestations'][0]['conditions'][0]['all']
+            for key, value in binding.items():
+                self.assertIn(renderer.condition(prefix+key, value, 'CONSUMER_BINDING_'+key), conditions)
+        for key in binding:
+            config['consumer_binding'] = {**binding, key: 'invalid'}
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                renderer.render(config)
+        config['consumer_binding'] = binding
+        config['mode'] = 'github'
+        with self.assertRaises(ValueError):
+            renderer.render(config)

@@ -2,7 +2,7 @@
 # Ordinary workload observations; definitions only.
 
 workload_deploy() {
-  if [[ "${execution_profile:-laboratory}" == delivery-v1 ]]; then
+  if [[ "${execution_profile:-laboratory}" == delivery-v1 || "${execution_profile:-laboratory}" == consumer-v1 ]]; then
     local status=0
     actor tfm-golden apply -f "$state_dir/tfm-golden.json" > "${1:-$state_dir/admission.log}" 2>&1 || status=$?
     if [[ "$status" != 0 ]]; then admission_record_failure "${1:-$state_dir/admission.log}" "$state_dir/admission-failure.json" "$status"; fi
@@ -42,7 +42,12 @@ workload_http() {
   [[ -n "$port" ]] || fail 'Could not obtain a port to test the service.'
   curl -fsS "http://127.0.0.1:$port/healthz" > "$state_dir/$ns-health.json"
   curl -fsS "http://127.0.0.1:$port/version" > "$state_dir/$ns-version.json"
+  if [[ "${execution_profile:-}" == consumer-v1 ]]; then
+    curl -fsS "http://127.0.0.1:$port/" > "$state_dir/consumer-response.json"
+    node "$contract" consumer-response "$state_dir/$ns-health.json" "$state_dir/$ns-version.json" "$state_dir/consumer-response.json" "$commit"
+  else
   curl -fsS -H 'Content-Type: application/json' -d '{"insuredAmountCents":100000,"coverage":"basic"}' "http://127.0.0.1:$port/quotes" > "$state_dir/$ns-quote.json"
   node "$contract" response "$state_dir/$ns-health.json" "$state_dir/$ns-quote.json" "$state_dir/$ns-version.json" "$commit"
+  fi
   kill "$port_pid"; wait "$port_pid" 2>/dev/null || true; port_pid=''
 }
