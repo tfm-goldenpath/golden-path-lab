@@ -137,7 +137,7 @@ derivadas**, registradas en `delivery-config.json`; se rechazan raíces con syml
 Véase el [contrato de módulos](../../implementation/docs/ES/architecture.md#contrato-de-módulos).
 `bash implementation/scripts/deliver.sh local`, su cleanup y
 `make -C implementation deliver` delegan en la misma implementación. La procedencia
-conserva el productor autorizado `implementation/scripts/deliver.sh` y sigue
+conserva el productor autorizado `implementacion/scripts/deliver.sh` y sigue
 compatible `legitimate-delivery-package/v1`.
 
 La [validación de mantenimiento](../EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026)
@@ -161,7 +161,8 @@ Evidencias, DB y estado privado ignorados **no se mueven**. Permanecen bajo
 absoluto original en cualquiera de las dos raíces exactas, verifica recibos y
 conserva el destino original del paquete. No permite reanudar. La limpieza de
 laboratorio reconoce las raíces originales; para sesiones manual/defensa antiguas
-se usa el checkout registrado, pues sus rutas de sesión dependen de esa revisión.
+se restaura la revisión registrada en la ubicación original del repositorio,
+pues sus rutas de sesión dependen de esa revisión.
 No se modifican declaraciones firmadas ni recibos históricos.
 
 Los productores locales `implementacion/scripts/deliver.sh` y

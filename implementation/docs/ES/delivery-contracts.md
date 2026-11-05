@@ -242,8 +242,8 @@ evento manual ni registro temporal autoriza una carga protegida.
 La [entrega legítima local](../../../docs/ES/legitimate-delivery.md) conserva las
 siete `CHECKS`, `golden-path-v1`, predicados y confianza local. Los recibos vinculan
 fuente/configuración y evidencia de imagen; logs no vacíos no autorizan.
-La procedencia acepta un productor validado: conserva `implementation/scripts/demo.sh`
-por defecto y delivery-v1 declara/verifica `implementation/scripts/deliver.sh`.
+La procedencia acepta un productor validado: conserva `implementacion/scripts/demo.sh`
+por defecto y delivery-v1 declara/verifica `implementacion/scripts/deliver.sh`.
 `legitimate-delivery-package/v1` describe una entrega sin resúmenes de escenarios;
 no cambia la política firmada. Hosted mantiene obligaciones de certificados, OIDC,
 transparencia, procedencia nativa e identidades autorizadas.

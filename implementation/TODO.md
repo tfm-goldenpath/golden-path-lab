@@ -14,8 +14,8 @@ current navigation, not replacement evidence.
 
 | Item | Current status/type | Decision owner / role | Next action | Blocks | Canonical record |
 | --- | --- | --- | --- | --- | --- |
-| Bounded local separation / PR #74 | Merged at `e0f2f569`; broader acceptance/custody remain separate | Repository owner/reviewer | Review exact candidate and bounded acceptance; document the decision | Acceptance of this increment | [PR #74](https://github.com/tfm-goldenpath/golden-path-lab/pull/74), [validation](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026) |
-| Remaining separation, interfaces and consumer scope | Interface consolidation and English migration in progress; human review pending | Maintainer proposes; owner approves boundary | Consolidate supported interface before defining an independent consumer template | Consumer/template claims; then Java trial | [Next increment](#next-implementation-increment), [migration map](../docs/EN/maintainers/repository-map.md#migration-sequence) |
+| Bounded local separation / PR #74 | Merged at `e0f2f569`; broader acceptance/custody remain separate | Repository owner/reviewer | Use merged local engine; review this interface increment separately | Acceptance of this increment | [PR #74](https://github.com/tfm-goldenpath/golden-path-lab/pull/74), [validation](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026) |
+| Remaining separation, interfaces and consumer scope | Implemented and locally validated on `ff8d3fc`; draft review pending | Maintainer proposes; owner approves boundary | Review explicit interfaces and English migration before defining an independent consumer template | Consumer/template claims; then Java trial | [Next increment](#next-implementation-increment), [migration map](../docs/EN/maintainers/repository-map.md#migration-sequence) |
 | License and private security route | Owner decisions pending | Repository owner | Select reuse terms and verify a private reporting channel | Declared reuse grant/private reporting instructions | [Reuse/support](../docs/EN/getting-started.md#reuse-and-support) |
 | Full historical dossier custody and detailed release review | Owner verification/review pending; partial custody confirmations retained | Evidence custodian / human reviewer | Complete required-original preservation and detailed review | Complete custody/release-review claims, not accepted reduced evaluation | [P00](#p00--laboratory-release-custody-before-product-restructuring), [custody assessment](../docs/EN/maintainers/repository-map.md#p00-baseline) |
 | PR #72 CLI update | Open; engineering compatibility validation and review pending | Tooling maintainer / reviewer | Check CLI 0.90.0 against three profiles, locks/hooks and required build/startup boundaries in separate work | Adopting #72; not #74 docs | [Update record](../docs/EN/maintainers/dependabot-tooling.md), [PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72) |
@@ -279,8 +279,9 @@ runner/analyzer, original observations and executed-source hashes.
 
 Historical coordination proposals from the pilot follow. The pilot, Actions
 refresh, Dependabot setup and intake are now merged; bounded local separation is
-implemented in open PR #74. The current next branch is
-`refactor/delivery-interface-consolidation` above. The old pairs are not a work
+merged in PR #74 at `e0f2f569`. Interface consolidation and the English migration
+are implemented on the current branch above; an independent consumer template
+is the next bounded proposal after review. The old pairs are not a work
 queue or renewed authorization; unselected future names remain proposals.
 
 | Pair | Scope and acceptance boundary |

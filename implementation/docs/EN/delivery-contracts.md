@@ -255,8 +255,8 @@ The [legitimate local path](../../../docs/EN/legitimate-delivery.md) uses the sa
 seven `CHECKS`, `golden-path-v1`, predicates and local trust. Successful receipts
 bind source/configuration and image evidence; nonempty logs alone cannot authorize.
 Provenance generation accepts a validated producer path, defaulting to the historic
-`implementation/scripts/demo.sh`; delivery-v1 declares and verifies
-`implementation/scripts/deliver.sh`. `legitimate-delivery-package/v1` describes
+`implementacion/scripts/demo.sh`; delivery-v1 declares and verifies
+`implementacion/scripts/deliver.sh`. `legitimate-delivery-package/v1` describes
 one delivery without scenario summaries. This archive profile is not a new signed
 policy/predicate version. Hosted certificate, OIDC, transparency, native provenance
 and authorized workflow paths retain their existing obligations.

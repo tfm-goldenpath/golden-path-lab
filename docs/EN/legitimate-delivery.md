@@ -137,7 +137,7 @@ recorded in `delivery-config.json`; symlinked roots are rejected. See the
 [module contract](../../implementation/docs/EN/architecture.md#module-contract).
 Legacy `bash implementation/scripts/deliver.sh local`, its cleanup command and
 `make -C implementation deliver` delegate to the same implementation. Provenance
-retains the authorized producer `implementation/scripts/deliver.sh`;
+retains the authorized producer `implementacion/scripts/deliver.sh`;
 `legitimate-delivery-package/v1` remains compatible.
 
 The [maintainer validation](maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026)
@@ -162,7 +162,7 @@ Ignored evidence, snapshots and private state are **not moved**. Historical
 Cleanup accepts an original absolute delivery directory under either exact root,
 validates its original resource/private receipts and writes any missing package
 to that same evidence root. No resume is added. Historical laboratory cleanup
-also recognizes its original evidence/private roots; use the recorded checkout
+also recognizes its original evidence/private roots; check out the recorded revision in the original repository location
 for historical manual/defense sessions whose session paths are revision-bound.
 Never substitute a new path into a signed statement or old source receipt.
 

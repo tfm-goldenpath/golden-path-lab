@@ -404,7 +404,7 @@ publisher update `2026-10-28T13:01:10.618103814Z` (about eight days old), DB has
 Using these identified bytes tests compatibility, not a current vulnerability
 assessment. Each ordinary delivery still creates its own snapshot.
 
-Results below will record exact committed runtime revisions and original attempts.
+The results below record exact committed runtime revisions and original attempts.
 Hosted OIDC integration is NOT_EXECUTED; no publishing workflow is dispatched.
 Human review remains pending. Next: independent consumer template after review.
 Rollback reverts source changes while retaining all evidence and original paths.
@@ -435,3 +435,89 @@ The source migration uses compatibility links around ignored directories rather
 than moving those originals. Git configuration files themselves are canonical
 regular files, since Git deliberately refuses symlinked ignore/attribute files.
 New tools/dependencies, raw evidence and private recovery remain ignored.
+
+### Committed runtime integrations and preservation
+
+Both real integrations ran sequentially on
+**`ff8d3fca5d8a9e3fada437a915df8047830b76e1`**. The shared suite above tested the
+working-tree bytes subsequently committed at that revision; the demo's own
+service/unit/policy preflight also ran on the committed revision. The final
+handoff changes documentation only, with selected executable/configuration
+inputs compared to this execution revision. No execution is attributed to a
+later documentation SHA.
+
+| Execution | Actual result | Original evidence |
+| --- | --- | --- |
+| `python3 implementation/tests/integration/product-boundary.py --output /tmp/gp-delivery-interface-20261105-knhva0vs/product-export --run` | PASS, exit 0, `delivery-nvqUQ9k6`; all 21 protected stages and finalization PASS. Genuine sparse checkout at the original commit with lab execution files absent. Authenticated gates, restricted-actor admission, Deployment/ready-Pod digest and HTTP responses checked. | Original export remains at that absolute path; retained raw/package/console/export receipt under `implementation/evidence/raw/delivery-interface-consolidation/product-01/`. |
+| `make -C implementation demo` | PASS, exit 0, `run-CeZOMzLD`; initial delivery, directed rejection/recovery and independently analyzed/signed replacement completed. Optional L05 NOT_EXECUTED; separate F03/F04/L02 suite not run. | `implementation/evidence/raw/run-CeZOMzLD/`; console `delivery-interface-consolidation/laboratory-attempt-01.log`. |
+| Actual scripted DB adapter with the preserved real DB | PASS; explicitly selected original DB path, no destination copy, repeated identity checks pass. No manual tasks or measurement campaign. | `delivery-interface-consolidation/scripted-reuse/` and `scripted-reuse.log`. |
+
+The existing lane-A auditor passes **26 applicable boundaries**. Its complete
+catalogue aggregate remains **FAIL** solely because L05 requires an unselected
+explicit source pair. `laboratory-audit.json`, its exit status and original log
+retain that outcome; this is not a complete twenty-scenario campaign. Static
+F01/F02 receipts are under `delivery-interface-consolidation/workflows/`, on the
+same committed source. No hosted OIDC execution is claimed.
+
+The current verifier checked outer checksums, safe members and every internal
+hash, including the retained product copy and the historical archive above:
+
+| Archive | SHA-256 | Internal hashes |
+| --- | --- | ---: |
+| `delivery-nvqUQ9k6.tar.gz` | `fc2b4eaf7dc6170f64cf8cadc63728ba6c5f3fc2c295c9885aab329c762af94c` | 160 |
+| `run-CeZOMzLD.tar.gz` | `489ddc385ff6b3a5be896d81a1e66e29511edce48f37078a17e94fdbd8d92910` | 1,725 |
+
+Product source snapshot:
+`7c4544cd89d68b8ffc513cc59d424fb88864f61fdc6173a44f7dd3d39f223777`;
+image `sha256:191716910814dbb76a22b24333f2cba136b4938bccbd7db6d0eacbf7f9ba3329`.
+Laboratory source snapshot:
+`1bf168bb8ece0506add35f19687ae622dc67d8d4df70664d6f7e7923886e79b2`;
+initial image `sha256:e704d50353dc39977941fecb6e58c090b927eb2b5aa8a717d5a6a7b0598504a6`,
+replacement `sha256:d98d74ddf70c8f27ecb5f2055cf437c99e8f70c9c4771fcd2118f0eadc9c2ec9`.
+Each run's independent immutable snapshot is retained under
+`/tmp/gp-delivery-interface-20261105-knhva0vs/snapshots/`; both match the original
+DB/metadata hashes above and pass the current identity check after execution.
+
+All six observed immutable container IDs and four owned volumes are retired;
+`product-verified.json` and `laboratory-retirement.json` record identity/metadata
+checks and the unchanged three pre-existing volumes. Repeated product cleanup
+from an unrelated CWD passes and preserves the first result, finalization, log,
+diagnostics and package hashes. Private recovery copies are under
+`implementation/.tmp/delivery-interface-consolidation/`; they are excluded from
+public packages. Originals, failed development checks and the sparse checkout
+remain preserved. No global prune, evidence cleanup, tag substitution or external
+custody claim is made.
+
+Lowest observed workspace/Docker free capacity was **6.7 GiB**; after retirement
+it is **8.5 GiB**, with **102 GiB** free on separate `/tmp`, about **13 GiB** RAM
+available and **80%** free workspace inodes. Capacity logs cover pre-creation,
+build/scanning and packaging/retirement. Guards were never reduced. Existing
+Kyverno deprecation warnings remain a separate admission-selection decision.
+
+Remaining old spelling is intentional: Linux compatibility entries, stable local
+provenance identifiers, exact historical recovery roots, old immutable Git-tree
+selection (L05, frozen paired warmup and release specification), and dated records,
+fixtures and generated historical bytecode. No historical claim is assigned to
+renamed bytes. Legacy JS export identities and Python verifier access pass their
+read-only checks. Symlink support is limited to the supplied Linux environment;
+canonical commands work without the legacy source tree in the product export.
+Historical manual/defense sessions use their recorded revision in the original
+repository location; this branch adds no cross-revision resume contract.
+
+| Activity | AI contribution | Human review | Decision |
+| --- | --- | --- | --- |
+| Adapter contracts, English migration, regressions, local integrations and handoff | OpenAI Codex / GPT-6 | Pending | Draft for review; no acceptance, custody or measurement decision inferred |
+
+Final documentation checks: **1,100 links/anchors in 87 changed guides PASS**,
+exact 816-path inventory and 11 inventory regressions PASS, and diff whitespace
+checks PASS. `final-source-continuity.json` compares all 61 product file contents
+and Git executable classifications with the actual sparse export, plus the
+unchanged laboratory source snapshot. The first whole-snapshot comparison found
+filesystem permission differences between sparse checkout and workspace; the
+existing capture includes those bits. Both original hashes and that observation
+are retained, rather than normalizing historical receipts. No file contents or
+Git executable classifications differ, and the final source delta is documentation
+only, so the runtime integrations remain applicable to their recorded boundary.
+Private recovery verification derives each retained key's public key and matches
+it to the run's retained public anchor; kubeconfig contexts match their run owner.
+Final push/PR CI URLs and status are reported in the PR handoff on its exact head.
