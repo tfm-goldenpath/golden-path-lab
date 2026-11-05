@@ -21,8 +21,10 @@ walk(root);
 return files;
 }
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
-  const [context,base,commit,authorizationFile,execution,profile='delivery-v1']=process.argv.slice(2);
-  if(profile!=='delivery-v1' || context!=='services/quotes-node' || authorizationFile || execution)
+  const [context,base,commit,authorizationFile,execution,profile='delivery-v1',consumerRoot]=process.argv.slice(2);
+  if(profile==='consumer-v1') {
+    if(context!==resolve(consumerRoot,'service') || realpathSync(context)!==context || authorizationFile || execution) throw new Error('Invalid consumer build context');
+  } else if(profile!=='delivery-v1' || context!=='services/quotes-node' || authorizationFile || execution)
     throw new Error('Delivery requires the quotes-node build context');
   const root=resolve(context);
   if(realpathSync(root)!==root) throw new Error('Ambiguous build context');

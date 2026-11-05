@@ -112,9 +112,9 @@ into PASS. Retain failed attempts and private recovery material.
 
 ## Current scope
 
-This available path is fixed to **local quotes-node**. It has no standalone
-installer, independent consumer template, stable public configuration API or
-production-cluster adapter. It does not run reference/scenario/measurement or
+The command without `--consumer` remains fixed to **local quotes-node**. For a
+separate service repository, use the [Node consumer quickstart](consumer-quickstart.md).
+General workload configuration and production-cluster adapters remain unsupported. It does not run reference/scenario/measurement or
 presentation procedures; those belong to the [laboratory](../../lab/README.md).
 Local keys do not establish hosted OIDC/certificate/transparency verification.
 No production-readiness, full DORA compliance, SLSA Build L3, complete SBOM

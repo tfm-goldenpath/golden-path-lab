@@ -13,7 +13,7 @@ which checks passed, or why deployment should be allowed.
 This repository implements that approach in a research laboratory using the synthetic
 `quotes-node` service. It is useful to developers inspecting delivery controls and
 platform maintainers evaluating how policy, signatures and operational evidence fit
-together. One legitimate local delivery is available today; an independent consumer template is still planned.
+together. One legitimate local delivery is available today; the independent Node starter uses that same engine from a separate repository.
 
 ## Delivery overview
 
@@ -36,12 +36,13 @@ blocking decisions and their evidence.
 
 1. [Understand the stages and controls](docs/EN/how-it-works.md): what is checked, where delivery stops and what evidence remains.
 2. [Run one legitimate local delivery](docs/EN/legitimate-delivery.md): `bash bin/deliver local`, using Linux AMD64, the pinned environment, Docker and committed source. The fixed profile delivers quotes-node locally.
-3. [Explore the laboratory](lab/README.md): scenarios, reference delivery, measurements and recorded experiments.
+3. [Create an independent Node consumer](docs/EN/consumer-quickstart.md): a separate service repository with an exact engine pin.
+4. [Explore the laboratory](lab/README.md): scenarios, reference delivery, measurements and recorded experiments.
 
 ## Current availability
 
 The local delivery engine lives in `bin/` and `src/`; laboratory adapters reuse it.
-The independent consumer template is planned. Read the [current scope and limits](docs/EN/legitimate-delivery.md#current-scope)
+The [Node consumer quickstart](docs/EN/consumer-quickstart.md) defines its narrow runtime contract. Read the [current scope and limits](docs/EN/legitimate-delivery.md#current-scope)
 before running, and use the [code-navigation guide](docs/EN/getting-started.md)
 to find the implementation. The [readiness matrix](implementation/docs/EN/evaluation-readiness.md)
 binds research observations to exact revisions; the [dated human decision](implementation/registros/evaluation_acceptance_20261004_ES.md)

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 
+import {CONSUMER_PROFILE, CONSUMER_PRODUCER, ENGINE_REPOSITORY} from './consumer.mjs';
 import {validateSchema} from './validate-sbom-schema.mjs';
 
 export const RESULTS_TYPE = 'https://tfm-goldenpath.dev/attestations/verification-results/v1';
@@ -45,7 +46,8 @@ export function validateSbom(bom) {
 }
 // Trusted laboratory requirement shared by issuance and authenticated CI content.
 export const RESULTS_POLICY_VERSION = 'golden-path-v1';
-export function validateResults(value, repository, commit) {
+export function validateResults(value, repository, commit, binding) {
+  if(binding) validateConsumerBinding(value?.goldenPath,binding);
   const violations = [];
   if (typeof value?.policyVersion !== 'string' || !value.policyVersion.trim()) violations.push('RESULTS_STRUCTURE');
   if (value?.policyVersion !== RESULTS_POLICY_VERSION) violations.push('RESULTS_POLICY_VERSION');
@@ -60,23 +62,27 @@ export function validateResults(value, repository, commit) {
   }
   return value;
 }
-export function validateStatementPredicate(predicate, type, repository, commit, producer) {
-  if (type === RESULTS_TYPE) validateResults(predicate, repository, commit);
+export function validateStatementPredicate(predicate, type, repository, commit, producer, binding) {
+  if (type === RESULTS_TYPE) validateResults(predicate, repository, commit, binding);
   else if (type === 'https://cyclonedx.org/bom') validateSbom(predicate);
   else if (type === 'https://sigstore.dev/cosign/sign/v1') {
     if (!predicate || typeof predicate !== 'object' || Array.isArray(predicate)) throw new Error('Invalid image-signature predicate');
   }
-  else if (type === 'https://slsa.dev/provenance/v1') validateProvenance(predicate, {repository, commit, mode:'local', producer});
+  else if (type === 'https://slsa.dev/provenance/v1') validateProvenance(predicate, {repository, commit, mode:'local', producer, binding});
   else throw new Error('Unsupported predicate type');
 }
 // Content checks only. The caller must authenticate the exact statement first.
 // Expected values come from run configuration, never from the predicate.
-export function validateProvenance(predicate, {repository, commit, mode, identity, producer}) {
+export function validateProvenance(predicate, {repository, commit, mode, identity, producer, binding}) {
   if (!['local','github'].includes(mode) || !/^https:\/\/[^\s]+$/.test(repository || '')
       || !/^[a-f0-9]{40}$/.test(commit || '') || (mode === 'github' && !identity?.startsWith(repository + '/.github/workflows/'))) {
     throw new Error('Invalid expected provenance authorization');
   }
-  if (producer !== undefined) validateProducer(producer);
+  if(binding) {
+    if(mode!=='local' || producer!==CONSUMER_PRODUCER) throw new Error('Invalid consumer provenance profile');
+    validateConsumerBinding(predicate?.buildDefinition?.externalParameters?.goldenPath,binding);
+  } else if(predicate?.buildDefinition?.externalParameters?.workflow?.path===CONSUMER_PRODUCER) throw new Error('Consumer provenance requires explicit authorization');
+  if (producer !== undefined) validateProducer(producer,binding?'consumer-v1':'laboratory');
   const fields = [
     ['PROVENANCE_REPOSITORY', predicate?.buildDefinition?.externalParameters?.workflow?.repository, repository],
     ['PROVENANCE_REVISION', predicate?.buildDefinition?.resolvedDependencies?.[0]?.digest?.gitCommit, commit],
@@ -114,7 +120,20 @@ export function checkStatements(text, digest, predicateType, validate) {
 }
 function json(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); }
 function write(file, value) { fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n'); }
-export function validateProducer(producer) {
+export function validateConsumerBinding(actual, expected) {
+  const fields=['profile','producer','engineRepository','engineCommit','engineSnapshot','configurationSha256','consumerSnapshot'];
+  if(!expected || Object.keys(expected).sort().join()!==fields.sort().join()
+    || expected.profile!==CONSUMER_PROFILE || expected.producer!==CONSUMER_PRODUCER || expected.engineRepository!==ENGINE_REPOSITORY
+    || !/^[a-f0-9]{40}$/.test(expected.engineCommit)
+    || ['engineSnapshot','configurationSha256','consumerSnapshot'].some(k=>!/^[a-f0-9]{64}$/.test(expected[k]))) throw new Error('Invalid expected consumer authorization');
+  if(!actual || Object.keys(actual).sort().join()!==fields.sort().join() || fields.some(k=>actual[k]!==expected[k])) throw new Error('Authenticated consumer/engine/configuration binding mismatch');
+  return actual;
+}
+export function validateProducer(producer,profile='laboratory') {
+  if(profile==='consumer-v1') {
+    if(producer!==CONSUMER_PRODUCER) throw new Error('Invalid consumer provenance producer');
+    return;
+  }
   if (!['implementacion/scripts/demo.sh','implementacion/scripts/deliver.sh'].includes(producer)) throw new Error('Invalid local provenance producer');
 }
 export const RESULT_EVIDENCE = {
@@ -128,8 +147,13 @@ export const DELIVERY_STEPS = ['source','environment','unitTests','workflowPolic
 const hashFile = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 export function validateDeliveryChecks(directory, repository, commit) {
   const state=json(path.join(directory,'state.json')), steps=json(path.join(directory,'delivery-steps.json'));
-  if(state.profile!=='delivery-v1' || state.sourceRepository!==repository || state.sourceCommit!==commit
+  if(!['delivery-v1','consumer-v1'].includes(state.profile) || state.sourceRepository!==repository || state.sourceCommit!==commit
     || state.configurationSha256!==hashFile(path.join(directory,'delivery-config.json'))) throw new Error('Delivery configuration mismatch');
+  if(state.profile==='consumer-v1') {
+    const expected=json(path.join(directory,'delivery-config.json')).binding;
+    validateConsumerBinding(state.consumerBinding,expected);
+    if(expected.consumerSnapshot!==state.sourceSnapshot) throw new Error('Consumer snapshot mismatch');
+  }
   for(const check of CHECKS) {
     const stage=['signature','sbom','provenance'].includes(check)?'evidence':check;
     const receipt=steps[stage];
@@ -180,7 +204,7 @@ function deliveryRecord(command, [directory, step, status]) {
   }
   for(const name of running) steps[name]={...steps[name],status:outcome==='POLICY_REJECTED'?outcome:'ERROR',exitStatus};
   write(stepsFile,steps);
-  write(path.join(directory,'result.json'),{schema:'legitimate-delivery-result/v1',profile:'delivery-v1',status:outcome,exitStatus,cleanupStatus,
+  write(path.join(directory,'result.json'),{schema:'legitimate-delivery-result/v1',profile:state.profile,status:outcome,exitStatus,cleanupStatus,
     source:{repository:state.sourceRepository,commit:state.sourceCommit,snapshot:state.sourceSnapshot},configurationSha256:state.configurationSha256,
     image:state.digest?state.imageRepository+'@'+state.digest:null,stages:steps,
     scope:'One legitimate local quotes-node delivery; no scenario, replacement, measurement or hosted claim'});
@@ -201,11 +225,13 @@ function main([command, ...args]) {
     case 'manifest': write(args[2], manifest(args[0], args[1], args[3] === 'github')); break;
     case 'sbom': console.log(validateSbom(json(args[0]))); break;
     case 'provenance': {
-      const [repository, commit, sourceHash, run, out, producer='implementacion/scripts/demo.sh'] = args;
-      validateProducer(producer);
+      const [repository, commit, sourceHash, run, out, producer='implementacion/scripts/demo.sh',profile='laboratory',directory] = args;
+      validateProducer(producer,profile);
+      const binding=profile==='consumer-v1'?json(path.join(directory,'state.json')).consumerBinding:undefined;
+      if(profile==='consumer-v1') validateConsumerBinding(binding,json(path.join(directory,'delivery-config.json')).binding);
       write(out, { buildDefinition: {
         buildType: 'https://tfm-goldenpath.dev/buildtypes/local/v1',
-        externalParameters: { workflow: { repository, path: producer, ref: 'local' } },
+        externalParameters: { workflow: { repository, path: producer, ref: 'local' }, ...(binding?{goldenPath:binding}:{}) },
         internalParameters: { mode: 'local-key', sourceSnapshotSha256: sourceHash, gitCommitAvailable: commit !== '0'.repeat(40) },
         resolvedDependencies: [{ uri: repository, digest: { gitCommit: commit, sha256: sourceHash } }]
       }, runDetails: { builder: { id: 'https://tfm-goldenpath.dev/builders/local-development' }, metadata: { invocationId: run } } });
@@ -213,8 +239,8 @@ function main([command, ...args]) {
     }
     case 'results': {
       const [directory, repository, commit, out, profile='laboratory'] = args;
-      if (!['laboratory','delivery-v1'].includes(profile)) throw new Error('Unknown results execution profile');
-      if (profile==='delivery-v1') validateDeliveryChecks(directory, repository, commit);
+      if (!['laboratory','delivery-v1','consumer-v1'].includes(profile)) throw new Error('Unknown results execution profile');
+      if (['delivery-v1','consumer-v1'].includes(profile)) validateDeliveryChecks(directory, repository, commit);
       const files = RESULT_EVIDENCE;
       const evidence = Object.fromEntries(Object.entries(files).map(([key, file]) => {
         const bytes = fs.readFileSync(path.join(directory, file));
@@ -224,12 +250,20 @@ function main([command, ...args]) {
       // Only the orchestrator calls this after successful exit codes and content validation.
       const result = { policyVersion: RESULTS_POLICY_VERSION, source: { repository, commit }, result: 'PASS',
         checks: Object.fromEntries(CHECKS.map(check => [check, 'PASS'])), evidence };
-      write(out, validateResults(result, repository, commit)); break;
+      const binding=profile==='consumer-v1'?json(path.join(directory,'state.json')).consumerBinding:undefined;
+      if(binding) result.goldenPath=binding;
+      write(out, validateResults(result, repository, commit,binding)); break;
     }
     case 'verify-statement': {
       const [file, digest, type, repository, commit] = args;
       checkStatements(fs.readFileSync(file, 'utf8'), digest, type,
         predicate => validateStatementPredicate(predicate, type, repository, commit)); break;
+    }
+    case 'consumer-response': {
+      const [health,version,response,commit]=args;
+      if(json(health).status!=='ok' || json(version).buildCommit!==commit || json(version).name!=='independent-node'
+        || json(response).message!=='Hello from the independent consumer') throw new Error('Incorrect consumer response');
+      break;
     }
     case 'response': {
       const [health, quote, version, commit] = args;

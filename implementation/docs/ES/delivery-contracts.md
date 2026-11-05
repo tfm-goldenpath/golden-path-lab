@@ -247,3 +247,15 @@ por defecto y delivery-v1 declara/verifica `implementacion/scripts/deliver.sh`.
 `legitimate-delivery-package/v1` describe una entrega sin resúmenes de escenarios;
 no cambia la política firmada. Hosted mantiene obligaciones de certificados, OIDC,
 transparencia, procedencia nativa e identidades autorizadas.
+
+## Perfil de consumidor independiente
+
+La ejecución `consumer-v1` utiliza los mismos módulos. Fuente, workflow, pruebas
+y contexto de build proceden del repositorio Git del consumidor; motor, políticas,
+esquemas y herramientas pertenecen al motor. Antes de autorizar se recomprueban
+pin exacto y ambos snapshots confirmados. Procedencia y resultados firmados
+contienen el vínculo `node-http-consumer/v1`, verificado contra configuración
+confiable de ejecución en CI y admisión. No cambian productores ni autorización
+de laboratorio, `delivery-v1` o modo alojado. Véanse la
+[guía del consumidor](../../../docs/ES/consumer-quickstart.md) y la
+[validación exacta](../../../docs/EN/maintainers/independent-consumer-validation.md).

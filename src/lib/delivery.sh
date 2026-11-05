@@ -2,8 +2,8 @@
 # Shared delivery operations. Function definitions only.
 
 delivery_service_tests() {
-  if [[ "${execution_profile:-laboratory}" == delivery-v1 ]]; then
-    env -u NODE_TEST_CONTEXT node --test --test-reporter=tap services/quotes-node/test/*.test.js > "$state_dir/unit-tests.log" 2>&1
+  if [[ "${execution_profile:-laboratory}" == delivery-v1 || "${execution_profile:-laboratory}" == consumer-v1 ]]; then
+    env -u NODE_TEST_CONTEXT node --test --test-reporter=tap "${service_root:-services/quotes-node}"/test/*.test.js > "$state_dir/unit-tests.log" 2>&1
     node "$contract" service-tests "$state_dir/unit-tests.log"
     return
   fi
@@ -12,7 +12,7 @@ delivery_service_tests() {
 
 delivery_workflow_policy() {
   local workflow; local -a workflows=()
-  for workflow in "$root"/../.github/workflows/*.yml "$root"/../.github/workflows/*.yaml; do
+  for workflow in "${consumer_root:-$root/..}"/.github/workflows/*.yml "${consumer_root:-$root/..}"/.github/workflows/*.yaml; do
     [[ ! -f "$workflow" ]] || workflows+=("$workflow")
   done
   [[ ${#workflows[@]} -gt 0 ]] || fail 'No workflows found in the root .github/workflows directory; preserve the repository structure.'
@@ -158,7 +158,14 @@ delivery_analyze() {
 # CONTEXT BASE COMMIT [AUTHORIZATION_FILE EXECUTION PROFILE]. stdout is the
 # capture JSON; delivery_build owns build-inputs.json. Capture validates context
 # selection; existing content/provenance validators validate the signed claims.
-delivery_capture_build_inputs() { node "${engine_root:-${root:-$PWD}/../src}/capture-build-inputs.mjs" "$@"; }
+delivery_capture_build_inputs() {
+  if [[ "${execution_profile:-}" == consumer-v1 ]]; then
+    node "$engine_root/consumer.mjs" capture "$repository_root" "$consumer_root" > "$private/build-source.json"
+    cmp "$state_dir/consumer-inputs.json" "$private/build-source.json"
+    node "$engine_root/capture-build-inputs.mjs" "$@" "$consumer_root"
+    return
+  fi
+  node "${engine_root:-${root:-$PWD}/../src}/capture-build-inputs.mjs" "$@"; }
 
 # SOURCE DESTINATION -> selected path on stdout, diagnostics on stderr.
 # The caller owns both paths and retains the original bytes. Never overwrite a

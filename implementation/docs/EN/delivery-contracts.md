@@ -260,3 +260,15 @@ Provenance generation accepts a validated producer path, defaulting to the histo
 one delivery without scenario summaries. This archive profile is not a new signed
 policy/predicate version. Hosted certificate, OIDC, transparency, native provenance
 and authorized workflow paths retain their existing obligations.
+
+## Independent consumer profile
+
+The separately configured `consumer-v1` execution uses the same delivery modules.
+Consumer source, workflow, tests and build inputs come from its own Git repository;
+engine, policies, schemas and toolchain inputs remain engine-owned. The exact pin
+and both committed snapshots are rechecked before authorization. Both signed
+provenance and results carry the `node-http-consumer/v1` binding, checked against
+trusted execution configuration in CI and admission. Existing laboratory,
+`delivery-v1` and hosted producer/authorization semantics remain unchanged.
+See the [consumer quickstart](../../../docs/EN/consumer-quickstart.md) and
+[exact validation](../../../docs/EN/maintainers/independent-consumer-validation.md).

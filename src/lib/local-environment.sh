@@ -138,6 +138,7 @@ local_apply_admission_policies() {
   local -a renderer_args
   renderer_args=(--mode "$mode" --repository "$repository" --commit "$commit" --image-repository "$image_repo" --sbom-version "$(get sbomVersion)" --output "$state_dir/admission-policies.json")
   if [[ "$mode" == local ]]; then renderer_args+=(--public-key "$private/cosign.pub"); else renderer_args+=(--identity "$(get identity)" --registry-secret gp-ghcr); fi
+  if [[ "${execution_profile:-}" == consumer-v1 ]]; then renderer_args+=(--consumer-binding "$state_dir/consumer-binding.json"); fi
   python3 "${policies_root:-$root/policies}/kyverno/render.py" "${renderer_args[@]}"
   k apply -f "$state_dir/admission-policies.json"
   k get -f "$state_dir/admission-policies.json" -o json > "$state_dir/admission-policy-applied.json"
