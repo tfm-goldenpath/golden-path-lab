@@ -1,7 +1,7 @@
 # Una entrega legítima de quotes-node
 
 [Guía](README.md) · [English](../EN/legitimate-delivery.md) ·
-[Etapas y controles](how-it-works.md) · [Implementación](../../implementacion/docs/ES/architecture.md#organización-implementada-y-dependencias)
+[Etapas y controles](how-it-works.md) · [Implementación](../../implementation/docs/ES/architecture.md#organización-implementada-y-dependencias)
 
 `bash bin/deliver local` construye una imagen quotes-node, comprueba y firma sus
 evidencias, autoriza su despliegue en kind local efímero, observa la carga y
@@ -16,9 +16,9 @@ la raíz del repositorio, añade las herramientas locales a PATH si hace falta,
 instala las dependencias de esquemas solo si faltan y comprueba el entorno:
 
 ```bash
-export PATH="$PWD/implementacion/.tools/bin:$PATH"
-make -C implementacion setup-validation  # Solo si faltan las dependencias fijadas.
-make -C implementacion doctor
+export PATH="$PWD/implementation/.tools/bin:$PATH"
+make -C implementation setup-validation  # Solo si faltan las dependencias fijadas.
+make -C implementation doctor
 ```
 
 Confirma la fuente en Git antes de ejecutar. Se rechazan cambios versionados y
@@ -69,7 +69,7 @@ siendo contratos separados.
 
 ## Inspeccionar resultados y evidencias
 
-El comando muestra `implementacion/evidence/raw/delivery-XXXXXXXX/`.
+El comando muestra `implementation/evidence/raw/delivery-XXXXXXXX/`.
 Consulta **`finalization.json` como resultado final del comando**, junto a su código
 de salida. `result.json` y `delivery-steps.json` explican entrega/limpieza y estados:
 `PASS`, rechazo atribuible `POLICY_REJECTED`, error operativo `ERROR` y
@@ -78,20 +78,20 @@ verificador o evaluador no son rechazo atribuible; rollout, imagen efectiva y HT
 son observaciones separadas de admisión.
 
 El directorio conserva informes originales, bundles, verificaciones, entradas de
-fuente/build y observaciones. El archivo está bajo `implementacion/evidence/packages/`.
+fuente/build y observaciones. El archivo está bajo `implementation/evidence/packages/`.
 Verifica hash externo y todos los internos con código confiable del checkout,
 sustituyendo el identificador mostrado:
 
 ```bash
 python3 src/verify_package.py \
-  implementacion/evidence/packages/delivery-XXXXXXXX.tar.gz
+  implementation/evidence/packages/delivery-XXXXXXXX.tar.gz
 ```
 
 El `result.json` archivado precede al empaquetado; `finalization.json` se escribe
 junto a la evidencia raw después de cerrar el paquete. No deduzcas PASS final del
 resultado archivado si falla el empaquetado; consulta `package-failure.json` cuando
 exista. Los paquetes públicos excluyen `state.json`, credenciales, kubeconfig y
-claves privadas. Recuperación queda en `implementacion/.tmp/`; no publiques estado
+claves privadas. Recuperación queda en `implementation/.tmp/`; no publiques estado
 raw ni archivos privados. Conserva por separado los bytes identificados de la DB.
 
 ## Limpieza
@@ -101,7 +101,7 @@ original y la ruta absoluta del directorio raw:
 
 ```bash
 bash bin/deliver cleanup \
-  /workspaces/golden-path-lab/implementacion/evidence/raw/delivery-XXXXXXXX
+  /workspaces/golden-path-lab/implementation/evidence/raw/delivery-XXXXXXXX
 ```
 
 Cleanup solo retira recursos. Valida IDs inmutables de contenedores y propiedad/
@@ -119,7 +119,7 @@ alojada OIDC/certificados/transparencia. Una ejecución correcta no establece
 preparación para producción, conformidad DORA completa, SLSA Build L3, inventario
 SBOM completo ni ausencia general de vulnerabilidades. Las ejecuciones históricas
 validan sus revisiones registradas, no un checkout posterior. Véanse
-[decisiones y siguiente incremento](../../implementacion/TODO.md#current-decisions-and-actions).
+[decisiones y siguiente incremento](../../implementation/TODO.md#current-decisions-and-actions).
 
 <details>
 <summary>Avanzado: configuración conservada y compatibilidad</summary>
@@ -134,10 +134,10 @@ snapshots anteriores.
 
 Rutas de motor/servicio/políticas/tooling/evidencias/privados son **rutas internas
 derivadas**, registradas en `delivery-config.json`; se rechazan raíces con symlinks.
-Véase el [contrato de módulos](../../implementacion/docs/ES/architecture.md#contrato-de-módulos).
-`bash implementacion/scripts/deliver.sh local`, su cleanup y
-`make -C implementacion deliver` delegan en la misma implementación. La procedencia
-conserva el productor autorizado `implementacion/scripts/deliver.sh` y sigue
+Véase el [contrato de módulos](../../implementation/docs/ES/architecture.md#contrato-de-módulos).
+`bash implementation/scripts/deliver.sh local`, su cleanup y
+`make -C implementation deliver` delegan en la misma implementación. La procedencia
+conserva el productor autorizado `implementation/scripts/deliver.sh` y sigue
 compatible `legitimate-delivery-package/v1`.
 
 La [validación de mantenimiento](../EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026)
@@ -145,3 +145,28 @@ registra independencia con sparse checkout, revisiones exactas, hashes y
 compatibilidad histórica. No cierra custodia ni revisión humana.
 
 </details>
+
+### Directorios en inglés y acceso compatible
+
+Las nuevas ejecuciones usan `implementation/`; `bin/` y `src/` mantienen entrada
+y motor, y `lab/` la orientación del laboratorio. No completa la separación total.
+Linux Codespaces conserva enlaces Git para rutas de fuente antiguas y un Makefile
+`implementacion/Makefile` que delega cambiando al CWD canónico. No hay dos copias.
+Las entradas admiten help, local y cleanup desde repositorio, implementación,
+directorio de la entrada o ruta absoluta desde otro CWD. Las plataformas sin
+enlaces Git deben utilizar comandos canónicos.
+
+Evidencias, DB y estado privado ignorados **no se mueven**. Permanecen bajo
+`implementacion/evidence/` y `implementacion/.tmp/`. Cleanup acepta el directorio
+absoluto original en cualquiera de las dos raíces exactas, verifica recibos y
+conserva el destino original del paquete. No permite reanudar. La limpieza de
+laboratorio reconoce las raíces originales; para sesiones manual/defensa antiguas
+se usa el checkout registrado, pues sus rutas de sesión dependen de esa revisión.
+No se modifican declaraciones firmadas ni recibos históricos.
+
+Los productores locales `implementacion/scripts/deliver.sh` y
+`implementacion/scripts/demo.sh` siguen siendo identificadores compatibles,
+respaldados por las entradas antiguas. Nuevas capturas registran rutas reales
+`implementation/`; formato de archivo y verificación histórica no cambian.
+Se mantienen nombres de workflows, identidades, contextos lógicos y versiones.
+Véase el [contrato](../../implementation/docs/ES/architecture.md#contrato-de-módulos).

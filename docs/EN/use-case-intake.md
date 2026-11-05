@@ -54,7 +54,7 @@ does not guarantee implementation.
 
 1. **Clarify the request:** check for duplicates and fill important gaps.
 2. **Assess feasibility:** consider compatibility, tests and resource cost using
-   the [roadmap](../../implementacion/TODO.md) and [control guide](how-it-works.md).
+   the [roadmap](../../implementation/TODO.md) and [control guide](how-it-works.md).
 3. **Record the decision:** **needs information** asks for missing details;
    **candidate** means worth planning; **deferred** means revisit later;
    **declined** means not proceeding, with a reason.

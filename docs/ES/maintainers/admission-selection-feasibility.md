@@ -34,7 +34,7 @@ el fixture local usa DSSE clásico y requiere los cuatro tipos, incluido sign/v1
 Una firma clásica convencional no sustituye ese predicado independiente.
 
 La vía indirecta parecía suficiente para justificar la puerta 2. El
-[adaptador conservado en Git](../../../implementacion/tests/integration/admission-selection-feasibility.py)
+[adaptador conservado en Git](../../../implementation/tests/integration/admission-selection-feasibility.py)
 reutiliza el reproducer existente; publica todos los candidatos y deja la decisión
 al tester oficial. No hay verificador propio, fork ni filtro del harness.
 
@@ -74,7 +74,7 @@ checkout limpio, hash `99aac08514e3e6c6b7e93ef4411729696bf0dc0cd1397ee31ed676fa6
 La suite compartida final comprueba ese ajuste; no se repite el motor tras su NO_GO.
 
 `doctor` falló inicialmente por PATH; pasó al usar las herramientas fijadas ya
-existentes en `implementacion/.tools/bin`. El tester descargado se verificó contra
+existentes en `implementation/.tools/bin`. El tester descargado se verificó contra
 el checksum y la firma de su workflow exacto, conservando también el intento de
 verificación con identidad incorrecta. No se compiló, no se descargaron DB, no se
 ejecutaron scans ni se hizo limpieza global. El informe EN enlaza instrucciones

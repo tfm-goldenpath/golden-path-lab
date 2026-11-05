@@ -170,7 +170,9 @@ delivery_snapshot_database() {
 delivery_copy_database() {
   [[ $# == 2 && -n "$1" && -n "$2" ]] || { printf 'ERROR: database source and destination required.\n' >&2; return 2; }
   [[ ! -e "$2" && ! -L "$2" ]] || { printf 'ERROR: Database snapshot already exists; use a fresh run.\n' >&2; return 1; }
-  mkdir -p -- "${2%/*}" || return $?
+  local parent=${2%/*}
+  [[ "$parent" != "$2" ]] || parent=.
+  mkdir -p -- "$parent" || return $?
   mkdir -- "$2" || return $?
   mkdir -- "$2/db" || return $?
   cp --reflink=auto -- "$1/db/trivy.db" "$1/db/metadata.json" "$2/db/" || return $?

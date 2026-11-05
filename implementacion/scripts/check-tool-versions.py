@@ -1,6 +1,1 @@
-#!/usr/bin/env python3
-# Compatibility import/CLI. Execute canonical definitions in this module namespace.
-from pathlib import Path
-_source = Path(__file__).resolve().parents[2] / 'src' / 'check-tool-versions.py'
-__file__ = str(_source)
-exec(compile(_source.read_bytes(), str(_source), 'exec'))
+../../implementation/scripts/check-tool-versions.py

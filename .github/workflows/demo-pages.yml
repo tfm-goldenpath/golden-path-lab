@@ -25,8 +25,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 implementacion/scripts/defense-demo/pages.py fetch "$RUNNER_TEMP/demo-download"
-          python3 implementacion/scripts/defense-demo/pages.py unpack "$RUNNER_TEMP/demo-download/demo-site-v1.tar.gz" "$RUNNER_TEMP/demo-site"
+          python3 implementation/scripts/defense-demo/pages.py fetch "$RUNNER_TEMP/demo-download"
+          python3 implementation/scripts/defense-demo/pages.py unpack "$RUNNER_TEMP/demo-download/demo-site-v1.tar.gz" "$RUNNER_TEMP/demo-site"
       - name: Upload only the verified static site
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

@@ -5,20 +5,20 @@
 ## Find the implementation
 
 Read [the stages and controls](how-it-works.md), then use the
-[architecture module table](../../implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
+[architecture module table](../../implementation/docs/EN/architecture.md#implemented-modules-and-dependencies)
 to follow one digest through the engine. These read-only commands locate the
 canonical implementation and its retained inputs:
 
 ```bash
-git ls-files bin src implementacion/services/quotes-node implementacion/policies implementacion/schemas implementacion/tooling
+git ls-files bin src implementation/services/quotes-node implementation/policies implementation/schemas implementation/tooling
 # Compatibility and laboratory adapters:
-git ls-files implementacion/scripts/lib
+git ls-files implementation/scripts/lib
 ```
 
 `bin/deliver` is the entry; `src/run-delivery.sh` sequences the shared engine and
-owns cleanup. `implementacion/scripts/lib/` contains compatibility imports and
+owns cleanup. `implementation/scripts/lib/` contains compatibility imports and
 laboratory behavior, not a second engine. Policies, schemas, selected service and
-pinned tooling still live under `implementacion/`.
+pinned tooling still live under `implementation/`.
 
 ## Run the available local delivery
 
@@ -36,7 +36,7 @@ See [current scope](legitimate-delivery.md#current-scope) for limitations.
 The [laboratory route](../../lab/README.md) owns demo/reference execution,
 scenario runbooks, measurements and presentation procedures. For reading without
 a cluster, follow its [recorded observations](../../lab/README.md) and the
-[readiness matrix](../../implementacion/docs/EN/evaluation-readiness.md).
+[readiness matrix](../../implementation/docs/EN/evaluation-readiness.md).
 Record source SHA, lane, run ID and boundary before interpreting a result.
 A code path, green CI or merge is not a new scenario execution or human acceptance.
 Reading an archive hash does not reauthenticate signatures; use reviewed tools,
@@ -46,7 +46,7 @@ not code recovered from the archive.
 
 ## Next implementation step
 
-The local path works today. The proposed [interface consolidation](../../implementacion/TODO.md#next-implementation-increment)
+The local path works today. The proposed [interface consolidation](../../implementation/TODO.md#next-implementation-increment)
 precedes an independent consumer template and then a Java trial.
 
 ## Reuse and support
@@ -54,8 +54,8 @@ precedes an independent consumer template and then a Java trial.
 No root `LICENSE`, repository `SECURITY.md`, `SUPPORT.md` or declared support SLA
 is present in the reviewed checkout. Public visibility is not a grant of unrestricted reuse.
 Owner selection of repository reuse terms remains pending. The vendored
-[CycloneDX notices](../../implementacion/schemas/cyclonedx-1.7/LICENSE) and
-[is-number license](../../implementacion/tests/fixtures/l03/is-number/LICENSE)
+[CycloneDX notices](../../implementation/schemas/cyclonedx-1.7/LICENSE) and
+[is-number license](../../implementation/tests/fixtures/l03/is-number/LICENSE)
 apply to those materials; dependency locks do not replace dependency terms.
 
 Use [repository issues](https://github.com/tfm-goldenpath/golden-path-lab/issues)

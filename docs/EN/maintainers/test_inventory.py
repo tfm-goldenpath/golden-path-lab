@@ -71,6 +71,24 @@ class InventoryTests(unittest.TestCase):
         (self.root / 'helper.py').symlink_to('outside.py')
         self.assertIn('Missing/nonregular current file: helper.py', self.errors())
 
+    def test_declared_english_alias_requires_exact_canonical_target(self):
+        (self.root / 'implementation').mkdir()
+        (self.root / 'implementation/helper.py').write_text('# canonical fixture\n')
+        (self.root / 'implementacion').mkdir()
+        link = self.root / 'implementacion/helper.py'
+        link.symlink_to('../implementation/helper.py')
+        entry = copy.deepcopy(self.data['entries'][0])
+        entry.update(path='implementacion/helper.py', destination='implementation/helper.py',
+                     compatibility_target='implementation/helper.py')
+        self.data['entries'].append(entry)
+        self.tracked.add(entry['path'])
+        self.assertEqual([], self.errors())
+        link.unlink()
+        link.symlink_to('../helper.py')
+        self.assertIn('Missing/nonregular current file: implementacion/helper.py', self.errors())
+        entry['compatibility_target'] = 'helper.py'
+        self.assertIn('Missing/nonregular current file: implementacion/helper.py', self.errors())
+
 
 if __name__ == '__main__':
     unittest.main()

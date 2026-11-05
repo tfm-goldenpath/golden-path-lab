@@ -1,0 +1,37 @@
+{
+  "name": "Golden Path - implementation",
+  "build": {
+    "dockerfile": "../../implementation/.devcontainer/Dockerfile",
+    "context": "../../implementation"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:4.1.3": {
+      "version": "29.9.2",
+      "moby": false,
+      "installDockerBuildx": false,
+      "dockerDashComposeVersion": "none",
+      "installDockerComposeSwitch": false
+    }
+  },
+  "remoteUser": "node",
+  "containerEnv": {
+    "KIND_EXPERIMENTAL_PROVIDER": "docker"
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "32gb"
+  },
+  "postCreateCommand": "npm ci --prefix implementation/tooling --ignore-scripts --no-audit --no-fund && bash implementation/scripts/check-environment.sh --tools-only",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.eol": "\n"
+      },
+      "extensions": [
+        "openai.chatgpt"
+      ]
+    }
+  }
+}

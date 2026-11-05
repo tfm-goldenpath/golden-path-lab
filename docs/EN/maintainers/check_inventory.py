@@ -51,7 +51,16 @@ def validate(data, tracked, root):
         seen.add(path)
         if path not in tracked:
             errors.append(f'Untracked/stale path: {path}')
-        if not (root / path).is_file() or (root / path).is_symlink():
+        current = root / path
+        if current.is_symlink():
+            # Only declared migration aliases to their exact English counterpart.
+            target = entry.get('compatibility_target')
+            expected = path.replace('implementacion', 'implementation', 1)
+            if (not target or target != expected or target == path or not safe_path(target)
+                    or not (root / target).exists()
+                    or current.resolve() != (root / target).absolute()):
+                errors.append(f'Missing/nonregular current file: {path}')
+        elif not current.is_file():
             errors.append(f'Missing/nonregular current file: {path}')
         profile = profiles.get(entry.get('profile'))
         if not isinstance(profile, dict):

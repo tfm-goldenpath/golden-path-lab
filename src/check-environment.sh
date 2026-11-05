@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../implementacion" && pwd)
+root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../implementation" && pwd)
 source "$root/versions.env"
 mode=${1:-}
 [[ $# -le 1 && ( -z "$mode" || "$mode" == --tools-only || "$mode" == --delivery ) ]] || {

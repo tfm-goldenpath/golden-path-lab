@@ -1,7 +1,7 @@
 # How the implemented delivery works
 
 [Index](README.md) · [Español](../ES/how-it-works.md) ·
-[Authoritative contracts](../../implementacion/docs/EN/delivery-contracts.md)
+[Authoritative contracts](../../implementation/docs/EN/delivery-contracts.md)
 
 The protected path binds checks and evidence to one image digest and an authorized
 source. A mandatory check that cannot complete stops delivery. A policy decision,
@@ -11,9 +11,9 @@ new policy catalogue or a proposed consumer API.
 
 ## Phases and stopping points
 
-The [canonical modules](../../implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
+The [canonical modules](../../implementation/docs/EN/architecture.md#implemented-modules-and-dependencies)
 live in `src/` and share one Bash context. Policies, service and tooling remain
-under `implementacion/`. The table follows legitimate local delivery; laboratory
+under `implementation/`. The table follows legitimate local delivery; laboratory
 adapters add preflight/scenarios and hosted trust as noted. See the
 [current scope and limits](legitimate-delivery.md#current-scope).
 
@@ -33,14 +33,14 @@ adapters add preflight/scenarios and hosted trust as noted. See the
 | Deployment/rollout/HTTP: admitted image | `workload.sh`, scenario-owned rollout checks, kubectl/curl and `check-image-rollout.mjs` | Ready Pods with expected digest and expected API responses establish the bounded functional observation. Timeout, wrong digest or HTTP mismatch fails even after admission allows. | Deployment/Pod observations, health/version/quote JSON, `L01-image-update.json` for replacement |
 | Preservation/cleanup: success or failure | `src/run-delivery.sh` owns delivery cleanup/finalization through the local adapter and `src/package_evidence.py`; the lab retains its own trap/selection | Preserve original failure and first diagnostics/archive; cleanup only validated owned resources. Cleanup/packaging failures remain failures. | `finalization.json` is the final command outcome; archive/hashes exclude private state |
 
-For the exact producer/consumer checks use [contracts](../../implementacion/docs/EN/delivery-contracts.md),
-[architecture](../../implementacion/docs/EN/architecture.md) and
-[policy sources](../../implementacion/policies/README.md). Package integrity does
+For the exact producer/consumer checks use [contracts](../../implementation/docs/EN/delivery-contracts.md),
+[architecture](../../implementation/docs/EN/architecture.md) and
+[policy sources](../../implementation/policies/README.md). Package integrity does
 not repeat cryptographic evidence verification or establish human acceptance.
 
 ## Laboratory ordering is explicit
 
-[demo.sh](../../implementacion/scripts/demo.sh) runs preflight, infrastructure,
+[demo.sh](../../implementation/scripts/demo.sh) runs preflight, infrastructure,
 build, manifest rendering and **reference deployment/HTTP** before the protected
 manifest and analysis path. Reference is an experimental comparison, not a secure
 consumer route. It prepares the replacement image before hosted `prepare` returns.
@@ -51,7 +51,7 @@ verification precedes the directed **preissuance F13 missing-results admission**
 Results authorization follows that rejection. Local F07 removal/restoration,
 negative runtime CREATE trials, legitimate admission/HTTP, runtime UPDATE trials,
 image replacement and optional selected-source L05 then follow the coordinator.
-Faults and their oracles belong to [scenario modules](../../implementacion/tests/scenarios/);
+Faults and their oracles belong to [scenario modules](../../implementation/tests/scenarios/);
 they are not mandatory actions for a future consumer pipeline.
 
 L01's second digest has fresh image-specific scan, SBOM, signature, provenance and
@@ -69,13 +69,13 @@ and need separate tests.
 
 | Risk and practical value | Enforcement / existing ID | Valid → invalid example | Evidence, implementation and tests / scope |
 | --- | --- | --- | --- |
-| Mutable workflow dependencies or excess privileges | Early workflow Conftest: `ACTION_SHA`, `PR_WRITE`, `PULL_REQUEST_TARGET` | External action pinned to full SHA → tag; PR read permissions → write | [Rule source](../../implementacion/policies/conftest/workflow.rego), [static trials and evidence](../../implementacion/docs/EN/cases/F01-F02/runbook.md), [tests](../../implementacion/tests/policies/test_workflow_scenarios.py). Structural checks, not general workflow data-flow analysis. |
-| Mutable/unapproved workload image; privilege escape | Manifest `DIGEST`, `PRIVILEGED`; admission `authorized-image-repository`, `restricted-containers` under `tfm-runtime` | Authorized digest and `privileged=false` → tag-only image or privileged container | [Early rules](../../implementacion/policies/conftest/manifests.rego), [renderer](../../implementacion/policies/kyverno/render.py), [runtime trials](../../implementacion/docs/EN/cases/F11-F12-L06/record.md), [policy tests](../../implementacion/tests/policies/test_render.py). Protected namespace and covered operations, not all cluster security. |
-| Shipping known severe findings | Analysis Conftest `VULNERABILITY_BLOCK`; malformed input `TRIVY_REPORT_INVALID` | Valid MEDIUM-only fixture → target HIGH/CRITICAL | [Rules](../../implementacion/policies/conftest/trivy.rego), [real-image fixture record](../../implementacion/docs/EN/cases/F03-F04-L02/record.md), [tests](../../implementacion/tests/policies/run_rego.py). DB/component detection bounded; admission consumes authorization, does not rescan. |
-| Missing or altered independent image signature | Fresh gate `MISSING_IMAGE_SIGNATURE`; admission `tfm-signature` / `require-image-signature` | Authentic `cosign/sign/v1` for digest → absent signature despite present SBOM | [Gate](../../src/ci-verification-gate.mjs), [F07](../../implementacion/docs/EN/cases/F07/record.md), [F08](../../implementacion/docs/EN/cases/F08/record.md), [real crypto tests](../../implementacion/tests/integration/bundle-crypto.sh). Valid signature does not imply vulnerability safety. |
-| Absent or unrelated component evidence | Schema/content verification; admission `tfm-sbom` / `require-sbom` | Authentic matching CycloneDX → missing or different-digest donor | [Schema validator](../../src/validate-sbom-schema.mjs), [SBOM trials](../../implementacion/docs/EN/cases/F05-F06-L03/runbook.md), [schema tests](../../implementacion/tests/unit/sbom-schema.test.mjs). CI full schema and selected admission fields are distinct; neither proves inventory completeness. |
-| Unauthorized origin or build claim | Authenticated content checks; `tfm-provenance` / `require-provenance`, `PROVENANCE_REPOSITORY`, `PROVENANCE_REVISION`, `PROVENANCE_BUILD_TYPE`, `PROVENANCE_BUILDER` | Configured source/revision/builder → signed different repository | [Contracts](../../src/contracts.mjs), [provenance trials](../../implementacion/docs/EN/cases/F09-F10-L05/runbook.md), [tests](../../implementacion/tests/unit/provenance-contract.test.mjs). Local development keys do not prove hosted OIDC; no isolated-builder/SLSA L3 claim. |
-| Deployment without current successful authorization | Fresh gate `MISSING_RESULTS`, `RESULTS_POLICY_VERSION_MISMATCH`; `tfm-results` / `require-results`, `RESULTS_POLICY_VERSION` | Authentic PASS with required checks under `golden-path-v1` → missing results or laboratory P0 replay | [Results trials](../../implementacion/docs/EN/cases/F13-F14/record.md), [tests](../../implementacion/tests/unit/results-authorization.test.mjs), [admission conditions](../../implementacion/tests/policies/test_results_conditions.py). Custom results predicate, not VSA conformance; health remains separate. |
+| Mutable workflow dependencies or excess privileges | Early workflow Conftest: `ACTION_SHA`, `PR_WRITE`, `PULL_REQUEST_TARGET` | External action pinned to full SHA → tag; PR read permissions → write | [Rule source](../../implementation/policies/conftest/workflow.rego), [static trials and evidence](../../implementation/docs/EN/cases/F01-F02/runbook.md), [tests](../../implementation/tests/policies/test_workflow_scenarios.py). Structural checks, not general workflow data-flow analysis. |
+| Mutable/unapproved workload image; privilege escape | Manifest `DIGEST`, `PRIVILEGED`; admission `authorized-image-repository`, `restricted-containers` under `tfm-runtime` | Authorized digest and `privileged=false` → tag-only image or privileged container | [Early rules](../../implementation/policies/conftest/manifests.rego), [renderer](../../implementation/policies/kyverno/render.py), [runtime trials](../../implementation/docs/EN/cases/F11-F12-L06/record.md), [policy tests](../../implementation/tests/policies/test_render.py). Protected namespace and covered operations, not all cluster security. |
+| Shipping known severe findings | Analysis Conftest `VULNERABILITY_BLOCK`; malformed input `TRIVY_REPORT_INVALID` | Valid MEDIUM-only fixture → target HIGH/CRITICAL | [Rules](../../implementation/policies/conftest/trivy.rego), [real-image fixture record](../../implementation/docs/EN/cases/F03-F04-L02/record.md), [tests](../../implementation/tests/policies/run_rego.py). DB/component detection bounded; admission consumes authorization, does not rescan. |
+| Missing or altered independent image signature | Fresh gate `MISSING_IMAGE_SIGNATURE`; admission `tfm-signature` / `require-image-signature` | Authentic `cosign/sign/v1` for digest → absent signature despite present SBOM | [Gate](../../src/ci-verification-gate.mjs), [F07](../../implementation/docs/EN/cases/F07/record.md), [F08](../../implementation/docs/EN/cases/F08/record.md), [real crypto tests](../../implementation/tests/integration/bundle-crypto.sh). Valid signature does not imply vulnerability safety. |
+| Absent or unrelated component evidence | Schema/content verification; admission `tfm-sbom` / `require-sbom` | Authentic matching CycloneDX → missing or different-digest donor | [Schema validator](../../src/validate-sbom-schema.mjs), [SBOM trials](../../implementation/docs/EN/cases/F05-F06-L03/runbook.md), [schema tests](../../implementation/tests/unit/sbom-schema.test.mjs). CI full schema and selected admission fields are distinct; neither proves inventory completeness. |
+| Unauthorized origin or build claim | Authenticated content checks; `tfm-provenance` / `require-provenance`, `PROVENANCE_REPOSITORY`, `PROVENANCE_REVISION`, `PROVENANCE_BUILD_TYPE`, `PROVENANCE_BUILDER` | Configured source/revision/builder → signed different repository | [Contracts](../../src/contracts.mjs), [provenance trials](../../implementation/docs/EN/cases/F09-F10-L05/runbook.md), [tests](../../implementation/tests/unit/provenance-contract.test.mjs). Local development keys do not prove hosted OIDC; no isolated-builder/SLSA L3 claim. |
+| Deployment without current successful authorization | Fresh gate `MISSING_RESULTS`, `RESULTS_POLICY_VERSION_MISMATCH`; `tfm-results` / `require-results`, `RESULTS_POLICY_VERSION` | Authentic PASS with required checks under `golden-path-v1` → missing results or laboratory P0 replay | [Results trials](../../implementation/docs/EN/cases/F13-F14/record.md), [tests](../../implementation/tests/unit/results-authorization.test.mjs), [admission conditions](../../implementation/tests/policies/test_results_conditions.py). Custom results predicate, not VSA conformance; health remains separate. |
 
 For a failure, identify its phase, exact source/image, raw command status, structured
 decision and expected rule. A missing evidence report caused by registry failure

@@ -2,7 +2,7 @@
 
 For product orientation, start with the [reading guide](docs/EN/getting-started.md). Before extraction or path changes, consult the [ownership inventory and migration contract](docs/EN/maintainers/repository-map.md). P01 established documentation and inventory. The bounded P01b local path now lives in `bin/` and `src/`; compatibility commands, workflow identities and historical evidence remain supported.
 
-Contributions should keep the laboratory reproducible and its conclusions traceable. Start with the [README](README.md), [architecture](implementacion/docs/EN/architecture.md), [delivery contracts](implementacion/docs/EN/delivery-contracts.md) and the relevant scenario record. English is primary for code, tests and contributions; update affected Spanish commands, expectations and explanations alongside the English guide.
+Contributions should keep the laboratory reproducible and its conclusions traceable. Start with the [README](README.md), [architecture](implementation/docs/EN/architecture.md), [delivery contracts](implementation/docs/EN/delivery-contracts.md) and the relevant scenario record. English is primary for code, tests and contributions; update affected Spanish commands, expectations and explanations alongside the English guide.
 
 ## Propose a use case
 
@@ -23,13 +23,13 @@ Implementation work stays in this repository. Thesis edits, remote publication, 
 From the repository root in the Linux devcontainer or Codespaces:
 
 ```bash
-make -C implementacion doctor
-make -C implementacion test
+make -C implementation doctor
+make -C implementation test
 ```
 
 `make test` runs environment, service/unit, policy and offline Cosign checks. Targeted entry points are `test-env`, `test-unit`, `test-policies` and `test-bundles`. There are no `lint` or `format-check` targets yet. Report unavailable tools and unrun checks instead of presenting a partial run as complete.
 
-When the change affects registry access, trust, evidence consumption or admission, follow the [runbook](implementacion/docs/EN/cases/L01-F13/runbook.md) for the relevant real integration. Use `bash bin/deliver local` for one legitimate local delivery and the laboratory runbook for `make -C implementacion demo`; GitHub integration is a separate manual workflow on the exact reviewed revision. Ordinary documentation edits do not require a full cluster run.
+When the change affects registry access, trust, evidence consumption or admission, follow the [runbook](implementation/docs/EN/cases/L01-F13/runbook.md) for the relevant real integration. Use `bash bin/deliver local` for one legitimate local delivery and the laboratory runbook for `make -C implementation demo`; GitHub integration is a separate manual workflow on the exact reviewed revision. Ordinary documentation edits do not require a full cluster run.
 
 CI runs the shared tests for pull requests and pushes. Instructions, skills and a passing local command do not enforce merging: required checks and permissions depend on the repository's configured rules. Source files alone do not configure those rules or grant remote access.
 
@@ -37,6 +37,6 @@ CI runs the shared tests for pull requests and pushes. Instructions, skills and 
 
 AI may propose bounded changes, tests and explanations. People remain responsible for requirements, expected outcomes, review and interpretation. Generative AI does not decide runtime authorization and is excluded from the six measured manual tasks. The project remains usable without an assistant, account or model.
 
-Use the [AI-assisted development guide](implementacion/docs/EN/ai-assisted-development.md) ([español](implementacion/docs/ES/ai-assisted-development.md)), the shared [agent entry point](AGENTS.md), [Copilot instructions](.github/copilot-instructions.md) and, where supported and relevant, the [scenario-change skill](.github/skills/scenario-change/SKILL.md). Verify that the selected client loads the intended guidance; file presence is not evidence of loading or compliance.
+Use the [AI-assisted development guide](implementation/docs/EN/ai-assisted-development.md) ([español](implementation/docs/ES/ai-assisted-development.md)), the shared [agent entry point](AGENTS.md), [Copilot instructions](.github/copilot-instructions.md) and, where supported and relevant, the [scenario-change skill](.github/skills/scenario-change/SKILL.md). Verify that the selected client loads the intended guidance; file presence is not evidence of loading or compliance.
 
 For material assistance, use the [PR template](.github/pull_request_template.md) to record the activity, tool/model when known, contribution, human review status, final decision and evidence. A compact entry or a link to an existing record is enough. Do not keep hourly logs or duplicate full conversations. Attribute Codex and later Copilot work only when it occurred; do not invent model details, human review or historical test cycles.

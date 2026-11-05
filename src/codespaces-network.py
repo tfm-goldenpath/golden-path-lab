@@ -15,7 +15,7 @@ import subprocess
 import time
 import uuid
 
-ROOT = Path(__file__).resolve().parents[1] / "implementacion"
+ROOT = Path(__file__).resolve().parents[1] / "implementation"
 LEGACY_BASE = '''-P FORWARD DROP
 -A FORWARD -j DOCKER-USER
 -A FORWARD -j DOCKER-ISOLATION-STAGE-1

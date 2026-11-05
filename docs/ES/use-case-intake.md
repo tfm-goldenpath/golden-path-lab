@@ -56,7 +56,7 @@ Enviarla no garantiza su implementación.
 
 1. **Aclarar la solicitud:** buscar duplicados y completar datos importantes.
 2. **Evaluar la viabilidad:** considerar compatibilidad, pruebas y recursos según
-   el [plan vigente (EN)](../../implementacion/TODO.md) y la [guía de controles](how-it-works.md).
+   el [plan vigente (EN)](../../implementation/TODO.md) y la [guía de controles](how-it-works.md).
 3. **Registrar la decisión:** **needs information** pide datos; **candidate** propone
    planificar; **deferred** aplaza; **declined** descarta, explicando el motivo.
 

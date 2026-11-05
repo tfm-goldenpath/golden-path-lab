@@ -8,9 +8,9 @@ person responsible for the work owns requirements, test oracles and final review
 an assistant can propose implementations, tests, diagnoses and documentation.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution process and
-[TODO.md](implementacion/TODO.md) for current deliverables. Consult the
-[delivery contracts](implementacion/docs/EN/delivery-contracts.md) when changing
-trust or evidence, and the [architecture](implementacion/docs/EN/architecture.md)
+[TODO.md](implementation/TODO.md) for current deliverables. Consult the
+[delivery contracts](implementation/docs/EN/delivery-contracts.md) when changing
+trust or evidence, and the [architecture](implementation/docs/EN/architecture.md)
 when changing module boundaries. Preserve the existing Fxx/Lxx identifiers and
 the human-approved scenario expectations; the academic catalogue is maintained
 in the thesis repository linked from the scenario template.
@@ -30,15 +30,15 @@ with Makefile and GitHub workflows invoking it.
   It owns its cleanup trap; [the guide](docs/EN/legitimate-delivery.md) defines
   its fixed local profile, immutable resource receipts and non-resume boundary.
 
-- [Makefile](implementacion/Makefile) exposes the local/test commands.
+- [Makefile](implementation/Makefile) exposes the local/test commands.
   [CI](.github/workflows/ci.yml) runs shared checks;
   [hosted integration](.github/workflows/golden-path.yml) owns GitHub-specific
   permissions and native provenance issuance. Keep domain rules out of workflow
   YAML and avoid duplicating shell implementations in Actions steps.
-- [demo.sh](implementacion/scripts/demo.sh) parses mode/phase, loads modules and
+- [demo.sh](implementation/scripts/demo.sh) parses mode/phase, loads modules and
   scenarios, orders execution and owns the shared infrastructure cleanup trap.
   It coordinates operations rather than implementing policy or evidence parsing.
-- In [service sources](implementacion/services/quotes-node/src/), `index.js`
+- In [service sources](implementation/services/quotes-node/src/), `index.js`
   starts the application; `server.js` handles HTTP; `validation.js` checks input
   and defines request errors; `quote.js` performs deterministic calculation.
   The service has no dependency on the delivery scripts. Preserve this simple
@@ -49,23 +49,23 @@ with Makefile and GitHub workflows invoking it.
 ### Shared automation modules
 
 Canonical delivery modules and the local adapter live in [src/lib](src/lib/).
-[scripts/lib](implementacion/scripts/lib/) retains compatibility imports and lab adapters. They define
+[scripts/lib](implementation/scripts/lib/) retains compatibility imports and lab adapters. They define
 functions when sourced; importing them must not create infrastructure, perform
 network operations or start a scenario.
 
-Use the canonical [module table and contract](implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
+Use the canonical [module table and contract](implementation/docs/EN/architecture.md#implemented-modules-and-dependencies)
 for initialization order, operations, adapter callbacks and required shared state.
 Change delivery behavior in `src/lib/`; change scenario/reference/measurement
-adapters in `implementacion/scripts/lib/`. In particular, `lab.sh` adapts
+adapters in `implementation/scripts/lib/`. In particular, `lab.sh` adapts
 `src/lib/local-environment.sh`; it is not a product dependency. The legacy
-[`deliver.sh`](implementacion/scripts/deliver.sh) delegates to `bin/deliver`.
+[`deliver.sh`](implementation/scripts/deliver.sh) delegates to `bin/deliver`.
 
 The fixed delivery profile also records explicit `engine_root`, `service_root`,
 `policies_root`, `schemas_root`, `tooling_root`, `evidence_root` and `private_root`.
 Product code must run with laboratory execution modules absent. Keep source
 capture and sparse-export tests in sync with new runtime dependencies.
 
-The shell variable `root` resolves to `implementacion/`, not the repository root.
+The shell variable `root` resolves to `implementation/`, not the repository root.
 Functions depend on initialized shared context:
 
 - `mode`/`phase` identify the lane and execution phase.
@@ -89,16 +89,16 @@ safe to repeat, preserving the first diagnostics/archive and the failure status.
 
 | Location | Change here when modifying |
 |---|---|
-| [Conftest rules](implementacion/policies/conftest/) | Workflow/manifest acceptance and vulnerability-report decisions. |
-| [Kyverno renderer](implementacion/policies/kyverno/render.py) | Generated admission policies, protected scope and trust parameters. Edit the renderer, not generated run artifacts. |
+| [Conftest rules](implementation/policies/conftest/) | Workflow/manifest acceptance and vulnerability-report decisions. |
+| [Kyverno renderer](implementation/policies/kyverno/render.py) | Generated admission policies, protected scope and trust parameters. Edit the renderer, not generated run artifacts. |
 | [contracts.mjs](src/contracts.mjs) | Manifest/predicate generation and content/subject validation. It also handles CLI/file operations; it is not a cryptographic verifier. |
 | [verified-bundle-statement.mjs](src/verified-bundle-statement.mjs), [github-attestation.mjs](src/github-attestation.mjs) | Interpretation of the same authenticated bundle or the GitHub verifier's output, respectively. |
 | [download-bundle-inventory.mjs](src/download-bundle-inventory.mjs), [check-bundle-profile.mjs](src/check-bundle-profile.mjs) | Strict registry retrieval and required evidence types/shape for each phase. Inventory inspection does not authenticate signatures. |
-| [check-missing-results.mjs](implementacion/scripts/check-missing-results.mjs), [check-inventory-consistency.mjs](implementacion/scripts/check-inventory-consistency.mjs) | Laboratory F13 absence and inventory-consistency checks. Retrieval errors cannot establish absence. |
+| [check-missing-results.mjs](implementation/scripts/check-missing-results.mjs), [check-inventory-consistency.mjs](implementation/scripts/check-inventory-consistency.mjs) | Laboratory F13 absence and inventory-consistency checks. Retrieval errors cannot establish absence. |
 | [check-image-rollout.mjs](src/check-image-rollout.mjs) | Correspondence between replacement digest, Deployment and ready Pods. |
-| [package_evidence.py](src/package_evidence.py), [verify_package.py](src/verify_package.py) | Shared archive writer/verifier, hashes and exclusions; laboratory selection stays in `implementacion/scripts/package-evidence.py`. |
+| [package_evidence.py](src/package_evidence.py), [verify_package.py](src/verify_package.py) | Shared archive writer/verifier, hashes and exclusions; laboratory selection stays in `implementation/scripts/package-evidence.py`. |
 
-Legacy helpers under `implementacion/scripts/` delegate to canonical `src/`
+Legacy helpers under `implementation/scripts/` delegate to canonical `src/`
 implementations where extracted. `lab-contracts.mjs` is the compatibility name
 for `src/contracts.mjs`; scenario-specific selection/allowlists stay with the lab.
 Do not edit wrappers as though they were a second implementation.
@@ -120,7 +120,7 @@ delivery, exercises missing-results admission before issuing results, then check
 legitimate admission, the directed runtime rejection and image replacement.
 Preserve that order when adding a scenario with different evidence prerequisites.
 
-[Scenario modules](implementacion/tests/scenarios/) own controlled alterations and
+[Scenario modules](implementation/tests/scenarios/) own controlled alterations and
 their expected outcomes. Common delivery operations stay in `src/lib/` and
 acceptance rules stay in policies/validators. `f13.sh` imports the neutral `scripts/lib/admission.sh` classifier for historical
 scenario callers; paired delivery and audit tools import it directly. Scenario
@@ -160,12 +160,12 @@ of their original revisions.
 
 ## Invariants to preserve
 
-- Consult the [evaluation readiness matrix](implementacion/docs/EN/evaluation-readiness.md)
-  ([ES](implementacion/docs/ES/evaluation-readiness.md)) for all twenty scenario
+- Consult the [evaluation readiness matrix](implementation/docs/EN/evaluation-readiness.md)
+  ([ES](implementation/docs/ES/evaluation-readiness.md)) for all twenty scenario
   IDs, observed revisions/boundaries and remaining final-source work. Code or a
   green CI job does not establish scenario execution or human acceptance.
 - Keep functional scenario trials, scripted remediation with known repairs, the
-  four-pair timing pilot and the [recorded ten-pair timing campaign](implementacion/docs/EN/paired-rg-campaign-results.md)
+  four-pair timing pilot and the [recorded ten-pair timing campaign](implementation/docs/EN/paired-rg-campaign-results.md)
   as separate datasets. Campaign technical success is not human acceptance.
   Shared L01/L03/L04 deliveries and positive counterparts are not independent
   samples. F01/F02 are static checks; unsupported hosted negatives stay NOT_EXECUTED.
@@ -203,17 +203,17 @@ of their original revisions.
 Run from the repository root in the supplied Linux devcontainer/Codespaces:
 
 ```bash
-make -C implementacion test-env      # Environment configuration and probe tests
-make -C implementacion test-unit     # Service and evidence/orchestration tests
-make -C implementacion test-policies # Python, Conftest and Kyverno checks
-make -C implementacion test-bundles  # Real local Cosign cryptographic checks
-make -C implementacion test         # All of the above; not a Kubernetes run
+make -C implementation test-env      # Environment configuration and probe tests
+make -C implementation test-unit     # Service and evidence/orchestration tests
+make -C implementation test-policies # Python, Conftest and Kyverno checks
+make -C implementation test-bundles  # Real local Cosign cryptographic checks
+make -C implementation test         # All of the above; not a Kubernetes run
 ```
 
-`make -C implementacion smoke-env` and `make -C implementacion demo` require Docker
+`make -C implementation smoke-env` and `make -C implementation demo` require Docker
 and create temporary laboratory resources; see the
-[runbook](implementacion/docs/EN/cases/L01-F13/runbook.md).
-`make -C implementacion reference` exercises R. Hosted integration uses the manual
+[runbook](implementation/docs/EN/cases/L01-F13/runbook.md).
+`make -C implementation reference` exercises R. Hosted integration uses the manual
 `golden-path.yml` workflow and publishes images/evidence. Run it only when that
 remote action is authorized. Do not infer permission to push, publish, release,
 merge, change repository settings or post comments from a local editing task.

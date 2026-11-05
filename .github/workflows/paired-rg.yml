@@ -58,7 +58,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Validate human-authorized plan and fresh development artifacts without delivery
-        working-directory: implementacion
+        working-directory: implementation
         env:
           GH_TOKEN: ${{ github.token }}
           DATASET: ${{ inputs.dataset }}
@@ -72,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: paired-rg-plan-${{ github.run_id }}
-          path: implementacion/evidence/measurements/campaign-plan/**
+          path: implementation/evidence/measurements/campaign-plan/**
           if-no-files-found: error
           retention-days: 30
   pair:
@@ -88,9 +88,9 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: implementacion
+        working-directory: implementation
     env:
-      PAIR_DIR: ${{ github.workspace }}/implementacion/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}
+      PAIR_DIR: ${{ github.workspace }}/implementation/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -204,7 +204,7 @@ jobs:
         with:
           name: paired-rg-${{ github.run_id }}
           path: |
-            implementacion/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}/**
-            !implementacion/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}/retry-db/**
+            implementation/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}/**
+            !implementation/evidence/measurements/${{ inputs.dataset }}/${{ github.run_id }}/retry-db/**
           if-no-files-found: error
           retention-days: 30

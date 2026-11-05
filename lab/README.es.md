@@ -2,20 +2,20 @@
 
 [Introducción del producto](../README.es.md) · [English](README.md)
 
-El laboratorio ejecutable sigue en `implementacion/`. Este directorio es solo una
+El laboratorio ejecutable sigue en `implementation/`. Este directorio es solo una
 entrada de navegación, separada de la [explicación de entrega](../docs/ES/how-it-works.md).
 
 ## Ejecutar el laboratorio
 
-El [runbook L01/F13](../implementacion/docs/ES/cases/L01-F13/runbook.md) define
-prerrequisitos, respuestas y limpieza propia. Consulta [entorno](../implementacion/docs/ES/environment.md)
-y [README de implementación](../implementacion/README.md). Desde la raíz en el
+El [runbook L01/F13](../implementation/docs/ES/cases/L01-F13/runbook.md) define
+prerrequisitos, respuestas y limpieza propia. Consulta [entorno](../implementation/docs/ES/environment.md)
+y [README de implementación](../implementation/README.md). Desde la raíz en el
 devcontainer Linux AMD64 configurado:
 
 ```bash
-make -C implementacion doctor
-make -C implementacion test
-make -C implementacion demo
+make -C implementation doctor
+make -C implementation test
+make -C implementation demo
 ```
 
 La demo crea kind, registro, builder y namespaces; construye imágenes inicial/de
@@ -30,10 +30,10 @@ en GHCR con attestations GitHub; una edición o ejecución local no autoriza lan
 
 ## Escenarios y configuraciones
 
-La [matriz de veinte escenarios](../implementacion/docs/ES/evaluation-readiness.md)
+La [matriz de veinte escenarios](../implementation/docs/ES/evaluation-readiness.md)
 es la entrada a **F01–F14 y L01–L06**, revisiones/ejecuciones reales, observaciones
-compartidas, fronteras sin ejecutar y aceptación. El [índice técnico](../implementacion/docs/ES/README.md)
-enlaza runbooks; los [módulos](../implementacion/tests/scenarios/) poseen fixtures y oráculos.
+compartidas, fronteras sin ejecutar y aceptación. El [índice técnico](../implementation/docs/ES/README.md)
+enlaza runbooks; los [módulos](../implementation/tests/scenarios/) poseen fixtures y oráculos.
 
 - **R/G** selecciona referencia o controles Golden Path. `make reference` omite controles de evidencia G y es una comparación experimental.
 - **A/B** selecciona confianza de clave local o GitHub OIDC real. Un devcontainer alojado con claves locales sigue siendo A; `act` no prueba B.
@@ -42,26 +42,26 @@ enlaza runbooks; los [módulos](../implementacion/tests/scenarios/) poseen fixtu
 
 ## Mediciones y límites
 
-Tras [preparación de evaluación](../implementacion/docs/ES/evaluation-readiness.md),
-consulta el dataset correspondiente: [reparaciones automatizadas](../implementacion/docs/ES/automated-remediation.md),
-[piloto de cuatro pares](../implementacion/docs/ES/paired-rg-pilot-review.md) o
-[campaña de diez pares](../implementacion/docs/ES/paired-rg-campaign-results.md).
-El [protocolo](../implementacion/docs/ES/paired-rg-measurements.md) y
-[análisis de recursos](../implementacion/docs/ES/economic-evaluation.md) definen las
+Tras [preparación de evaluación](../implementation/docs/ES/evaluation-readiness.md),
+consulta el dataset correspondiente: [reparaciones automatizadas](../implementation/docs/ES/automated-remediation.md),
+[piloto de cuatro pares](../implementation/docs/ES/paired-rg-pilot-review.md) o
+[campaña de diez pares](../implementation/docs/ES/paired-rg-campaign-results.md).
+El [protocolo](../implementation/docs/ES/paired-rg-measurements.md) y
+[análisis de recursos](../implementation/docs/ES/economic-evaluation.md) definen las
 magnitudes. Los ensayos funcionales son otro dataset. Esfuerzo humano, calibración
 elegible y congelación de límites siguen aplazados; reparaciones conocidas no son
 productividad humana.
 
 ## Registros y aceptación
 
-Los [registros originales](../implementacion/registros/) mantienen bytes, fechas y
-límites. La [decisión del 4 de octubre](../implementacion/registros/evaluation_acceptance_20261004_ES.md)
+Los [registros originales](../implementation/registros/) mantienen bytes, fechas y
+límites. La [decisión del 4 de octubre](../implementation/registros/evaluation_acceptance_20261004_ES.md)
 cierra alcance reducido. Las observaciones posteriores del catálogo corregido
 conservan su revisión propia. Éxito técnico, release o merge no amplían esa declaración.
 
 ## Defensa y demostración
 
-La [guía por objetivo](../implementacion/docs/ES/defense/README.md) explica preparación,
+La [guía por objetivo](../implementation/docs/ES/defense/README.md) explica preparación,
 controles, grabación, exportación offline y ciclo de vida. La [demo grabada publicada](https://tfm-goldenpath.github.io/golden-path-lab/demo/)
 muestra evidencia histórica seleccionada sin Kubernetes; no es un panel vivo ni el
 freeze privado completo. Se mantiene el vídeo silencioso original. Narración y
@@ -71,8 +71,8 @@ por el propietario; no bloquean P00/P01.
 ## Release congelada y recuperación
 
 [lab-v2026.10.24](https://github.com/tfm-goldenpath/golden-path-lab/releases/tag/lab-v2026.10.24)
-conserva fuente seleccionada y transportes originales. La [guía](../implementacion/docs/ES/lab-release-freeze.md)
-y la [especificación](../implementacion/releases/lab-freeze.inputs.json) definen
+conserva fuente seleccionada y transportes originales. La [guía](../implementation/docs/ES/lab-release-freeze.md)
+y la [especificación](../implementation/releases/lab-freeze.inputs.json) definen
 anclas, capacidad y custodia pública/privada. El [estado P00 (EN)](../docs/EN/maintainers/repository-map.md#p00-baseline)
 recoge el informe de verificación independiente y los huecos humanos/de custodia.
 La release es mutable (`immutable=false`). Custodia de frozen-0002 no implica

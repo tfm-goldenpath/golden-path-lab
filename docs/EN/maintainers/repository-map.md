@@ -1,7 +1,7 @@
 # Repository ownership and migration contract
 
 [Product guide](../README.md) · [Laboratory](../../../lab/README.md) ·
-[Current architecture](../../../implementacion/docs/EN/architecture.md) ·
+[Current architecture](../../../implementation/docs/EN/architecture.md) ·
 [Canonical inventory](repository-inventory.json)
 
 Historical foundation: P01 was documentation and inventory work on `chore/product-foundation`, based on
@@ -11,9 +11,21 @@ checkout; the owner's P01 request supplies the bounded roadmap sequence below.
 This is not a reconstruction of another checkout's roadmap. The newer merged
 release-freeze work remains intact.
 
-Current navigation: the [module contract](../../../implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
-describes the extracted engine; the [decision index](../../../implementacion/TODO.md#current-decisions-and-actions)
+Current navigation: the [module contract](../../../implementation/docs/EN/architecture.md#implemented-modules-and-dependencies)
+describes the extracted engine; the [decision index](../../../implementation/TODO.md#current-decisions-and-actions)
 separates current owner actions, engineering and pending validation.
+
+## English migration — 5 November 2026
+
+The owner authorizes `implementation/` as the canonical retained implementation
+root and `.devcontainer/implementation/` as its Codespaces profile. Only tracked
+files move; ignored originals remain under `implementacion/`. Explicit tracked
+Linux source aliases fit around directories containing retained ignored files;
+Make delegates to the canonical CWD. The inventory records each alias and its
+exact canonical target. It accepts no arbitrary symlink source. New captures
+record actual paths; historical records and producer identities are unchanged.
+See [compatibility/recovery](../legitimate-delivery.md#english-layout-and-legacy-access)
+and [validation](delivery-core-validation.md#interface-consolidation-and-english-layout--5-november-2026).
 
 ## Reading the inventory
 
@@ -53,11 +65,11 @@ The optional [context retrieval pilot](context-retrieval.md) records a bounded
 A/B/C comparison; it does not change these navigation or ownership rules.
 
 <!-- inventory-summary:start -->
-572 tracked paths; 272 individually enumerated scripts/helpers/tests.
+816 tracked paths; 487 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 166 |
+| developer | 410 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 273 |
@@ -70,7 +82,7 @@ A/B/C comparison; it does not change these navigation or ownership rules.
 
 Current physical roots include `bin/` (delivery entry), `src/` (shared delivery
 engine), `.github/` (automation and contribution instructions), `.devcontainer/`
-(workspace configurations) and `implementacion/` (selected service, policies,
+(workspace configurations) and `implementation/` (selected service, policies,
 schemas, pinned tooling, laboratory adapters, tests, demo and measurements).
 `docs/` and `lab/` added by P01 are navigation/maintenance guidance. Historical
 `registros/`, release inputs/notes and the Pages lock are retained in place.
@@ -90,7 +102,7 @@ neutral `src/` helpers have no laboratory execution imports. Old script paths
 remain adapters; laboratory source selection, readiness probes, reference/trial
 workloads, fixture/manual build allowlists and package summaries stay with them.
 Policies/schemas/tooling/pins and the selected service retain their explicit
-`implementacion/` roots. The whole repository is not separated. See the
+`implementation/` roots. The whole repository is not separated. See the
 [operator guide](../legitimate-delivery.md) and [validation](delivery-core-validation.md#p01b-implementation-boundary--4-november-2026).
 
 ## Proposed boundaries
@@ -115,8 +127,8 @@ Laboratory tooling consumes the engine; product delivery does not require fault
 fixtures, measurement plans, scenario summaries or presentation state. This does
 not establish a general consumer template or whole-repository separation.
 
-Use the single current [module table and contract](../../../implementacion/docs/EN/architecture.md#implemented-modules-and-dependencies)
-for `src/lib/` responsibilities and `implementacion/scripts/lib/` adapters.
+Use the single current [module table and contract](../../../implementation/docs/EN/architecture.md#implemented-modules-and-dependencies)
+for `src/lib/` responsibilities and `implementation/scripts/lib/` adapters.
 Remaining consolidation must preserve function-only imports, shared-process error
 propagation and the distinction between content checks and authentication.
 
@@ -129,8 +141,8 @@ propagation and the distinction between content checks and authentication.
 | Refresh A — `chore/dependency-refresh` | Merged #62: bounded AJV/fast-uri correction; [record](dependency-refresh-validation.md). Actions (#70) and updater setup (#71) are also merged; #72 compatibility and #23 disposition remain separate. |
 | Refresh B — `chore/devcontainer-refresh` | Merged #63: pinned runtimes/images, three profiles and optional Codex; [exact checks and limits](devcontainer-refresh-validation.md), without claiming a Codespaces UI Full Rebuild. |
 | Refresh C — `chore/security-toolchain-refresh` | Merged #64: pinned tools and recorded local/hosted validation; [record](security-toolchain-refresh-validation.md). CEL adoption remains blocked separately. |
-| P01b — physical repository separation | Implemented in open PR #74 with recorded sparse-checkout and lab validation; human review pending. Broader physical moves are not complete. See [validation](delivery-core-validation.md#p01b-observed-execution-and-handoff). |
-| P03b — `refactor/delivery-interface-consolidation` (proposed next) | Clarify supported interface and adapter results, simplify proven duplication and define compatibility/deprecation; [bounded scope and acceptance](../../../implementacion/TODO.md#next-implementation-increment). No consumer API or arbitrary-service support yet. |
+| P01b — physical repository separation | Merged in PR #74 at `e0f2f56980ffbb00b926521ecf58eed64c713f1b` with recorded sparse-checkout and lab validation; broader acceptance remains separate. Broader physical moves are not complete. See [validation](delivery-core-validation.md#p01b-observed-execution-and-handoff). |
+| P03b — `refactor/delivery-interface-consolidation` (current bounded increment) | Clarify supported interface and adapter results, simplify proven duplication and define compatibility/deprecation; [bounded scope and acceptance](../../../implementation/TODO.md#next-implementation-increment). No consumer API or arbitrary-service support yet. |
 | P04 — consumer template | Ship a real consumer starter using the extracted engine, with documented prerequisites and actual independent execution. No fictional install/configuration API beforehand. |
 
 Scope clarification — 4 November 2026: the owner explicitly authorizes the bounded
@@ -151,7 +163,7 @@ moves, deletions, releases, settings changes or measurement runs.
 
 | Existing dependency | Migration obligation |
 | --- | --- |
-| Bash `root` resolves to `implementacion/`; state helpers and module globals | Introduce explicit roots/state adapters before relocation; restore cross-step values. Never silently retarget digest, trust or evidence directory. |
+| Bash `root` resolves to `implementation/`; state helpers and module globals | Introduce explicit roots/state adapters before relocation; restore cross-step values. Never silently retarget digest, trust or evidence directory. |
 | `demo.sh` and paired/defense coordinators source modules and dynamic scenario lists | Inspect all coordinators/importers, not just textual filename calls. Keep imports effect-free and direct calls preserving Bash `errexit`. `f13.sh` imports the neutral admission classifier; historical names remain compatible. |
 | Build contexts and fixture allowlists | Update Dockerfile COPY/context, `.dockerignore`, captured input hashes and actual source exports together. Quotes service must remain independent of delivery scripts. |
 | Selected source/configuration snapshots | A path move changes snapshot bytes/identity. Preserve old manifests and teach new code the new layout; never rewrite historical source or evidence hashes. |
@@ -168,7 +180,7 @@ moves, deletions, releases, settings changes or measurement runs.
 
 The inventory proposes responsibility-based destinations; no destination is owner
 approval. The bounded local extraction now puts canonical contracts, capture and archive
-primitives in `src/`, with lab allowlists/adapters retained under `implementacion/`.
+primitives in `src/`, with lab allowlists/adapters retained under `implementation/`.
 Remaining dynamic-scope callbacks, CLI/validation coupling and compatibility
 policy need interface consolidation; the inventory records broader unknowns. Test wrappers may
 combine contract checks with scenario sequencing; do not move all tests wholesale.
