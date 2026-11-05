@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+entry_file=$(realpath -e -- "${BASH_SOURCE[0]}")
+root=$(cd -- "$(dirname -- "$entry_file")/.." && pwd -P)
 lock=${TOOLS_LOCK_FILE:-$root/tools.lock.json}
 prefix=${PREFIX:-/usr/local}
 platform_tools=0

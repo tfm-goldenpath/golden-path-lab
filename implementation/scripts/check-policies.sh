@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+entry_file=$(realpath -e -- "${BASH_SOURCE[0]}")
+root=$(cd -- "$(dirname -- "$entry_file")/.." && pwd -P)
 cd "$root"
 shopt -s nullglob
 workflows=(../.github/workflows/*.yml ../.github/workflows/*.yaml)

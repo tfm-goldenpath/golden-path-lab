@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+entry_file=$(realpath -e -- "${BASH_SOURCE[0]}")
+root=$(cd -- "$(dirname -- "$entry_file")/.." && pwd -P)
 source "$root/versions.env"
 [[ $# == 0 ]] || { echo 'Usage: bash scripts/smoke-environment.sh' >&2; exit 2; }
 mkdir -p "$root/evidence/environment"

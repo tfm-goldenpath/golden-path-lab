@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Scanner preparation/re-evaluation using shared operations. No Kubernetes requests.
 set -Eeuo pipefail
-root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd -P)
+entry_file=$(realpath -e -- "${BASH_SOURCE[0]}")
+root=$(cd -- "$(dirname -- "$entry_file")/../.." && pwd -P)
 cd "$root"
 source versions.env
 for module in context lab delivery; do source "scripts/lib/$module.sh"; done

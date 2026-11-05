@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Same hosted tool installation as lane B; setup is excluded from delivery time.
 set -Eeuo pipefail
-cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+entry_file=$(realpath -e -- "${BASH_SOURCE[0]}")
+cd -- "$(dirname -- "$entry_file")/.."
 source versions.env
 [[ "$(node --version)" == "v$NODE_VERSION" && "$(npm --version)" == "$NPM_VERSION" ]]
 npm ci --prefix tooling --ignore-scripts --no-audit --no-fund

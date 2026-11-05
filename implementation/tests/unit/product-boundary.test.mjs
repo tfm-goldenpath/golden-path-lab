@@ -157,3 +157,68 @@ test('product and laboratory service capture preserve the same JSON and logical 
  assert.ok(product.files.some(f=>f.path==='src/index.js'));
  for(const file of product.files) {assert.deepEqual(Object.keys(file),['path','mode','sha256','content']);assert.match(file.sha256,/^[a-f0-9]{64}$/);}
 });
+
+// Synthetic repository: actual legacy file link and coordinator/context; no
+// infrastructure implementations are installed. Cleanup only prints the state.
+function legacyLabFixture(t) {
+ const d=temporary(t),root=join(d,'implementation'),old=join(d,'implementacion');
+ for(const p of ['scripts/lib','tests/scenarios']) mkdirSync(join(root,p),{recursive:true});
+ mkdirSync(join(d,'src/lib'),{recursive:true});mkdirSync(join(old,'scripts'),{recursive:true});
+ cpSync(join(repository,'src/lib/context.sh'),join(d,'src/lib/context.sh'));
+ for(const p of ['scripts/demo.sh','scripts/lib/context.sh','versions.env']) cpSync(join(implementation,p),join(root,p));
+ symlinkSync('../../implementation/scripts/demo.sh',join(old,'scripts/demo.sh'));
+ symlinkSync('../../implementation/scripts/lib',join(old,'scripts/lib'));
+ symlinkSync('../implementation/versions.env',join(old,'versions.env'));
+ symlinkSync('../implementation/tests',join(old,'tests'));
+ for(const name of ['delivery','attestations','workload']) writeFileSync(join(root,`scripts/lib/${name}.sh`),'');
+ for(const name of ['l01','f13','f07','f08','sbom','provenance','results','l05','runtime','f11','vulnerabilities']) writeFileSync(join(root,`tests/scenarios/${name}.sh`),'');
+ writeFileSync(join(root,'scripts/lib/lab.sh'),`lab_check_environment() { printf 'preflight:%s:%s:%s:%s:%s\\n' "$root" "$PWD" "$mode" "$phase" "$GP_TEST_VALUE"; exit 37; }
+cleanup() { printf 'cleanup:%s:%s:%s:%s\\n' "$root" "$state_dir" "$private" "$evidence_root"; return 23; }\n`);
+ return {d,root,old,entry:join(old,'scripts/demo.sh')};
+}
+test('legacy demo local reaches canonical preflight and forwards mode, phase, environment and status',t=>{
+ const {d,root,old,entry}=legacyLabFixture(t);
+ for(const cwd of [d,root,old,join(old,'scripts'),'/tmp']) {
+  const r=spawnSync('bash',[cwd===join(old,'scripts')?'demo.sh':entry,'local','reference'],{cwd,encoding:'utf8',env:{...process.env,BASH_ENV:'',GP_TEST_VALUE:'value with spaces'}});
+  assert.equal(r.status,37,r.stderr);assert.equal(r.stdout,`preflight:${root}:${root}:local:reference:value with spaces\n`);
+  for(const args of [['bad-mode'],['local','bad-phase']]) assert.equal(run('bash',[entry,...args],cwd).status,2);
+ }
+ const r=spawnSync('bash',[entry,'local'],{cwd:d,encoding:'utf8',env:{...process.env,BASH_ENV:'',GP_TEST_VALUE:'default'}});
+ assert.equal(r.status,37,r.stderr);assert.match(r.stdout,/:local:run:default/);
+});
+for(const historical of [false,true]) test(`legacy demo cleanup validates saved roots without deleting resources; historical=${historical}`,t=>{
+ const {d,root,old,entry}=legacyLabFixture(t),original=historical?old:root;
+ const state=join(original,'evidence/raw/run-synthetic'),privatePath=join(original,'.tmp/private-synthetic');
+ mkdirSync(state,{recursive:true});mkdirSync(privatePath,{recursive:true});
+ const saved={mode:'local',private:privatePath,cluster:'tfm-demo-run-synthetic',registry:'tfm-zot-run-synthetic',builder:'tfm-build-run-synthetic'};
+ const stateFile=join(state,'state.json');writeFileSync(stateFile,JSON.stringify(saved));
+ const execute=(cwd,selected=state)=>spawnSync('bash',[cwd===join(old,'scripts')?'demo.sh':entry,'local','cleanup'],{cwd,encoding:'utf8',env:{...process.env,BASH_ENV:'',GP_STATE_DIR:selected}});
+ for(const cwd of [d,root,join(old,'scripts'),'/tmp']) {
+  const r=execute(cwd);assert.equal(r.status,23,r.stderr);
+  assert.equal(r.stdout,`cleanup:${root}:${state}:${privatePath}:${original}/evidence\n`);
+  assert.equal(readFileSync(stateFile,'utf8'),JSON.stringify(saved));assert.ok(existsSync(privatePath));
+ }
+ for(const badPrivate of [join(d,'.tmp/private-foreign'),join(historical?root:old,'.tmp/private-mismatch')]) {
+  writeFileSync(stateFile,JSON.stringify({...saved,private:badPrivate}));
+  const r=execute('/tmp');assert.equal(r.status,1);assert.match(r.stderr,/Invalid state resources/);assert.equal(r.stdout,'');
+ }
+ const foreign=join(d,'foreign/run-synthetic');mkdirSync(foreign,{recursive:true});
+ writeFileSync(join(foreign,'state.json'),JSON.stringify(saved));
+ const r=execute('/tmp',foreign);assert.equal(r.status,1);assert.match(r.stderr,/State is outside the lab/);assert.equal(r.stdout,'');
+});
+
+const legacyRootEntries=['demo.sh','paired-delivery.sh','paired-cleanup.sh','paired-dependencies.sh','check-environment.sh','check-policies.sh','install-security-tools.sh','smoke-environment.sh','defense-demo.sh','defense-demo/adapters.sh','defense-demo/early-adapters.sh'];
+for(const name of legacyRootEntries) test(`legacy ${name} startup selects the canonical root`,t=>{
+ const d=temporary(t),root=join(d,'implementation'),old=join(d,'implementacion');
+ const canonical=join(root,'scripts',name),alias=join(old,'scripts',name);
+ mkdirSync(dirname(canonical),{recursive:true});mkdirSync(dirname(alias),{recursive:true});
+ const lines=readFileSync(join(implementation,'scripts',name),'utf8').split('\n');
+ const end=lines.findIndex(line=>line.startsWith('root=$(cd') || line.startsWith('cd -- '));
+ assert.ok(end>=0);
+ // Execute the real entry's startup only; installation, infrastructure and
+ // session operations are deliberately outside this bounded unit check.
+ writeFileSync(canonical,lines.slice(0,end+1).join('\n')+'\nprintf "%s" "${root:-$PWD}"\n');
+ symlinkSync(canonical,alias);
+ for(const cwd of [d,dirname(alias),'/tmp'])
+  assert.equal(pass(run('bash',[cwd===dirname(alias)?name.split('/').at(-1):alias],cwd)),root);
+});

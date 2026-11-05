@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # One legitimate arm. No demo/scenario sequence is invoked.
 set -Eeuo pipefail
-root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
+entry_file=$(realpath -e -- "${BASH_SOURCE[0]}")
+root=$(cd -- "$(dirname -- "$entry_file")/.." && pwd -P)
 cd "$root"
 source versions.env
 for module in context lab delivery attestations workload; do source "$root/scripts/lib/$module.sh"; done
@@ -50,15 +51,34 @@ if [[ "$phase" == bootstrap ]]; then
   docker info --format '{{json .}}' | jq '{NCPU,MemTotal,ServerVersion,Driver,CgroupVersion,OSType,Architecture}' > "$state_dir/resources.json"
   k get nodes -o json > "$state_dir/nodes.json"
   warmup=$(jq -er .warmupSource "$pair_dir/pair.json")
-  git diff "$warmup" "$commit" -- services/quotes-node/src > "$state_dir/application-change.txt"
-  git rev-parse "$warmup:implementation/services/quotes-node/src" "$commit:implementation/services/quotes-node/src" > "$state_dir/application-trees.txt"
+  # Like L05, select each path from its immutable tree, not the checkout.
+  paired_service_path() {
+    local revision=$1 candidate
+    [[ "$revision" =~ ^[a-f0-9]{40}$ && "$(git -C "$root/.." cat-file -t "$revision")" == commit ]] || fail 'Expected an immutable commit for the service tree.'
+    for candidate in implementation/services/quotes-node implementacion/services/quotes-node; do
+      if git -C "$root/.." cat-file -e "$revision:$candidate" 2>/dev/null; then
+        [[ "$(git -C "$root/.." cat-file -t "$revision:$candidate")" == tree &&
+           "$(git -C "$root/.." cat-file -t "$revision:$candidate/src")" == tree ]] || fail "Invalid service tree: $revision:$candidate"
+        printf '%s\n' "$candidate"
+        return
+      fi
+    done
+    fail "Missing service tree: $revision"
+  }
+  warmup_service=$(paired_service_path "$warmup") || exit $?
+  target_service=$(paired_service_path "$commit") || exit $?
+  warmup_tree=$(git -C "$root/.." rev-parse "$warmup:$warmup_service/src")
+  target_tree=$(git -C "$root/.." rev-parse "$commit:$target_service/src")
+  [[ "$warmup_tree" != "$target_tree" ]] || fail 'Paired delivery requires actual application source changes.'
+  git -C "$root/.." diff "$warmup_tree" "$target_tree" > "$state_dir/application-change.txt"
+  printf '%s\n' "$warmup_tree" "$target_tree" > "$state_dir/application-trees.txt"
   mkdir "$private/warmup"
   # Export from the repository root: a subdirectory cwd scopes archive paths
   # and otherwise yields an empty archive for this service-tree object.
-  git -C "$root/.." archive "$warmup:implementation/services/quotes-node" | tar -x -C "$private/warmup"
+  git -C "$root/.." archive "$warmup:$warmup_service" | tar -x -C "$private/warmup"
   # Use the measured Dockerfile and pinned base for both cache preparations;
   # application/package bytes come from the immutable warmup revision.
-  cp services/quotes-node/Dockerfile "$private/warmup/Dockerfile"
+  cp "$root/services/quotes-node/Dockerfile" "$private/warmup/Dockerfile"
   shared_private=$private; shared_cluster=$cluster; shared_repo=$image_repo
   for arm in R G; do
     create_state

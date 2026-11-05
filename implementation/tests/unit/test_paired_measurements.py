@@ -344,14 +344,15 @@ class PreparedSbomContract(unittest.TestCase):
    self.assertEqual(result.returncode,code,result.stderr)
 
 class WarmupSourceExport(unittest.TestCase):
- def test_actual_warmup_export_from_implementation_directory(self):
-  # Synthetic Git history reproduces cwd scoping without requiring network or
-  # historical project objects in CI's shallow checkout.
+ # Execute the production preparation block, as in the original CWD regression.
+ # Only infrastructure preceding it and measured builds following it are omitted.
+ def prepare(self, old_layout, new_layout, cwd_name, change=True, invalid=None):
   script=(ROOT/'scripts/paired-delivery.sh').read_text()
-  preparation=script[script.index('  mkdir "$private/warmup"'):script.index('  shared_private=')]
-  with tempfile.TemporaryDirectory() as temp:
-   repo=Path(temp)/'repo';implementation=repo/'implementation';service=implementation/'services/quotes-node'
-   (service/'src').mkdir(parents=True);private=Path(temp)/'private';private.mkdir()
+  preparation=script[script.index('  warmup=$(jq'):script.index('  shared_private=')]
+  with tempfile.TemporaryDirectory(prefix='paired-source-unit-') as temp:
+   repo=Path(temp)/'repo';repo.mkdir();implementation=repo/'implementation'
+   service=repo/old_layout/'services/quotes-node';(service/'src').mkdir(parents=True)
+   private=Path(temp)/'private';private.mkdir();state=Path(temp)/'state';state.mkdir()
    inputs={'package.json':b'{"name":"synthetic-warmup"}\n','package-lock.json':b'{"lockfileVersion":3}\n',
            'src/server.js':b'// synthetic historical application\n','.dockerignore':b'node_modules\n','Dockerfile':b'# historical Dockerfile\n'}
    for name,data in inputs.items():(service/name).write_bytes(data)
@@ -359,17 +360,56 @@ class WarmupSourceExport(unittest.TestCase):
     return subprocess.check_output(['git','-C',str(repo),'-c','user.name=Fixture','-c','user.email=fixture@example.invalid','-c','commit.gpgsign=false',*args],stderr=subprocess.PIPE)
    git_fixture('init','-q');git_fixture('add','.');git_fixture('commit','-qm','Synthetic warmup')
    warmup=git_fixture('rev-parse','HEAD').decode().strip()
+   if old_layout!=new_layout:
+    (repo/old_layout).rename(repo/new_layout);service=repo/new_layout/'services/quotes-node'
+   if change:(service/'src/server.js').write_bytes(b'// synthetic measured application\n')
+   git_fixture('add','.');git_fixture('commit','--allow-empty','-qm','Synthetic target')
+   commit=git_fixture('rev-parse','HEAD').decode().strip()
+   if invalid=='revision-tree':
+    warmup=git_fixture('rev-parse',warmup+'^{tree}').decode().strip()
+   elif invalid:
+    import shutil
+    target=service if invalid in ['service-blob','missing-service'] else service/'src'
+    shutil.rmtree(target)
+    if not invalid.startswith('missing'):target.write_text('synthetic invalid tree')
+    git_fixture('add','.');git_fixture('commit','-qm','Invalid service tree')
+    commit=git_fixture('rev-parse','HEAD').decode().strip()
+   # The checkout layout must not select either immutable revision's path.
+   implementation.mkdir(exist_ok=True)
+   measured=implementation/'services/quotes-node'
+   if measured.is_file():measured.unlink()
+   measured.mkdir(parents=True,exist_ok=True)
    current_dockerfile=(ROOT/'services/quotes-node/Dockerfile').read_bytes()
-   (service/'Dockerfile').write_bytes(current_dockerfile)
-   (service/'src/server.js').write_bytes(b'// synthetic measured application\n')
-   git_fixture('add','.');git_fixture('commit','-qm','Synthetic measured source')
-   result=subprocess.run(['bash','-euo','pipefail','-c',preparation],cwd=implementation,
-    env=dict(os.environ,root=str(implementation),private=str(private),warmup=warmup),capture_output=True,text=True)
+   (measured/'Dockerfile').write_bytes(current_dockerfile)
+   (state/'pair.json').write_text(json.dumps({'warmupSource':warmup}))
+   result=subprocess.run(['bash','-euo','pipefail','-c','fail() { echo "$*" >&2; exit 1; };\n'+preparation],
+    cwd=implementation if cwd_name=='implementation' else temp,
+    env=dict(os.environ,root=str(implementation),private=str(private),state_dir=str(state),pair_dir=str(state),commit=commit),capture_output=True,text=True)
+   if invalid or not change:
+    self.assertNotEqual(result.returncode,0,result.stdout+result.stderr)
+    self.assertRegex(result.stderr,'service tree|application source changes')
+    self.assertFalse((private/'warmup').exists())
+    return
    self.assertEqual(result.returncode,0,result.stderr)
-   context=private/'warmup'
    for name,expected in inputs.items():
-    exported=context/name
+    exported=private/'warmup'/name
     self.assertTrue(exported.is_file(),f'Missing warmup input: {name}')
     self.assertEqual(exported.read_bytes(),current_dockerfile if name=='Dockerfile' else expected)
+   trees=(state/'application-trees.txt').read_text().splitlines()
+   self.assertEqual(trees,[git_fixture('rev-parse',f'{warmup}:{old_layout}/services/quotes-node/src').decode().strip(),
+                           git_fixture('rev-parse',f'{commit}:{new_layout}/services/quotes-node/src').decode().strip()])
+   report=(state/'application-change.txt').read_text()
+   self.assertIn('-// synthetic historical application',report)
+   self.assertIn('+// synthetic measured application',report)
+   self.assertNotIn('package.json',report)
+ def test_actual_warmup_export_across_layouts_and_working_directories(self):
+  for old,new in [('implementacion','implementation'),('implementation','implementation'),('implementacion','implementacion')]:
+   for cwd in ['implementation','unrelated']:
+    with self.subTest(old=old,new=new,cwd=cwd):self.prepare(old,new,cwd)
+ def test_rename_only_is_not_an_application_change(self):
+  self.prepare('implementacion','implementation','implementation',change=False)
+ def test_missing_and_invalid_service_trees(self):
+  for invalid in ['missing','missing-service','service-blob','src-blob','revision-tree']:
+   with self.subTest(invalid=invalid):self.prepare('implementacion','implementation','implementation',invalid=invalid)
 
 if __name__=='__main__':unittest.main()
