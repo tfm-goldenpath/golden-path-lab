@@ -152,9 +152,15 @@ Las nuevas ejecuciones usan `implementation/`; `bin/` y `src/` mantienen entrada
 y motor, y `lab/` la orientación del laboratorio. No completa la separación total.
 Linux Codespaces conserva enlaces Git para rutas de fuente antiguas y un Makefile
 `implementacion/Makefile` que delega cambiando al CWD canónico. No hay dos copias.
-Las entradas admiten help, local y cleanup desde repositorio, implementación,
-directorio de la entrada o ruta absoluta desde otro CWD. Las plataformas sin
-enlaces Git deben utilizar comandos canónicos.
+`bin/deliver` y ambas grafías de `scripts/deliver.sh` admiten help, local y cleanup.
+También se conservan los comandos directos de laboratorio:
+`bash implementacion/scripts/demo.sh local` y
+`GP_STATE_DIR=/ruta/absoluta/original/run-directory bash implementacion/scripts/demo.sh local cleanup`.
+El coordinador y las otras entradas shell conservadas resuelven el fichero
+invocado antes de calcular la raíz canónica. Regresiones acotadas comprueban
+preflight y validación de estado de demo desde repositorio, directorio de entrada
+y otro CWD con ruta absoluta; no crean ni eliminan recursos reales.
+Las plataformas sin enlaces Git deben utilizar comandos canónicos.
 
 Evidencias, DB y estado privado ignorados **no se mueven**. Permanecen bajo
 `implementacion/evidence/` y `implementacion/.tmp/`. Cleanup acepta el directorio

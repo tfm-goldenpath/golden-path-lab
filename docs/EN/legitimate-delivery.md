@@ -152,8 +152,14 @@ New executions use `implementation/`; `bin/` and `src/` retain their entry/engin
 roles, and `lab/` retains laboratory guidance. This rename does not finish the
 product/laboratory separation. Linux Codespaces checks out tracked compatibility
 links for old source paths and a delegating `implementacion/Makefile`; there is
-one implementation. Both script paths support help, local and cleanup from the
-repository, implementation, entry directory or an unrelated CWD via absolute path.
+one implementation. `bin/deliver` and both spellings of `scripts/deliver.sh`
+support help, local and cleanup. Direct laboratory commands also remain supported:
+`bash implementacion/scripts/demo.sh local` and
+`GP_STATE_DIR=/absolute/original/run-directory bash implementacion/scripts/demo.sh local cleanup`.
+The laboratory coordinator and other retained shell entries resolve the invoked
+file before deriving the canonical root. Bounded regressions exercise legacy demo
+preflight and saved-state validation from the repository, entry directory and an
+unrelated CWD via absolute path; they do not provision or delete real resources.
 Directory links are compatibility access, never the selected delivery root.
 Platforms that do not preserve Git symlinks must use canonical commands.
 

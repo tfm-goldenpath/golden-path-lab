@@ -192,6 +192,22 @@ fuente comprometida y claims firmados. `delivery_build` posee `build-inputs.json
 el fallo detiene antes del build. No se añade esquema ni autenticación alternativos.
 `contracts.mjs` mantiene CLI y exports; estos llamadores no justifican dividirlo.
 
+Las entradas shell de laboratorio que calculan `root` desde su ubicación resuelven
+primero el fichero con `realpath -e`; los directorios no resuelven enlaces de fichero.
+Es inicialización de la entrada, no trabajo al importar módulos. Se mantiene la
+validación estricta de raíz canónica. Cleanup histórico selecciona únicamente las
+raíces originales exactas de evidencia/privados del estado; no mueve estado ni
+permite reanudar entre revisiones.
+
+El bootstrap pareado resuelve por separado la ruta del servicio en cada commit
+Git inmutable, exige objetos tree para servicio y `src`, y compara los IDs de
+`src`. Un cambio de nombre sin cambios de aplicación no basta. El informe compara
+esos árboles y el archivo de warmup se exporta desde la raíz del repositorio,
+conservando los bytes originales de aplicación/paquetes. Solo se superpone el
+Dockerfile medido, con la misma base fijada y cachés R/G aisladas. No cambian la
+revisión congelada ni el protocolo. Como la selección L05/release, contempla los
+directorios históricos conocidos, sin crear configuración arbitraria de servicios.
+
 Se mantienen imports y funciones compatibles, además del estado compartido aún
 necesario. El siguiente paso acotado es la plantilla de consumidor independiente
 tras revisión de estas interfaces.

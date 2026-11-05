@@ -521,3 +521,116 @@ only, so the runtime integrations remain applicable to their recorded boundary.
 Private recovery verification derives each retained key's public key and matches
 it to the run's retained public anchor; kubeconfig contexts match their run owner.
 Final push/PR CI URLs and status are reported in the PR handoff on its exact head.
+
+## PR #75 review fixes — 5 November 2026
+
+The review of `ed654393bf678146fc84bead9d3acab4ac2f4f4c` found two migration
+defects. No later commits existed when work resumed on the same branch/PR.
+Runtime fixes and regressions are committed at
+**`e3008cb077b09e36002c0581738725618ceee94d`**; the subsequent handoff changes
+only documentation. Human review remains pending.
+
+1. Paired bootstrap incorrectly requested the new directory spelling from the
+   frozen warmup commit. `paired-delivery.sh` now resolves each commit's service
+   path separately, requires commit/service/`src` object types, compares the
+   application trees and exports from the repository root. The change report
+   compares those same trees. Rename-only revisions fail the application-change
+   requirement. The frozen SHA, protocol, measured Dockerfile/base overlay,
+   R/G cache isolation and timing boundaries are unchanged. Existing L05/release
+   immutable-path selection informed the bounded resolver; no migration framework
+   or new public interface was introduced.
+2. Direct legacy `demo.sh` followed directory ancestry but not its file symlink,
+   selecting `implementacion/` and failing the strict canonical-root check.
+   The coordinator now resolves its invoked file first. The same confirmed
+   startup pattern is corrected in paired delivery/cleanup/dependencies,
+   environment/policy/install/smoke entries and defense entry/adapters: eleven
+   shell entries total. `deliver.sh` already delegates correctly; the manual
+   session template and F11 static helper use their documented Git-root lookup.
+   Context validation, imports, saved-state roots, downstream operations and
+   coordinator cleanup ownership are unchanged.
+
+### Executable regressions and historical export
+
+Evidence is retained under
+`implementation/evidence/raw/pr75-review-fixes-20261105/`. Before the runtime
+fix, new uncommitted regressions ran against the reviewed implementation:
+`paired-red.log` records the historical lookup/CWD failures,
+`legacy-red.log` the actual coordinator's wrong-root failures, and
+`aliases-red.log` the other startup-root mismatches. These are observed failures,
+not a reconstructed TDD history. Synthetic fixtures are labelled unit tests.
+
+- `test_paired_measurements.py`: **57 tests PASS** on the fixed runtime. The
+  warmup regression executes the actual production preparation block in real
+  temporary Git repositories, covering old→new, old→old and new→new layouts,
+  implementation/unrelated CWDs, original application/package bytes, the measured
+  Dockerfile, tree reports, rename-only rejection, missing service/`src` trees,
+  blobs where trees are required and a non-commit revision object.
+- Focused product-boundary, legitimate-delivery, orchestration and L05 tests:
+  **133 PASS** during development. The final legacy-only rerun has **14 PASS**,
+  including real coordinator/context initialization with bounded stage stubs,
+  argument/environment/status forwarding, repository/implementation/entry/unrelated
+  CWDs, canonical and historical cleanup roots, foreign state and private-root
+  mismatches. Cleanup only prints the synthetic saved state; no historical
+  resources are reachable. Import-purity and protected-stage failures remain
+  covered by the existing suite.
+- One development rerun omitted the pinned-tool PATH and could not find Conftest
+  (`paired-all-02.log`). The corrected run (`paired-all-03.log`) passes; no pin or
+  policy changed. Earlier failed output remains preserved.
+- Actual frozen warmup **`7243334fe4ee7073801a86b25c90986b7d3c5ece`**:
+  read-only production lookup/export **PASS**, from implementation and unrelated
+  CWDs, on fix source `e3008cb`. Both retained exports contain ten verified files;
+  application/package bytes match their original Git blobs. Only the intended
+  measured Dockerfile differs. `historical-export.json` records exact trees,
+  file hashes and original paths under
+  `/tmp/gp-pr75-historical-export-uo9o85oh/`. Console logs, the executed production
+  block and export receipts remain retained. This is not cache warming, hosted
+  execution or a measurement campaign.
+
+The canonical shared checks passed against committed runtime `e3008cb`, with
+these documentation updates present in the working tree:
+
+| Check | Result |
+| --- | --- |
+| `make -C implementation doctor` | PASS |
+| `make -C implementation test` | PASS: 9 environment, 1,043 service/unit, 130 Python policy, Conftest/Kyverno, offline Cosign, static workflows, 153 defense and 22 release tests |
+| `python3 docs/EN/maintainers/check_inventory.py` | PASS: exact 816 tracked paths |
+| `python3 -I -S -m unittest discover -s docs/EN/maintainers -p 'test_inventory.py'` | PASS: 11 tests |
+| Existing documentation link/anchor procedure, scoped to the six affected guides | PASS: 303 relative links/anchors |
+| `git diff --check` | PASS |
+
+`doctor.log`, `shared-01.log`, inventory logs and `links.log` retain the outputs.
+Checks ran sequentially; existing tool/dependency pins were reused. Final push
+and PR CI results are recorded on the exact final commit in the PR handoff.
+
+### Integration applicability and preservation
+
+Both prior real integration receipts remain attributed solely to
+**`ff8d3fca5d8a9e3fada437a915df8047830b76e1`**, with the original observations,
+source snapshots and limitations above. No integration is relabelled as a run of
+this fix. `integration-impact.json` compares all **61 product inputs**: none
+changed. The laboratory capture changes in the eleven shell entries listed
+above and two regression files; the exact path list is retained in that report.
+The runtime delta is entry resolution and immutable warmup lookup/report/export,
+so focused executable compatibility tests cover the affected behavior. No
+product or representative laboratory integration was rerun; downstream build,
+scan, trust, admission, workload and cleanup implementations did not change.
+Hosted OIDC and paired workflow execution remain **NOT_EXECUTED**. No workflow
+was dispatched, no twenty-scenario/measurement campaign was started, and optional
+L05 in the earlier demo remains NOT_EXECUTED.
+
+The retained product and laboratory package hashes still match
+`fc2b4eaf7dc6170f64cf8cadc63728ba6c5f3fc2c295c9885aab329c762af94c` and
+`489ddc385ff6b3a5be896d81a1e66e29511edce48f37078a17e94fdbd8d92910`, respectively.
+Original evidence, archives, database snapshots, private recovery and the two
+unrelated untracked package files remain in place. No Docker resources were
+created by these fixes; the three pre-existing volumes remain untouched. Owned
+synthetic test directories are retired by their existing test teardown; the two
+historical exports are deliberately retained. Workspace/Docker capacity remains
+**8.5 GiB free**, with **102 GiB** free on separate `/tmp`, above the unchanged
+3 GiB reserve. `task-receipt.json` records retained hashes, volumes and capacity.
+
+Compatibility guidance is corrected in EN/ES. No inventory paths were added or
+moved. Custody, human acceptance, admission-selection and license/private-reporting
+remain pending. The independent consumer template is still a proposed next branch
+after review, not work performed by this fix. Rollback reverts source changes
+while retaining all original evidence and recovery material.

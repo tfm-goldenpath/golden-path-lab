@@ -199,6 +199,21 @@ failure stops before Docker build. Partial output is never authorization. No new
 schema or cryptographic claim is introduced. `contracts.mjs` retains its existing
 CLI and exports: these callers justify no additional split.
 
+Laboratory shell entries that derive `root` from their own location first resolve
+the invoked file with `realpath -e`; directory ancestry alone misses file links.
+This is entry initialization, not import-time work. Canonical-root checks remain
+strict. Historical cleanup selects only the exact original evidence/private
+roots in saved state; no state is moved and no cross-revision resume is added.
+
+Paired bootstrap resolves the service path separately in each immutable Git
+commit, validates both service and `src` objects as trees, and compares the `src`
+tree IDs. A rename alone cannot qualify as an application change. The change
+report compares those trees, and warmup archive export runs from the repository
+root, retaining original application/package bytes. Only the measured Dockerfile
+is overlaid, with the same pinned base and isolated R/G caches. The frozen warmup
+revision and protocol remain unchanged. Like L05/release selection, this handles
+known historical layouts; it is not a service configuration interface.
+
 Compatibility imports and exported functions remain supported. These contracts
 remove the demonstrated snapshot coupling, not all shared-process state. The
 next bounded step is an independent consumer template after interface review.
