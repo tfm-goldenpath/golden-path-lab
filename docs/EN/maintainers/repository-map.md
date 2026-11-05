@@ -65,15 +65,15 @@ The optional [context retrieval pilot](context-retrieval.md) records a bounded
 A/B/C comparison; it does not change these navigation or ownership rules.
 
 <!-- inventory-summary:start -->
-816 tracked paths; 487 individually enumerated scripts/helpers/tests.
+833 tracked paths; 494 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 410 |
+| developer | 414 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 273 |
-| product | 41 |
+| product | 54 |
 | shared | 28 |
 
 121 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
@@ -84,6 +84,7 @@ Current physical roots include `bin/` (delivery entry), `src/` (shared delivery
 engine), `.github/` (automation and contribution instructions), `.devcontainer/`
 (workspace configurations) and `implementation/` (selected service, policies,
 schemas, pinned tooling, laboratory adapters, tests, demo and measurements).
+`templates/node-http/` contains the independent starter owned by service teams.
 `docs/` and `lab/` added by P01 are navigation/maintenance guidance. Historical
 `registros/`, release inputs/notes and the Pages lock are retained in place.
 There are no tracked composite actions at the base. The unrelated untracked root

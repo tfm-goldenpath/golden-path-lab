@@ -38,9 +38,17 @@ test('separate repository, exact pin, unrelated CWD, no laboratory dependencies 
  const cli=command('node',[join(e,'src/consumer.mjs'),'capture',e,c],'/tmp'); assert.equal(JSON.parse(cli).commit,consumerCommit);
  command('node',['--test',join(c,'service/test/server.test.js')],c);
  command('conftest',['test','--policy',join(e,'implementation/policies/conftest'),'--namespace','workflow',join(c,'.github/workflows/ci.yml')],'/tmp');
+ const state=join(c,'observations');mkdirSync(state);
+ const workflowStage=()=>spawnSync('bash',['-c','set -Eeuo pipefail; source "$1/src/lib/context.sh"; source "$1/src/lib/delivery.sh"; root="$1/implementation"; consumer_root="$2"; state_dir="$3"; delivery_workflow_policy','test',e,c,state],{cwd:'/tmp',encoding:'utf8'});
+ assert.equal(workflowStage().status,0);
+ const build=JSON.parse(command('node',[join(e,'src/capture-build-inputs.mjs'),join(c,'service'),'base',consumerCommit,'','','consumer-v1',c],'/tmp'));
+ assert.ok(build.files.some(f=>f.path==='src/server.js' && f.content.includes('independent-node')));
  const workflow=join(c,'.github/workflows/ci.yml');writeFileSync(workflow,readFileSync(workflow,'utf8').replace(/actions\/checkout@[a-f0-9]{40}/,'actions/checkout@main'));
+ assert.equal(workflowStage().status,1);
+ assert.match(readFileSync(join(state,'workflow-policy.json'),'utf8'),/ACTION_SHA/);
  const policy=spawnSync('conftest',['test','--policy',join(e,'implementation/policies/conftest'),'--namespace','workflow',workflow],{encoding:'utf8'});
  assert.equal(policy.status,1);assert.match(policy.stdout,/ACTION_SHA/);
+ rmSync(workflow);const missing=workflowStage();assert.notEqual(missing.status,0);assert.match(missing.stderr,/No workflows/);
 });
 test('configuration rejects unknown keys, mutable pins and arbitrary roots',()=>{
  const config={schema:CONSUMER_PROFILE,repository:'https://example.invalid/consumer',service:'service',engine:{repository:ENGINE_REPOSITORY,commit:'a'.repeat(40)}};
