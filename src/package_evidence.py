@@ -93,9 +93,12 @@ def package(source, output, status, profile="delivery-v1"):
         raise ValueError('Invalid legitimate delivery result')
     if any(re.match(r'^(?:F[0-9]{2}|L[0-9]{2}|measurement|manual-task|defense-demo)', p.name) for p in names):
         raise ValueError('Laboratory evidence in delivery profile')
+    execution_profile = result.get('profile', 'delivery-v1')
+    scope = 'independent Node consumer' if execution_profile == 'consumer-v1' else 'quotes-node'
     summary = {'schema': 'legitimate-delivery-package/v1', 'profile': profile,
+        'executionProfile': execution_profile,
         'run': source.name, 'status': status, 'result': 'result.json',
-        'scope': 'One legitimate local quotes-node delivery; no scenario, replacement, measurement or hosted claim',
+        'scope': f'One legitimate local {scope} delivery; no scenario, replacement, measurement or hosted claim',
         'secretsIncluded': False}
     write_package(source, output, status, profile, names, summary)
 

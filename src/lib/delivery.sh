@@ -3,7 +3,11 @@
 
 delivery_service_tests() {
   if [[ "${execution_profile:-laboratory}" == delivery-v1 || "${execution_profile:-laboratory}" == consumer-v1 ]]; then
-    env -u NODE_TEST_CONTEXT node --test --test-reporter=tap "${service_root:-services/quotes-node}"/test/*.test.js > "$state_dir/unit-tests.log" 2>&1
+    if [[ "${execution_profile}" == consumer-v1 ]]; then
+      (cd -- "$service_root"; env -u NODE_TEST_CONTEXT node --test --test-reporter=tap test/*.test.js) > "$state_dir/unit-tests.log" 2>&1
+    else
+      env -u NODE_TEST_CONTEXT node --test --test-reporter=tap "${service_root:-services/quotes-node}"/test/*.test.js > "$state_dir/unit-tests.log" 2>&1
+    fi
     node "$contract" service-tests "$state_dir/unit-tests.log"
     return
   fi

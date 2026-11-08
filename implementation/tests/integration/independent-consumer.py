@@ -28,6 +28,17 @@ def main():
     run(['git', 'remote', 'add', 'origin', 'https://github.com/tfm-goldenpath/golden-path-lab'], engine)
     run(['bash', str(engine/'bin/deliver'), 'init', str(consumer), '--repository',
          'https://example.invalid/golden-path-consumer-validation', '--engine-commit', receipt['commit']], Path('/tmp'))
+    # This real delivery must exercise service CWD, beyond module-relative imports.
+    (consumer/'service/test/fixtures').mkdir()
+    (consumer/'service/test/fixtures/message.txt').write_text('independent consumer fixture\n')
+    (consumer/'service/test/cwd.test.js').write_text("""import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+test('service-relative package and fixture belong to the consumer',()=>{
+  assert.equal(JSON.parse(readFileSync('./package.json')).name,'independent-node');
+  assert.equal(readFileSync('./test/fixtures/message.txt','utf8'),'independent consumer fixture\\n');
+});
+""")
     run(['git', 'init', '-q'], consumer)
     run(['git', 'add', '.'], consumer)
     run(['git', '-c', 'user.name=Local validation fixture', '-c', 'user.email=fixture@example.invalid',
@@ -59,6 +70,13 @@ def main():
     assert json.loads((state/'finalization.json').read_text())['status'] == 'PASS'
     captured = json.loads((state/'consumer-inputs.json').read_text())
     assert captured['commit'] == consumer_commit and captured['binding']['engineCommit'] == receipt['commit']
+    assert captured['remoteOriginVerified'] is False
+    assert 'service/test/cwd.test.js' in [f['path'] for f in captured['source']['files']]
+    assert 'service-relative package and fixture belong to the consumer' in (state/'unit-tests.log').read_text()
+    assert json.loads((state/'result.json').read_text())['profile'] == 'consumer-v1'
+    summary = json.loads((state/'execution-summary.json').read_text())
+    assert summary['profile'] == 'delivery-v1' and summary['executionProfile'] == 'consumer-v1'
+    assert 'independent Node consumer' in summary['scope']
     for filename, get_binding in [('verified-provenance.json', lambda p: p['buildDefinition']['externalParameters']['goldenPath']),
                                   ('verified-results.json', lambda p: p['goldenPath'])]:
         assert get_binding(json.loads((state/filename).read_text())['predicate']) == captured['binding']

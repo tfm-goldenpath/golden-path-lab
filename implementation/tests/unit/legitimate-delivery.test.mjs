@@ -276,3 +276,22 @@ test('packaging failure preserves delivery observations but marks overall finali
  assert.equal(final.status,'ERROR');assert.equal(final.packagingExitStatus,37);
  assert.equal(JSON.parse(readFileSync(join(r.state,'package-failure.json'))).status,'ERROR');
 });
+
+for(const profile of ['delivery-v1','consumer-v1']) test(`result and compatible archive describe ${profile} execution accurately`,t=>{
+ const d=directory(t),raw=join(d,'delivery-scope'),output=join(d,'packages');mkdirSync(raw);
+ writeFileSync(join(raw,'state.json'),JSON.stringify({profile}));
+ for(const args of [['delivery-init',raw],['delivery-result',raw,'1','0']]) {
+  const r=spawnSync('node',['scripts/lab-contracts.mjs',...args],{cwd:root,encoding:'utf8'});
+  assert.equal(r.status,0,r.stderr);
+ }
+ const result=JSON.parse(readFileSync(join(raw,'result.json')));
+ const scope=profile==='consumer-v1'?'independent Node consumer':'quotes-node';
+ assert.equal(result.profile,profile);assert.match(result.scope,new RegExp(scope));
+ const r=spawnSync('python3',['scripts/package-evidence.py',raw,output,'ERROR','delivery-v1'],{cwd:root,encoding:'utf8'});
+ assert.equal(r.status,0,r.stderr);
+ const summary=JSON.parse(readFileSync(join(raw,'execution-summary.json')));
+ assert.equal(summary.schema,'legitimate-delivery-package/v1');assert.equal(summary.profile,'delivery-v1');
+ assert.equal(summary.executionProfile,profile);assert.equal(summary.scope,result.scope);
+ const verify=spawnSync('python3',[join(root,'../src/verify_package.py'),join(output,'delivery-scope.tar.gz')],{encoding:'utf8'});
+ assert.equal(verify.status,0,verify.stderr);
+});

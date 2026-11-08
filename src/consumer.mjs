@@ -10,7 +10,12 @@ export const CONSUMER_PRODUCER='bin/deliver:node-http-consumer/v1';
 export const engineSources=['bin','src','templates/node-http','implementation/policies','implementation/schemas',
   'implementation/versions.env','implementation/tools.lock.json','implementation/tooling/package.json','implementation/tooling/package-lock.json'];
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const git=(root,...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+const gitBytes=(root,...args)=>execFileSync('git',['--no-replace-objects','--literal-pathspecs','-C',root,...args],{stdio:['ignore','pipe','pipe']});
+const git=(root,...args)=>gitBytes(root,...args).toString('utf8').trim();
+const head=root=>git(root,'rev-parse','--verify','HEAD^{commit}');
+function requireHead(root,commit) {
+  if(head(root)!==commit) throw new Error('Source commit changed during capture');
+}
 const read=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 function keys(value,expected) {
   if(!value || Array.isArray(value) || typeof value!=='object' || Object.keys(value).sort().join()!==expected.sort().join()) throw new Error('Unknown or missing configuration fields');
@@ -30,43 +35,57 @@ export function canonical(root) {
 // Snapshot every selected byte, including ignored/untracked additions, plus modes.
 // Consumer root node_modules is excluded by the fixed Docker allowlist.
 // Engine-generated Python caches are outside committed runtime inputs.
-export function snapshot(root,selection,engine=false) {
+export function snapshot(root,selection,engine,commit) {
+  if(!/^[a-f0-9]{40}$/.test(commit)) throw new Error('Snapshot requires an exact resolved commit');
+  requireHead(root,commit);
   const excluded=name=>(engine && name.split('/').includes('__pycache__')) || (!engine && (name==='service/node_modules' || name.startsWith('service/node_modules/')));
-  const files=[];
+  // The immutable tree, never the mutable index, defines the complete inventory.
+  // NUL records preserve spaces, tabs, newlines and Git-quoted path characters.
+  const tree=new TextDecoder('utf-8',{fatal:true}).decode(gitBytes(root,'ls-tree','-r','-z','--full-tree',commit,'--',...selection));
+  const expected=new Map();
+  for(const record of tree.split('\0').filter(Boolean)) {
+    const tab=record.indexOf('\t'), name=record.slice(tab+1);
+    if(excluded(name)) continue;
+    const match=/^(100644|100755) blob ([a-f0-9]{40})$/.exec(record.slice(0,tab));
+    if(tab<0 || !match) throw new Error('Nonregular committed input: '+name);
+    expected.set(name,{executable:match[1]==='100755',blob:match[2]});
+  }
+  const files=[],seen=new Set();
   function walk(name) {
     const file=path.join(root,name), stat=fs.lstatSync(file);
-    if(stat.isSymbolicLink()) throw new Error('Symlink in selected input: '+name);
+    if(stat.isSymbolicLink() || fs.realpathSync(file)!==file) throw new Error('Symlink in selected input: '+name);
     if(stat.isDirectory()) {
       for(const child of fs.readdirSync(file).sort()) {
         if(excluded(name+'/'+child)) continue;
         walk(name+'/'+child);
       }
     } else if(stat.isFile()) {
-      const bytes=fs.readFileSync(file), tree=git(root,'ls-tree','HEAD','--',name);
-      const match=/^(100644|100755) blob ([a-f0-9]{40})\t/.exec(tree);
+      const bytes=fs.readFileSync(file), entry=expected.get(name);
       const blob=createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
-      if(!match || match[2]!==blob || (match[1]==='100755')!==!!(stat.mode&0o111)) throw new Error('Selected input differs from committed source: '+name);
+      if(!entry || entry.blob!==blob || entry.executable!==!!(stat.mode&0o111)) throw new Error('Selected input differs from committed source: '+name);
+      seen.add(name);
       files.push({path:name,mode:(stat.mode&0o777).toString(8),sha256:hash(bytes)});
     } else throw new Error('Nonregular selected input: '+name);
   }
   selection.forEach(walk);
-  const tracked=git(root,'ls-files','-z','--',...selection).split('\0').filter(Boolean).filter(n=>!excluded(n));
-  if(tracked.some(n=>!files.some(f=>f.path===n))) throw new Error('Selected committed input is missing');
+  for(const name of expected.keys()) if(!seen.has(name)) throw new Error('Selected committed input is missing: '+name);
+  requireHead(root,commit);
   files.sort((a,b)=>a.path.localeCompare(b.path,'en'));
   return {sha256:hash(JSON.stringify(files)),files};
 }
 export function verifyEngine(engine,expected) {
   engine=canonical(engine);
-  if(git(engine,'rev-parse','HEAD')!==expected.commit || git(engine,'config','--get','remote.origin.url')!==expected.repository) throw new Error('Engine checkout repository or commit mismatch');
-  return snapshot(engine,engineSources,true);
+  if(head(engine)!==expected.commit || git(engine,'config','--get','remote.origin.url')!==expected.repository) throw new Error('Engine checkout repository or commit mismatch');
+  return snapshot(engine,engineSources,true,expected.commit);
 }
 export function captureConsumer(engine,consumer) {
   engine=canonical(engine); consumer=canonical(consumer);
   if(engine===consumer || consumer.startsWith(engine+'/') || engine.startsWith(consumer+'/')) throw new Error('Consumer must be a separate repository outside the engine');
+  const commit=head(consumer);
   if(fs.lstatSync(path.join(consumer,'golden-path.json')).isSymbolicLink()) throw new Error('Symlinked configuration');
   const config=validateConfig(read(path.join(consumer,'golden-path.json')));
   const engineSnapshot=verifyEngine(engine,config.engine);
-  const source=snapshot(consumer,['service','.github/workflows','golden-path.json']);
+  const source=snapshot(consumer,['service','.github/workflows','golden-path.json'],false,commit);
   for(const name of ['Dockerfile','.dockerignore']) if(!fs.readFileSync(path.join(consumer,'service',name)).equals(fs.readFileSync(path.join(engine,'templates/node-http/service',name)))) throw new Error('Unsupported build context '+name+'; use the fixed consumer template');
   const pkg=read(path.join(consumer,'service/package.json')), lock=read(path.join(consumer,'service/package-lock.json'));
   if(['dependencies','devDependencies','optionalDependencies','peerDependencies'].some(k=>Object.keys(pkg[k]||{}).length) || lock.lockfileVersion!==3 || Object.keys(lock.packages||{}).length!==1 || !lock.packages[''] || lock.name!==pkg.name || lock.version!==pkg.version || lock.packages[''].name!==pkg.name || lock.packages[''].version!==pkg.version) throw new Error('This profile supports locked dependency-free Node services only');
@@ -74,7 +93,7 @@ export function captureConsumer(engine,consumer) {
   let origin;
   try {origin=git(consumer,'config','--get','remote.origin.url');} catch {origin=null;}
   if(origin && origin!==config.repository) throw new Error('Consumer origin differs from expected repository');
-  const commit=git(consumer,'rev-parse','HEAD');
+  requireHead(consumer,commit); requireHead(engine,config.engine.commit);
   return {schema:CONSUMER_PROFILE,repository:config.repository,commit,remoteOriginVerified:!!origin,
     remoteVerification:'Local Git origin string only; no host authentication',source,engine:engineSnapshot,
     binding:{profile:CONSUMER_PROFILE,producer:CONSUMER_PRODUCER,engineRepository:config.engine.repository,

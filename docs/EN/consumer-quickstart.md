@@ -69,7 +69,10 @@ returns `{"status":"ok"}`; `/version` identifies `independent-node` and the
 consumer's `BUILD_COMMIT`; `/` retains the starter greeting as the first profile's
 application check. General workload/API configuration, dependencies and Java are
 later increments. Tests and workflow files are selected exclusively from the
-consumer; missing or rejected checks stop delivery.
+consumer; missing or rejected checks stop delivery. Tests run from `service/`,
+so relative fixtures and `./package.json` resolve within the consumer. Selected
+inputs are checked against the complete pinned commit tree, independent of staged
+index changes; deleting a committed input stops delivery.
 
 The seven required controls remain `unitTests`, `manifestPolicy`, `workflowPolicy`,
 `vulnerabilityPolicy`, `signature`, `sbom`, `provenance`. Image signature, SBOM,
@@ -90,7 +93,9 @@ The command prints the engine's `implementation/evidence/raw/delivery-XXXXXXXX/`
 Read `finalization.json`, `result.json` and `delivery-steps.json`; policy rejection,
 operational errors and unreached stages are different outcomes. Consumer/engine
 snapshots, configuration and authenticated statements are retained there. Verify
-all archive hashes using the pinned engine:
+all archive hashes using the pinned engine. The archive format remains
+`delivery-v1` / `legitimate-delivery-package/v1`; its summary identifies the
+execution separately as `executionProfile: consumer-v1`:
 
 ```bash
 python3 "$ENGINE/src/verify_package.py" \

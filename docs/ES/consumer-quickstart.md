@@ -68,7 +68,10 @@ sistema de archivos de solo lectura y puerto 3000. Deployment/contenedor
 y `BUILD_COMMIT` del consumidor; `/` conserva el saludo de la plantilla como
 comprobación funcional de este perfil. Configuración general, dependencias y Java
 son incrementos posteriores. Pruebas y workflows proceden solo del consumidor;
-si faltan o fallan, la entrega se detiene.
+si faltan o fallan, la entrega se detiene. Las pruebas se ejecutan desde `service/`:
+las rutas relativas y `./package.json` pertenecen al consumidor. El inventario
+completo se verifica contra el commit fijado, independientemente del índice;
+borrar un archivo versionado detiene la entrega.
 
 Siguen siendo obligatorios `unitTests`, `manifestPolicy`, `workflowPolicy`,
 `vulnerabilityPolicy`, `signature`, `sbom`, `provenance`. Firma de imagen, SBOM,
@@ -88,7 +91,9 @@ admisión no vuelve a ejecutarlos. Consulte [controles](how-it-works.md) y
 La entrega imprime `implementation/evidence/raw/delivery-XXXXXXXX/` del motor.
 Consulte `finalization.json`, `result.json` y `delivery-steps.json`: rechazo de
 política, error operativo y etapa no alcanzada son distintos. Se retienen snapshots,
-configuración y declaraciones autenticadas. Verifique todos los hashes:
+configuración y declaraciones autenticadas. El formato del archivo conserva
+`delivery-v1` / `legitimate-delivery-package/v1`; el resumen distingue la ejecución
+mediante `executionProfile: consumer-v1`. Verifique todos los hashes:
 
 ```bash
 python3 "$ENGINE/src/verify_package.py" \

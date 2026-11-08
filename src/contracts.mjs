@@ -207,7 +207,7 @@ function deliveryRecord(command, [directory, step, status]) {
   write(path.join(directory,'result.json'),{schema:'legitimate-delivery-result/v1',profile:state.profile,status:outcome,exitStatus,cleanupStatus,
     source:{repository:state.sourceRepository,commit:state.sourceCommit,snapshot:state.sourceSnapshot},configurationSha256:state.configurationSha256,
     image:state.digest?state.imageRepository+'@'+state.digest:null,stages:steps,
-    scope:'One legitimate local quotes-node delivery; no scenario, replacement, measurement or hosted claim'});
+    scope:(state.profile==='consumer-v1'?'One legitimate local independent Node consumer delivery':'One legitimate local quotes-node delivery')+'; no scenario, replacement, measurement or hosted claim'});
 }
 function main([command, ...args]) {
   switch (command) {
