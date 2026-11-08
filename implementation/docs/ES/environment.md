@@ -86,7 +86,16 @@ Al terminar se elimina el clúster temporal y la etiqueta de la imagen de sonda.
 - **Timeout DNS de BuildKit en kind:** consultar el [diagnóstico y recuperación del firewall](kind-network-firewall.md), con la solución temporal y la propuesta para Codespaces.
 - **Docker no responde:** comprobar el motor anfitrión para abrir el contenedor; dentro de él, revisar el servicio Docker-in-Docker y reabrir el devcontainer.
 - **Versión distinta:** reconstruir el devcontainer después de modificar las referencias. No sustituir valores por `latest` para continuar.
-- **Descarga o checksum incorrectos:** comprobar red, proxy y publicación oficial. La instalación se detiene ante una discrepancia.
+- **Descarga o checksum incorrectos:** el instalador muestra herramienta/versión,
+  ruta, estado HTTP, código de curl y tiempo, sin credenciales ni URLs de redirección.
+  Permite como máximo dos peticiones por ruta, 120 segundos por herramienta y
+  300 segundos de descarga total. Los fallos transitorios admitidos de URLs exactas
+  de releases de GitHub pueden usar su API oficial de assets sin autenticación;
+  otros hosts conservan la ruta primaria. Deben coincidir tag, nombre y un único
+  asset cargado. Ambas rutas exigen el SHA-256 del lock antes de extraer/instalar.
+  Un checksum incorrecto detiene la instalación sin fallback. Se conservan TLS
+  y redirecciones solo HTTPS. Si fallan ambas rutas, compruebe disponibilidad de
+  la publicación oficial/red; el fallo de bootstrap sigue siendo un fallo.
 - **Nodo sin recursos o espera agotada:** revisar logs, memoria y espacio; el fallo sigue siendo una incidencia de infraestructura.
 - **Plataforma ARM:** esta base requiere AMD64; ARM se mantiene como ampliación opcional.
 

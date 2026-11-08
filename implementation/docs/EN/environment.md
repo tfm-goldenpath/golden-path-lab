@@ -86,7 +86,16 @@ Cleanup removes the temporary cluster and probe tag while retaining base images/
 - **BuildKit DNS timeout on kind:** see the [firewall diagnosis and recovery guide](kind-network-firewall.md) for the observed legacy/nft conflict, temporary rules and proposed Codespaces fix.
 - **Docker unavailable:** check the host engine and then the internal Docker-in-Docker service.
 - **Version mismatch:** rebuild after changing references; do not replace pins with `latest`.
-- **Download/checksum failure:** check network, proxy and official release. Installation stops on mismatch.
+- **Download/checksum failure:** the installer reports tool/version, route, HTTP
+  status, curl exit code and elapsed time without credentials or redirect URLs.
+  It makes at most two requests per route, within 120 seconds per tool and a
+  300-second total download budget. Eligible transient failures of exact GitHub
+  release URLs can use the official asset API, anonymously; other hosts retain
+  their primary route. The exact tag/name and single uploaded asset must match.
+  Both routes require the checked-in SHA-256 before extraction/installation.
+  A checksum mismatch stops immediately without fallback. TLS validation and
+  HTTPS-only redirects remain required. If both routes fail, check the official
+  release/network availability; bootstrap failure remains a failure.
 - **Node timeout/resource shortage:** inspect logs, memory and disk; this is an infrastructure incident.
 - **ARM platform:** the base requires AMD64; ARM is optional future work.
 
