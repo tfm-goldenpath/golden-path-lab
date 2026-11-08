@@ -1,5 +1,9 @@
 # Independent consumer validation — 5 November 2026
 
+Latest: [PR #77 review fixes — 8 November](#pr-77-review-fixes--8-november-2026).
+The dated observations below remain historical; the review-fix receipt supersedes
+the supported runtime attribution.
+
 Baseline: fetched `origin/main` **`f64dcc0fb283b7fd2c904858b716150484704b5d`**,
 PR #75 merged. Branch: `feat/independent-consumer-template`. The two unrelated
 root npm files, historical evidence/private recovery and three existing Docker
@@ -170,3 +174,141 @@ License, private reporting, custody and human acceptance remain separate decisio
 | Activity | Assistant contribution | Human review | Final decision |
 | --- | --- | --- | --- |
 | Implementation, tests, documentation and local validation | OpenAI Codex / GPT-6 | Pending | Draft for owner review; no human acceptance inferred |
+
+## PR #77 review fixes — 8 November 2026
+
+Reviewed head `ba153f6884e0d5e204cec79b7a706d6790b98dc6` was still current after
+fetch. Both required defects reproduced in disposable repositories before editing
+runtime: `required-red.log` records three intended failures (staged consumer and
+engine deletions, and tests reading the conflicting engine package). The two
+unstaged-deletion cases already rejected correctly. No developer checkout file
+was removed or staged for reproduction; unrelated root npm files remain intact.
+
+| Finding | Correction and observed coverage |
+| --- | --- |
+| **Required: complete committed inventory** | NUL-delimited `ls-tree` at the explicitly resolved commit defines inventory, blob IDs and executable modes. Index removal cannot hide files; HEAD drift fails. Staged/unstaged deletions, unusual literal paths, content/modes, unexpected files, nonregular inputs, parent symlinks and clean sparse engines are covered. Only the existing precise cache exclusions remain. |
+| **Required: consumer test CWD** | The actual shared stage runs Node tests in a service-directory subshell. Relative package/fixture reads, conflicting engine files, unrelated CWD, spaces, failing tests, TAP validation and unchanged caller CWD are covered. The fresh integration consumer contains a committed CWD-sensitive test and fixture. |
+| **Small metadata improvement** | Result and package descriptions distinguish independent Node consumers from fixed quotes-node delivery. Archive format remains `delivery-v1` / `legitimate-delivery-package/v1`; `executionProfile` identifies the execution. Both profiles pass focused assertions and archive verification. Old archives are unchanged. |
+| **Validation gap: negative live admission** | Now observed for one required results binding: wrong expected engine commit produces the singleton `CONSUMER_BINDING_engineCommit` rejection; restoring the correct expectation accepts the same authentic image. This is a directed check, not a previously demonstrated bypass or all-binding live coverage. |
+
+The committed integrated engine is **`0f949b40e6bb8c3b5164b091aebe299560a81e55`**.
+The final independent consumer is **`2d23884c7f1a703cf9d5f4b55b13d0b05ceae799`**.
+Each attempt generated a new repository and pinned that exact engine revision;
+none reused the November 5 lock. Consumers have no origin. Their declared
+`https://example.invalid/golden-path-consumer-validation` identity remains local
+test data, without hosted source or OIDC authentication.
+
+### Executions, including failures
+
+All four attempts retain their original records under
+`/tmp/gp-pr77-20261108/attempt-01/` through `attempt-04/`. Workspace copies of
+raw evidence, packages, installation/check/delivery logs and acceptance receipts
+are in `implementation/evidence/raw/pr77-review-fixes-20261108/attempt-XX/`.
+Every archive below passed outer and internal checksum verification, including
+the failed delivery's archive. No earlier record was relabelled or replaced.
+
+| Attempt / run | Consumer commit | Delivery | Verified archive SHA-256 |
+| --- | --- | --- | --- |
+| 01: `delivery-dxAj3XA2` | `74a59a510f74a5d198e39175807d48a0f1e34627` | FAILED | `96747e1142fabc6c9068e50dd7bad5d175d440ae4903b2ed9d5175daa338e698` (34 internal hashes) |
+| 02: `delivery-uFQOT8FA` | `398d44ddd74c7e6ccb02b190756a7dd14f50017c` | PASS | `9f8110602c3e7ee0669517a3681ff90b0361ac4bd52954a4038e8694bad6c71f` (164 internal hashes) |
+| 03: `delivery-LiJASbLw` | `cb6f358758e8ead4e2f3a56d4211ce846b6d83bb` | PASS | `37d7e77adb16ca63d015a1d4ca8d8cd036c15b15d6292474b67d91de91c3cf70` (164 internal hashes) |
+| 04: `delivery-agCCHOTy` | `2d23884c7f1a703cf9d5f4b55b13d0b05ceae799` | PASS | `3dc8c6a65fd2676caa755295a094649022ea34982f7959cbc35def8aa76f1c88` (164 internal hashes) |
+
+Attempt 01 stopped at vulnerability analysis because the operator had not created
+the configured snapshot directory. This was **ERROR**, not policy rejection;
+signing and admission remained unreached. Creating that directory resolved the
+setup error without runtime changes. Attempts 02–04 passed all 21 stages: source
+capture/rechecks, consumer tests/workflow, manifest policy, build/scan, four
+independent evidence types, authorization, admission, rollout, running digest,
+HTTP, finalization and retirement. `/version` in attempt 04 reports
+`independent-node` and consumer commit `2d23884…`; the application check observed
+the starter greeting. The sparse engine had no laboratory execution modules.
+
+The separate observer failures remain under `attempt-01-admission*`,
+`attempt-02-admission` and `attempt-03-admission`. The first observer initially
+matched the wrapper path rather than its exec'd coordinator; no admission was
+reached in that delivery. The next observer combined a Kyverno stderr deprecation
+warning with JSON and failed before policy changes. Attempt 03 accepted the
+correct image, but its negative request encountered a webhook connection refusal
+after restart. That is an **integration error**, not condition rejection;
+restored acceptance was unreached. No failed request was silently retried.
+
+`directed-admission-05.py`, retained with the evidence, uses the existing product
+endpoint-convergence checker after controller restarts. For attempt 04 it paused
+only its own coordinator descendant after authorized admission setup, copied all
+five policies into an isolated namespace, and submitted server-side dry-run
+Deployments as the restricted actor. It changed only the copied results policy's
+expected engine commit to forty zeros. The same signed evidence first passed,
+then failed with the sole `autogen-require-results` /
+`CONSUMER_BINDING_engineCommit` diagnostic, then passed after restoration.
+Original delivery policy UIDs, generations and specs were unchanged. Probe
+policies and namespace were retired using captured UIDs; the coordinator resumed
+and completed normally. Raw diagnostics, loaded policies, convergence observations,
+restoration, cleanup and per-file checksums are in `attempt-04-admission/`.
+No production renderer, validator, global policy or coordinator hook was changed.
+
+Both authenticated statements bind engine snapshot
+`79682ed130f03b2c3ecb4002f192e6d8a82e3e0d876ef62737368579ee67d506`,
+consumer snapshot `db56c4fb2524fb1cdb985a5f3e74d15b71c2fccb75738608470493eaeb02b977`
+and configuration `207a82908cc83b33e527d065e2a54b40791594420de9e276ab6cf8d026209dc1`.
+Final image: `sha256:611bfd443011028f57cbd9a78906c9b0c0c8c7eb11ae8ce1817b69f5c12685be`.
+Twelve additional offline negative checks authenticated original attempt-02
+bundles before rejecting wrong source/engine/configuration expectations;
+`actual-negatives/receipt.json` records their exact revisions and outcomes.
+
+### Commands, checks and preservation
+
+The committed `implementation/tests/integration/independent-consumer.py --run`
+remains the normal integration entry point. The final directed trial used the
+retained observer below to invoke that same helper, with no substituted stages.
+These destinations already exist and must be preserved; another run needs a fresh
+output path. The snapshot root must exist before delivery:
+
+```bash
+export PATH="$PWD/implementation/.tools/bin:$PATH"
+export GP_VULNERABILITY_DB="$PWD/implementacion/.tmp/security-refresh-db"
+export GP_VULNERABILITY_SNAPSHOT_ROOT=/tmp/gp-pr77-20261108/snapshots
+mkdir -p "$GP_VULNERABILITY_SNAPSHOT_ROOT"
+export TRIVY_CACHE_DIR="$GP_VULNERABILITY_SNAPSHOT_ROOT/cache"
+python3 implementation/evidence/raw/pr77-review-fixes-20261108/directed-admission-05.py \
+  /tmp/gp-pr77-20261108/attempt-04
+```
+
+`make -C implementation doctor` and `make -C implementation test` PASS: 9 environment,
+1,059 service/unit, 131 Python policy, Conftest, 16 Kyverno checks, both real offline
+Cosign suites, workflows, 153 defense and 22 release tests. Focused source/test-stage/
+lifecycle/packaging run: 53 PASS; final source regressions: 14 PASS. Both actual
+fixed and laboratory shared test-stage invocations passed 43 service tests and
+preserved caller CWD. This compatibility scope follows the changed paths: consumer
+capture is profile-specific, existing fixed/laboratory test branches are unchanged,
+and package descriptions are covered for both profiles. No historical campaign
+or full laboratory scenario catalogue was rerun. Inventory covers 833 tracked
+paths, all 11 inventory regressions pass, and documentation links plus
+`git diff --check` pass. Logs are beside the attempt copies.
+
+Pinned tools and their lock/versions hashes match the November 5 identities above.
+The preserved real Trivy database still hashes to
+`faa015429c6ebd9c9a672be99cfbd5aecec2eade21d1d6e59d4dc091dc752ff3`; its metadata hash
+is `75ccefb55d36ea911801b1cdb555f4d022f0fc8a813e061b0d491fe9752dc706`.
+All three fresh snapshots remain under `/tmp/gp-pr77-20261108/snapshots/`; the
+workspace original remains untouched. Scan PASS is specific to those bytes,
+not a current vulnerability-freshness claim.
+
+Capacity logs precede installation and each attempt. Workspace/Docker share the
+32 GiB `/dev/loop4` filesystem; `/tmp` uses a separate `/dev/sda1` filesystem.
+Every run met the 3 GiB reserve plus existing operation growth allowances; the
+isolated probe additionally required 256 MiB for bounded logs/metadata. Runs were
+sequential. Twelve owned containers and eight owned volumes were retired; only
+three pre-existing volumes remain. Probe namespace/policy cleanup also passed.
+After preservation, workspace/Docker have **8.0 GiB free**, `/tmp` **101 GiB**.
+Repeated final cleanup preserved all 171 raw files and the archive hash.
+Private recovery and consumer Git repositories were copied to
+`implementation/.tmp/pr77-review-fixes-20261108/`; originals and old evidence,
+archives, snapshots and legacy directories remain untouched. No pruning occurred.
+
+The following receipt commit changes documentation only; `runtime-continuity.json`
+records matching selected runtime bytes and Git modes. Final-head push/PR CI is
+reported in PR #77. Hosted OIDC, public publication and production-cluster checks
+remain **NOT_EXECUTED**. All other earlier scope limits and owner decisions remain;
+the bounded Java trial is outside this PR. OpenAI Codex / GPT-6 implemented and
+validated these corrections; human review and acceptance remain pending.
