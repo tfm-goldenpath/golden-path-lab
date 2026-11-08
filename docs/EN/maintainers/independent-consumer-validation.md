@@ -312,3 +312,91 @@ reported in PR #77. Hosted OIDC, public publication and production-cluster check
 remain **NOT_EXECUTED**. All other earlier scope limits and owner decisions remain;
 the bounded Java trial is outside this PR. OpenAI Codex / GPT-6 implemented and
 validated these corrections; human review and acceptance remain pending.
+
+### Pinned-tool downloads — follow-up on 8 November 2026
+
+The remote remained at `63b2db053846a3ed954b70fad60b9cbb6971163c`. Repeated
+[push failure](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/42464765012/job/128700110395)
+(run `42464765012`, attempt 2, job `128700110395`) and
+[PR failure](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/42464767726/job/128700458429)
+(run `42464767726`, attempt 3, job `128700458429`) stopped before tests. Node's
+GitHub download returned 504 but setup-node succeeded through nodejs.org;
+the security installer then failed on its first pinned Trivy download.
+Full attempt logs, job/run metadata and source IDs are retained under
+`implementation/evidence/raw/pr77-download-reliability-20261108/`.
+
+Codespaces reproduced HTTP 504 / curl exit 22 on the pinned Trivy URL.
+The official release metadata and asset API both returned HTTP 200. The downloaded
+asset matched the existing SHA-256
+`c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0`.
+This establishes that the alternate official route worked during this observation,
+not that both routes will always be available.
+
+Installer candidate **`ed0a51421926b3b9dba705d7fa0f920856b08fba`** adds bounded
+retrieval inside the existing developer installer. Each route has at most two
+transfer attempts, each allowing at most five HTTPS redirects. Transfer time caps
+are 20 seconds for primary, 15 for metadata and 45 for
+asset retrieval, clamped to 120 seconds per tool and a 300-second total budget.
+Specified transient HTTP/transport failures may use the
+[official asset API](https://docs.github.com/en/rest/releases/assets#get-a-release-asset).
+The exact locked repository, tag and filename must identify one uploaded asset;
+metadata cannot replace the checked-in checksum. Both binary responses and HTTPS
+redirects use `Accept: application/octet-stream`. Requests are anonymous, ignore
+ambient curl configuration/netrc, send no tokens and never use location-trusted.
+Diagnostics record tool/version, route, HTTP status, curl exit and elapsed time;
+raw error bodies and signed redirect URLs are not printed. Certificate/configuration
+errors, malformed metadata and checksum failures remain distinct failures. A
+checksum mismatch never switches routes. Non-GitHub URLs retain their primary
+route, and existing extraction/regular-file checks remain enforced.
+
+One real installation into `/tmp/pr77-real-tool-install-83gxuffr/prefix` passed
+at that committed candidate. Trivy, Conftest, Cosign, act and Kyverno recovered
+through the API after primary 504s; Helm succeeded on its existing non-GitHub
+route. All six archives passed the unchanged checked-in checksums; the existing
+version checker selected all six fresh binaries and passed. `installation-receipt.json`,
+`real-install.log`, `installed-versions.log` and `installed-binaries.json` record
+source, routes, executable hashes and outcomes. Commands used:
+
+```bash
+PREFIX=/tmp/pr77-real-tool-install-83gxuffr/prefix \
+TMPDIR=/tmp/pr77-real-tool-install-83gxuffr/scratch \
+  bash implementation/scripts/install-security-tools.sh
+export PATH="/tmp/pr77-real-tool-install-83gxuffr/prefix/bin:$PWD/implementation/.tools/bin:$PATH"
+python3 implementation/scripts/check-tool-versions.py
+make -C implementation doctor
+make -C implementation test
+```
+
+The prefix/scratch directories were freshly created before these commands and
+are now retired; reproduction requires a new task-owned directory. Capacity was
+checked before downloads and installation with a 3 GiB reserve plus a 2 GiB working
+allowance. Installation and heavy suites ran sequentially. Only eight verified
+files in the task-owned install/probe directories were removed after recording
+their hashes. No Docker resources or historical evidence were removed. Remaining
+capacity: workspace/Docker **7.9 GiB**, separate `/tmp` **108 GiB**.
+
+Deterministic downloader regressions: **28 PASS**; combined installer/legacy
+compatibility checks: **63 PASS**. The retained initial red test failed because
+the old installer exited on the primary 504 without fallback. The first shared
+run exposed a test harness that sliced the newly scoped main function into
+incomplete Bash; its canonical-root oracle was preserved while adapting the
+startup fragment. `shared-test.log` retains that failure. `shared-test-02.log`
+records the passing full suite: 9 environment, 1,087 service/unit, 131 Python policy,
+Conftest, 16 Kyverno, both real offline Cosign suites, workflows, 153 defense and
+22 release tests. Doctor, the 834-path inventory, 11 inventory regressions,
+documentation links and `git diff --check` pass. The final compatibility fixture
+and receipt changes do not alter the installed candidate's script bytes or mode.
+
+`tools.lock.json` and `versions.env` retain the hashes recorded above. All 56
+selected consumer-engine Git entries (55 captured inputs) match the previously
+integrated `0f949b4` runtime; `src/`, `bin/`, templates, policies, schemas, versions
+and checksums are unchanged. No Kubernetes/consumer delivery was rerun for this
+bootstrap-only change. Earlier delivery receipts remain attributed to their
+original engine and consumer commits. Availability of both official routes,
+including anonymous API limits, remains external; failed bootstrap still stops CI.
+
+Final-head [push CI](https://github.com/tfm-goldenpath/golden-path-lab/actions/workflows/ci.yml?query=branch%3Afeat%2Findependent-consumer-template+event%3Apush)
+and [PR checks](https://github.com/tfm-goldenpath/golden-path-lab/pull/77/checks)
+are checked after the final push; immutable run/job IDs, source SHA and conclusions
+are recorded in the [PR description](https://github.com/tfm-goldenpath/golden-path-lab/pull/77)
+and the retained CI receipts. The PR stays draft and unmerged; human review remains pending.

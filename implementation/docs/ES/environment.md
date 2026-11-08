@@ -88,7 +88,8 @@ Al terminar se elimina el clúster temporal y la etiqueta de la imagen de sonda.
 - **Versión distinta:** reconstruir el devcontainer después de modificar las referencias. No sustituir valores por `latest` para continuar.
 - **Descarga o checksum incorrectos:** el instalador muestra herramienta/versión,
   ruta, estado HTTP, código de curl y tiempo, sin credenciales ni URLs de redirección.
-  Permite como máximo dos peticiones por ruta, 120 segundos por herramienta y
+  Permite como máximo dos intentos de transferencia por ruta (cinco redirecciones
+  HTTPS por intento), 120 segundos por herramienta y
   300 segundos de descarga total. Los fallos transitorios admitidos de URLs exactas
   de releases de GitHub pueden usar su API oficial de assets sin autenticación;
   otros hosts conservan la ruta primaria. Deben coincidir tag, nombre y un único

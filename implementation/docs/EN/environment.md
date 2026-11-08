@@ -88,7 +88,8 @@ Cleanup removes the temporary cluster and probe tag while retaining base images/
 - **Version mismatch:** rebuild after changing references; do not replace pins with `latest`.
 - **Download/checksum failure:** the installer reports tool/version, route, HTTP
   status, curl exit code and elapsed time without credentials or redirect URLs.
-  It makes at most two requests per route, within 120 seconds per tool and a
+  It makes at most two transfer attempts per route (five HTTPS redirects per
+  attempt), within 120 seconds per tool and a
   300-second total download budget. Eligible transient failures of exact GitHub
   release URLs can use the official asset API, anonymously; other hosts retain
   their primary route. The exact tag/name and single uploaded asset must match.
