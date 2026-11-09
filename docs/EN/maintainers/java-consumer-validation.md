@@ -189,3 +189,24 @@ passed; 853 tracked paths have exact coverage. EN/ES Java command blocks match,
 499 relative links/anchors in 16 affected guides passed, and whitespace checks
 passed. The final push/PR CI status is recorded in the draft PR against its exact
 head; no earlier CI is relabelled.
+
+### Final runtime candidate
+
+After the build-state correction, both consumers were initialized and tested again
+on **`017f20ac6979c5ab70b8447876e299bab35ecaa2`**. Both checks and host service tests passed; both
+deliveries again stopped at the unchanged environment capacity gate before tests,
+build, scan, signing or infrastructure. Repeated cleanup passed and all archive
+hashes verified. These are capacity-stop observations, not full deliveries.
+
+| Consumer | Commit | ERROR run | Archive SHA-256 |
+| --- | --- | --- | --- |
+| java | `bf2c6a80472ddf1053cdbe6fba0580578ca1c331` | `delivery-Q20qd13r` | `d5b7858b48db8bcd073eb2821c4b0f1ac0f91b9ecb961573ddfc9db90c8ca8fc` |
+| node | `1ae942efddedf1cabb2a64de38429ff73ff2aab7` | `delivery-ILYFGGt3` | `ceedf3e5e3db8c7a7bfd5fe1c1c478aa1d5352fd227d1ac21dabf166871d587f` |
+
+Final candidate receipt: `/tmp/java-consumer-trial/candidate-017f20a/receipt.json`,
+SHA-256 `52838c6a1806e6cd722b6826e9268251cee64a29e9b3473845508fb9a292c9af`.
+Only documentation changes follow this runtime candidate; source/mode continuity
+is checked against the final PR head. Its two capacity-stop archives contain
+14 (Java) and 13 (Node) verified internal hashes. All local containers are absent;
+the original three images and three volumes remain unchanged. Full acceptance
+stays blocked by the capacity requirement above.

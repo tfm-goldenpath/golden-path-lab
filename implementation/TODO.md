@@ -42,7 +42,9 @@ Node, fixed delivery and laboratory behavior remain compatibility requirements.
 See the [Java quickstart](../docs/EN/java-consumer-quickstart.md) and single
 [validation record](../docs/EN/maintainers/java-consumer-validation.md).
 
-Implementation and lightweight verification are distinct from acceptance. Actual
+Shared checks, actual host Java/Node tests and separate committed-consumer checks
+passed; both local attempts stopped at capacity and their ERROR archives verified.
+These observations are distinct from acceptance. Actual
 Java/Node deliveries, directed Java admission and runtime memory/SBOM observations
 remain blocked by available Docker capacity; the existing guard is not lowered.
 Broader Java/framework support and hosted execution remain separate. Human review,
