@@ -14,7 +14,7 @@ La primera prueba utiliza una sonda de infraestructura independiente de `quotes-
 
 | Componente | Referencia fijada | Razón y fuente |
 |---|---|---|
-| Node / npm | 24.22.1 / 11.19.1 | Rama LTS y pruebas nativas sin un framework adicional. [Publicación de Node](https://nodejs.org/en/blog/release/v24.22.1), [npm incluido](https://github.com/nodejs/node/blob/v24.22.1/deps/npm/package.json). |
+| Node / npm | 24.22.1 / 12.2.2 | Rama LTS y pruebas nativas sin un framework adicional. [Publicación de Node](https://nodejs.org/en/blog/release/v24.22.1), [npm fijado](https://registry.npmjs.org/npm/12.2.2). |
 | Imagen base | `node:24.22.1-bookworm`, manifiesto AMD64 por SHA-256 | [Imagen oficial Node](https://hub.docker.com/_/node). Referencia completa en `versions.env`. |
 | Imagen de ejecución del servicio | Node 24.22.1 / Alpine 3.23, manifiesto AMD64 por SHA-256 | Rama `main` de Alpine con soporte y reconocida por los metadatos de fin de soporte de Trivy 0.76.1. Referencia `SERVICE_NODE_IMAGE` en [versions.env](../../versions.env) y [justificación de compatibilidad](../../services/quotes-node/README.md). |
 | Docker Engine y CLI | 29.9.2 | [Publicación oficial](https://docs.docker.com/engine/release-notes/29/#2992). Instalación desde el repositorio de Docker para Debian. |
@@ -155,7 +155,7 @@ Docker antes de crear infraestructura. Detener la operación si no cabe. El hook
 solo instala dependencias de validación y comprueba herramientas; es repetible.
 No inicia Kubernetes, descarga bases de vulnerabilidades ni lanza agentes.
 
-La imagen común instala **Codex CLI 0.164.0** desde npm oficial con manifiesto/lock
+La imagen común instala **Codex CLI 0.167.0** desde npm oficial con manifiesto/lock
 separados en `.devcontainer/codex/`, incluida la dependencia nativa Linux AMD64.
 Está en PATH para `node`; versión y ayuda no requieren login. La entrega, doctor y
 CI no dependen de Codex ni de una cuenta. La extensión **openai.chatgpt** es otro
@@ -207,3 +207,11 @@ del paquete final y recibos de limpieza. Solo el paquete final relevante fuera d
 Git y un registro compacto; indicar originales intermedios descartados. Las nuevas
 validaciones no sustituyen observaciones históricas. Véase el
 [registro de actualización](../../../docs/EN/maintainers/devcontainer-refresh-validation.md).
+
+Verificado el 2026-11-09 con metadatos oficiales de npm: npm 11.19.1 → 12.2.2
+(Node `^22.22.2 || ^24.15.0 || >=26.0.0`), Codex 0.164.0 → 0.167.0
+(Node `>=16`). Ambos admiten Node 24.22.1. El instalador existente verifica
+el archivo npm contra `NPM_INTEGRITY` antes de instalarlo globalmente y comprobar
+su versión. Codex permanece en `/opt/codex` con lock e integridad por plataforma.
+Los tres perfiles conservan 4 CPU, 16 GB RAM, 32 GB y `openai.chatgpt`.
+La versión/ayuda de CLI no demuestra la instalación de la extensión remota.
