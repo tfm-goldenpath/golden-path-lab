@@ -146,3 +146,8 @@ inputs in a new committed attempt; preserve the first failed attempt.
 
 Hosted OIDC, public image publication, production and full catalogue execution
 remain **NOT_EXECUTED**. License, custody and human review decisions stay separate.
+
+The runtime stage upgrades only `apt` and `libapt-pkg6.0t64` to
+`2.8.4ubuntu0.1` from the signed Ubuntu snapshot `20261109T000000Z`, fixing
+[CVE-2026-109518](https://ubuntu.com/security/CVE-2026-109518). APT retries are
+disabled during this bootstrap. The base-image digest and 192 MiB limit remain fixed.

@@ -8,6 +8,12 @@ COPY src/ ./src/
 RUN mvn -B -ntp --strict-checksums -Dmaven.repo.local=/build/repository verify \
     && find repository -type f \( -name '*.jar' -o -name '*.pom' \) -print0 | sort -z | xargs -0 sha256sum > build-artifacts.sha256
 FROM ${JAVA_RUNTIME_IMAGE}
+# Noble security fix for CVE-2026-109518; retain signed, dated archive inputs.
+# Disable retries while bootstrapping the affected APT implementation.
+RUN apt-get -o Acquire::Retries=0 update --snapshot 20261109T000000Z \
+    && apt-get -o Acquire::Retries=0 install --snapshot 20261109T000000Z -y --no-install-recommends --only-upgrade \
+       apt=2.8.4ubuntu0.1 libapt-pkg6.0t64=2.8.4ubuntu0.1 \
+    && rm -rf /var/lib/apt/lists/*
 ARG BUILD_COMMIT=unknown
 LABEL org.opencontainers.image.title="independent-java" \
       org.opencontainers.image.description="Bounded independent Java HTTP consumer" \

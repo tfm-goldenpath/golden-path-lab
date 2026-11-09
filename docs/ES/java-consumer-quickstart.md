@@ -126,3 +126,9 @@ realizadas; errores de red/escáner no demuestran detección. Conserve intentos 
 
 OIDC alojado, publicación pública, producción y catálogo completo: **NOT_EXECUTED**.
 Licencia, custodia y revisión humana permanecen como decisiones separadas.
+
+La etapa de ejecución actualiza solo `apt` y `libapt-pkg6.0t64` a
+`2.8.4ubuntu0.1` desde la instantánea firmada de Ubuntu `20261109T000000Z`,
+corrigiendo [CVE-2026-109518](https://ubuntu.com/security/CVE-2026-109518).
+Se desactivan reintentos de APT durante esta actualización. Se conservan el digest
+de la imagen base y el límite de 192 MiB.
