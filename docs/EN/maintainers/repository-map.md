@@ -65,15 +65,15 @@ The optional [context retrieval pilot](context-retrieval.md) records a bounded
 A/B/C comparison; it does not change these navigation or ownership rules.
 
 <!-- inventory-summary:start -->
-816 tracked paths; 487 individually enumerated scripts/helpers/tests.
+833 tracked paths; 494 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 410 |
+| developer | 414 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 273 |
-| product | 41 |
+| product | 54 |
 | shared | 28 |
 
 121 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
@@ -84,6 +84,7 @@ Current physical roots include `bin/` (delivery entry), `src/` (shared delivery
 engine), `.github/` (automation and contribution instructions), `.devcontainer/`
 (workspace configurations) and `implementation/` (selected service, policies,
 schemas, pinned tooling, laboratory adapters, tests, demo and measurements).
+`templates/node-http/` contains the independent starter owned by service teams.
 `docs/` and `lab/` added by P01 are navigation/maintenance guidance. Historical
 `registros/`, release inputs/notes and the Pages lock are retained in place.
 There are no tracked composite actions at the base. The unrelated untracked root
@@ -142,8 +143,8 @@ propagation and the distinction between content checks and authentication.
 | Refresh B — `chore/devcontainer-refresh` | Merged #63: pinned runtimes/images, three profiles and optional Codex; [exact checks and limits](devcontainer-refresh-validation.md), without claiming a Codespaces UI Full Rebuild. |
 | Refresh C — `chore/security-toolchain-refresh` | Merged #64: pinned tools and recorded local/hosted validation; [record](security-toolchain-refresh-validation.md). CEL adoption remains blocked separately. |
 | P01b — physical repository separation | Merged in PR #74 at `e0f2f56980ffbb00b926521ecf58eed64c713f1b` with recorded sparse-checkout and lab validation; broader acceptance remains separate. Broader physical moves are not complete. See [validation](delivery-core-validation.md#p01b-observed-execution-and-handoff). |
-| P03b — `refactor/delivery-interface-consolidation` (current bounded increment) | Clarify supported interface and adapter results, simplify proven duplication and define compatibility/deprecation; [bounded scope and acceptance](../../../implementation/TODO.md#next-implementation-increment). No consumer API or arbitrary-service support yet. |
-| P04 — consumer template | Ship a real consumer starter using the extracted engine, with documented prerequisites and actual independent execution. No fictional install/configuration API beforehand. |
+| P03b — `refactor/delivery-interface-consolidation` (merged PR #75) | Clarify supported interface and adapter results, simplify proven duplication and define compatibility/deprecation; [bounded scope and acceptance](../../../implementation/TODO.md#next-implementation-increment). Merged at `f64dcc0`; historical validation remains revision-specific. |
+| P04 — consumer template | Current `feat/independent-consumer-template`: `templates/node-http/` holds service-owner files; shared `src/` validates the pin and both identities. [Quickstart](../consumer-quickstart.md), [validation](independent-consumer-validation.md). General workload configuration and Java remain later increments. |
 
 Scope clarification — 4 November 2026: the owner explicitly authorizes the bounded
 [use-case intake](../use-case-intake.md) documentation/form increment while P00/P01

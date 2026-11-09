@@ -46,8 +46,9 @@ not code recovered from the archive.
 
 ## Next implementation step
 
-The local path works today. The proposed [interface consolidation](../../implementation/TODO.md#next-implementation-increment)
-precedes an independent consumer template and then a Java trial.
+The [independent Node quickstart](consumer-quickstart.md) uses the shared engine
+from a separate service repository. The next dependent [bounded increment](../../implementation/TODO.md#next-implementation-increment)
+is the Java consumer trial; general workload support remains separate.
 
 ## Reuse and support
 

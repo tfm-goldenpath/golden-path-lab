@@ -217,7 +217,11 @@ for(const name of legacyRootEntries) test(`legacy ${name} startup selects the ca
  assert.ok(end>=0);
  // Execute the real entry's startup only; installation, infrastructure and
  // session operations are deliberately outside this bounded unit check.
- writeFileSync(canonical,lines.slice(0,end+1).join('\n')+'\nprintf "%s" "${root:-$PWD}"\n');
+ // The installer now scopes executable setup in a subshell function so tests
+ // can source its downloader without installing. Close and invoke that real
+ // startup fragment; keep the same canonical-root oracle and no network work.
+ const finish=name==='install-security-tools.sh'?'\n)\ninstall_security_tools\n':'';
+ writeFileSync(canonical,lines.slice(0,end+1).join('\n')+'\nprintf "%s" "${root:-$PWD}"\n'+finish);
  symlinkSync(canonical,alias);
  for(const cwd of [d,dirname(alias),'/tmp'])
   assert.equal(pass(run('bash',[cwd===dirname(alias)?name.split('/').at(-1):alias],cwd)),root);

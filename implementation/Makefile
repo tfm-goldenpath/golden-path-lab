@@ -20,6 +20,7 @@ test-policies:
 
 test-bundles:
 	bash tests/integration/bundle-crypto.sh
+	node tests/integration/consumer-crypto.mjs
 
 test: test-env test-unit test-policies test-bundles test-workflows test-defense test-release
 

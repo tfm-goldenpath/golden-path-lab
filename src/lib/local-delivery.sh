@@ -69,7 +69,10 @@ environment_create() {
 }
 
 environment_namespaces() { local_prepare_namespaces tfm-golden; }
-environment_admission() { local_install_admission authorized; }
+environment_admission() {
+  if [[ "${execution_profile:-}" == consumer-v1 ]]; then delivery_source_recheck; fi
+  local_install_admission authorized
+}
 
 environment_cleanup() {
   local code=0 name expected actual volume

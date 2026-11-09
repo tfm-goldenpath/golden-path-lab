@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 
 export const deliverySources = [
-  '../bin', '../src', 'services/quotes-node', 'policies', 'schemas',
+  '../bin', '../src', '../templates/node-http', 'services/quotes-node', 'policies', 'schemas',
   '../.github/workflows', 'versions.env', 'tools.lock.json',
   'tooling/package.json', 'tooling/package-lock.json', 'scripts/deliver.sh',
 ];

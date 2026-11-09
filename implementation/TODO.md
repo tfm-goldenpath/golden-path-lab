@@ -2,10 +2,10 @@
 
 ## Current decisions and actions
 
-As of 5 November 2026, PR #74 is merged at
-`e0f2f56980ffbb00b926521ecf58eed64c713f1b`. The owner authorizes the bounded
-interface consolidation and English directory migration on
-`refactor/delivery-interface-consolidation`, including local integration and a draft PR.
+As of 8 November 2026, PR #75 is merged at
+`f64dcc0fb283b7fd2c904858b716150484704b5d`. The owner authorizes
+`feat/independent-consumer-template`: one separate Node consumer using the shared
+engine, bounded real local validation, commit/push and one draft PR.
 This index separates
 owner decisions, engineering, unexecuted validation and deferred proposals.
 Merge/CI does not establish human acceptance, custody or untested execution.
@@ -15,7 +15,7 @@ current navigation, not replacement evidence.
 | Item | Current status/type | Decision owner / role | Next action | Blocks | Canonical record |
 | --- | --- | --- | --- | --- | --- |
 | Bounded local separation / PR #74 | Merged at `e0f2f569`; broader acceptance/custody remain separate | Repository owner/reviewer | Use merged local engine; review this interface increment separately | Acceptance of this increment | [PR #74](https://github.com/tfm-goldenpath/golden-path-lab/pull/74), [validation](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026) |
-| Remaining separation, interfaces and consumer scope | Integrations at `ff8d3fc`; PR #75 entry/source-path review fixes at `e3008cb`, human review pending | Maintainer proposes; owner approves boundary | Review explicit interfaces, English migration and [compatibility fixes](../docs/EN/maintainers/delivery-core-validation.md#pr-75-review-fixes--5-november-2026) before defining an independent consumer template | Consumer/template claims; then Java trial | [Next increment](#next-implementation-increment), [migration map](../docs/EN/maintainers/repository-map.md#migration-sequence) |
+| Interfaces / PR #75 and independent consumer | PR #75 merged at `f64dcc0`; PR #77 review fixes and independent delivery PASS at `0f949b4`, including one directed negative admission binding; legacy `4d743fa` observations retained; human review pending | Maintainer implements; owner reviews | Review PR #77 corrections, failed attempts and exact-revision receipts; retain historical [PR #75 receipts](../docs/EN/maintainers/delivery-core-validation.md#pr-75-review-fixes--5-november-2026) | Supported consumer claim; then bounded Java trial | [Consumer validation](../docs/EN/maintainers/independent-consumer-validation.md), [migration map](../docs/EN/maintainers/repository-map.md#migration-sequence) |
 | License and private security route | Owner decisions pending | Repository owner | Select reuse terms and verify a private reporting channel | Declared reuse grant/private reporting instructions | [Reuse/support](../docs/EN/getting-started.md#reuse-and-support) |
 | Full historical dossier custody and detailed release review | Owner verification/review pending; partial custody confirmations retained | Evidence custodian / human reviewer | Complete required-original preservation and detailed review | Complete custody/release-review claims, not accepted reduced evaluation | [P00](#p00--laboratory-release-custody-before-product-restructuring), [custody assessment](../docs/EN/maintainers/repository-map.md#p00-baseline) |
 | PR #72 CLI update | Open; engineering compatibility validation and review pending | Tooling maintainer / reviewer | Check CLI 0.90.0 against three profiles, locks/hooks and required build/startup boundaries in separate work | Adopting #72; not #74 docs | [Update record](../docs/EN/maintainers/dependabot-tooling.md), [PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72) |
@@ -34,18 +34,18 @@ and deferred manual measurement/calibration scope are not reopened.
 
 ### Next implementation increment
 
-Current branch: **`refactor/delivery-interface-consolidation`**. Explicit database
-selection and documented capture/context contracts retain the fixed local path.
-`implementation/` is canonical; legacy Linux source access and Make commands
-remain supported, with ignored historical evidence/private state left in place.
-Focused/shared checks and real isolated-product/laboratory integration validate
-the committed runtime layout; see the [dated record](../docs/EN/maintainers/delivery-core-validation.md#interface-consolidation-and-english-layout--5-november-2026).
-Human review remains pending. This authorization does not close dated custody,
-measurement, admission-selection, license or private-reporting decisions.
+Current branch: **`feat/independent-consumer-template`**. PR #75's interface
+consolidation and English layout are merged; their dated validation remains
+attributed to its original revisions. This increment adds one genuinely separate
+Git consumer, a strict versioned configuration and exact engine pin, authenticated
+consumer/engine bindings and the existing local delivery lifecycle. Follow the
+[quickstart](../docs/EN/consumer-quickstart.md) and [exact validation receipt](../docs/EN/maintainers/independent-consumer-validation.md).
+Human review remains pending. No broader acceptance, custody, license, private
+reporting, admission-selection, hosted or production claim follows.
 
-Recommended next bounded branch after interface review:
-**`feat/independent-consumer-template`**, defining one independent consumer and
-validating its actual execution. This branch delivers no template or Java support.
+Next dependent bounded increment: **Java consumer trial**, after this consumer
+boundary is validated and reviewed. General workload configuration and unrelated
+roadmap decisions remain separate.
 
 ### Deferred product requests
 
