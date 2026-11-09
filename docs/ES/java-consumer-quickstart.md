@@ -1,6 +1,6 @@
 # Prueba acotada de consumidor Java
 
-[Guía](README.md) · [English](../EN/java-consumer-quickstart.md) · [Validación y límites](../EN/maintainers/java-consumer-validation.md)
+[Guía](README.md) · [English](../EN/java-consumer-quickstart.md) · [Validación y límites](maintainers/java-consumer-validation.md)
 
 `java-http-consumer/v1` entrega un servicio JDK HttpServer sin bibliotecas de
 producción, con Temurin 25.0.5+8 y Maven 3.10.0. El motor fijado mantiene controles,
@@ -54,6 +54,22 @@ Elija un directorio nuevo para cada intento de pruebas. Se retienen salida Maven
 estado del proceso, XML Surefire originales, hashes de artefactos e identidad del
 contenedor. Informes ausentes, antiguos, malformados, vacíos, fallidos u omitidos
 rechazan; un proceso fallido tampoco pasa aunque su XML parezca correcto.
+
+El productor debe retirarse y confirmarse su ausencia antes de inspeccionar
+salidas. La recolección usa descriptores relativos con `O_NOFOLLOW` y valida el
+objeto abierto; rechaza enlaces simbólicos/duros y entradas no regulares, incluidas
+raíces/directorios intermedios de informes y artefactos JAR/POM. Límites: 10.000
+entradas, 32 niveles, 64 MiB por artefacto y 512 MiB totales; 4 MiB por informe y
+16 MiB totales. Conserva bytes, mtime y hashes originales. Son límites del starter,
+no una política Maven configurable.
+
+El retiro se intenta independientemente de errores de ejecución, recibos o
+recolección. Cualquier error sigue siendo no cero, conserva la excepción primaria
+y no emite `java-tests.json` satisfactorio. `java-test-errors.json` es best effort
+si no queda espacio; `java-test-work.json` identifica trabajo recuperable fuera
+de la evidencia que se sube. Sin retiro confirmado no se recopilan salidas y se
+conservan trabajo/recibos. Cleanup exige ID exacto, propietario e imagen fijada;
+una etiqueta sola no autoriza borrar. La repetición confirma ausencia.
 
 ```bash
 TEST_OUTPUT=/absolute/fresh-java-test-evidence

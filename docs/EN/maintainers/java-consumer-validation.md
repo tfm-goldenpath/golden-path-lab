@@ -1,5 +1,118 @@
 # Bounded Java consumer trial — 9 November 2026
 
+## PR #78 review follow-up — 9 November 2026
+
+Reviewed and starting head: `25ba72af5393ed37b5441bdbd00698f733a8e8c4`, matching
+fetched branch. Unrelated root `package.json`/`package-lock.json` are preserved.
+The sections below are historical observations; this follow-up supersedes their
+claim that only documentation followed `017f20a`. No old integration receipt is
+attributed to the repaired runner. [Resumen en español](../../ES/maintainers/java-consumer-validation.md).
+
+Two mocked regressions were run **before** changing the runner:
+`vulnerable-regressions.log` records acceptance of a harmless external report link
+and ENOSPC replacing a timeout before retirement. The fixes stop and confirm the
+exact owned container's removal before collection; traverse generated reports and
+JAR/POM files with no-follow descriptor opens/fstat; reject nonregular entries and
+bound count/bytes. Retirement is independent of evidence writes. The original
+execution exception is retained alongside collection/cleanup errors; unresolved
+errors cannot produce PASS. Failed retirement preserves recovery work/receipts.
+
+Focused checks cover external links, report roots/intermediate directories,
+artifact links, FIFO/socket, link swaps, limits, stale/fresh bytes and hashes,
+process/OOM/interruption failure, ENOSPC/read/hash/manifest failures, exact ownership
+and incomplete retirement. These are deterministic test doubles, not Docker or
+admission observations. The added stale-report regression exposed a buffered-write
+mtime mistake during development; flushing before restoring mtime corrected it.
+Both failures and the passing rerun are retained separately.
+
+CI additionally runs normal real Java tests followed by a real-container harmless
+link fixture through the ordinary runner/gates. It requires successful Maven
+execution, an attributable collection rejection, confirmed producer absence and
+no external sentinel contents in uploadable files. CI container tests do not prove
+local delivery, cryptographic admission, database scans or runtime memory limits.
+
+Local checks: `python3 implementation/tests/unit/test_java_consumer.py` passed
+22 focused tests; `make -C implementation doctor` and `make -C implementation test`
+passed (9 environment, 1,096 service/unit, 132 Python policy, Conftest/Kyverno,
+real offline Cosign Node/Java negatives, workflows, 153 defense and 22 release).
+A second full shared run validates the final runtime bytes; its original log is
+`shared-final.log`. Inventory covers 854 tracked paths with 11 inventory regressions.
+A one-off relative-link/anchor review checked 395 references in the changed guides;
+EN/ES Java shell blocks match. No generic tracked link-check Make target exists.
+`git diff --check` passed. Logs distinguish deterministic fixtures from real offline
+cryptography. The latter does not establish live registry or admission behavior.
+
+The supported `make -C implementation test-java JAVA_TEST_OUTPUT=...` was attempted
+with the fresh output `implementation/evidence/raw/java-runner-review-20261109/local-java-test-capacity-stop`.
+It rejected at the unchanged 10 GiB Docker guard before pull/create/Maven; its log
+is `local-java-test-capacity-stop.log`. No tests executed in that local attempt.
+The local generated-link container negative and both full deliveries were therefore
+not started. No new local database dates, hashes, images or consumer bindings exist.
+This fix changes only Java test lifecycle/collection; no extra fixed/lab integration
+is justified by those paths alone. The earlier shared profile changes still need
+the requested Java/Node live coverage before assessing broader acceptance.
+
+### Capacity and preserved evidence
+
+Read-only inventory: 4 CPUs, approximately 15 GiB RAM/13 GiB available, no swap.
+Workspace and Docker share device 1796 (`/dev/loop4`); `/tmp` is separate device
+2049. At 13:58:13 UTC Docker/workspace had **8,364,621,824 bytes free**, 1,681,528
+free inodes. Java's unchanged 10 GiB gate needs **2,372,796,416 additional bytes**
+(2.210 GiB); this is only the gate deficit, not a complete allowance for cumulative
+image/build/DB/snapshot/evidence growth. Node's 8 GiB gate also fails.
+Separate `/tmp` had 114,619,088,896 free bytes; it cannot enlarge Docker storage.
+
+No containers or active named builder exist. APT has no downloaded `.deb` files.
+Three original infrastructure images (~1.973 GB) and three inactive BuildKit volumes
+(~471 MB) remain. Historical coordinator receipts identify removed containers but
+not immutable container-to-volume mounts; labels are absent. A name match alone
+cannot justify deletion. No pre-existing resource was deleted: **0 bytes reclaimed**. Unique
+historical evidence, private recovery and DB snapshots remain untouched.
+
+Evidence for this follow-up is retained under
+`implementation/evidence/raw/java-runner-review-20261109/` (ignored by Git):
+`capacity.json`, original failing regression logs, `focused-final.log`,
+`doctor.log`, shared/inventory/link check logs and final CI verification receipts.
+No new large archive is created. Previous packages and sidecars remain at
+`implementation/evidence/packages/`; their historical identities are listed below.
+**`/tmp/java-consumer-trial` is absent in this Codespace session**. Its older paths
+below describe the original run, not currently recoverable files; repository copies
+under `implementation/evidence/raw/java-consumer-trial/` remain. Missing originals
+must not be reconstructed or silently treated as retained custody.
+
+### Fresh-Codespace handoff and remaining acceptance
+
+1. Preserve the current checkout, unrelated files, `implementation/evidence/`,
+   physical historical `implementacion/evidence/`, and private recovery/DB snapshots
+   under `implementacion/.tmp/`. Transfer existing packages with their sidecars;
+   copy missing raw/private material directly to verified destination storage.
+   Do not build a second large archive here. Verify transfer hashes at destination
+   before any deletion; custody of missing old `/tmp` originals remains unresolved.
+2. Provision Docker storage with at least 10 GiB **free**, plus space for cumulative
+   growth on shared mounts. Retain the separate 3.5 GiB evidence, 5 GiB test-temp and
+   7 GiB per DB source/snapshot guards. Reinspect mounts/bytes/inodes before each
+   download, build, database copy, cluster and package stage. Do not lower gates.
+3. Fetch the final PR head; use its exact reviewed runtime commit as `ENGINE_SHA`.
+   Follow the [Java quickstart](../java-consumer-quickstart.md) with fresh, independent
+   committed consumers and unique evidence directories. Run normal container tests
+   then the harmless real negative:
+   `python3 implementation/tests/unit/test_java_consumer.py --real-link-negative "$FRESH_NEGATIVE_OUTPUT"`.
+   This requires an absolute, nonexistent output path and ordinary Docker capacity.
+4. Complete Java delivery, current main/Java DB capture and delivered-image SBOM
+   inspection, four authenticated evidence types, 192 MiB restricted rollout and
+   [directed wrong-binding admission/restoration](independent-consumer-validation.md).
+   Verify the archive, retire only its owned resources, remeasure, then complete
+   Node delivery on that same engine commit. Do not reuse historical consumer pins.
+5. Reassess whether fixed/lab runtime coverage still needs a bounded extra run.
+   Shared fixed/lab regressions pass only at their tested boundary; no full catalogue
+   or campaign is required. Keep hosted delivery/OIDC, publication and production
+   **NOT_EXECUTED**, and human review pending.
+
+No fresh integrated consumer commits, delivered image digests, databases or delivery
+packages exist for this fix yet. Full Java/Node delivery and the directed admission
+negative remain merge blockers, independently of CI. Final commit/check details are
+recorded below and in the same draft PR; no merge/release is authorized.
+
 ## Implementation plan and acceptance
 
 Baseline: fetched `origin/main` at `39f93a449623920368fcad8e19da7714f8752280`,

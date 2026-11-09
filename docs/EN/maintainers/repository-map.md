@@ -65,7 +65,7 @@ The optional [context retrieval pilot](context-retrieval.md) records a bounded
 A/B/C comparison; it does not change these navigation or ownership rules.
 
 <!-- inventory-summary:start -->
-853 tracked paths; 501 individually enumerated scripts/helpers/tests.
+854 tracked paths; 501 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
@@ -73,7 +73,7 @@ A/B/C comparison; it does not change these navigation or ownership rules.
 | generated | 1 |
 | historical | 63 |
 | laboratory | 273 |
-| product | 71 |
+| product | 72 |
 | shared | 28 |
 
 121 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.

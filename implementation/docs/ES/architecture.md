@@ -493,6 +493,22 @@ base64 explícito. `src/java-tests.py` ejecuta el contenedor acotado, retiene ID
 inmutable y verifica propiedad en cleanup, también desde el coordinador tras una
 interrupción. No monta credenciales ni socket Docker.
 
+El productor debe retirarse y confirmarse su ausencia antes de inspeccionar
+salidas. La recolección usa descriptores relativos con `O_NOFOLLOW` y valida el
+objeto abierto; rechaza enlaces simbólicos/duros y entradas no regulares, incluidas
+raíces/directorios intermedios de informes y artefactos JAR/POM. Límites: 10.000
+entradas, 32 niveles, 64 MiB por artefacto y 512 MiB totales; 4 MiB por informe y
+16 MiB totales. Conserva bytes, mtime y hashes originales. Son límites del starter,
+no una política Maven configurable.
+
+El retiro se intenta independientemente de errores de ejecución, recibos o
+recolección. Cualquier error sigue siendo no cero, conserva la excepción primaria
+y no emite `java-tests.json` satisfactorio. `java-test-errors.json` es best effort
+si no queda espacio; `java-test-work.json` identifica trabajo recuperable fuera
+de la evidencia que se sube. Sin retiro confirmado no se recopilan salidas y se
+conservan trabajo/recibos. Cleanup exige ID exacto, propietario e imagen fijada;
+una etiqueta sola no autoriza borrar. La repetición confirma ausencia.
+
 `src/java-test-reports.py` exige XML Surefire nuevo y proceso exitoso.
 `java-tests.json` vincula log, informes, hashes de artefactos y toolchain; el campo
 `unitTests` Java apunta a ese recibo y autorización recomprueba sus archivos. Node

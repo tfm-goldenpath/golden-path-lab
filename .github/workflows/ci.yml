@@ -47,6 +47,8 @@ jobs:
           make test WORKFLOW_EVIDENCE=evidence/raw/workflow-ci
       - name: Run bounded Java service tests
         run: make test-java JAVA_TEST_OUTPUT="$RUNNER_TEMP/java-service-tests"
+      - name: Reject a harmless generated link in the real Java container
+        run: python3 tests/unit/test_java_consumer.py --real-link-negative "$RUNNER_TEMP/java-service-tests/generated-link-negative"
       - name: Retain Java service test reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

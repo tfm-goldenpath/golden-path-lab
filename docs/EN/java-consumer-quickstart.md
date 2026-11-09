@@ -66,6 +66,22 @@ Maven log, process status, original Surefire XML, artifact hashes and container
 ownership receipt. All tests must execute and pass; missing, stale, malformed,
 empty, failed or skipped reports reject, as does process failure with good XML.
 
+The producer must be retired and absence confirmed before generated outputs are
+inspected. Collection uses descriptor-relative `O_NOFOLLOW` opens and validates
+opened objects; symlinks, hard links and nonregular entries are rejected, including
+report roots/intermediate directories and JAR/POM artifacts. Limits: 10,000 entries,
+32 directory levels, 64 MiB per artifact, 512 MiB artifact bytes total, 4 MiB per
+report and 16 MiB report bytes total. Retained reports preserve original bytes,
+mtime and hashes. These are starter bounds, not configurable Maven policy.
+
+Retirement is attempted independently of execution/receipt/collection errors.
+Errors stay nonzero, preserve the primary exception and never issue a successful
+`java-tests.json`. `java-test-errors.json` is best effort on a full filesystem;
+`java-test-work.json` identifies recovery work outside uploadable evidence. If
+retirement cannot be confirmed, no generated output is collected and work/ownership
+receipts remain for recovery. Cleanup requires exact ID, owner and pinned image;
+a label alone cannot authorize deletion. Repeated cleanup confirms absence.
+
 ```bash
 TEST_OUTPUT=/absolute/fresh-java-test-evidence
 python3 "$ENGINE/src/java-tests.py" "$CONSUMER/service" "$TEST_OUTPUT"
