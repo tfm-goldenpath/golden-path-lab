@@ -7,7 +7,8 @@ producción, con Temurin 25.0.5+8 y Maven 3.10.0. El motor fijado mantiene contr
 evidencia e infraestructura. El consumidor mantiene código Java, pruebas y
 recursos; POM, Dockerfile y `.dockerignore` son fijos. Sin `--profile` se conserva
 Node. Perfiles desconocidos, pins móviles y configuración ampliada se rechazan.
-La aceptación mediante entregas reales sigue pendiente según el recibo mantenedor.
+La entrega real Java/Node y admisión dirigida pasaron en la revisión exacta del
+recibo mantenedor; la aceptación humana permanece pendiente.
 No constituye soporte general Java/frameworks.
 
 ## Requisitos y creación

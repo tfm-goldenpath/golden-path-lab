@@ -42,18 +42,15 @@ Node, fixed delivery and laboratory behavior remain compatibility requirements.
 See the [Java quickstart](../docs/EN/java-consumer-quickstart.md) and single
 [validation record](../docs/EN/maintainers/java-consumer-validation.md).
 
-Shared checks, actual host Java/Node tests and separate committed-consumer checks
-passed; both local attempts stopped at capacity and their ERROR archives verified.
-These observations are distinct from acceptance. Actual
-Java/Node deliveries, directed Java admission and runtime memory/SBOM observations
-remain blocked by available Docker capacity; the existing guard is not lowered.
-PR #78 review fixes reject generated-output links/nonregular files with bounded,
-no-follow collection after verified retirement, and attempt retirement despite
-execution/evidence errors. Synthetic regressions cover both reproduced findings;
-CI real-container Java tests and the harmless generated-link negative passed,
-with downloaded artifact/internal hashes verified. Local container and Java/Node
-delivery validation remain capacity-blocked.
-See the validation record's review follow-up and fresh-Codespace handoff.
+Fresh independent Java and Node deliveries PASS at `1517eae`, including real
+DB/SBOM checks, authenticated bindings, restricted rollout/HTTP at 192 MiB and a
+directed wrong-engine-binding admission rejection followed by restored acceptance.
+The first fresh Java attempt's vulnerability rejection is preserved; a bounded
+signed-snapshot APT repair passed on new immutable consumer bindings. npm/Codex
+were refreshed before initialization and the configured devcontainer was built.
+Historical capacity stops and review-fix observations remain in the validation
+record. Packages, original reports and resource retirement were verified. Final
+shared checks, final-head CI and artifact hashes are recorded in the PR handoff.
 Broader Java/framework support and hosted execution remain separate. Human review,
 custody, licensing and pending owner decisions are unchanged.
 

@@ -9,8 +9,8 @@ resources. The supplied POM, Dockerfile and `.dockerignore` are fixed inputs for
 this trial. Unknown profiles, mutable engine pins and altered build configuration
 reject. Omitting `--profile` continues to select the existing Node starter.
 
-This is an implemented trial awaiting the real delivery acceptance recorded in
-the maintainer receipt. It is not general Java/framework support. Namespace
+Real bounded Java/Node delivery and directed admission validation passed at the
+exact revision in the maintainer receipt; human acceptance remains pending. It is not general Java/framework support. Namespace
 `tfm-golden`, Deployment/container `quotes-node`, actor `deployer`, port 3000 and
 Linux AMD64 remain compatibility constraints. No production dependencies,
 frameworks, database or hosted delivery are supported by this profile.

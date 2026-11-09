@@ -1,5 +1,168 @@
 # Bounded Java consumer trial — 9 November 2026
 
+## Fresh Codespace acceptance — 9 November 2026
+
+This section supersedes the earlier capacity-blocked acceptance status; historical
+observations below remain attributed to their original revisions. Starting clean
+head/origin: `4eaa2d2b111f43b0034641926976d92c913ce939`,
+`https://github.com/tfm-goldenpath/golden-path-lab`. Tooling commit
+`18b9893f596f2cf1275b98550f911b4007179dec` preceded consumer initialization.
+Successful integrated engine: **`1517eae9b8bca75ca8c5cf8c58acae42738eda0d`**.
+Final documentation head and push/PR CI identities are recorded in PR #78.
+Human acceptance remains **pending**.
+
+The fresh host actually reported 2 CPUs and 8,327,041,024 bytes RAM, not the
+requested 4/16 GB; the owner authorized continuing without an interrupting resize.
+All three profiles still declare 4 CPUs, 16 GB RAM and 32 GB storage. Heavy work
+ran sequentially. Initial Docker/workspace free space was 19,130,949,632 bytes on
+`/dev/loop4`; `/tmp` was separate `/dev/sdc1` with 40,174,309,376 bytes free.
+Initial Docker inventory was empty. No old Codespace, evidence or resources were
+touched. Historical packages were **not transferred or independently reverified**
+here; ignored evidence is not contained in Git branches/tags.
+
+### Persistent tooling
+
+Official `npm view ...@latest version engines dist.integrity --json
+--registry=https://registry.npmjs.org` queries on 2026-11-09 selected npm
+**11.19.1 → 12.2.2**, engines `^22.22.2 || ^24.15.0 || >=26.0.0`, and Codex
+**0.164.0 → 0.167.0**, engines `>=16`. Both support pinned Node 24.22.1.
+[npm metadata](https://registry.npmjs.org/npm/12.2.2) integrity:
+`sha512-KglgbZyacf7jH+FHuNRqVuCzQi8VhI2a7J87Ix43FsPTuZoGWmIXXGdZtBUOA79vwL+IJREqURVzupA7PsQTcA==`.
+[Codex metadata](https://registry.npmjs.org/@openai%2Fcodex/0.167.0) integrity:
+`sha512-1FSQgbTIKAdTub5Ln6z36NT4eXDmBRkinfigzycbgn9yLZdJ3UdkQZqr0N7jnl8/D1xxT/Pz3Fl2l7S2dmRaFA==`.
+The existing installer verifies the npm archive before installing globally and
+asserting its version. Codex retains `/opt/codex`, exact isolated platform locks
+and `/usr/local/bin/codex`; no service dependency or control uses Codex.
+
+The Dockerfile build and locked CLI 0.89.0 full devcontainer build/start passed,
+including the actual post-create hook. A separate owned container was used; the
+active Codespace was not rebuilt. Non-root, unauthenticated smoke checks reported
+Node 24.22.1, npm 12.2.2 and Codex 0.167.0; npm/Codex resolved under `/usr/local/bin`,
+and `codex --help` passed. All profiles retain `openai.chatgpt`; actual remote
+editor installation/sign-in was not observed. Use interactive `codex login` (or
+supported device auth) privately; no credentials, login or model calls were used.
+The original host doctor failure (`kind` missing) is retained; doctor subsequently
+passed in the configured devcontainer, with Docker 29.9.2 and Buildx 0.38.1.
+
+### Attempts and the bounded runtime repair
+
+Initial Java `delivery-2S0pATl4`, engine `18b9893`, consumer
+`435a7797fb9c9fd8871d86c33718428c4f6c6480`, failed the real vulnerability policy:
+`apt` and `libapt-pkg6.0t64` 2.8.3 were HIGH for
+[CVE-2026-109518](https://ubuntu.com/security/CVE-2026-109518). Finalization was
+ERROR, with attributable POLICY_REJECTED stage; signing/admission/rollout were
+NOT_REACHED. Its original reports and 67-file verified archive remain preserved.
+The current Temurin AMD64 tag still resolved to the pinned vulnerable digest.
+Commit `1517eae` therefore upgrades only those two packages to 2.8.4ubuntu0.1
+from signed Ubuntu snapshot `20261109T000000Z`, disabling APT retries during
+bootstrap. No image pin, trust rule, vulnerability threshold or memory limit was
+relaxed. Nine focused Java tests passed before new committed consumer bindings.
+The first initializer invocation used unsupported argument order and rejected;
+its log is retained separately from the successful documented-order invocation.
+
+Both fresh consumers below use explicitly synthetic `https://example.invalid/`
+identities, not remotely verified ownership. Each has a separate Git history.
+
+| Consumer / configured repository suffix | Consumer commit | Run / result |
+| --- | --- | --- |
+| `pr78-1517-java` | `aa86dff2b24f49bcfa3cadd380313ffe39394b51` | `delivery-YoZBjqac` / PASS |
+| `pr78-1517-node` | `fc23ffd8527a480ffff60fcea16d240774cb2ece` | `delivery-vJaLLQ4B` / PASS |
+
+Both deliveries ran on engine `1517eae`, with npm 12.2.2 and Codex 0.167.0 available.
+`check` ran from `/tmp`, outside the engine. Immutable capture, real tests,
+pinned captured-input image build, full CycloneDX schema validation, independent
+image/SBOM/provenance/results authentication, exact subject/profile/producer/
+consumer/engine/configuration binding, restricted admission, ready-Pod digest and
+HTTP checks all passed. `/healthz`, `/version` and `/` matched their respective
+consumer contracts; deployed Java retains **192Mi**. Node used separate database
+source/snapshot storage and evidence. It did not reuse Java predicates.
+
+| Image | SHA-256 digest |
+| --- | --- |
+| Java | `9fba538910f4cdb4ea34a7cb0973b4f87c33e65c6385034557cee39b5b756c29` |
+| Node | `050281d077443b6e195c10a8e4e2c5696983cd71e1af4d51d5601f6e1474b19f` |
+
+Java main DB SHA-256:
+`df53926a9cc6a579932e4163f52e8a9441d09b0e7d7aab06e09c7dc7a0c72723`,
+updated 2026-11-09T13:58:27Z; Java identification DB:
+`b91d168ad0b06a4bd0fa1ff11907679bcdfe43fb9d12e55e6f61b40aae6297bb`,
+updated 2026-11-09T00:59:24Z. Trivy 0.76.1 acquired both explicitly; source/snapshot
+identities were checked before and after use. Exact metadata hashes, timestamps
+and Node's independently acquired main DB identity are in each package's
+`database-identity.json`, `database-source-identity.json` and `analysis.json`.
+The Java SBOM has 110 components: Ubuntu, 108 Debian packages, and the application
+Maven component; both APT versions are fixed. It does **not** identify a separate
+Temurin JRE component. Maven/JUnit are build/test dependencies, absent from the
+runtime dependency inventory; `build-artifacts.sha256` is a separate hash inventory.
+This dependency-free starter does not establish complete inventory or general
+Java/framework support.
+
+### Directed admission and evidence custody
+
+The retained observer followed the earlier independent-consumer procedure: pause
+only the identified coordinator after authorized admission, retaining its cleanup
+trap, with a 600-second resume watchdog. Isolated copies of all five policies and
+namespace `pr78-java-binding` accepted the authentic image as the restricted actor.
+Changing only the copied results expectation `engineCommit` to forty zeros yielded
+sole policy/rule `pr78-tfm-results / autogen-require-results` and
+`CONSUMER_BINDING_engineCommit`. Restoring it accepted the same signed image.
+Controller restarts used the existing endpoint-convergence checker. Original
+policy UIDs/generations/specs were unchanged; isolated resources were deleted with
+UID preconditions and the coordinator resumed to finish normally. This is one
+binding trial, not all-binding live coverage. No request was retried as detection.
+Original requests/responses, policy copies, ownership and restoration are under
+`implementation/evidence/raw/pr78-20261109-fresh/attempt-02/directed/`.
+
+Archives under `implementation/evidence/packages/` were verified with
+`python3 src/verify_package.py`; safe original reports and diagnostics are retained:
+
+| Archive | SHA-256 | Internal hashes |
+| --- | --- | ---: |
+| `delivery-2S0pATl4.tar.gz` | `d27f62be73e84d8e2a11f512d826931872df58b582e5adb68e9efadc4616ffc1` | 67 |
+| `delivery-YoZBjqac.tar.gz` | `f6e7e1934274d32c70ab1a0624a9aaa0e5ce18f321c6570b3ba339f1be2448b0` | 179 |
+| `delivery-vJaLLQ4B.tar.gz` | `98227515afdfaa0dc9578e72372294de8ad8b026f2da00f57014f7b0c2f50d14` | 166 |
+
+Raw commands/logs, exit receipts, metadata, runner/hash checks and sanitized
+`delivery-summary.json` are under `implementation/evidence/raw/pr78-20261109-fresh/`.
+Normal local Java tests executed two tests; the separate real-link negative
+completed Maven with exit 0, rejected collection, retired its producer and retained
+no sentinel bytes or successful receipt. The 22 focused Python tests passed.
+Runtime push CI 42656527245 and PR CI 42656538626 passed; downloaded Java ZIPs matched
+GitHub digests and all normal report/log/inventory and ten negative-receipt hashes.
+Final-head CI/ZIP identities are retained in the same directory and PR description.
+
+Successful consumer repositories and required DB material remain on the separate
+host mount `/tmp/pr78-20261109-fresh-temp/`: `pr78-consumers-1517/`,
+`pr78-db/cache/`, both Java snapshots in `pr78-db/snapshots/`, and the independent
+`pr78-node-db/`. Inside the validation container these are `/tmp/...`. Preserve
+these actual directories before restarting/replacing the Codespace; do not infer
+Git custody. Private recovery remains under `implementation/.tmp/` and is excluded
+from packages. All three deliveries passed ownership-checked cleanup; no historical
+package was replaced. Final resource/capacity receipts are retained with the logs.
+
+No additional fixed-profile/laboratory integration is required: the only runtime
+repair is in the Java starter Dockerfile; real Node delivery covers the shared
+engine and updated npm, while shared regressions cover legacy/fixed boundaries.
+The full catalogue, campaigns, hosted OIDC, public publication and production were
+not run. Final shared/inventory/documentation checks and source-byte/executable-mode
+continuity are recorded in the handoff. AI assistance: OpenAI Codex implemented
+bounded fixes, tests, validation and records; human review/merge decision pending.
+
+Final local checks PASS: doctor, 10 environment tests, 1,096 service/unit tests,
+132 Python policy tests, Conftest/Kyverno, offline Node/Java cryptography, workflows,
+153 defense and 22 release tests. Inventory covers 854 tracked paths with 11 tests;
+192 relative documentation links/anchors and `git diff --check` pass. Both consumers'
+69 selected engine inputs retain integrated bytes and executable modes after the
+documentation edits; no receipt is attributed to a newer runtime.
+
+At 16:55:05 UTC, all delivery and directed resources plus the separately owned
+validation container and its two captured Docker volumes were retired. No
+containers or volumes remain. Docker/workspace free: **12,376,997,888 bytes**,
+1,719,022 free inodes; separate `/tmp`: **23,369,474,048 bytes**, 2,947,674 free
+inodes. Reproducible image/build caches remain; no broad prune was used. DB snapshots
+and consumer sources on the separate mount remain intact. Historical resources
+were never present in this environment and were not deleted remotely.
+
 ## PR #78 review follow-up — 9 November 2026
 
 Reviewed and starting head: `25ba72af5393ed37b5441bdbd00698f733a8e8c4`, matching
