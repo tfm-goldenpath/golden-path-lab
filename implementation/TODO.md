@@ -50,7 +50,9 @@ remain blocked by available Docker capacity; the existing guard is not lowered.
 PR #78 review fixes reject generated-output links/nonregular files with bounded,
 no-follow collection after verified retirement, and attempt retirement despite
 execution/evidence errors. Synthetic regressions cover both reproduced findings;
-real local container and Java/Node delivery validation remain capacity-blocked.
+CI real-container Java tests and the harmless generated-link negative passed,
+with downloaded artifact/internal hashes verified. Local container and Java/Node
+delivery validation remain capacity-blocked.
 See the validation record's review follow-up and fresh-Codespace handoff.
 Broader Java/framework support and hosted execution remain separate. Human review,
 custody, licensing and pending owner decisions are unchanged.

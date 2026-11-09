@@ -52,6 +52,44 @@ This fix changes only Java test lifecycle/collection; no extra fixed/lab integra
 is justified by those paths alone. The earlier shared profile changes still need
 the requested Java/Node live coverage before assessing broader acceptance.
 
+### Committed fix and CI artifact verification
+
+Runtime fix commit: **`7a0127a5d435f2f34fec652c151d1a839bb0a012`**. Subsequent
+handoff edits are documentation only; all 70 canonical engine-input files retain
+identical bytes and executable modes (`runtime-files.json`). No real consumer
+integration is attributed to this commit. The final PR head and its separate push/
+PR checks are recorded in the PR description and retained `final-head-ci.json`;
+this source record identifies the immutable runtime tested below.
+
+Both [push CI 42631337823](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/42631337823)
+and [PR CI 42631348008](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/42631348008)
+passed on attempt 1 at that exact runtime commit. Each executed two ordinary
+Java service tests in the pinned 2 CPU/1 GiB Maven container, followed by the real
+harmless generated-link fixture. Maven exited 0 in the fixture; collection then
+rejected the unsafe entry, without PASS, after verified producer retirement.
+This is an actual bind-mount/collection negative, **not** an admission negative.
+
+Downloaded artifacts retained under `implementation/evidence/raw/java-runner-review-20261109/`:
+
+| CI artifact / local ZIP | Verified GitHub SHA-256 | Original ServerTest XML SHA-256 |
+| --- | --- | --- |
+| `13681770966` / `java-13681770966.zip` (push) | `312319d82dbce5b6126c39c0155ef85538e266befd35c9a67709d4f039c8fbab` | `37b79fb4ff5923c65b5c1027ad7cf09699cc8cbfcad0e12abdb884c6a209ce8a` |
+| `13682320409` / `java-13682320409.zip` (PR) | `01ce632b73707b69853ded36dd770fdd1914958e3aa042e7d80138756aa0c766` | `afd134b68502436411516318b5ba632dc6a517896a8e048b81fa09df9376e59e` |
+
+`verify-ci-artifact.py` checked GitHub ZIP digests, normal report/log/artifact-manifest
+hashes and pinned toolchain, plus all ten internal hashes in each negative receipt.
+Each ZIP contains 20 files and **no symlinks or external sentinel contents**, including
+the failed run's uploaded evidence. ZIP timestamps do not preserve nanosecond
+freshness; that property was enforced at execution, while archive checks compare
+original bytes/hashes. `java-<artifact>-verification.json` retains these observations.
+Original Maven/runner logs and report bytes remain inside the ZIPs; no extra large
+archive was created. Both receipts observed builder image ID
+`sha256:c7a5284d62811ecb0d3f8154ad1ed5303d5f8f327492a9947d48960bfe96d462`
+for the pinned builder manifest above, and application JAR SHA-256
+`d73a0e2d5bac3fde87fbe32a6ba0c2f8499e75e719d1541f4df8beb98f2cf41a`.
+These are test-build artifacts, not a delivered runtime image or SBOM. Shared-final log SHA-256 is
+`b0b83cc1bd4556d2a8247a8500fbb63c1e383270e1df73df06afd0a367e0e06b`.
+
 ### Capacity and preserved evidence
 
 Read-only inventory: 4 CPUs, approximately 15 GiB RAM/13 GiB available, no swap.
@@ -71,7 +109,7 @@ historical evidence, private recovery and DB snapshots remain untouched.
 
 Evidence for this follow-up is retained under
 `implementation/evidence/raw/java-runner-review-20261109/` (ignored by Git):
-`capacity.json`, original failing regression logs, `focused-final.log`,
+`capacity.json`, original failing regression logs, `focused-final-02.log`,
 `doctor.log`, shared/inventory/link check logs and final CI verification receipts.
 No new large archive is created. Previous packages and sidecars remain at
 `implementation/evidence/packages/`; their historical identities are listed below.

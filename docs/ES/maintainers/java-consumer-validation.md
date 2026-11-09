@@ -41,3 +41,13 @@ histórica, recuperación privada y snapshots a un Codespace con capacidad verif
 comprobar hashes, fijar el commit exacto del motor y crear intentos nuevos. Conserva
 las puertas de capacidad, perfiles/productores, siete controles y cuatro evidencias.
 OIDC hosted, publicación, producción y catálogo completo siguen NOT_EXECUTED.
+
+El fix runtime es `7a0127a5d435f2f34fec652c151d1a839bb0a012`. Push CI
+42631337823 y PR CI 42631348008 pasaron en intento 1. En ambos, dos pruebas Java
+reales pasaron y el enlace inocuo fue rechazado después de Maven exit 0 y retiro
+confirmado. Se descargaron ambos ZIP; digest GitHub y hashes internos coinciden,
+sin enlaces ni bytes del sentinel en los 20 archivos de cada artefacto, incluida
+la evidencia del intento rechazado. El registro inglés conserva IDs/hashes exactos.
+Los cambios posteriores son documentación; se verifica continuidad de los 70
+inputs canónicos. La PR y `final-head-ci.json` registran HEAD final y su CI propia.
+Esto no elimina el bloqueo de las entregas locales ni demuestra admisión.
