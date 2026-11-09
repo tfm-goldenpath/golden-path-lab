@@ -38,16 +38,19 @@ delivery_build() {
     [[ -d "$DELIVERY_CACHE_FROM" && -f "$DELIVERY_CACHE_FROM/index.json" ]] || fail 'Prepared cache is missing.'
     cache_args+=(--cache-from "type=local,src=$DELIVERY_CACHE_FROM" --progress=plain)
   fi
-  local node_image context=${1:-services/quotes-node} base=${2:-}
+  local node_image java_builder context=${1:-services/quotes-node} base=${2:-}
   node_image=${GP_NODE_IMAGE:-$SERVICE_NODE_IMAGE}
   [[ "$node_image" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'The base image must be pinned by digest.'
   if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
     base=$(jq -er .runtimeImage "$engine_root/java-toolchain.json")
-    build_args=(--build-arg "JAVA_RUNTIME_IMAGE=$base" --build-arg "JAVA_BUILDER_IMAGE=$(jq -er .builderImage "$engine_root/java-toolchain.json")")
+    java_builder=$(jq -er .builderImage "$engine_root/java-toolchain.json")
+    [[ "$base" =~ @sha256:[a-f0-9]{64}$ && "$java_builder" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'Java images must be pinned by digest.'
+    put javaRuntimeImage "$base"; put javaBuilderImage "$java_builder"
+    build_args=(--build-arg "JAVA_RUNTIME_IMAGE=$base" --build-arg "JAVA_BUILDER_IMAGE=$java_builder")
   else
+    put nodeImage "$node_image"
     build_args=(--build-arg "BASE_IMAGE=$base" --build-arg "NODE_IMAGE=$node_image")
   fi
-  put nodeImage "$node_image"
   delivery_capture_build_inputs "$context" "${base:-$node_image}" "$commit" "${3:-}" "${4:-}" "${5:-laboratory}" > "$state_dir/build-inputs.json"
   if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
     python3 "$engine_root/materialize-build-inputs.py" "$state_dir/build-inputs.json" "$private/java-build-context"

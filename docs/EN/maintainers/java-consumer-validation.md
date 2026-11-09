@@ -114,3 +114,78 @@ version 1.0.0, Java 25 metadata and Maven `pom.properties` for
 `dev.goldenpath.trial:independent-java:1.0.0`. Its only class is `trial/Server.class`;
 no test/dependency JAR is embedded. This proves the inspected application archive's
 contents, not deployed-image SBOM identification. The latter is still unexecuted.
+
+## Committed-candidate attempts and exact limits
+
+Candidate **`300fc5958da4bf31c14b23add317a451879d7fc6`** was committed before the
+separate repositories were initialized through `bin/deliver init --profile ...`.
+Both have explicit local `https://example.invalid/java-trial-{java,node}` identities,
+no remote origin and distinct Git histories. Exact commands/CWD/status/timings are
+in `/tmp/java-consumer-trial/candidate-300fc59/receipt.json`, SHA-256
+`0854d7226effdf4fcd20aa43fa174e333d04eb3b3a068b42a1387d0a9782cd96`.
+
+| Consumer | Committed source | Actual observations |
+| --- | --- | --- |
+| Java | `e2dd53b04a3ccf32b3efc70a9194493e89979dc5` | `check --consumer` PASS from `/tmp`; two real tests PASS in 4.703 s using both checksum-verified distributions, from consumer `service/`; delivery stopped at capacity before unitTests/build/infrastructure. |
+| Node | `bef217923fe8734b88d09833ca2771b024635204` | `check --consumer` PASS from `/tmp`; actual Node tests PASS in 0.363 s; delivery stopped at capacity before infrastructure. |
+| Intentional Java test failure | `791602e4c01c4e9fd17cdfef8e91184833247631` | Separate initialized/committed fixture with wrong greeting; real Maven exited 1 in 4.650 s. Original failed Surefire report retained; not a delivery/admission negative. |
+
+The successful Java Surefire report SHA-256 is
+`2ece29f053ee21fd9f165d9df5de2861aae11a47d74b45246fcb320df8499c4a`;
+Maven output `61bbdf6c392bbe0890db004ec4927e47674c8554bbd0db1f3bc568f70c3a3f92`.
+The failed report is `dfc8621afe139c00a04e56af51fb3467924a12c65466fac1dacf83efd1c7b32b`.
+Node test output is `8bee38fbaaae6d3f7f07df2398bc6b02b76d7d7f832a2ffdb97baa931f564191`.
+
+The exact candidate JAR also ran in a host JVM with the documented heap/native
+budgets. All three routes returned the expected values, including actual consumer
+commit `e2dd53b…` at `/version`. After 100 sequential requests, `/proc` reported
+59,428 KiB RSS/high-water and 15 threads. The owned process was terminated. This
+is **not** a 192 MiB cgroup, read-only-container, image scan or Kubernetes proof.
+It cannot satisfy the requested runtime acceptance.
+
+Both capacity-stop attempts preserve an ERROR result, unreached protected stages,
+first archive and private recovery. `verify_package.py` passed outer/internal
+hashes, and repeated `cleanup` exited 0 without replacing those archives:
+
+| Attempt | Archive in `implementation/evidence/packages/` | SHA-256 | Internal hashes |
+| --- | --- | --- | ---: |
+| Java capacity stop | `delivery-dXxezlcI.tar.gz` | `619e3b9790dd572c870f7f3679ed190e4fb0e5c7ed999d9ff1d655b581d8c061` | 14 |
+| Node capacity stop | `delivery-H6fG6uwG.tar.gz` | `a3178e7a62332b53f6f0312950bcf9a49eb8cf884e579c870e3371fca4533434` | 13 |
+
+At the measured checkpoint Docker/workspace free bytes were **8,364,756,992**
+(7.790 GiB), below Node's 8 GiB gate by **225,177,600 bytes** and Java's 10 GiB
+gate by **2,372,661,248 bytes** (2.210 GiB). Separate `/tmp` had
+114,515,107,840 free bytes. No image layers were pulled, DBs downloaded, cluster
+created, or existing image/volume deleted. Three pre-existing volumes and three
+images remain. Safe Docker capacity remains the blocking requirement; do not
+lower the gate or treat `/tmp` free space as Docker capacity.
+
+Required remaining acceptance: full independent Java delivery and authenticated
+four-type evidence; current main/Java DB bytes and delivered-image SBOM analysis;
+192 MiB restricted-container rollout; attributable live admission negative and
+restored acceptance; then full Node compatibility delivery. Fixed/laboratory
+checks passed in the shared suite, but because neither consumer reached shared
+runtime stages, the decision to omit additional fixed/lab integration cannot yet
+be justified by live coverage. Reassess after the two required deliveries; no
+catalogue/demo/campaign rerun is claimed. Hosted OIDC/signing, public publication,
+production and full catalogue remain **NOT_EXECUTED**.
+
+| Activity | Assistant contribution | Human review | Decision |
+| --- | --- | --- | --- |
+| Implementation, tests, EN/ES documentation and bounded local checks | OpenAI Codex / GPT-6 | Pending | Draft implementation; real delivery acceptance blocked by capacity |
+
+Repository licensing, private reporting and historical custody decisions remain
+unchanged. Existing third-party notices are retained. No remote consumer
+repository, hosted dispatch, settings change, merge or release was performed.
+
+`shared-02.log` also passed (1,095 service/unit checks plus the same remaining
+shared suites), adding Java source mode/symlink and XML package coverage. Final
+source review corrected Java build state to record `javaBuilderImage` and
+`javaRuntimeImage`, avoiding an irrelevant legacy `nodeImage` field. The affected
+build-adapter regression in `java-final-01.log` passed all nine Java checks and
+verifies both immutable arguments and the captured build context. This is a
+synthetic Docker boundary, not an image-build result. Eleven inventory regressions
+passed; 853 tracked paths have exact coverage. EN/ES Java command blocks match,
+499 relative links/anchors in 16 affected guides passed, and whitespace checks
+passed. The final push/PR CI status is recorded in the draft PR against its exact
+head; no earlier CI is relabelled.

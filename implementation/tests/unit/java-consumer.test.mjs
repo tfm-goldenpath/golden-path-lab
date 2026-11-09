@@ -78,3 +78,52 @@ test('Python report, database and lifecycle regressions',()=>{
  const result=spawnSync('python3',['-I','-S',join(import.meta.dirname,'test_java_consumer.py')],{encoding:'utf8'});
  assert.equal(result.status,0,result.stdout+result.stderr);
 });
+test('Java source content, executable modes and symlink escapes remain protected',t=>{
+ const {e,c}=fixture(t),file=join(c,'service/src/main/java/trial/Server.java'),bytes=fs.readFileSync(file);
+ fs.appendFileSync(file,'\n// changed');assert.throws(()=>captureConsumer(e,c),/committed source/);fs.writeFileSync(file,bytes);
+ fs.chmodSync(file,0o755);assert.throws(()=>captureConsumer(e,c),/committed source/);fs.chmodSync(file,0o644);
+ fs.rmSync(file);fs.symlinkSync('/etc/passwd',file);assert.throws(()=>captureConsumer(e,c),/Symlink/);
+});
+test('Java archive preserves original XML reports and verifies all internal hashes',t=>{
+ const d=fs.mkdtempSync(join(tmpdir(),'java package synthetic '));t.after(()=>fs.rmSync(d,{recursive:true,force:true}));
+ const raw=join(d,'delivery-synthetic'),out=join(d,'packages');fs.mkdirSync(raw);
+ fs.writeFileSync(join(raw,'state.json'),JSON.stringify({profile:'consumer-v1',consumerBinding:{profile:JAVA_PROFILE}}));
+ fs.writeFileSync(join(raw,'consumer-binding.json'),JSON.stringify({profile:JAVA_PROFILE}));
+ fs.mkdirSync(join(raw,'java-test-reports'));
+ fs.writeFileSync(join(raw,'java-test-reports/TEST-synthetic.xml'),'<synthetic>not real test evidence</synthetic>');
+ fs.symlinkSync('/etc/passwd',join(raw,'java-test-reports/TEST-foreign.xml'));
+ run('node',[join(engine,'src/contracts.mjs'),'delivery-init',raw],'/tmp');
+ run('node',[join(engine,'src/contracts.mjs'),'delivery-result',raw,'1','0'],'/tmp');
+ run('python3',[join(engine,'src/package_evidence.py'),raw,out,'ERROR'],'/tmp');
+ const result=JSON.parse(run('python3',[join(engine,'src/verify_package.py'),join(out,'delivery-synthetic.tar.gz')],'/tmp'));
+ assert.ok(result.internalHashes>0);
+ const entries=run('tar',['-tzf',join(out,'delivery-synthetic.tar.gz')],'/tmp');
+ assert.match(entries,/java-test-reports\/TEST-synthetic.xml/);assert.doesNotMatch(entries,/TEST-foreign|state.json/);
+ assert.match(fs.readFileSync(join(raw,'execution-summary.json'),'utf8'),/independent Java consumer/);
+});
+test('Java build adapter records its own pinned images and materializes captured test/source bytes',t=>{
+ const {e,c}=fixture(t),state=join(c,'observations'),priv=join(c,'private');fs.mkdirSync(state);fs.mkdirSync(priv);
+ fs.writeFileSync(join(state,'state.json'),'{}');fs.writeFileSync(join(state,'consumer-inputs.json'),JSON.stringify(captureConsumer(e,c),null,2)+'\n');
+ const script=`set -Eeuo pipefail
+source "$1/src/lib/context.sh"
+source "$1/src/lib/delivery.sh"
+source "$1/implementation/versions.env"
+root="$1/implementation"; engine_root="$1/src"; repository_root="$1"; consumer_root="$2"; service_root="$2/service"
+state_dir="$3"; private="$4"; execution_profile=consumer-v1; consumer_profile=java-http-consumer/v1
+commit=$(git -C "$consumer_root" rev-parse HEAD); id=synthetic; builder=synthetic; image_repo=registry.invalid/synthetic
+# Synthetic Docker boundary only; all source capture/materialization remains real.
+docker() {
+ printf '%s\\n' "$@" > "$state_dir/docker-args.txt"
+ printf '{"containerimage.digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}' > "$state_dir/build-metadata.json"
+}
+delivery_build "$service_root" '' '' '' consumer-v1
+`;
+ run('bash',['-c',script,'synthetic',e,c,state,priv],'/tmp');
+ const pins=JSON.parse(fs.readFileSync(join(e,'src/java-toolchain.json'))),saved=JSON.parse(fs.readFileSync(join(state,'state.json')));
+ assert.equal(saved.javaRuntimeImage,pins.runtimeImage);assert.equal(saved.javaBuilderImage,pins.builderImage);assert.equal(saved.nodeImage,undefined);
+ const args=fs.readFileSync(join(state,'docker-args.txt'),'utf8');
+ assert.match(args,/JAVA_BUILDER_IMAGE=maven:.*@sha256:/);assert.match(args,/JAVA_RUNTIME_IMAGE=eclipse-temurin:.*@sha256:/);
+ assert.equal(args.trim().split('\n').at(-1),join(priv,'java-build-context'));
+ assert.ok(fs.existsSync(join(priv,'java-build-context/src/test/resources/greeting.json')));
+ assert.equal(fs.existsSync(join(priv,'java-build-context/target')),false);
+});
