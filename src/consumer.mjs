@@ -4,10 +4,11 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
+import {consumerProfile, JAVA_PROFILE} from './consumer-profiles.mjs';
 export const ENGINE_REPOSITORY='https://github.com/tfm-goldenpath/golden-path-lab';
 export const CONSUMER_PROFILE='node-http-consumer/v1';
 export const CONSUMER_PRODUCER='bin/deliver:node-http-consumer/v1';
-export const engineSources=['bin','src','templates/node-http','implementation/policies','implementation/schemas',
+export const engineSources=['bin','src','templates/node-http','templates/java-http','implementation/policies','implementation/schemas',
   'implementation/versions.env','implementation/tools.lock.json','implementation/tooling/package.json','implementation/tooling/package-lock.json'];
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const gitBytes=(root,...args)=>execFileSync('git',['--no-replace-objects','--literal-pathspecs','-C',root,...args],{stdio:['ignore','pipe','pipe']});
@@ -22,7 +23,8 @@ function keys(value,expected) {
 }
 export function validateConfig(config) {
   keys(config,['schema','repository','engine','service']); keys(config.engine,['repository','commit']);
-  if(config.schema!==CONSUMER_PROFILE || config.service!=='service') throw new Error('Unsupported consumer profile or service path');
+  consumerProfile(config.schema);
+  if(config.service!=='service') throw new Error('Unsupported consumer profile or service path');
   if(!/^https:\/\/[A-Za-z0-9.-]+\/[A-Za-z0-9_.\/-]+$/.test(config.repository) || config.repository.includes('/../')) throw new Error('Expected an explicit HTTPS consumer repository');
   if(config.engine.repository!==ENGINE_REPOSITORY || !/^[a-f0-9]{40}$/.test(config.engine.commit)) throw new Error('Engine requires the expected repository and exact full commit SHA');
   return config;
@@ -33,12 +35,12 @@ export function canonical(root) {
   return root;
 }
 // Snapshot every selected byte, including ignored/untracked additions, plus modes.
-// Consumer root node_modules is excluded by the fixed Docker allowlist.
+// Node root node_modules / Java root target are excluded by their fixed Docker allowlists.
 // Engine-generated Python caches are outside committed runtime inputs.
-export function snapshot(root,selection,engine,commit) {
+export function snapshot(root,selection,engine,commit,profile=CONSUMER_PROFILE) {
   if(!/^[a-f0-9]{40}$/.test(commit)) throw new Error('Snapshot requires an exact resolved commit');
   requireHead(root,commit);
-  const excluded=name=>(engine && name.split('/').includes('__pycache__')) || (!engine && (name==='service/node_modules' || name.startsWith('service/node_modules/')));
+  const excluded=name=>(engine && name.split('/').includes('__pycache__')) || (!engine && (profile===JAVA_PROFILE ? (name==='service/target' || name.startsWith('service/target/')) : (name==='service/node_modules' || name.startsWith('service/node_modules/'))));
   // The immutable tree, never the mutable index, defines the complete inventory.
   // NUL records preserve spaces, tabs, newlines and Git-quoted path characters.
   const tree=new TextDecoder('utf-8',{fatal:true}).decode(gitBytes(root,'ls-tree','-r','-z','--full-tree',commit,'--',...selection));
@@ -85,36 +87,47 @@ export function captureConsumer(engine,consumer) {
   if(fs.lstatSync(path.join(consumer,'golden-path.json')).isSymbolicLink()) throw new Error('Symlinked configuration');
   const config=validateConfig(read(path.join(consumer,'golden-path.json')));
   const engineSnapshot=verifyEngine(engine,config.engine);
-  const source=snapshot(consumer,['service','.github/workflows','golden-path.json'],false,commit);
-  for(const name of ['Dockerfile','.dockerignore']) if(!fs.readFileSync(path.join(consumer,'service',name)).equals(fs.readFileSync(path.join(engine,'templates/node-http/service',name)))) throw new Error('Unsupported build context '+name+'; use the fixed consumer template');
+  const source=snapshot(consumer,['service','.github/workflows','golden-path.json'],false,commit,config.schema);
+  const adapter=consumerProfile(config.schema);
+  for(const name of ['Dockerfile','.dockerignore',...(config.schema===JAVA_PROFILE?['pom.xml']:[])]) if(!fs.readFileSync(path.join(consumer,'service',name)).equals(fs.readFileSync(path.join(engine,'templates',adapter.template,'service',name)))) throw new Error('Unsupported build context '+name+'; use the fixed consumer template');
+  if(config.schema===JAVA_PROFILE) {
+    const allowed=['Dockerfile','.dockerignore','pom.xml','src','target'];
+    if(fs.readdirSync(path.join(consumer,'service')).some(n=>!allowed.includes(n))) throw new Error('Unsupported Java build configuration');
+    for(const name of source.files.map(f=>f.path).filter(p=>p.startsWith('service/src/'))) {
+      if(!/^service\/src\/(main|test)\/(java|resources)\//.test(name) || /\.(jar|class|war)$/i.test(name)) throw new Error('Unsupported Java source input: '+name);
+    }
+  } else {
   const pkg=read(path.join(consumer,'service/package.json')), lock=read(path.join(consumer,'service/package-lock.json'));
   if(['dependencies','devDependencies','optionalDependencies','peerDependencies'].some(k=>Object.keys(pkg[k]||{}).length) || lock.lockfileVersion!==3 || Object.keys(lock.packages||{}).length!==1 || !lock.packages[''] || lock.name!==pkg.name || lock.version!==pkg.version || lock.packages[''].name!==pkg.name || lock.packages[''].version!==pkg.version) throw new Error('This profile supports locked dependency-free Node services only');
+  }
   if(!fs.readdirSync(path.join(consumer,'.github/workflows')).some(n=>/\.ya?ml$/.test(n))) throw new Error('Consumer workflow input required');
   let origin;
   try {origin=git(consumer,'config','--get','remote.origin.url');} catch {origin=null;}
   if(origin && origin!==config.repository) throw new Error('Consumer origin differs from expected repository');
   requireHead(consumer,commit); requireHead(engine,config.engine.commit);
-  return {schema:CONSUMER_PROFILE,repository:config.repository,commit,remoteOriginVerified:!!origin,
+  return {schema:config.schema,repository:config.repository,commit,remoteOriginVerified:!!origin,
     remoteVerification:'Local Git origin string only; no host authentication',source,engine:engineSnapshot,
-    binding:{profile:CONSUMER_PROFILE,producer:CONSUMER_PRODUCER,engineRepository:config.engine.repository,
+    binding:{profile:config.schema,producer:adapter.producer,engineRepository:config.engine.repository,
       engineCommit:config.engine.commit,engineSnapshot:engineSnapshot.sha256,
       configurationSha256:hash(fs.readFileSync(path.join(consumer,'golden-path.json'))),consumerSnapshot:source.sha256}};
 }
-export function initialize(engine,destination,repository,commit) {
+export function initialize(engine,destination,repository,commit,profile=CONSUMER_PROFILE) {
   destination=path.resolve(destination);
   if(fs.existsSync(destination) && (!fs.lstatSync(destination).isDirectory() || fs.lstatSync(destination).isSymbolicLink() || fs.readdirSync(destination).length)) throw new Error('Refusing nonempty or symlinked destination');
-  const config=validateConfig({schema:CONSUMER_PROFILE,repository,engine:{repository:ENGINE_REPOSITORY,commit},service:'service'});
+  const config=validateConfig({schema:profile,repository,engine:{repository:ENGINE_REPOSITORY,commit},service:'service'});
   verifyEngine(engine,config.engine);
   fs.mkdirSync(destination,{recursive:true});
   if(fs.realpathSync(destination)!==destination) throw new Error('Symlinked destination parent');
-  for(const name of fs.readdirSync(path.join(engine,'templates/node-http'))) fs.cpSync(path.join(engine,'templates/node-http',name),path.join(destination,name),{recursive:true,errorOnExist:true,force:false});
+  const template=path.join(engine,'templates',consumerProfile(profile).template);
+  for(const name of fs.readdirSync(template)) fs.cpSync(path.join(template,name),path.join(destination,name),{recursive:true,errorOnExist:true,force:false});
   fs.writeFileSync(path.join(destination,'golden-path.json'),JSON.stringify(config,null,2)+'\n',{flag:'wx'});
 }
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
   try {
     const [command,engine,...args]=process.argv.slice(2);
     if(command==='init' && args.length===5 && args[1]==='--repository' && args[3]==='--engine-commit') initialize(engine,args[0],args[2],args[4]);
+    else if(command==='init' && args.length===7 && args[1]==='--profile' && args[3]==='--repository' && args[5]==='--engine-commit') initialize(engine,args[0],args[4],args[6],args[2]);
     else if(command==='capture' && args.length===1) console.log(JSON.stringify(captureConsumer(engine,args[0]),null,2));
-    else throw new Error('Usage: init DEST --repository HTTPS_URL --engine-commit FULL_SHA | check/local --consumer PATH');
+    else throw new Error('Usage: init DEST [--profile PROFILE] --repository HTTPS_URL --engine-commit FULL_SHA | check/local --consumer PATH');
   } catch(error) {console.error('Consumer configuration: '+error.message);process.exitCode=1;}
 }

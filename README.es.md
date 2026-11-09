@@ -41,6 +41,8 @@ referencia. La procedencia alojada se emite entre preparación y finalización.
 ## Disponibilidad actual
 
 El motor local está en `bin/` y `src/`; los adaptadores del laboratorio lo reutilizan.
+La [prueba Java acotada](docs/ES/java-consumer-quickstart.md) añade un perfil explícito; su aceptación real sigue pendiente.
+
 La [guía del consumidor Node](docs/ES/consumer-quickstart.md) define su contrato acotado. Consulta el [alcance y los límites actuales](docs/ES/legitimate-delivery.md#alcance-actual)
 antes de ejecutar y la [guía de navegación del código](docs/ES/getting-started.md)
 para localizar la implementación. La [matriz de preparación](implementation/docs/ES/evaluation-readiness.md)

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>dev.goldenpath.trial</groupId><artifactId>independent-java</artifactId><version>1.0.0</version>
+  <name>Independent Java HTTP consumer</name>
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.outputTimestamp>2026-11-09T00:00:00Z</project.build.outputTimestamp>
+  </properties>
+  <!-- These fixed versions constrain this trial; they are not a dependency lock. -->
+  <dependencies>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><version>6.1.3</version><scope>test</scope></dependency>
+  </dependencies>
+  <build>
+    <finalName>independent-java</finalName>
+    <plugins>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-clean-plugin</artifactId><version>3.5.0</version></plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-resources-plugin</artifactId><version>3.5.0</version></plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.16.0</version></plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.6.1</version>
+        <configuration><failIfNoTests>true</failIfNoTests><forkCount>1</forkCount><reuseForks>true</reuseForks>
+          <argLine>-Xmx128m -XX:ActiveProcessorCount=2</argLine>
+        </configuration>
+      </plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-jar-plugin</artifactId><version>3.5.1</version>
+        <configuration><archive><manifest><mainClass>trial.Server</mainClass><addDefaultImplementationEntries>true</addDefaultImplementationEntries></manifest></archive></configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

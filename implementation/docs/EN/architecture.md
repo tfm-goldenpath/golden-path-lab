@@ -467,8 +467,36 @@ The separately configured `consumer-v1` execution uses the same delivery modules
 Consumer source, workflow, tests and build inputs come from its own Git repository;
 engine, policies, schemas and toolchain inputs remain engine-owned. The exact pin
 and both committed snapshots are rechecked before authorization. Both signed
-provenance and results carry the `node-http-consumer/v1` binding, checked against
+provenance and results carry the exact configured `node-http-consumer/v1` or `java-http-consumer/v1` binding, checked against
 trusted execution configuration in CI and admission. Existing laboratory,
 `delivery-v1` and hosted producer/authorization semantics remain unchanged.
 See the [consumer quickstart](../../../docs/EN/consumer-quickstart.md) and
 [exact validation](../../../docs/EN/maintainers/independent-consumer-validation.md).
+
+### Bounded Java adapter
+
+`src/consumer-profiles.mjs` maps only two fixed profiles. `src/java-toolchain.json`
+pins the Java builder/runtime; initialization defaults to Node. Java requires the
+fixed POM/Docker inputs, captures `src/main`, `src/test` and resources, excludes only
+root `target/` consistently with Docker, and materializes builds from hashed
+captured bytes. Binary resources carry explicit base64 encoding in build capture;
+legacy UTF-8 captures remain compatible. `src/java-tests.py` owns a bounded test
+container and immutable ID receipt; the delivery coordinator's cleanup invokes
+its checked cleanup after interruption. No credentials or Docker socket are mounted.
+
+`src/java-test-reports.py` validates fresh Surefire XML and process success;
+`java-tests.json` binds log, reports, resolved artifact hashes and toolchain.
+The Java `unitTests` evidence entry hashes this receipt. Authorization revalidates
+its retained files; Node retains TAP/log semantics. Maven versions are constrained
+by the fixed POM, not claimed as a complete dependency lock. Runtime has no test
+libraries. Namespace, port, security controls and 192 MiB limit remain fixed.
+
+Java DB identity adds `schema: 2` and a `java` metadata/hash object; existing main-DB
+identities remain schema 1. Required Java DB acquisition uses a fresh cache and
+retained source/snapshot hashes. Both databases remain stable with updates disabled
+through image inventory and SBOM vulnerability scanning. Large snapshots remain
+outside the archive/Git; their identities and commands travel in evidence. Java
+XML reports are included with internal package hashes. Profile/producer admission
+conditions are exact equalities, never an either-profile authorization. Full local
+acceptance and Java inventory coverage must follow the [validation record](../../../docs/EN/maintainers/java-consumer-validation.md);
+[operator commands](../../../docs/EN/java-consumer-quickstart.md) do not imply execution.

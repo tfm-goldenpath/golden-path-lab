@@ -1,0 +1,20 @@
+name: Java consumer tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container:
+      image: maven:3.10.0-eclipse-temurin-25-noble@sha256:b726d3a43d3de48046821dfbfdf55babb0a01474d1059ec6ce8ad4aebb07927f
+      options: --cpus 2 --memory 1g
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Run the service tests
+        working-directory: service
+        env:
+          MAVEN_OPTS: -Xmx256m -XX:ActiveProcessorCount=2
+        run: mvn -B -ntp --strict-checksums verify

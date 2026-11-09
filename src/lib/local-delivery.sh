@@ -18,17 +18,17 @@ environment_capacity() {
   { nproc || return; free -h || return; df -h "$root" /tmp "$docker_root" || return; df -i "$root" /tmp "$docker_root" || return; docker system df || return; } > "$state_dir/storage-$checkpoint.log"
   # Cold-start planning allowance, not a universal guarantee. Evidence needs a
   # separate 512 MiB allowance in addition to the 3 GiB reserve.
-  python3 - "$root" "$docker_root" "$checkpoint" "${GP_VULNERABILITY_SNAPSHOT_ROOT:-$root/.tmp}" "${TRIVY_CACHE_DIR:-$root/.tmp}" <<'PY'
+  python3 - "$root" "$docker_root" "$checkpoint" "${GP_VULNERABILITY_SNAPSHOT_ROOT:-$root/.tmp}" "${TRIVY_CACHE_DIR:-$root/.tmp}" "${consumer_profile:-}" <<'PY'
 import shutil, sys
 from pathlib import Path
-for path, growth in ((sys.argv[1], 0.5), (sys.argv[2], 5 if sys.argv[3]=='before-infrastructure' else 0),
-                     (sys.argv[4], 2 if sys.argv[3] in ('before-infrastructure','after-build') else 0),
-                     (sys.argv[5], 2 if sys.argv[3] in ('before-infrastructure','after-build') else 0)):
+for path, growth in ((sys.argv[1], 0.5), (sys.argv[2], (7 if sys.argv[6]=='java-http-consumer/v1' else 5) if sys.argv[3]=='before-infrastructure' else 0),
+                     (sys.argv[4], (4 if sys.argv[6]=='java-http-consumer/v1' else 2) if sys.argv[3] in ('before-infrastructure','after-build','before-analysis') else 0),
+                     (sys.argv[5], (4 if sys.argv[6]=='java-http-consumer/v1' else 2) if sys.argv[3] in ('before-infrastructure','after-build','before-analysis') else 0)):
     path=Path(path)
     while not path.exists(): path=path.parent
     free=shutil.disk_usage(path).free
     if free < (3+growth)*1024**3:
-        raise SystemExit('Insufficient capacity at '+path+': preserve 3 GiB plus planned growth; see storage log')
+        raise SystemExit('Insufficient capacity at '+str(path)+': preserve 3 GiB plus planned growth; see storage log')
 PY
 }
 
@@ -76,10 +76,13 @@ environment_admission() {
 
 environment_cleanup() {
   local code=0 name expected actual volume
+  if [[ -n "${state_dir:-}" && -f "$state_dir/java-test-container.id" ]]; then
+    python3 "${engine_root:-$root/../src}/java-tests.py" cleanup "$state_dir" || code=1
+  fi
   [[ -z "${port_pid:-}" ]] || { kill "$port_pid" 2>/dev/null || true; wait "$port_pid" 2>/dev/null || true; port_pid=''; }
   [[ -n "${state_dir:-}" && -f "$state_dir/state.json" ]] || return 0
   [[ ! -L "$state_dir/.resources-retired" && ! -L "$state_dir/.diagnostics-retained" ]] || return 1
-  [[ ! -f "$state_dir/.resources-retired" ]] || return 0
+  [[ ! -f "$state_dir/.resources-retired" ]] || return "$code"
   [[ ! -L "$state_dir/state.json" ]] || return 1
   jq -e --arg registry "$registry" --arg node "${cluster:-}-control-plane" --arg builder "buildx_buildkit_${builder:-}0" '
     (.ownedContainers | type=="object" and all(to_entries[];

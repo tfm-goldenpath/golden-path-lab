@@ -8,7 +8,10 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {authenticateBundle} from '../../../src/ci-verification-gate.mjs';
 import {CHECKS,RESULTS_TYPE} from '../../../src/contracts.mjs';
-import {CONSUMER_PROFILE,CONSUMER_PRODUCER,ENGINE_REPOSITORY} from '../../../src/consumer.mjs';
+import {ENGINE_REPOSITORY} from '../../../src/consumer.mjs';
+import {consumerProfile} from '../../../src/consumer-profiles.mjs';
+const CONSUMER_PROFILE=process.argv[2] || 'node-http-consumer/v1';
+const CONSUMER_PRODUCER=consumerProfile(CONSUMER_PROFILE).producer;
 const directory=fs.mkdtempSync(join(tmpdir(),'gp-consumer-crypto-'));
 const write=(name,value)=>fs.writeFileSync(join(directory,name),JSON.stringify(value));
 const run=(command,args)=>execFileSync(command,args,{encoding:'utf8',env:{...process.env,COSIGN_PASSWORD:''},stdio:['ignore','pipe','pipe']});
@@ -38,6 +41,9 @@ try {
  }
  for(const [predicate,type] of [[provenance,'https://slsa.dev/provenance/v1'],[results,RESULTS_TYPE]]) {
   const file=sign(predicate,type);authenticate(file,type);
+  const other=CONSUMER_PROFILE==='node-http-consumer/v1'?'java-http-consumer/v1':'node-http-consumer/v1';
+  assert.throws(()=>authenticate(file,type,{...options,producer:consumerProfile(other).producer,binding:{...binding,profile:other,producer:consumerProfile(other).producer}}),/binding mismatch/);
+  assert.throws(()=>authenticate(file,'https://sigstore.dev/cosign/sign/v1')); // A signed results/provenance object cannot be the independent image signature.
   for(const key of ['engineCommit','engineSnapshot','configurationSha256','consumerSnapshot']) {
    const changed={...binding,[key]:(key==='engineCommit'?'f'.repeat(40):'f'.repeat(64))};
    assert.throws(()=>authenticate(file,type,{...options,binding:changed}),/binding mismatch/);

@@ -88,6 +88,11 @@ def package(source, output, status, profile="delivery-v1"):
     if profile != "delivery-v1": raise ValueError("Unknown evidence package profile")
     source, output = Path(source).resolve(), Path(output).resolve()
     names = {p: p.relative_to(source).as_posix() for p in sorted(source.iterdir()) if shareable(p)}
+    reports = source/'java-test-reports'
+    if reports.is_dir() and not reports.is_symlink():
+        for file in sorted(reports.glob('TEST-*.xml')):
+            if file.is_file() and not file.is_symlink() and b'PRIVATE KEY-----' not in file.read_bytes():
+                names[file] = file.relative_to(source).as_posix()
     result = json.loads((source / 'result.json').read_text())
     if result.get('schema') != 'legitimate-delivery-result/v1' or result.get('status') != status:
         raise ValueError('Invalid legitimate delivery result')
@@ -95,6 +100,9 @@ def package(source, output, status, profile="delivery-v1"):
         raise ValueError('Laboratory evidence in delivery profile')
     execution_profile = result.get('profile', 'delivery-v1')
     scope = 'independent Node consumer' if execution_profile == 'consumer-v1' else 'quotes-node'
+    if execution_profile == 'consumer-v1' and (source/'consumer-binding.json').exists():
+        if json.loads((source/'consumer-binding.json').read_text()).get('profile') == 'java-http-consumer/v1':
+            scope = 'independent Java consumer'
     summary = {'schema': 'legitimate-delivery-package/v1', 'profile': profile,
         'executionProfile': execution_profile,
         'run': source.name, 'status': status, 'result': 'result.json',

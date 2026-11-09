@@ -2,6 +2,10 @@
 # Shared delivery operations. Function definitions only.
 
 delivery_service_tests() {
+  if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
+    python3 "$engine_root/java-tests.py" "$service_root" "$state_dir"
+    return
+  fi
   if [[ "${execution_profile:-laboratory}" == delivery-v1 || "${execution_profile:-laboratory}" == consumer-v1 ]]; then
     if [[ "${execution_profile}" == consumer-v1 ]]; then
       (cd -- "$service_root"; env -u NODE_TEST_CONTEXT node --test --test-reporter=tap test/*.test.js) > "$state_dir/unit-tests.log" 2>&1
@@ -29,7 +33,7 @@ delivery_versions() {
 }
 
 delivery_build() {
-  local -a cache_args=()
+  local -a cache_args=() build_args=()
   if [[ -n "${DELIVERY_CACHE_FROM:-}" ]]; then
     [[ -d "$DELIVERY_CACHE_FROM" && -f "$DELIVERY_CACHE_FROM/index.json" ]] || fail 'Prepared cache is missing.'
     cache_args+=(--cache-from "type=local,src=$DELIVERY_CACHE_FROM" --progress=plain)
@@ -37,11 +41,21 @@ delivery_build() {
   local node_image context=${1:-services/quotes-node} base=${2:-}
   node_image=${GP_NODE_IMAGE:-$SERVICE_NODE_IMAGE}
   [[ "$node_image" =~ @sha256:[a-f0-9]{64}$ ]] || fail 'The base image must be pinned by digest.'
+  if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
+    base=$(jq -er .runtimeImage "$engine_root/java-toolchain.json")
+    build_args=(--build-arg "JAVA_RUNTIME_IMAGE=$base" --build-arg "JAVA_BUILDER_IMAGE=$(jq -er .builderImage "$engine_root/java-toolchain.json")")
+  else
+    build_args=(--build-arg "BASE_IMAGE=$base" --build-arg "NODE_IMAGE=$node_image")
+  fi
   put nodeImage "$node_image"
   delivery_capture_build_inputs "$context" "${base:-$node_image}" "$commit" "${3:-}" "${4:-}" "${5:-laboratory}" > "$state_dir/build-inputs.json"
+  if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
+    python3 "$engine_root/materialize-build-inputs.py" "$state_dir/build-inputs.json" "$private/java-build-context"
+    context="$private/java-build-context"
+  fi
   record "Build image $id"
   docker buildx build --builder "$builder" --platform linux/amd64 --provenance=false --sbom=false --push \
-    --build-arg "BASE_IMAGE=$base" --build-arg "NODE_IMAGE=$node_image" --build-arg "BUILD_COMMIT=$commit" --label "tfm.lab.run=$id" \
+    "${build_args[@]}" --build-arg "BUILD_COMMIT=$commit" --label "tfm.lab.run=$id" \
     --tag "$image_repo:$id" --metadata-file "$state_dir/build-metadata.json" "${cache_args[@]}" "$context"
   digest=$(jq -er '."containerimage.digest"' "$state_dir/build-metadata.json")
   [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]] || fail 'Buildx did not return a valid image digest.'
@@ -83,6 +97,8 @@ delivery_analysis_command() {
 
 delivery_database_prepare() {
   local cache=${TRIVY_CACHE_DIR:-$root/.tmp/trivy-cache} snapshot
+  local -a database_args=()
+  if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then database_args+=(--java); fi
   if jq -e '.vulnerabilityDatabase' "$state_dir/state.json" >/dev/null; then
     snapshot=$(get vulnerabilityDatabase)
   else
@@ -94,21 +110,38 @@ delivery_database_prepare() {
     fi
     snapshot="$snapshot_root/vulnerability-db-$(basename "$state_dir")"
     [[ ! -e "$snapshot" ]] || fail 'Database snapshot already exists; use a fresh run.'
+    if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then environment_capacity before-analysis; fi
     if [[ -n "${GP_VULNERABILITY_DB:-}" ]]; then
       cache=$(realpath -- "$GP_VULNERABILITY_DB")
     else
+      if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
+        mkdir -p -- "$cache"
+        cache=$(mktemp -d "$cache/java-attempt-XXXXXXXX")
+      fi
       # Fetch from the publisher directly: a mirror layer 404 can abort Trivy
       # before its built-in fallback. Keep explicit operator overrides recorded.
       delivery_analysis_command database-download trivy image --cache-dir "$cache" \
         --db-repository "${TRIVY_DB_REPOSITORY:-ghcr.io/aquasecurity/trivy-db:2}" --download-db-only
     fi
+    if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
+      if [[ -z "${GP_VULNERABILITY_DB:-}" ]]; then
+        delivery_analysis_command java-database-download trivy image --cache-dir "$cache" \
+          --java-db-repository "${TRIVY_JAVA_DB_REPOSITORY:-ghcr.io/aquasecurity/trivy-java-db:1}" --download-java-db-only
+      fi
+      python3 "$engine_root/vulnerability-database.py" identify "$cache" --java > "$state_dir/database-source-identity.json"
+    fi
     # Command substitution does not inherit errexit: the adapter explicitly
     # propagates failures and emits only its selected path on stdout.
     snapshot=$(delivery_snapshot_database "$cache" "$snapshot") || return $?
-    python3 "${engine_root:-${root:-$PWD}/../src}/vulnerability-database.py" identify "$snapshot" > "$state_dir/database-identity.json"
+    python3 "${engine_root:-${root:-$PWD}/../src}/vulnerability-database.py" identify "$snapshot" "${database_args[@]}" > "$state_dir/database-identity.json"
+    if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
+      jq -S 'del(.retrieval)' "$state_dir/database-source-identity.json" > "$private/database-before.json"
+      jq -S 'del(.retrieval)' "$state_dir/database-identity.json" > "$private/database-after.json"
+      cmp "$private/database-before.json" "$private/database-after.json"
+    fi
     put vulnerabilityDatabase "$snapshot"
   fi
-  python3 "${engine_root:-${root:-$PWD}/../src}/vulnerability-database.py" check "$snapshot" "$state_dir/database-identity.json"
+  python3 "${engine_root:-${root:-$PWD}/../src}/vulnerability-database.py" check "$snapshot" "$state_dir/database-identity.json" "${database_args[@]}"
 }
 
 delivery_scan() {
@@ -116,6 +149,10 @@ delivery_scan() {
   delivery_database_prepare
   snapshot=$(get vulnerabilityDatabase)
   [[ "$mode" != local ]] || args+=(--insecure)
+  if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
+    args+=(--offline-scan)
+    cp "$snapshot/java-db/metadata.json" "$state_dir/trivy-java-db.json"
+  fi
   trivy --version > "$state_dir/trivy-version.txt"
   cp "$snapshot/db/metadata.json" "$state_dir/trivy-db.json"
   # Original inventory first. Do not request vulnerability enrichment here.
@@ -187,5 +224,9 @@ delivery_copy_database() {
   mkdir -- "$2" || return $?
   mkdir -- "$2/db" || return $?
   cp --reflink=auto -- "$1/db/trivy.db" "$1/db/metadata.json" "$2/db/" || return $?
+  if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then
+    mkdir -- "$2/java-db" || return $?
+    cp --reflink=auto -- "$1/java-db/trivy-java.db" "$1/java-db/metadata.json" "$2/java-db/" || return $?
+  fi
   printf '%s\n' "$2"
 }

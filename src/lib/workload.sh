@@ -44,7 +44,7 @@ workload_http() {
   curl -fsS "http://127.0.0.1:$port/version" > "$state_dir/$ns-version.json"
   if [[ "${execution_profile:-}" == consumer-v1 ]]; then
     curl -fsS "http://127.0.0.1:$port/" > "$state_dir/consumer-response.json"
-    node "$contract" consumer-response "$state_dir/$ns-health.json" "$state_dir/$ns-version.json" "$state_dir/consumer-response.json" "$commit"
+    node "$contract" consumer-response "$state_dir/$ns-health.json" "$state_dir/$ns-version.json" "$state_dir/consumer-response.json" "$commit" "${consumer_profile:-node-http-consumer/v1}"
   else
   curl -fsS -H 'Content-Type: application/json' -d '{"insuredAmountCents":100000,"coverage":"basic"}' "http://127.0.0.1:$port/quotes" > "$state_dir/$ns-quote.json"
   node "$contract" response "$state_dir/$ns-health.json" "$state_dir/$ns-quote.json" "$state_dir/$ns-version.json" "$commit"

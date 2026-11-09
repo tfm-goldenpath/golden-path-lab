@@ -67,8 +67,9 @@ The supported profile is `node-http-consumer/v1`: Node 24 built-ins only, fixed
 namespace `tfm-golden` and restricted actor `deployer` remain fixed. `/healthz`
 returns `{"status":"ok"}`; `/version` identifies `independent-node` and the
 consumer's `BUILD_COMMIT`; `/` retains the starter greeting as the first profile's
-application check. General workload/API configuration, dependencies and Java are
-later increments. Tests and workflow files are selected exclusively from the
+application check. General workload/API configuration and dependencies remain later increments.
+The separate [bounded Java trial](java-consumer-quickstart.md) has its own profile
+and validation limits. Tests and workflow files are selected exclusively from the
 consumer; missing or rejected checks stop delivery. Tests run from `service/`,
 so relative fixtures and `./package.json` resolve within the consumer. Selected
 inputs are checked against the complete pinned commit tree, independent of staged
