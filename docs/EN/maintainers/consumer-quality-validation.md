@@ -92,3 +92,47 @@ Java coverage, authenticated-results/admission integration, AI diagnosis/draft-P
 automation, independent SBOM/image comparison and vulnerability reassessment remain
 separate work. License, historical custody, selection semantics, hosted OIDC and
 human acceptance remain open under their existing records.
+
+## Independent committed starter execution
+
+Final local runtime: **`55dea4a64b6a9a64853fe2c08a4d0288119db784`**.
+The engine initialized `/workspaces/consumer-quality-validation-final/consumer`
+through `bin/deliver`. Each controlled change was committed separately:
+
+```bash
+node implementation/tests/integration/consumer-quality.mjs /workspaces/consumer-quality-validation-final
+bash bin/deliver quality --verify /workspaces/consumer-quality-validation-final/pass
+```
+
+The harness invokes the public quality command from consumer and unrelated CWDs.
+Results and original reports were copied unchanged into the ignored evidence
+root's `independent-starter-final/`, with a verified Git bundle and
+`validation.json`. Each manifest verifies 12 file hashes (48 total). Below are
+SHA-256 anchors for `CASE/checksums.json`, not signed attestations.
+
+| Case | Consumer commit | Result / exit | Manifest SHA-256 |
+| --- | --- | --- | --- |
+| pass | `311daa773d10e2ca9cfa631e41b16cc9cddbd909` | PASS / 0 | `0f80cb60ffb5769e816693a9fdcf178802ae451ce804cfcfce4e26d5970519f7` |
+| threshold | `71bb36e9efc7871c87f1debd98235d2421bc36d8` | FAIL / 1 | `18ff5dae2bad4bc6ededb94bd0f3cffb5a89c685aa2827dc2ea029c3b3fe0f95` |
+| test-failure | `245faf5086fa62b8d5d36ae5281b4c233b053ef3` | FAIL / 1 | `5c8e0eead0ba96fc56ced66bc7e266abe8f5e9d9dfa584cb1c59e5b525a59c10` |
+| collection-error | `f58b4b122b850164ecd666fdfaa6511f580ab61b` | ERROR / 2 | `4f90bbd7892ea6f55167cfbffa390d620c7c757c942800dbd4f10ba0cfd56b92` |
+
+The passing service reports lines 100% (10/10), functions 100% (2/2), branches
+88.88888888888889% (8/9). The threshold case deliberately requires 100% branches.
+The assertion failure retains high coverage but fails tests. The collection
+negative executes successful tests, creates a harmless symlink and receives ERROR;
+its producer is retired before inspection and work removal. No linked bytes are
+retained. These are local independent repositories, not a hosted consumer.
+
+Earlier four-case executions at `de0aeae` and `2e03286` remain separately retained
+in `independent-starter/` and `/workspaces/consumer-quality-validation-descriptors/`.
+Final review hardened descriptor-relative output creation and temporary-root
+validation; all 24 focused tests passed (`focused-descriptors-final.log`). Four
+Python boundary tests then passed, including existing-report and root symlinks;
+the early-error pipe ResourceWarning was fixed and rechecked before the final
+four-case execution above. Original failed development logs remain unchanged.
+
+Only this validation document changes after `55dea4a`; selected engine runtime
+bytes are unchanged. Final-head push/PR checks and downloaded artifact hashes
+are recorded in the draft PR description. CI runs the same four cases against
+its own checkout. No previous run identity is attributed to that head.
