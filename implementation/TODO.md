@@ -42,14 +42,17 @@ Node, fixed delivery and laboratory behavior remain compatibility requirements.
 See the [Java quickstart](../docs/EN/java-consumer-quickstart.md) and single
 [validation record](../docs/EN/maintainers/java-consumer-validation.md).
 
-Fresh independent Java and Node deliveries PASS at `1517eae`, including real
+Fresh independent Java and Node deliveries PASS at `e083164`, including real
 DB/SBOM checks, authenticated bindings, restricted rollout/HTTP at 192 MiB and a
 directed wrong-engine-binding admission rejection followed by restored acceptance.
 The first fresh Java attempt's vulnerability rejection is preserved; a bounded
 signed-snapshot APT repair passed on new immutable consumer bindings. npm/Codex
 were refreshed before initialization and the configured devcontainer was built.
 Historical capacity stops and review-fix observations remain in the validation
-record. Packages, original reports and resource retirement were verified. Final
+record. The 10 November rerun preserves new consumer Git bundles and verified DB
+archives in the workspace after discovering the prior temporary material absent;
+the historical custody gap remains explicit. Packages, original reports and
+resource retirement were verified. Final
 shared checks, final-head CI and artifact hashes are recorded in the PR handoff.
 Broader Java/framework support and hosted execution remain separate. Human review,
 custody, licensing and pending owner decisions are unchanged.

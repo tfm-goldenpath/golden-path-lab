@@ -1,4 +1,114 @@
-# Bounded Java consumer trial — 9 November 2026
+# Bounded Java consumer trial — acceptance record
+
+## Renewed delivery and durable custody — 10 November 2026
+
+Both fresh deliveries PASS on actual engine
+**`e083164f749babc070378be052b90577fc4a7d71`**, with clean origin
+`https://github.com/tfm-goldenpath/golden-path-lab`. Human review remains pending.
+This section updates the custody state and adds new executions; it does not
+relabel the 9 November receipts below. Final documentation head and final-head
+push/PR CI artifact identities are recorded in PR #78.
+
+At resume, `/tmp/pr78-20261109-fresh-temp/` was absent and `/tmp` reported a
+different backing device. The owner reports no Codespace restart; the cause is
+unknown. The previous successful consumer repositories and DB source/snapshot
+bytes there are unavailable. All three 9 November packages remain intact and
+were reverified against their unchanged outer and 67/179/166 internal hashes.
+Their observations remain historical, with this custody gap explicitly retained.
+No missing original was reconstructed. The owner authorized new attempts.
+
+New consumers were initialized through `bin/deliver`, committed independently in
+`/workspaces/pr78-20261110-consumers/{java,node}`, and checked outside the engine.
+Configured repository identities below are synthetic, not remote ownership claims.
+Verified Git bundles are retained under ignored
+`implementation/evidence/raw/pr78-20261110-custody/` alongside commands, exit
+statuses, tool/resource receipts, directed requests/responses and hash manifests.
+
+| Consumer / repository | Consumer commit | Run / result |
+| --- | --- | --- |
+| `https://example.invalid/pr78-20261110-java` | `383da64f1b4a15ed668fd677303a633765b450c9` | `delivery-GKchqp9L` / PASS |
+| `https://example.invalid/pr78-20261110-node` | `27768fc2fc2f2a6e4f4fa32dbf429840843f06e3` | `delivery-wZNLxGVu` / PASS |
+
+| Delivered image | SHA-256 digest |
+| --- | --- |
+| Java | `b4629e3c76e970cccc9fa85854d26ea2b3f41d9bfe0bdfbeaa503c5a221e03b8` |
+| Node | `eb6e61ec927f2c55930d27ac4e6293a6516a1f74db4118d504edd783a6cb1a24` |
+
+Both executions passed immutable capture, real service tests, pinned builds,
+real CycloneDX/schema and vulnerability checks, independent image/SBOM/provenance/
+results cryptographic verification, exact bindings, restricted admission and
+rollout. `/healthz`, `/version` and root responses passed; version reports the
+respective consumer commit and ready Pods match the image digest. Java still has
+**192Mi**. Its 110-component SBOM identifies Ubuntu, 108 Debian packages (including
+fixed APT 2.8.4ubuntu0.1) and the application; no separate Temurin JRE component.
+Maven/JUnit test dependencies and build-artifact hashes are not runtime-library
+inventory. No general Java/framework or complete-SBOM claim follows.
+
+The Java directed test repeated the supported isolated-policy procedure below:
+restricted actor acceptance, only copied results `engineCommit` changed to forty
+zeros, authenticated `CONSUMER_BINDING_engineCommit` rejection attributed solely
+to `pr78-tfm-results / autogen-require-results`, then restoration and acceptance.
+Original policies retained UIDs/generations/specs. The observer retained cleanup
+ownership and resume watchdog; isolated resources were retired using UID checks.
+All 141 directed evidence files have a retained hash inventory.
+
+Trivy 0.76.1 explicitly acquired main DB
+`c5c0b8f89197cd5e1f2d4588d708bde91ea4aa930e80cca058ee13da377828f0`
+(updated 2026-11-10T06:59:14.229854289Z) and Java DB
+`467018f9087ddde4e7df26653fbc1f93a77daae3047fe73e7f601fa6b53da6f4`
+(updated 2026-11-10T00:57:42.100478509Z). Java source/snapshot identities matched
+before/after use. Node independently acquired the main DB, with its own download
+metadata and snapshot checks; its retained source was also checked after delivery.
+Node did not reuse Java configuration or evidence.
+
+| Evidence package under `implementation/evidence/packages/` | SHA-256 | Internal hashes |
+| --- | --- | ---: |
+| `delivery-GKchqp9L.tar.gz` | `156b55ad875a499fa369f4e829cc2f383dee4ca0c4477e2f24b0f99a877f1167` | 179 |
+| `delivery-wZNLxGVu.tar.gz` | `a1aa403efb50f4321cef7a60fe9874025d4bf06acac7692ce693aeed667266eb` | 166 |
+
+Both passed `python3 src/verify_package.py`, including safe original reports and
+diagnostics. DB bytes are now also retained in the workspace evidence directory's
+`database-material/`, with sidecars and source/snapshot identity records:
+
+| Compressed DB material | SHA-256 |
+| --- | --- |
+| `delivery-GKchqp9L-database.tar.gz` | `f1e282d344ddf2e98fd7afe877f079404a6e58394453489c90f8bc11c59aef37` |
+| `delivery-wZNLxGVu-database.tar.gz` | `cd77edd28d464510ee319b2de493a0e35660d970ad525f8254e58cc887b4d86c` |
+
+Every compressed member was read back and hashed against the run identity; each
+copied archive's SHA-256 was checked again in durable storage. Sizes are
+1,200,301,121 and 174,320,305 bytes. The first Node preservation helper invocation
+expected the Java-only source receipt and stopped before writing an archive;
+its original error remains. A separate post-delivery Node source identity enabled
+the successful copy. No delivery report was modified. New temporary DB sources
+and snapshots also remain under `/tmp/pr78-20261110-work/`, but custody no longer
+relies solely on that mount. These ignored files are not stored in Git.
+
+The existing verified devcontainer image was started without rebuilding the
+active Codespace. Its post-create hook, non-root unauthenticated tooling smoke,
+`doctor` and 10 environment checks passed: Node 24.22.1, npm 12.2.2, Codex 0.167.0.
+The full shared suite below already passed at `1517eae`; only documentation changed
+to `e083164`. Both new consumers' 69 engine inputs retain identical bytes and
+executable modes through this documentation update. Final-head CI repeats the
+shared suite and real Java normal/generated-link checks; its downloaded artifact
+digests and internal hashes are verified in the PR handoff. The earlier `e083164`
+push/PR runs 42659620418/42659635742 and their Java artifacts were also verified.
+No additional fixed-profile integration is warranted: no shared runtime changed
+since the successful Java/Node runs and shared checks. Hosted execution, catalogue,
+production and general Java support remain outside this trial.
+
+Heavy operations ran sequentially on the owner-authorized 2-CPU/8-GB host; profile
+requirements remain 4 CPU/16 GB/32 GB. Initial Docker/workspace free capacity was
+11,586,064,384 bytes; separate `/tmp` had 41,877,151,744. After Java, only identified
+images owned by the new inner daemon were retired to satisfy Node's 8-GiB gate.
+Both deliveries passed supported ownership-checked cleanup. At 07:59:40 UTC the
+separate validation container and its two recorded volumes were retired; no
+containers or volumes remain. Docker/workspace has **10,190,204,928 bytes** and
+1,717,688 inodes free; `/tmp` has **30,327,496,704 bytes** and 2,948,457 inodes free.
+Net retained consumption is 1,395,859,456 workspace bytes and 11,549,655,040 temporary
+bytes. Pre-existing outer images/build caches and historical packages are intact;
+no broad prune or remote deletion occurred. Technical acceptance is complete;
+human acceptance, editor installation/sign-in and broader scope are not inferred.
 
 ## Fresh Codespace acceptance — 9 November 2026
 

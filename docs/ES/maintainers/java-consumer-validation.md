@@ -1,5 +1,67 @@
 # Validación del consumidor Java — seguimiento de PR #78
 
+## Nuevas entregas y custodia persistente — 10 de noviembre de 2026
+
+Java `delivery-GKchqp9L` y Node `delivery-wZNLxGVu` **PASS** en el motor real
+`e083164f749babc070378be052b90577fc4a7d71`, partiendo del árbol limpio. Este registro
+añade ejecuciones nuevas; no reasigna recibos históricos. El commit documental
+final y las identidades de CI push/PR se registran en PR #78. Revisión humana pendiente.
+
+Al reanudar faltaba `/tmp/pr78-20261109-fresh-temp/` y `/tmp` mostraba otro
+dispositivo. El propietario indica que no reinició Codespaces; la causa es
+indeterminada. Los consumidores y bytes DB de esos intentos ya no están disponibles.
+Los tres paquetes del 9 de noviembre siguen intactos y se reverificaron sus hashes
+externos y 67/179/166 internos. Se conserva explícitamente esa pérdida de custodia;
+no se reconstruyeron originales. El propietario autorizó intentos nuevos.
+
+Los nuevos consumidores se inicializaron y confirmaron en repositorios separados
+bajo `/workspaces/pr78-20261110-consumers/`, con bundles Git verificados en
+`implementation/evidence/raw/pr78-20261110-custody/`. Identidades sintéticas:
+
+| Consumidor / sufijo de `https://example.invalid/` | Commit |
+| --- | --- |
+| Java / `pr78-20261110-java` | `383da64f1b4a15ed668fd677303a633765b450c9` |
+| Node / `pr78-20261110-node` | `27768fc2fc2f2a6e4f4fa32dbf429840843f06e3` |
+
+Ambas entregas pasaron captura inmutable, pruebas reales, build fijado, SBOM y
+esquema completos, análisis de vulnerabilidades, cuatro evidencias autenticadas,
+vínculos exactos, admisión restringida, rollout y HTTP. `/version` identifica cada
+commit consumidor y los Pods ejecutan el digest verificado. Java conserva **192Mi**.
+El rechazo dirigido cambió solo `engineCommit` en la política aislada de resultados:
+`CONSUMER_BINDING_engineCommit`, atribuido únicamente a
+`pr78-tfm-results / autogen-require-results`; restaurar aceptó la misma imagen.
+Las políticas originales no cambiaron y los recursos aislados se retiraron por UID.
+
+Los paquetes Java/Node verificaron 179/166 hashes internos. Las DB comprimidas
+(1.200.301.121/174.320.305 bytes) se conservaron además en el workspace, dentro de
+`database-material/`, con sidecars, lectura completa de miembros contra sus
+identidades y verificación del SHA-256 tras copiar. Los originales nuevos siguen
+en `/tmp/pr78-20261110-work/`, pero ya no son la única copia. El primer intento del
+helper Node esperaba un recibo exclusivo de Java y falló antes de escribir; el
+error se conserva y la copia posterior comprobó la identidad de origen tras la
+entrega. No se modificaron informes. El
+[registro EN](../../EN/maintainers/java-consumer-validation.md#renewed-delivery-and-durable-custody--10-november-2026)
+contiene todos los digests, archivos, SHA-256, identidades DB y límites.
+
+Se reutilizó la imagen devcontainer verificada, sin reconstruir el Codespace activo.
+Hook, smoke no-root sin autenticación, doctor y 10 pruebas de entorno pasaron:
+Node 24.22.1, npm 12.2.2, Codex 0.167.0. La suite compartida completa ya pasó en
+`1517eae`; solo documentación cambió hasta `e083164`. Los 69 inputs de cada
+consumidor conservan bytes y modos ejecutables. CI del head documental final y sus
+artefactos Java normal/negativo se verifican en el handoff. También se verificaron
+CI push/PR 42659620418/42659635742 de `e083164`. No se justifica otra integración
+de perfil fijo: no cambió runtime compartido. No se ejecutaron catálogo ni hosted.
+
+Ejecución secuencial en el host de 2 CPU/8 GB autorizado; los tres perfiles conservan
+4 CPU/16 GB/32 GB. Cleanup soportado retiró ambas entregas; luego se retiraron el
+contenedor auxiliar y sus dos volúmenes identificados. A las 07:59:40 UTC no quedan
+contenedores ni volúmenes: Docker/workspace tiene **10.190.204.928 bytes** y
+1.717.688 inodes libres; `/tmp`, **30.327.496.704 bytes** y 2.948.457 inodes.
+Consumo neto retenido: 1.395.859.456 bytes de workspace y 11.549.655.040 temporales.
+Se preservaron imágenes/cachés previas y paquetes históricos; sin prune general.
+La aceptación técnica está completa; revisión humana, instalación efectiva de la
+extensión/inicio de sesión, producción y soporte Java general no se infieren.
+
 ## Aceptación en Codespace nuevo — 9 de noviembre de 2026
 
 Este seguimiento sustituye el estado bloqueado de los registros históricos de abajo.
