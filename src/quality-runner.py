@@ -128,6 +128,7 @@ def run(request):
     identity = work.stat()
     process = None
     output_fd = None
+    selector = None
     interrupted = []
     for sig in (signal.SIGTERM, signal.SIGINT):
         signal.signal(sig, lambda number, _frame: interrupted.append(number))
@@ -180,6 +181,14 @@ def run(request):
             result['retired'] = True
         except Exception as error:
             result['errors'].append('Retirement: '+str(error))
+        try:
+            if selector is not None:
+                selector.close()
+            if process is not None:
+                process.stdout.close()
+                process.stderr.close()
+        except Exception as error:
+            result['errors'].append('Pipe cleanup: '+str(error))
         if result['retired']:
             try:
                 result['inventory'] = inspect_tree(work, 16777216+request['limits']['maxOutputBytes'])
