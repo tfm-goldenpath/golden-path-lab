@@ -86,6 +86,103 @@ esquema completo del SBOM, asociación del análisis y snapshots se verifican an
 admisión no vuelve a ejecutarlos. Consulte [controles](how-it-works.md) y
 [contratos](../../implementation/docs/ES/delivery-contracts.md).
 
+## Puerta optativa de pruebas y cobertura
+
+`quality` ejecuta una vez el perfil existente `node --test test/*.test.js` con
+cobertura nativa de Node **24.22.1**. Requiere Linux, Python 3 y Git, sin Docker,
+instalación npm, dependencias de cobertura ni servicios externos. Compara líneas,
+funciones y ramas ejecutadas con umbrales revisados. La cobertura no demuestra
+calidad de las aserciones, ausencia de vulnerabilidades ni cumplimiento normativo.
+
+Para activarla, seleccione una revisión revisada del motor con este comando y
+actualice su SHA completo en `golden-path.json`. Añada esta configuración completa
+e integre el workflow actualizado mediante el mismo cambio revisado en Git:
+
+```bash
+cat > "$CONSUMER/service/quality-gate.json" <<'JSON'
+{
+  "schema": "node-quality-gate/v1",
+  "include": ["src/"],
+  "exclude": ["src/index.js"],
+  "thresholds": {"lines": 80, "functions": 80, "branches": 70},
+  "limits": {"timeoutSeconds": 120, "maxOutputBytes": 4194304, "workers": 2}
+}
+JSON
+# Para una plantilla sin cambios; concilie antes sus workflows personalizados.
+cp "$ENGINE/templates/node-http/.github/workflows/ci.yml" "$CONSUMER/.github/workflows/ci.yml"
+git -C "$CONSUMER" diff
+git -C "$CONSUMER" add golden-path.json service/quality-gate.json .github/workflows/ci.yml
+git -C "$CONSUMER" commit -m 'Enable reviewed Node test and coverage gate'
+bash "$ENGINE/bin/deliver" quality --consumer "$CONSUMER"
+# Opcional: el padre debe existir; cada directorio de salida será nuevo y externo al consumidor.
+QUALITY_OUTPUT=/absolute/evidence/new-quality-run
+bash "$ENGINE/bin/deliver" quality --consumer "$CONSUMER" --output "$QUALITY_OUTPUT"
+bash "$ENGINE/bin/deliver" quality --verify "$QUALITY_OUTPUT"
+```
+
+Puede usar cualquier directorio de trabajo. Los ejemplos crean dos ejecuciones
+separadas; normalmente elija uno. El archivo queda capturado con todas las entradas
+comprometidas de `service/` y participa en la identidad del consumidor. Cambios sin
+commit, archivos adicionales, entradas ausentes y enlaces siguen causando error.
+No hay campos de comandos. `include` y `exclude` admiten archivos literales
+`.js`/`.mjs`/`.cjs` o prefijos de directorio terminados en `/`, bajo `src/`, sin
+patrones glob. Cada entrada debe corresponder a código comprometido; el alcance
+final vacío es inválido. La exclusión explícita `src/index.js` deja fuera el punto
+de arranque que abre el socket; revise esa decisión para su aplicación.
+
+80/80/70 es una propuesta práctica, no un estándar de la industria ni una garantía.
+Cambie umbrales (0–100), alcance y exclusiones con un commit revisado; nunca se
+relajan automáticamente. Límites: timeout de 1–300 segundos, salida de 4 KiB–16 MiB
+y 1–2 workers. El runner limita el heap Node a 256 MiB por proceso, copia hasta
+16 MiB/1.000 archivos y comprueba el crecimiento agregado (16 MiB más el límite de
+salida). Exige reserva de 3 GiB más 64 MiB de crecimiento previsto en almacenamiento
+de trabajo y evidencia. Son límites cooperativos, no aislamiento frente a código
+hostil ni cuota de memoria del sistema operativo. Las pruebas usan la identidad
+del usuario: revíselas y ejecute CI sin secretos. Una tarea pesada cada vez.
+
+| Resultado | Salida | Interpretación |
+| --- | ---: | --- |
+| PASS | 0 | Pruebas reales satisfactorias y métricas suficientes. |
+| FAIL | 1 | Fallo de pruebas o umbral concreto incumplido. |
+| ERROR | 2 | Entradas/configuración inválidas, interrupción, evidencia inválida o fallo de colección/limpieza. |
+| NOT_EXECUTED | 0 | Control Node ausente; `quality` no ejecutó pruebas ni aceptó cobertura. |
+| NOT_APPLICABLE | 0 | Perfil Java; su cobertura queda fuera del incremento. |
+
+La [documentación de la versión Node](https://nodejs.org/download/release/v24.22.1/docs/api/test.html#collecting-code-coverage)
+describe el recolector experimental. Solo informa archivos cargados. La puerta
+obtiene el conjunto esperado del inventario comprometido: un archivo esperado no
+importado produce ERROR. No importa código artificialmente para subir la cifra.
+Informes ausentes/truncados, cero pruebas reales, pruebas omitidas/TODO, supresión
+inline y métricas inválidas/desconocidas no permiten PASS. Un denominador cero no
+es 100%: es no aplicable, y un umbral agregado no evaluable produce ERROR. Se comparan
+los conteos originales; solo se redondea la presentación.
+
+El comando imprime su directorio nuevo `implementation/evidence/raw/quality-*/`.
+Consulte `summary.txt`, `result.json`, `tests.log`, `coverage.ndjson` original,
+`quality-gate.json`, `effective-config.json`, `inputs.json`, `scope.json`, versiones
+y recibos de comando/ejecución. `checksums.json` recoge hashes; `--verify` comprueba
+inventario y bytes. Un error previo de ruta puede quedar solo en consola; el fallo
+de sellado produce ERROR y, si es posible, `finalization-error.json`. Conserve el
+primer fallo. `recoveryWork` identifica trabajo retenido sin presumir retirada
+segura. Estos hashes locales no son atestaciones firmadas ni autorización de entrega.
+La asociación incluye identidad de ejecución, copias verificadas y recomprobación/
+vigilancia de entradas originales; un commit declarado por el informe no basta.
+Conserve aparte el hash del propio manifiesto al transferir evidencia.
+
+El CI actualizado descarga el motor por su SHA completo configurado y comprueba
+origin, HEAD y bytes comprometidos con el mismo comando. Ejecuta las pruebas una
+vez. FAIL y ERROR hacen fallar el job; el resumen muestra métricas, umbrales y
+motivos, y los artefactos se conservan también ante rechazo. Sin configuración,
+continúan las pruebas npm habituales y cobertura figura como NOT_EXECUTED. Los
+workflows de consumidores existentes deben adoptar esta integración expresamente.
+Fallar un job y exigirlo para merge son decisiones distintas: no se cambian reglas
+de protección. Validar una copia local generada no acredita un consumidor alojado.
+
+`check`, `local`, `cleanup`, Java, las siete comprobaciones de resultados y las
+cuatro evidencias autenticadas independientes mantienen su contrato. Esta puerta
+no añade una condición de admisión Kubernetes. El [registro de validación en inglés](../EN/maintainers/consumer-quality-validation.md)
+distingue revisión, casos observados y pendientes.
+
 ## Evidencia y retirada
 
 La entrega imprime `implementation/evidence/raw/delivery-XXXXXXXX/` del motor.

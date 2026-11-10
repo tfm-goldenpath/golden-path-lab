@@ -23,3 +23,9 @@ See the pinned engine's `docs/EN/consumer-quickstart.md` (Spanish:
 evidence verification and owned-resource cleanup. Delivery prints the retained
 evidence path in the engine checkout and automatically retires its resources.
 Hosted signing, publication, Java and production clusters are unsupported.
+
+Coverage is opt-in: commit `service/quality-gate.json` using the pinned engine's
+EN/ES quickstart example, then run
+`bash "$ENGINE/bin/deliver" quality --consumer "$CONSUMER"`.
+The supplied CI runs that same gate when configured, otherwise ordinary tests.
+FAIL/ERROR fail the job and retain evidence; coverage is not Kubernetes admission.

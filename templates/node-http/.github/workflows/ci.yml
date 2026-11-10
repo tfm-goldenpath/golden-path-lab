@@ -5,13 +5,62 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          path: consumer
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24.22.1'
-      - run: npm ci --prefix service --ignore-scripts --no-audit --no-fund
-      - run: npm test --prefix service
+          package-manager-cache: false
+      - name: Detect opt-in and resolve exact engine pin
+        id: quality
+        working-directory: consumer
+        run: |
+          if [[ -e service/quality-gate.json || -L service/quality-gate.json ]]; then
+            node --input-type=module <<'NODE' >> "$GITHUB_OUTPUT"
+          import fs from 'node:fs';
+          const {engine} = JSON.parse(fs.readFileSync('golden-path.json'));
+          if (engine?.repository !== 'https://github.com/tfm-goldenpath/golden-path-lab' || !/^[a-f0-9]{40}$/.test(engine.commit)) throw new Error('Expected exact engine identity');
+          console.log('enabled=true\ncommit=' + engine.commit);
+          NODE
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo 'Node quality gate: NOT_EXECUTED (not configured); ordinary tests follow.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Check out pinned engine
+        if: steps.quality.outputs.enabled == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tfm-goldenpath/golden-path-lab
+          ref: ${{ steps.quality.outputs.commit }}
+          path: engine
+          persist-credentials: false
+      - name: Ordinary tests without coverage acceptance
+        if: steps.quality.outputs.enabled == 'false'
+        working-directory: consumer
+        run: |
+          npm ci --prefix service --ignore-scripts --no-audit --no-fund
+          npm test --prefix service
+      - name: Node quality gate
+        if: steps.quality.outputs.enabled == 'true'
+        run: bash "$GITHUB_WORKSPACE/engine/bin/deliver" quality --consumer "$GITHUB_WORKSPACE/consumer" --output "$RUNNER_TEMP/node-quality"
+      - name: Quality summary and evidence integrity
+        if: always() && steps.quality.outputs.enabled == 'true'
+        run: |
+          if [[ -f "$RUNNER_TEMP/node-quality/summary.txt" && ! -L "$RUNNER_TEMP/node-quality/summary.txt" ]]; then
+            cat "$RUNNER_TEMP/node-quality/summary.txt" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Node quality gate: ERROR (missing summary; inspect job log).' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          bash "$GITHUB_WORKSPACE/engine/bin/deliver" quality --verify "$RUNNER_TEMP/node-quality"
+      - name: Retain quality evidence even on rejection
+        if: always() && steps.quality.outputs.enabled == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: node-quality-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/node-quality/*
+          if-no-files-found: error
+          retention-days: 14
