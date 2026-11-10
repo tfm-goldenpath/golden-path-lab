@@ -88,6 +88,105 @@ also cover tests, workflow, full SBOM schema, scan association and source snapsh
 admission does not rerun them. See [controls](how-it-works.md) and
 [contracts](../../implementation/docs/EN/delivery-contracts.md).
 
+## Optional test and coverage gate
+
+`quality` runs the existing `node --test test/*.test.js` profile once with native
+Node **24.22.1** coverage. It needs Linux, Python 3 and Git, but no Docker, npm
+install, coverage dependency or external service. It checks executed production
+lines, functions and branches against reviewed thresholds. Coverage does not prove
+assertion quality, absence of vulnerabilities or regulatory compliance.
+
+To activate it, use a reviewed engine revision that contains this command and
+update the full engine pin in `golden-path.json`. Add this complete configuration
+and integrate the updated starter workflow in the same reviewed Git change:
+
+```bash
+cat > "$CONSUMER/service/quality-gate.json" <<'JSON'
+{
+  "schema": "node-quality-gate/v1",
+  "include": ["src/"],
+  "exclude": ["src/index.js"],
+  "thresholds": {"lines": 80, "functions": 80, "branches": 70},
+  "limits": {"timeoutSeconds": 120, "maxOutputBytes": 4194304, "workers": 2}
+}
+JSON
+# For an unchanged starter; reconcile existing custom workflows before committing.
+cp "$ENGINE/templates/node-http/.github/workflows/ci.yml" "$CONSUMER/.github/workflows/ci.yml"
+git -C "$CONSUMER" diff
+git -C "$CONSUMER" add golden-path.json service/quality-gate.json .github/workflows/ci.yml
+git -C "$CONSUMER" commit -m 'Enable reviewed Node test and coverage gate'
+bash "$ENGINE/bin/deliver" quality --consumer "$CONSUMER"
+# Optional: parent must exist; each output directory must be new and outside the consumer.
+QUALITY_OUTPUT=/absolute/evidence/new-quality-run
+bash "$ENGINE/bin/deliver" quality --consumer "$CONSUMER" --output "$QUALITY_OUTPUT"
+bash "$ENGINE/bin/deliver" quality --verify "$QUALITY_OUTPUT"
+```
+
+Run either invocation from any working directory. The two examples above create
+two separate runs; normally choose one. The config is captured automatically with
+all committed `service/` inputs and contributes to consumer identity. Uncommitted
+changes, untracked additions, missing inputs and links remain errors. No field
+accepts commands. `include` and `exclude` contain literal `.js`/`.mjs`/`.cjs` files
+or directory prefixes ending in `/`, under `src/`; there are no glob expressions.
+Every entry must match committed production code; an empty final scope is invalid.
+The explicit `src/index.js` exclusion leaves the starter's socket-listening entry
+point outside this measurement. Review that exclusion for your application.
+
+80/80/70 is a practical starter example, not an industry standard or a quality
+guarantee. Change thresholds (0–100), scope or exclusions through a reviewed commit;
+the engine never lowers them automatically. The maximum timeout is 300 seconds,
+output is 4 KiB–16 MiB, and workers are 1–2. The bounded runner caps Node heaps at
+256 MiB per process, copies at most 16 MiB/1,000 source files, checks aggregate work
+growth (16 MiB plus the output limit), and requires a 3 GiB disk reserve plus 64 MiB
+anticipated growth on evidence and work storage. These cooperative local limits
+are not a sandbox for hostile code or an OS memory quota. Tests run as the caller;
+review them and run CI without secrets. One heavy task at a time.
+
+| Outcome | Exit | Meaning |
+| --- | ---: | --- |
+| PASS | 0 | Actual tests succeed and all applicable metrics meet thresholds. |
+| FAIL | 1 | Test failure or a specific unmet coverage threshold. |
+| ERROR | 2 | Invalid inputs/configuration, interrupted execution, invalid evidence or failed collection/cleanup. |
+| NOT_EXECUTED | 0 | Node control absent; no coverage acceptance and no tests run by `quality`. |
+| NOT_APPLICABLE | 0 | Java profile; Java coverage is outside this increment. |
+
+The [versioned Node documentation](https://nodejs.org/download/release/v24.22.1/docs/api/test.html#collecting-code-coverage)
+describes the experimental collector. It reports loaded files. This gate derives
+expected files from the committed inventory: an unimported expected file produces
+ERROR, never apparently complete coverage. It does not import application code
+just to increase coverage. Missing/truncated reports, zero actual tests, skipped
+or TODO tests, inline coverage suppression and invalid/unknown metrics cannot pass.
+Zero denominators are not 100%: they are not applicable, and an aggregate metric
+with a configured but unevaluable threshold causes ERROR. Comparisons use original
+counts; only display is rounded.
+
+The command prints its fresh `implementation/evidence/raw/quality-*/` directory.
+Read `summary.txt`, `result.json`, `tests.log`, original `coverage.ndjson`,
+`quality-gate.json`, `effective-config.json`, `inputs.json`, `scope.json`, versions,
+command and execution receipts. `checksums.json` covers retained bytes; `--verify`
+checks the inventory and hashes. An output-path/preflight error may only reach the
+console; sealing failures emit ERROR and best-effort `finalization-error.json`.
+Preserve the first failure. A `recoveryWork` path means work was retained rather
+than assuming safe retirement. Local hashes are not signed attestations and are
+not delivery authorization. Tests, report binding, copied-source checks and original
+input rechecks/watch events establish this run's association; a report's claimed
+commit alone is insufficient. Keep the checksum manifest's own hash separately
+when transferring evidence.
+
+The updated starter CI checks out the configured full engine SHA, verifies its
+origin/HEAD/committed bytes through the same command and executes tests once.
+FAIL and ERROR fail the job; the summary contains metrics, thresholds and reasons,
+and evidence uploads run even on rejection. Without the config, CI retains
+ordinary npm tests and labels coverage NOT_EXECUTED. Existing consumer workflows
+must adopt the updated integration explicitly. A failing job is distinct from an
+organization choosing a required merge check; no protection rules are changed.
+Local generated-starter validation is not a hosted consumer-repository run.
+
+`check`, `local`, `cleanup`, Java, the seven mandatory result checks and four
+independent authenticated evidence types are unchanged. This gate is not a
+Kubernetes admission condition. [Validation and limits](maintainers/consumer-quality-validation.md)
+record the exact source and observed cases.
+
 ## Evidence and cleanup
 
 The command prints the engine's `implementation/evidence/raw/delivery-XXXXXXXX/`.

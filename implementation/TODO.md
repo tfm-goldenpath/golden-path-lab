@@ -2,11 +2,10 @@
 
 ## Current decisions and actions
 
-As of 9 November 2026, fetched main includes PR #77 merged at
-`39f93a449623920368fcad8e19da7714f8752280`. Its final push CI
-[42472801921](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/42472801921)
-succeeded on attempt 2. The owner authorizes `feat/java-consumer-trial`: one bounded
-independent Java service, local validation, commit/push and a draft PR.
+As of 10 November 2026, PR #78 is merged at
+`ccc52a59c499510d331d5cb06a9a98e164ee2f1e`. The owner authorizes
+`feat/consumer-quality-gate`: an opt-in Node test/coverage command and CI gate,
+local validation, commit/push and a draft PR, without merge or deployment.
 This index separates
 owner decisions, engineering, unexecuted validation and deferred proposals.
 Merge/CI does not establish human acceptance, custody or untested execution.
@@ -35,7 +34,20 @@ and deferred manual measurement/calibration scope are not reopened.
 
 ### Next implementation increment
 
-Current branch: **`feat/java-consumer-trial`**, based on merged PR #77. Adds
+Current branch: **`feat/consumer-quality-gate`**, based on
+`ccc52a59c499510d331d5cb06a9a98e164ee2f1e`. Adds opt-in Node tests and native coverage,
+explicit committed scope/exclusions/thresholds, deterministic PASS/FAIL/ERROR,
+fresh unsigned evidence and the same local/CI command. No Kubernetes, signed
+result, policy or admission contract changes. [Commands](../docs/EN/consumer-quickstart.md#optional-test-and-coverage-gate)
+and [validation](../docs/EN/maintainers/consumer-quality-validation.md).
+
+- [x] Implement the bounded Node gate and focused negative/compatibility checks.
+- [ ] Human review of the scope, exclusions, thresholds and implementation.
+- [ ] Java coverage: separate future adapter and validation.
+- [ ] Any future authenticated-results/admission integration needs its own contract,
+  producers, validators, policies and real integration validation.
+
+Completed Java increment: **PR #78 merged**, based on PR #77. Added
 `java-http-consumer/v1`, fixed Temurin/Maven toolchain and service, strict Java
 source/test/evidence adapters and Java identification DB preservation. Default
 Node, fixed delivery and laboratory behavior remain compatibility requirements.
@@ -69,7 +81,7 @@ outcome; only their operating requirements remain open.
 | --- | --- | --- |
 | Broader Java support | Frameworks, dependencies, alternative build tools and general workload configuration | Separate from the bounded Java trial above; no general Java-support claim from one service. |
 | AI blocker diagnosis → draft PR | Allowed blockers, readable evidence, redaction, credentials, patch scope and retry limits | One opt-in diagnosis/repair case ending in a draft PR with reproducible tests and human review; AI cannot authorize delivery or enter measured manual tasks. |
-| Quality/test-coverage gates | Metrics, thresholds, exclusions, tools and ownership of the oracle | One deterministic gate with known pass/fail/error fixtures and a real service check; do not equate coverage with correctness. |
+| Broader quality coverage | Java measurement and any authenticated-results/admission contract | Separate from the opt-in Node CI/local gate above; define independent oracles and validation before adoption. |
 | Deployed-image vulnerability reassessment and redeployment freshness | Trigger/cadence, DB/evidence age, exact running digest and reject/revoke/reprepare behavior | Bounded reassessment of one deployed digest plus new-delivery freshness rules; retain original authorization, reports and failure/unreached states. Separate from currently deferred continuous revocation in the [ADR](../docs/EN/maintainers/attestation-selection-contract.md). |
 | Independent SBOM/image inventory comparison | Independent source, matching rules, scope and discrepancy oracle | One genuine image comparison with attributable differences; no inventory-completeness claim from schema validity. |
 | Scoped default Conftest/Kyverno policies | Supported workloads/namespaces, rule catalogue, exceptions and change ownership | One agreed default scope with matching tests per consumer and real admission where required; preserve existing oracles until explicitly changed. |
