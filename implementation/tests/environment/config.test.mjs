@@ -139,3 +139,16 @@ test('restricted context has no broad exceptions for execution data or user conf
   const allowed = read('.dockerignore').split(/\r?\n/).filter(x => x.startsWith('!')).map(x => x.slice(1));
   assert.deepEqual(allowed.sort(), ['.devcontainer/', '.devcontainer/install-tools.sh', '.devcontainer/debian.sources', '.devcontainer/codex/', '.devcontainer/codex/package.json', '.devcontainer/codex/package-lock.json', 'versions.env', 'tools.lock.json', 'scripts/', 'scripts/install-security-tools.sh'].sort());
 });
+
+// npm ships in the base image: changing only NPM_VERSION must not pass.
+test('npm is installed from the pinned verified archive before its version assertion', () => {
+  const installer = read('.devcontainer/install-tools.sh');
+  assert.match(versions.NPM_VERSION, /^\d+\.\d+\.\d+$/);
+  assert.match(versions.NPM_INTEGRITY, /^sha512-[A-Za-z0-9+/]+={0,2}$/);
+  const verify = installer.indexOf('== "$NPM_INTEGRITY"');
+  const install = installer.indexOf('npm install --global "$work/npm.tgz" --engine-strict');
+  const check = installer.indexOf('[[ "$(npm --version)" == "$NPM_VERSION" ]]');
+  assert.ok(verify > 0 && verify < install && install < check);
+  assert.ok(installer.includes('https://registry.npmjs.org/npm/-/npm-${NPM_VERSION}.tgz'));
+  assert.ok(!installer.includes('npm@latest'));
+});

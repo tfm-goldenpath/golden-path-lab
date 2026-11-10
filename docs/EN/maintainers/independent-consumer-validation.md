@@ -400,3 +400,8 @@ and [PR checks](https://github.com/tfm-goldenpath/golden-path-lab/pull/77/checks
 are checked after the final push; immutable run/job IDs, source SHA and conclusions
 are recorded in the [PR description](https://github.com/tfm-goldenpath/golden-path-lab/pull/77)
 and the retained CI receipts. The PR stays draft and unmerged; human review remains pending.
+
+PR #78 compatibility: fresh Node `delivery-wZNLxGVu` PASS on engine `e083164`,
+with separate consumer history and evidence after the Java trial. See the
+[Java acceptance record](java-consumer-validation.md) for exact identities, archive
+hashes and limits. Earlier receipts above keep their original attribution.

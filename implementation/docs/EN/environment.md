@@ -14,7 +14,7 @@ The first environment test uses an infrastructure probe independent of `quotes-n
 
 | Component | Pinned reference | Rationale and source |
 |---|---|---|
-| Node / npm | 24.22.1 / 11.19.1 | LTS line and native tests without another framework. [Node release](https://nodejs.org/en/blog/release/v24.22.1), [bundled npm](https://github.com/nodejs/node/blob/v24.22.1/deps/npm/package.json). |
+| Node / npm | 24.22.1 / 12.2.2 | LTS line and native tests without another framework. [Node release](https://nodejs.org/en/blog/release/v24.22.1), [pinned npm](https://registry.npmjs.org/npm/12.2.2). |
 | Development base | `node:24.22.1-bookworm`, AMD64 manifest by SHA-256 | [Official Node image](https://hub.docker.com/_/node); full reference in [versions.env](../../versions.env). |
 | Service runtime base | Node 24.22.1 / Alpine 3.23, AMD64 manifest by SHA-256 | Supported Alpine `main` branch recognized by Trivy 0.76.1's EOL metadata. Separate `SERVICE_NODE_IMAGE` in [versions.env](../../versions.env); see [service README](../../services/quotes-node/README.md) for the compatibility decision. |
 | Docker Engine / CLI | 29.9.2 | [Official release](https://docs.docker.com/engine/release-notes/29/#2992); installed from Docker's Debian repository. |
@@ -146,7 +146,7 @@ these protections. The creation hook only installs the validation dependencies
 and checks tools; repeated invocation is safe. It does not start Kubernetes,
 download vulnerability databases or invoke an assistant.
 
-The common image installs the official **Codex CLI 0.164.0**, independently locked
+The common image installs the official **Codex CLI 0.167.0**, independently locked
 under `.devcontainer/codex/`, including the Linux AMD64 native dependency. It is
 available on PATH to `node`; `--version` and `--help` need no login. Codex is optional:
 `doctor`, CI and delivery never require its executable, account or model access.
@@ -199,3 +199,11 @@ final package checksum and cleanup receipts. Keep only the relevant final packag
 outside Git and a compact review record. State which intermediate originals were
 discarded; a new validation never replaces historical observations. See the
 [current refresh record](../../../docs/EN/maintainers/devcontainer-refresh-validation.md).
+
+Verified 2026-11-09 against official npm registry metadata: npm 11.19.1 → 12.2.2
+(Node `^22.22.2 || ^24.15.0 || >=26.0.0`), Codex 0.164.0 → 0.167.0
+(Node `>=16`). Both support pinned Node 24.22.1. The existing installer verifies
+the npm tarball against `NPM_INTEGRITY` before global installation and the version
+assertion. Codex stays in `/opt/codex` with its exact platform lock and integrity.
+The three profiles retain 4 CPUs, 16 GB RAM, 32 GB disk and `openai.chatgpt`.
+CLI version/help checks do not establish remote editor extension installation.

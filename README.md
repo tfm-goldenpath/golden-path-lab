@@ -42,6 +42,8 @@ blocking decisions and their evidence.
 ## Current availability
 
 The local delivery engine lives in `bin/` and `src/`; laboratory adapters reuse it.
+The [bounded Java trial](docs/EN/java-consumer-quickstart.md) adds an explicit profile; real delivery acceptance remains pending.
+
 The [Node consumer quickstart](docs/EN/consumer-quickstart.md) defines its narrow runtime contract. Read the [current scope and limits](docs/EN/legitimate-delivery.md#current-scope)
 before running, and use the [code-navigation guide](docs/EN/getting-started.md)
 to find the implementation. The [readiness matrix](implementation/docs/EN/evaluation-readiness.md)

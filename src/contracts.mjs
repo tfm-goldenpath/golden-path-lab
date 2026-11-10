@@ -1,9 +1,11 @@
+import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 
-import {CONSUMER_PROFILE, CONSUMER_PRODUCER, ENGINE_REPOSITORY} from './consumer.mjs';
+import {ENGINE_REPOSITORY} from './consumer.mjs';
+import {consumerProfile, profiles} from './consumer-profiles.mjs';
 import {validateSchema} from './validate-sbom-schema.mjs';
 
 export const RESULTS_TYPE = 'https://tfm-goldenpath.dev/attestations/verification-results/v1';
@@ -79,9 +81,9 @@ export function validateProvenance(predicate, {repository, commit, mode, identit
     throw new Error('Invalid expected provenance authorization');
   }
   if(binding) {
-    if(mode!=='local' || producer!==CONSUMER_PRODUCER) throw new Error('Invalid consumer provenance profile');
+    if(mode!=='local' || producer!==consumerProfile(binding.profile).producer) throw new Error('Invalid consumer provenance profile');
     validateConsumerBinding(predicate?.buildDefinition?.externalParameters?.goldenPath,binding);
-  } else if(predicate?.buildDefinition?.externalParameters?.workflow?.path===CONSUMER_PRODUCER) throw new Error('Consumer provenance requires explicit authorization');
+  } else if(Object.values(profiles).some(p=>p.producer===predicate?.buildDefinition?.externalParameters?.workflow?.path)) throw new Error('Consumer provenance requires explicit authorization');
   if (producer !== undefined) validateProducer(producer,binding?'consumer-v1':'laboratory');
   const fields = [
     ['PROVENANCE_REPOSITORY', predicate?.buildDefinition?.externalParameters?.workflow?.repository, repository],
@@ -123,7 +125,7 @@ function write(file, value) { fs.writeFileSync(file, JSON.stringify(value, null,
 export function validateConsumerBinding(actual, expected) {
   const fields=['profile','producer','engineRepository','engineCommit','engineSnapshot','configurationSha256','consumerSnapshot'];
   if(!expected || Object.keys(expected).sort().join()!==fields.sort().join()
-    || expected.profile!==CONSUMER_PROFILE || expected.producer!==CONSUMER_PRODUCER || expected.engineRepository!==ENGINE_REPOSITORY
+    || expected.producer!==consumerProfile(expected.profile).producer || expected.engineRepository!==ENGINE_REPOSITORY
     || !/^[a-f0-9]{40}$/.test(expected.engineCommit)
     || ['engineSnapshot','configurationSha256','consumerSnapshot'].some(k=>!/^[a-f0-9]{64}$/.test(expected[k]))) throw new Error('Invalid expected consumer authorization');
   if(!actual || Object.keys(actual).sort().join()!==fields.sort().join() || fields.some(k=>actual[k]!==expected[k])) throw new Error('Authenticated consumer/engine/configuration binding mismatch');
@@ -131,7 +133,7 @@ export function validateConsumerBinding(actual, expected) {
 }
 export function validateProducer(producer,profile='laboratory') {
   if(profile==='consumer-v1') {
-    if(producer!==CONSUMER_PRODUCER) throw new Error('Invalid consumer provenance producer');
+    if(!Object.values(profiles).some(p=>p.producer===producer)) throw new Error('Invalid consumer provenance producer');
     return;
   }
   if (!['implementacion/scripts/demo.sh','implementacion/scripts/deliver.sh'].includes(producer)) throw new Error('Invalid local provenance producer');
@@ -141,6 +143,9 @@ export const RESULT_EVIDENCE = {
   vulnerabilityPolicy:'vulnerability-policy.json', signature:'verified-signature.json',
   sbom:'verified-sbom.json', provenance:'verified-provenance.json',
 };
+function resultEvidence(state) {
+  return state.consumerBinding?.profile==='java-http-consumer/v1'?{...RESULT_EVIDENCE,unitTests:'java-tests.json'}:RESULT_EVIDENCE;
+}
 export const DELIVERY_STEPS = ['source','environment','unitTests','workflowPolicy','versions','environmentCreate',
   'buildSource','build','storageAfterBuild','namespaces','manifest','manifestPolicy','vulnerabilityPolicy',
   'sourceRecheck','evidence','authorization','admission','deploy','rollout','deployedDigest','http'];
@@ -152,13 +157,14 @@ export function validateDeliveryChecks(directory, repository, commit) {
   if(state.profile==='consumer-v1') {
     const expected=json(path.join(directory,'delivery-config.json')).binding;
     validateConsumerBinding(state.consumerBinding,expected);
+    if(expected.profile==='java-http-consumer/v1') execFileSync('python3',[path.join(import.meta.dirname,'java-test-reports.py'),'check',directory],{stdio:'pipe'});
     if(expected.consumerSnapshot!==state.sourceSnapshot) throw new Error('Consumer snapshot mismatch');
   }
   for(const check of CHECKS) {
     const stage=['signature','sbom','provenance'].includes(check)?'evidence':check;
     const receipt=steps[stage];
     if(receipt?.status!=='PASS' || receipt.sourceSnapshot!==state.sourceSnapshot || receipt.sourceCommit!==commit
-      || receipt.evidence?.[check]!==hashFile(path.join(directory,RESULT_EVIDENCE[check]))
+      || receipt.evidence?.[check]!==hashFile(path.join(directory,resultEvidence(state)[check]))
       || (!['unitTests','workflowPolicy'].includes(check) && receipt.image!==state.imageRepository+'@'+state.digest)) {
       throw new Error('Mandatory delivery check has no matching successful execution: '+check);
     }
@@ -178,7 +184,7 @@ function deliveryRecord(command, [directory, step, status]) {
       || steps[step]?.status !== (status==='RUNNING'?'NOT_REACHED':'RUNNING')) throw new Error('Invalid delivery stage transition');
     const evidence={};
     if(status==='PASS') for(const check of CHECKS.filter(c=>c===step || (step==='evidence' && ['signature','sbom','provenance'].includes(c)))) {
-      evidence[check]=hashFile(path.join(directory,RESULT_EVIDENCE[check]));
+      evidence[check]=hashFile(path.join(directory,resultEvidence(state)[check]));
     }
     steps[step]={status,sourceCommit:state.sourceCommit,sourceSnapshot:state.sourceSnapshot,
       ...(state.digest?{image:state.imageRepository+'@'+state.digest}:{}),evidence};
@@ -207,7 +213,7 @@ function deliveryRecord(command, [directory, step, status]) {
   write(path.join(directory,'result.json'),{schema:'legitimate-delivery-result/v1',profile:state.profile,status:outcome,exitStatus,cleanupStatus,
     source:{repository:state.sourceRepository,commit:state.sourceCommit,snapshot:state.sourceSnapshot},configurationSha256:state.configurationSha256,
     image:state.digest?state.imageRepository+'@'+state.digest:null,stages:steps,
-    scope:(state.profile==='consumer-v1'?'One legitimate local independent Node consumer delivery':'One legitimate local quotes-node delivery')+'; no scenario, replacement, measurement or hosted claim'});
+    scope:(state.profile==='consumer-v1'?(state.consumerBinding?.profile==='java-http-consumer/v1'?'One legitimate local independent Java consumer delivery':'One legitimate local independent Node consumer delivery'):'One legitimate local quotes-node delivery')+'; no scenario, replacement, measurement or hosted claim'});
 }
 function main([command, ...args]) {
   switch (command) {
@@ -228,7 +234,10 @@ function main([command, ...args]) {
       const [repository, commit, sourceHash, run, out, producer='implementacion/scripts/demo.sh',profile='laboratory',directory] = args;
       validateProducer(producer,profile);
       const binding=profile==='consumer-v1'?json(path.join(directory,'state.json')).consumerBinding:undefined;
-      if(profile==='consumer-v1') validateConsumerBinding(binding,json(path.join(directory,'delivery-config.json')).binding);
+      if(profile==='consumer-v1') {
+        validateConsumerBinding(binding,json(path.join(directory,'delivery-config.json')).binding);
+        if(producer!==binding.producer) throw new Error('Consumer producer differs from expected profile');
+      }
       write(out, { buildDefinition: {
         buildType: 'https://tfm-goldenpath.dev/buildtypes/local/v1',
         externalParameters: { workflow: { repository, path: producer, ref: 'local' }, ...(binding?{goldenPath:binding}:{}) },
@@ -241,7 +250,7 @@ function main([command, ...args]) {
       const [directory, repository, commit, out, profile='laboratory'] = args;
       if (!['laboratory','delivery-v1','consumer-v1'].includes(profile)) throw new Error('Unknown results execution profile');
       if (['delivery-v1','consumer-v1'].includes(profile)) validateDeliveryChecks(directory, repository, commit);
-      const files = RESULT_EVIDENCE;
+      const files = profile==='consumer-v1'?resultEvidence(json(path.join(directory,'state.json'))):RESULT_EVIDENCE;
       const evidence = Object.fromEntries(Object.entries(files).map(([key, file]) => {
         const bytes = fs.readFileSync(path.join(directory, file));
         if (!bytes.length) throw new Error('Empty evidence: ' + file);
@@ -260,9 +269,10 @@ function main([command, ...args]) {
         predicate => validateStatementPredicate(predicate, type, repository, commit)); break;
     }
     case 'consumer-response': {
-      const [health,version,response,commit]=args;
-      if(json(health).status!=='ok' || json(version).buildCommit!==commit || json(version).name!=='independent-node'
-        || json(response).message!=='Hello from the independent consumer') throw new Error('Incorrect consumer response');
+      const [health,version,response,commit,profile='node-http-consumer/v1']=args;
+      const adapter=consumerProfile(profile);
+      if(json(health).status!=='ok' || json(version).buildCommit!==commit || json(version).name!==adapter.name
+        || json(response).message!==adapter.message) throw new Error('Incorrect consumer response');
       break;
     }
     case 'response': {

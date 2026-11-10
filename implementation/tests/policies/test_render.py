@@ -1,6 +1,7 @@
 """Contract-level tests; cryptographic checks require the real cluster demo."""
 
 import importlib.util
+import json
 import re
 import unittest
 from pathlib import Path
@@ -249,3 +250,20 @@ class ConsumerBindingTests(unittest.TestCase):
         config['mode'] = 'github'
         with self.assertRaises(ValueError):
             renderer.render(config)
+
+    def test_java_expected_binding_is_exact_and_never_accepts_node_producer(self):
+        binding = dict(profile='java-http-consumer/v1', producer='bin/deliver:java-http-consumer/v1',
+                       engineRepository='https://github.com/tfm-goldenpath/golden-path-lab',
+                       engineCommit='b'*40, engineSnapshot='c'*64,
+                       configurationSha256='d'*64, consumerSnapshot='e'*64)
+        config = self.config()
+        config['consumer_binding'] = binding
+        items = renderer.render(config)['items']
+        self.assertEqual(len(items), 5)  # Runtime and four independent evidence policies.
+        for item, prefix in ((items[3], 'buildDefinition.externalParameters.goldenPath.'), (items[4], 'goldenPath.')):
+            conditions = item['spec']['rules'][0]['verifyImages'][0]['attestations'][0]['conditions'][0]['all']
+            for key, value in binding.items():
+                self.assertIn(renderer.condition(prefix+key, value, 'CONSUMER_BINDING_'+key), conditions)
+            self.assertNotIn('node-http-consumer/v1', json.dumps(conditions))
+        config['consumer_binding'] = {**binding, 'producer': 'bin/deliver:node-http-consumer/v1'}
+        with self.assertRaises(ValueError): renderer.render(config)

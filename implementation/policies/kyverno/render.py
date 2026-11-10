@@ -177,8 +177,8 @@ def render(config):
     if binding is not None:
         fields = {"profile", "producer", "engineRepository", "engineCommit", "engineSnapshot", "configurationSha256", "consumerSnapshot"}
         if (config["mode"] != "local" or not isinstance(binding, dict) or set(binding) != fields
-                or binding["profile"] != "node-http-consumer/v1"
-                or binding["producer"] != "bin/deliver:node-http-consumer/v1"
+                or binding["profile"] not in ("node-http-consumer/v1", "java-http-consumer/v1")
+                or binding["producer"] != "bin/deliver:" + binding["profile"]
                 or binding["engineRepository"] != "https://github.com/tfm-goldenpath/golden-path-lab"
                 or not re.fullmatch(r"[a-f0-9]{40}", binding["engineCommit"])
                 or any(not re.fullmatch(r"[a-f0-9]{64}", binding[k]) for k in ("engineSnapshot", "configurationSha256", "consumerSnapshot"))):

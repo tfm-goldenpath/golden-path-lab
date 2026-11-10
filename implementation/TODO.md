@@ -2,10 +2,11 @@
 
 ## Current decisions and actions
 
-As of 8 November 2026, PR #75 is merged at
-`f64dcc0fb283b7fd2c904858b716150484704b5d`. The owner authorizes
-`feat/independent-consumer-template`: one separate Node consumer using the shared
-engine, bounded real local validation, commit/push and one draft PR.
+As of 9 November 2026, fetched main includes PR #77 merged at
+`39f93a449623920368fcad8e19da7714f8752280`. Its final push CI
+[42472801921](https://github.com/tfm-goldenpath/golden-path-lab/actions/runs/42472801921)
+succeeded on attempt 2. The owner authorizes `feat/java-consumer-trial`: one bounded
+independent Java service, local validation, commit/push and a draft PR.
 This index separates
 owner decisions, engineering, unexecuted validation and deferred proposals.
 Merge/CI does not establish human acceptance, custody or untested execution.
@@ -15,7 +16,7 @@ current navigation, not replacement evidence.
 | Item | Current status/type | Decision owner / role | Next action | Blocks | Canonical record |
 | --- | --- | --- | --- | --- | --- |
 | Bounded local separation / PR #74 | Merged at `e0f2f569`; broader acceptance/custody remain separate | Repository owner/reviewer | Use merged local engine; review this interface increment separately | Acceptance of this increment | [PR #74](https://github.com/tfm-goldenpath/golden-path-lab/pull/74), [validation](../docs/EN/maintainers/delivery-core-validation.md#p01b-implementation-boundary--4-november-2026) |
-| Interfaces / PR #75 and independent consumer | PR #75 merged at `f64dcc0`; PR #77 review fixes and independent delivery PASS at `0f949b4`, including one directed negative admission binding; legacy `4d743fa` observations retained; human review pending | Maintainer implements; owner reviews | Review PR #77 corrections, failed attempts and exact-revision receipts; retain historical [PR #75 receipts](../docs/EN/maintainers/delivery-core-validation.md#pr-75-review-fixes--5-november-2026) | Supported consumer claim; then bounded Java trial | [Consumer validation](../docs/EN/maintainers/independent-consumer-validation.md), [migration map](../docs/EN/maintainers/repository-map.md#migration-sequence) |
+| Interfaces / PR #75 and independent consumer | PR #75 merged at `f64dcc0`; PR #77 merged; review-fix independent delivery PASS at `0f949b4`, including one directed negative admission binding; legacy `4d743fa` observations retained; human review pending | Maintainer implements; owner reviews | Preserve PR #77 corrections, failed attempts and exact-revision receipts; retain historical [PR #75 receipts](../docs/EN/maintainers/delivery-core-validation.md#pr-75-review-fixes--5-november-2026) | Supported consumer claim; then bounded Java trial | [Consumer validation](../docs/EN/maintainers/independent-consumer-validation.md), [migration map](../docs/EN/maintainers/repository-map.md#migration-sequence) |
 | License and private security route | Owner decisions pending | Repository owner | Select reuse terms and verify a private reporting channel | Declared reuse grant/private reporting instructions | [Reuse/support](../docs/EN/getting-started.md#reuse-and-support) |
 | Full historical dossier custody and detailed release review | Owner verification/review pending; partial custody confirmations retained | Evidence custodian / human reviewer | Complete required-original preservation and detailed review | Complete custody/release-review claims, not accepted reduced evaluation | [P00](#p00--laboratory-release-custody-before-product-restructuring), [custody assessment](../docs/EN/maintainers/repository-map.md#p00-baseline) |
 | PR #72 CLI update | Open; engineering compatibility validation and review pending | Tooling maintainer / reviewer | Check CLI 0.90.0 against three profiles, locks/hooks and required build/startup boundaries in separate work | Adopting #72; not #74 docs | [Update record](../docs/EN/maintainers/dependabot-tooling.md), [PR #72](https://github.com/tfm-goldenpath/golden-path-lab/pull/72) |
@@ -34,18 +35,27 @@ and deferred manual measurement/calibration scope are not reopened.
 
 ### Next implementation increment
 
-Current branch: **`feat/independent-consumer-template`**. PR #75's interface
-consolidation and English layout are merged; their dated validation remains
-attributed to its original revisions. This increment adds one genuinely separate
-Git consumer, a strict versioned configuration and exact engine pin, authenticated
-consumer/engine bindings and the existing local delivery lifecycle. Follow the
-[quickstart](../docs/EN/consumer-quickstart.md) and [exact validation receipt](../docs/EN/maintainers/independent-consumer-validation.md).
-Human review remains pending. No broader acceptance, custody, license, private
-reporting, admission-selection, hosted or production claim follows.
+Current branch: **`feat/java-consumer-trial`**, based on merged PR #77. Adds
+`java-http-consumer/v1`, fixed Temurin/Maven toolchain and service, strict Java
+source/test/evidence adapters and Java identification DB preservation. Default
+Node, fixed delivery and laboratory behavior remain compatibility requirements.
+See the [Java quickstart](../docs/EN/java-consumer-quickstart.md) and single
+[validation record](../docs/EN/maintainers/java-consumer-validation.md).
 
-Next dependent bounded increment: **Java consumer trial**, after this consumer
-boundary is validated and reviewed. General workload configuration and unrelated
-roadmap decisions remain separate.
+Fresh independent Java and Node deliveries PASS at `e083164`, including real
+DB/SBOM checks, authenticated bindings, restricted rollout/HTTP at 192 MiB and a
+directed wrong-engine-binding admission rejection followed by restored acceptance.
+The first fresh Java attempt's vulnerability rejection is preserved; a bounded
+signed-snapshot APT repair passed on new immutable consumer bindings. npm/Codex
+were refreshed before initialization and the configured devcontainer was built.
+Historical capacity stops and review-fix observations remain in the validation
+record. The 10 November rerun preserves new consumer Git bundles and verified DB
+archives in the workspace after discovering the prior temporary material absent;
+the historical custody gap remains explicit. Packages, original reports and
+resource retirement were verified. Final
+shared checks, final-head CI and artifact hashes are recorded in the PR handoff.
+Broader Java/framework support and hosted execution remain separate. Human review,
+custody, licensing and pending owner decisions are unchanged.
 
 ### Deferred product requests
 
@@ -57,7 +67,7 @@ outcome; only their operating requirements remain open.
 
 | Future item | Unanswered requirements | Proposed next increment and acceptance boundary |
 | --- | --- | --- |
-| Java trial | Runtime/build tool, sample API and parity expectations | After independent template, deliver one genuine Java consumer with the same required evidence; no general Java-support claim from one trial. |
+| Broader Java support | Frameworks, dependencies, alternative build tools and general workload configuration | Separate from the bounded Java trial above; no general Java-support claim from one service. |
 | AI blocker diagnosis → draft PR | Allowed blockers, readable evidence, redaction, credentials, patch scope and retry limits | One opt-in diagnosis/repair case ending in a draft PR with reproducible tests and human review; AI cannot authorize delivery or enter measured manual tasks. |
 | Quality/test-coverage gates | Metrics, thresholds, exclusions, tools and ownership of the oracle | One deterministic gate with known pass/fail/error fixtures and a real service check; do not equate coverage with correctness. |
 | Deployed-image vulnerability reassessment and redeployment freshness | Trigger/cadence, DB/evidence age, exact running digest and reject/revoke/reprepare behavior | Bounded reassessment of one deployed digest plus new-delivery freshness rules; retain original authorization, reports and failure/unreached states. Separate from currently deferred continuous revocation in the [ADR](../docs/EN/maintainers/attestation-selection-contract.md). |

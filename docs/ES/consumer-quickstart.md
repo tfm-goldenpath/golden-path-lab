@@ -66,8 +66,8 @@ sistema de archivos de solo lectura y puerto 3000. Deployment/contenedor
 `quotes-node`, namespace `tfm-golden` y actor restringido `deployer` son fijos.
 `/healthz` devuelve `{"status":"ok"}`; `/version` identifica `independent-node`
 y `BUILD_COMMIT` del consumidor; `/` conserva el saludo de la plantilla como
-comprobación funcional de este perfil. Configuración general, dependencias y Java
-son incrementos posteriores. Pruebas y workflows proceden solo del consumidor;
+comprobación funcional de este perfil. Configuración general y dependencias siguen siendo incrementos posteriores.
+La [prueba Java acotada](java-consumer-quickstart.md) tiene perfil y límites propios. Pruebas y workflows proceden solo del consumidor;
 si faltan o fallan, la entrega se detiene. Las pruebas se ejecutan desde `service/`:
 las rutas relativas y `./package.json` pertenecen al consumidor. El inventario
 completo se verifica contra el commit fijado, independientemente del índice;

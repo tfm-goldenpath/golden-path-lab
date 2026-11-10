@@ -21,6 +21,11 @@ install -d /usr/local/lib/docker/cli-plugins
 download "https://github.com/docker/buildx/releases/download/v${BUILDX_VERSION}/buildx-v${BUILDX_VERSION}.linux-amd64" \
   "$BUILDX_SHA256" /usr/local/lib/docker/cli-plugins/docker-buildx
 [[ "$(node --version)" == "v${NODE_VERSION}" ]]
+# Verify the exact official npm archive before replacing the base-image npm.
+curl --fail --show-error --silent --location --retry 3 --connect-timeout 20 --max-time 300 \
+  "https://registry.npmjs.org/npm/-/npm-${NPM_VERSION}.tgz" -o "$work/npm.tgz"
+[[ "sha512-$(openssl dgst -sha512 -binary "$work/npm.tgz" | openssl base64 -A)" == "$NPM_INTEGRITY" ]]
+npm install --global "$work/npm.tgz" --engine-strict --ignore-scripts --no-audit --no-fund
 [[ "$(npm --version)" == "$NPM_VERSION" ]]
 kind version
 kubectl version --client=true --output=json

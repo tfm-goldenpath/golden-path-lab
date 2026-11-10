@@ -19,7 +19,7 @@ context_init() {
   contract="$engine_root/contracts.mjs"
   results_type=https://tfm-goldenpath.dev/attestations/verification-results/v1
   state_dir=''; private=''; cluster=''; registry=''; builder=''; port_pid=''
-  preserve=0
+  preserve=0; consumer_profile=''
 }
 
 load_delivery_context() {
@@ -57,6 +57,7 @@ load_delivery_state() {
   jq -e --arg node "$cluster-control-plane" --arg registry "$registry" --arg builder "buildx_buildkit_${builder}0" \
     '.ownedContainers | type=="object" and all(to_entries[]; (.key==$node or .key==$registry or .key==$builder) and (.value|test("^[a-f0-9]{64}$")))' "$state_dir/state.json" >/dev/null
   jq -e --arg builder "buildx_buildkit_${builder}0_state" '.ownedVolumes // {} | type=="object" and all(to_entries[]; (.key==$builder or (.key|test("^[a-f0-9]{64}$"))) and .value.Name==.key)' "$state_dir/state.json" >/dev/null
+  consumer_profile=$(jq -r '.consumerBinding.profile // ""' "$state_dir/state.json")
   export DOCKER_CONFIG="$private/docker"
 }
 
@@ -129,6 +130,7 @@ delivery_package() {
   [[ ! -L "$marker" ]] || return 1
   if [[ -f "$marker" ]]; then return 0; fi
   [[ ! -e "$marker" ]] || return 1
+  if [[ "${consumer_profile:-}" == java-http-consumer/v1 ]]; then environment_capacity before-package || return; fi
   status=$(jq -er .status "$state_dir/result.json") || return
   python3 "$engine_root/package_evidence.py" "$state_dir" "$evidence_root/packages" "$status" delivery-v1 || return
   touch "$marker"
@@ -153,7 +155,8 @@ capture_consumer_source() {
   node "$engine_root/consumer.mjs" capture "$repository_root" "$consumer_root" > "$state_dir/consumer-inputs.json"
   repository=$(jq -er .repository "$state_dir/consumer-inputs.json")
   commit=$(jq -er .commit "$state_dir/consumer-inputs.json")
-  delivery_producer=bin/deliver:node-http-consumer/v1
+  consumer_profile=$(jq -er .binding.profile "$state_dir/consumer-inputs.json")
+  delivery_producer=$(jq -er .binding.producer "$state_dir/consumer-inputs.json")
   put sourceRepository "$repository"; put sourceCommit "$commit"
   put sourceSnapshot "$(jq -er .source.sha256 "$state_dir/consumer-inputs.json")"
   put identity local-development-key; put producer "$delivery_producer"

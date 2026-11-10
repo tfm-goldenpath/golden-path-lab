@@ -21,6 +21,7 @@ test-policies:
 test-bundles:
 	bash tests/integration/bundle-crypto.sh
 	node tests/integration/consumer-crypto.mjs
+	node tests/integration/consumer-crypto.mjs java-http-consumer/v1
 
 test: test-env test-unit test-policies test-bundles test-workflows test-defense test-release
 
@@ -65,3 +66,8 @@ paired-analyze:
 .PHONY: deliver
 deliver:
 	bash scripts/deliver.sh local
+
+.PHONY: test-java
+# Explicit opt-in; normal Node tests do not need Java or a builder container.
+test-java:
+	python3 ../src/java-tests.py ../templates/java-http/service "$(JAVA_TEST_OUTPUT)"
