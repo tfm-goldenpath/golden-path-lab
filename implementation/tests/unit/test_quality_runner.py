@@ -30,6 +30,31 @@ class RetirementTests(unittest.TestCase):
             self.assertFalse(result['cleaned'])
             self.assertTrue(result['retired'])
 
+    def test_output_root_link_is_rejected_before_execution(self):
+        with tempfile.TemporaryDirectory() as directory:
+            request = self.request(directory)
+            outside = Path(directory)/'outside'
+            outside.mkdir()
+            Path(request['output']).rmdir()
+            Path(request['output']).symlink_to(outside, target_is_directory=True)
+            with patch.object(runner.subprocess, 'Popen') as execute:
+                result = runner.run(request)
+            execute.assert_not_called()
+            self.assertTrue(result['errors'])
+            self.assertEqual(list(outside.iterdir()), [])
+
+    def test_existing_report_link_cannot_overwrite_its_target(self):
+        with tempfile.TemporaryDirectory() as directory:
+            request = self.request(directory)
+            request['argv'] = ['/usr/bin/true']
+            sentinel = Path(directory)/'sentinel'
+            sentinel.write_text('unchanged')
+            (Path(request['output'])/'coverage.ndjson').symlink_to(sentinel)
+            result = runner.run(request)
+            self.assertTrue(result['errors'])
+            self.assertTrue(result['retired'])
+            self.assertEqual(sentinel.read_text(), 'unchanged')
+
     def test_failed_retirement_prevents_collection_and_cleanup(self):
         with tempfile.TemporaryDirectory() as directory:
             request = self.request(directory)

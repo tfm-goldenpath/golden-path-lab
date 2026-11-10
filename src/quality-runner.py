@@ -127,12 +127,14 @@ def run(request):
     work = Path(request['work'])
     identity = work.stat()
     process = None
+    output_fd = None
     interrupted = []
     for sig in (signal.SIGTERM, signal.SIGINT):
         signal.signal(sig, lambda number, _frame: interrupted.append(number))
     try:
         if ctypes.CDLL(None, use_errno=True).prctl(36, 1, 0, 0, 0) != 0:
             raise ValueError('Linux child subreaper is required')
+        output_fd = os.open(request['output'], os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         limit = request['limits']['maxOutputBytes']
         def bounds():
             resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
@@ -141,7 +143,10 @@ def run(request):
         process = subprocess.Popen(request['argv'], cwd=work, env=request['env'], stdin=subprocess.DEVNULL,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True, preexec_fn=bounds)
         selector = selectors.DefaultSelector()
-        with open(request['output']+'/coverage.ndjson', 'xb') as report, open(request['output']+'/tests.log', 'xb') as log:
+        def retained(name):
+            fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=output_fd)
+            return os.fdopen(fd, 'wb')
+        with retained('coverage.ndjson') as report, retained('tests.log') as log:
             selector.register(process.stdout, selectors.EVENT_READ, report)
             selector.register(process.stderr, selectors.EVENT_READ, log)
             deadline, size = time.monotonic()+request['limits']['timeoutSeconds'], 0
@@ -194,6 +199,8 @@ def run(request):
                 result['cleaned'] = True
             except Exception as error:
                 result['errors'].append('Cleanup: '+str(error))
+        if output_fd is not None:
+            os.close(output_fd)
     return result
 
 

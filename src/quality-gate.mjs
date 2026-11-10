@@ -94,6 +94,7 @@ export async function runQuality(engine,consumer,requested) {
      changed=true;
     }));
    }
+   if(fs.realpathSync(os.tmpdir())!==path.resolve(os.tmpdir())) throw new Error('Symlinked temporary root');
    capacity(os.tmpdir(),64*1024**2);
    work=fs.mkdtempSync(path.join(os.tmpdir(),'quality-work-'));workIdentity=fs.lstatSync(work);
    write('execution.json',json({runId,workingDirectory:work,tests,expected}));
