@@ -98,34 +98,71 @@ def retire(process):
         time.sleep(.02)
 
 
-def monitor(work, output, maximum):
-    # Bound aggregate growth as well as each file; never descend through links.
-    count, total, pending = 0, 0, [(str(work), 0)]
-    while pending:
-        directory, depth = pending.pop()
+def monitor(work, output, maximum, identity):
+    # Live children may disappear. The work root and final collection may not.
+    count, total = 0, 0
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_NONBLOCK
+
+    def check_root(info):
+        if not stat.S_ISDIR(info.st_mode) or (info.st_dev, info.st_ino) != (identity.st_dev, identity.st_ino):
+            raise ValueError('Work directory identity changed during monitoring')
+
+    def entries(fd, depth):
+        # Only enumeration of a deleted child is transient, including deletion
+        # after open. Errors in the caller's stat/open/limit checks are not caught.
+        try:
+            with os.scandir(fd) as scan:
+                yield from scan
+        except FileNotFoundError:
+            if depth == 0:
+                raise
+
+    def walk(fd, depth):
+        nonlocal count, total
         if depth > 32:
             raise ValueError('Generated directory depth limit exceeded')
-        with os.scandir(directory) as entries:
-            for entry in entries:
-                count += 1
-                if count > 2000:
-                    raise ValueError('Generated entry count limit exceeded')
+        for entry in entries(fd, depth):
+            count += 1
+            if count > 2000:
+                raise ValueError('Generated entry count limit exceeded')
+            try:
                 info = entry.stat(follow_symlinks=False)
-                if stat.S_ISDIR(info.st_mode):
-                    pending.append((entry.path, depth+1))
-                elif stat.S_ISREG(info.st_mode):
-                    total += info.st_size
-                    if total > maximum:
-                        raise ValueError('Generated aggregate size limit exceeded')
-    for place in (work, output):
-        if shutil.disk_usage(place).free < 3*1024**3:
-            raise ValueError('Execution reached the 3 GiB storage reserve')
+            except FileNotFoundError:
+                continue  # Removed after enumeration; final inputs stay strict.
+            if stat.S_ISDIR(info.st_mode):
+                try:
+                    child = os.open(entry.name, flags, dir_fd=fd)
+                except FileNotFoundError:
+                    continue  # Removed after stat, before descending.
+                try:
+                    opened = os.fstat(child)
+                    if (opened.st_dev, opened.st_ino, opened.st_mode) != (info.st_dev, info.st_ino, info.st_mode):
+                        raise ValueError('Generated directory identity changed during monitoring')
+                    walk(child, depth+1)
+                finally:
+                    os.close(child)
+            elif stat.S_ISREG(info.st_mode):
+                total += info.st_size
+                if total > maximum:
+                    raise ValueError('Generated aggregate size limit exceeded')
+
+    fd = os.open(work, flags)
+    try:
+        check_root(os.fstat(fd))
+        walk(fd, 0)
+        check_root(work.lstat())
+        for place in (work, output):
+            if shutil.disk_usage(place).free < 3*1024**3:
+                raise ValueError('Execution reached the 3 GiB storage reserve')
+        check_root(work.lstat())
+    finally:
+        os.close(fd)
 
 
 def run(request):
     result = {'python': sys.version.split()[0], 'exitCode': None, 'errors': [], 'retired': False, 'collected': False, 'cleaned': False}
     work = Path(request['work'])
-    identity = work.stat()
+    identity = work.lstat()
     process = None
     output_fd = None
     selector = None
@@ -158,7 +195,7 @@ def run(request):
                 if time.monotonic() >= deadline:
                     raise ValueError('Test execution timeout')
                 if time.monotonic() >= next_monitor:
-                    monitor(work, request['output'], 16777216+limit)
+                    monitor(work, request['output'], 16777216+limit, identity)
                     next_monitor = time.monotonic()+.1
                 for key, _ in selector.select(.05):
                     chunk = os.read(key.fileobj.fileno(), 65536)
