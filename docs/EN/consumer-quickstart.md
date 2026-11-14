@@ -173,6 +173,11 @@ input rechecks/watch events establish this run's association; a report's claimed
 commit alone is insufficient. Keep the checksum manifest's own hash separately
 when transferring evidence.
 
+During active monitoring, temporary child files/directories may disappear without
+causing ERROR. Root disappearance/replacement, permission/IO errors and resource
+limits still reject. Monitoring never follows directory links; final collection
+and committed-input integrity checks remain strict after producer retirement.
+
 The updated starter CI checks out the configured full engine SHA, verifies its
 origin/HEAD/committed bytes through the same command and executes tests once.
 FAIL and ERROR fail the job; the summary contains metrics, thresholds and reasons,

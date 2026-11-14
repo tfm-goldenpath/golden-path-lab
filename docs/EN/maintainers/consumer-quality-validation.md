@@ -136,3 +136,146 @@ Only this validation document changes after `55dea4a`; selected engine runtime
 bytes are unchanged. Final-head push/PR checks and downloaded artifact hashes
 are recorded in the draft PR description. CI runs the same four cases against
 its own checkout. No previous run identity is attributed to that head.
+
+
+## Concurrent temporary deletion review fix — 14 November 2026
+
+PR #79 head and reviewed baseline both were
+`687fae1b55f76f1b7ba581819be858ecee95097f`; no later changes were reset. Runtime fix:
+**`a92734c74d799cfdf6a1d4825d92df6164e253f9`**. Unrelated root npm files were preserved.
+PR #78 is merged and outside this work. The historical observations above remain
+attached to their original revisions, not this fix. Human acceptance is pending.
+
+### Cause, reproduction and correction
+
+The active monitor enumerated a parent, then stat'ed entries or visited queued
+child paths. Normal temporary deletion between those operations raised
+`FileNotFoundError`, retired the producer and incorrectly produced ERROR.
+Two deterministic hooks in `test_quality_runner.py` reproduce deletion after
+parent enumeration/before child traversal and before `DirEntry.stat()`, without
+sleeps. On the original implementation, both failed specifically with
+`FileNotFoundError` (`reproduction-before-fix.log`: six tests, two errors).
+
+Only active child enumeration/stat/open handles that specific disappearance.
+Other exceptions propagate. Descriptor-relative directory opens use `O_NOFOLLOW`;
+opened child identities must match their metadata. The root is checked against
+its original identity on every poll and again after traversal/storage checks;
+missing/replaced/linked roots remain ERROR. No new retries, waits or production
+test hooks were added. The 32-level, 2,000-entry, byte and 3 GiB reserve limits
+remain. Final collection, committed-input hashes/modes, primary-error preservation
+and independent retirement/cleanup remain strict. No thresholds, exclusions,
+policies, attestations, dependencies, devcontainer or Java coverage changed.
+
+| Regression | Observed result |
+| --- | --- |
+| A: child directory deleted after parent enumeration | Monitor continues; also covers deletion after open/before enumeration. |
+| B: child file deleted before metadata | Monitor continues. |
+| C: missing/replaced/symlinked root, including during traversal | ERROR; original identity is required. |
+| D: permissions, IO/storage faults | ERROR; exceptions are not hidden. |
+| E: directory replaced by symlink or different inode | ERROR; outside directory never traversed. |
+| F: committed input removed/modified by a real subprocess | Collection ERROR despite process exit 0; retirement and cleanup complete. |
+| G: aggregate size, count, depth and disk reserve | Limits still reject; exactly 3 GiB remains the reserve boundary. |
+| H: collection/cleanup failure | Error remains; no false PASS; failed retirement prevents inspection/removal. |
+
+Supervisor: **16 tests PASS** (`supervisor.log`). Gate: **24 tests PASS**
+(`quality-focused.log`), including real native coverage, input drift, malformed
+reports, failing assertions, sealing and detached-process cases. These focused
+checks use temporary fixtures and deterministic fault injection; the four cases
+below are separate committed-consumer runs. Original failing logs are retained.
+
+### New independent committed consumer cases
+
+Executed in order after supervisor and gate regressions, on the runtime commit:
+
+```bash
+export PATH="$PWD/implementation/.tools/bin:$PATH"
+python3 implementation/tests/unit/test_quality_runner.py
+node --test --test-concurrency=2 implementation/tests/unit/quality-gate.test.mjs
+node implementation/tests/integration/consumer-quality.mjs /workspaces/quality-monitor-independent-20261114
+```
+
+The first harness invocation mistakenly used an output parent inside the engine;
+consumer isolation rejected its PASS case before any tests ran. That initial
+ERROR is retained in `independent-consumer/` and `four-real-cases.log`; it is not
+an assertion/monitoring failure. The corrected invocation used a new independent
+repository outside the engine and never overwrote the first attempt.
+
+| Case | Consumer commit | Result / exit | checksums.json SHA-256 |
+| --- | --- | --- | --- |
+| pass | `c8b25a5360008a4c98e53fdb991752b40c233257` | PASS / 0 | `6394821943e639714ed8e2cd401158951750a73ee46e98b875c146cb4b7130e7` |
+| threshold | `36e348773356504a8d6b76bc8817c07ad982b46e` | FAIL / 1 | `35caeb0472fe8e10a784ca3cceed6ac5ba845a733917c071d89755476943be08` |
+| test-failure | `7603b50878e08f7a936a782b3b9c7c0274e7bf81` | FAIL / 1 | `c8b352ae3a1da9c90907a12860cb7111ba2db5a176637902ee01484b83dd2510` |
+| collection-error | `10615c3f907698fc9fe60d64c7dc1d5995a061d2` | ERROR / 2 | `0a0d2d2a507986a320ed94b57c843abd627ab233a5fb982436b8d221c00cb1da` |
+
+The successful metrics remain lines 10/10, functions 2/2, branches 8/9. Threshold
+FAIL identifies branches; assertion FAIL retains its actual test diagnostic.
+Collection ERROR identifies the harmless generated link after tests exit 0.
+All producers retired, all work directories were removed, and 48 original hashes
+verified (`real-case-verification.json`). No Kubernetes or delivery execution was
+needed. Original files and Git bundle remain in the independent directory; verified
+copies are under the new evidence root's `independent-consumer-real/`.
+
+### Resources, environment and retained evidence
+
+This session actually has 4 CPUs, approximately 15 GiB RAM (13 GiB available), no
+swap. Before integration, workspace/Docker shared device 1796 with
+7,803,883,520 free bytes and 1,680,609 free inodes; separate `/tmp` device 2049 had
+116,096,921,600 free bytes. Reserve plus 64 MiB bounded test growth was checked.
+One heavy task runs at a time, consumer workers at most two. The full shared suite
+uses a receipt-owned temporary Node wrapper solely to run test files sequentially;
+it delegates to the existing pinned Node 24.22.1 and changes no repository tooling.
+
+`make -C implementation doctor` exits **2** at:
+`ERROR: npm: expected 12.2.2, found 11.19.1. Rebuild the environment.`
+kind already exists; nothing was installed. This is not a valid full-environment
+receipt. Do not reinterpret the old session's missing-kind result as this result.
+Docker inspection found no containers, three pre-existing images, three volumes
+and no build cache. No Docker resources, historical evidence or caches are removed.
+Only this task's verified temporary wrapper is eligible for retirement after use.
+
+New evidence is separate under
+`implementation/evidence/raw/quality-monitor-review-20261114/`: original failures,
+focused/shared logs, resource receipts, four-case copies, checksum manifests and
+final-head CI receipts. The earlier `implementation/evidence/raw/consumer-quality-gate/`
+path cited above is absent in this session; those historical receipts are not
+recreated or relabelled. Existing PR #78 evidence remains untouched.
+
+The shared-suite exit/duration, inventory/link/whitespace results and final-head CI
+are recorded in the continuation below and in the same draft PR. Documentation-only
+changes after the runtime fix retain explicit runtime byte/mode continuity. No
+Kubernetes, complete Node/Java delivery, hosted delivery, release or deployment is
+claimed. Linux local tests remain unsandboxed against hostile same-user code;
+Java coverage, authenticated coverage evidence and human acceptance remain separate.
+
+
+### Shared checks and final handoff
+
+After the four cases, `make -C implementation test` passed with exit 0 in
+434.636 seconds (`shared-command.json`): 10 environment, 1,120 service/unit,
+132 Python policy, Conftest/Kyverno, real offline Node/Java cryptography,
+workflow, 153 defense and 22 release checks. The recorded suite uses the temporary
+sequential Node wrapper described above; no extra workload ran concurrently.
+`shared.log` SHA-256:
+`68a1bf157126c5166ad3e3279454690eaedc633977cfaf6e6765ae4c0af4a0d8`.
+
+Then ownership inventory passed for 862 tracked paths with 11 regressions;
+21 relative links/anchors in the three affected documents and unchanged EN/ES
+shell commands passed the retained one-off `check-doc-links.py`. No generic
+tracked link-check target exists. `git diff --check` passed. No new runtime
+file/dependency needs adding to the engine input inventory: existing `src/`
+selection still includes the changed supervisor.
+
+The temporary wrapper was retired only after the suite exited, with matching
+path/device/inode, exact script contents and no remaining process using it.
+`cleanup.json` records 223 script bytes removed plus the empty temporary directory;
+measured `/tmp` free space increased from 115,700,494,336 to 115,700,502,528 bytes.
+Workspace free space was 7,842,451,456 bytes (7.304 GiB). No other cleanup occurred;
+original reports, consumer repository/bundle, earlier failures and Docker resources
+remain. `local-checksums.json` inventories new retained evidence outside Git.
+
+Only documentation follows runtime commit `a92734c`. `runtime-continuity.json`
+records exact final head and unchanged canonical runtime bytes/modes; final push
+and PR CI results, their exact head and relevant artifact verification are retained
+in `final-ci.json` and the updated PR #79 description. Those CI executions are their
+own observations, not reassigned local receipts. Doctor remains blocked by the
+npm mismatch above; no full-environment or human-acceptance claim is made.

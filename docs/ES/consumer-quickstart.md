@@ -183,6 +183,12 @@ cuatro evidencias autenticadas independientes mantienen su contrato. Esta puerta
 no añade una condición de admisión Kubernetes. El [registro de validación en inglés](../EN/maintainers/consumer-quality-validation.md)
 distingue revisión, casos observados y pendientes.
 
+Durante la monitorización activa pueden desaparecer archivos/directorios temporales
+hijos sin provocar ERROR. La desaparición/sustitución de la raíz, errores de permisos
+o IO y límites de recursos siguen rechazándose. No se siguen enlaces de directorio;
+la colección final y la integridad de inputs comprometidos permanecen estrictas
+tras retirar el productor. Véase el [seguimiento de validación](../EN/maintainers/consumer-quality-validation.md#concurrent-temporary-deletion-review-fix--14-november-2026).
+
 ## Evidencia y retirada
 
 La entrega imprime `implementation/evidence/raw/delivery-XXXXXXXX/` del motor.
