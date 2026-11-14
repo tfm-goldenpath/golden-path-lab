@@ -65,15 +65,15 @@ The optional [context retrieval pilot](context-retrieval.md) records a bounded
 A/B/C comparison; it does not change these navigation or ownership rules.
 
 <!-- inventory-summary:start -->
-854 tracked paths; 501 individually enumerated scripts/helpers/tests.
+862 tracked paths; 508 individually enumerated scripts/helpers/tests.
 
 | Current classification | Paths |
 | --- | ---: |
-| developer | 417 |
+| developer | 420 |
 | generated | 1 |
 | historical | 63 |
 | laboratory | 273 |
-| product | 72 |
+| product | 77 |
 | shared | 28 |
 
 121 entries carry explicit investigation notes; these are unresolved migration/coverage questions, not missing inventory rows.
@@ -144,7 +144,7 @@ propagation and the distinction between content checks and authentication.
 | Refresh C — `chore/security-toolchain-refresh` | Merged #64: pinned tools and recorded local/hosted validation; [record](security-toolchain-refresh-validation.md). CEL adoption remains blocked separately. |
 | P01b — physical repository separation | Merged in PR #74 at `e0f2f56980ffbb00b926521ecf58eed64c713f1b` with recorded sparse-checkout and lab validation; broader acceptance remains separate. Broader physical moves are not complete. See [validation](delivery-core-validation.md#p01b-observed-execution-and-handoff). |
 | P03b — `refactor/delivery-interface-consolidation` (merged PR #75) | Clarify supported interface and adapter results, simplify proven duplication and define compatibility/deprecation; [bounded scope and acceptance](../../../implementation/TODO.md#next-implementation-increment). Merged at `f64dcc0`; historical validation remains revision-specific. |
-| P04 — consumer template | Merged PR #77: `templates/node-http/` holds service-owner files; shared `src/` validates the pin and both identities. [Quickstart](../consumer-quickstart.md), [validation](independent-consumer-validation.md). General workload configuration remains later work; [bounded Java trial](java-consumer-validation.md) adds an explicit second profile, with runtime acceptance pending. |
+| P04 — consumer template | Merged PR #77: `templates/node-http/` holds service-owner files; shared `src/` validates the pin and both identities. [Quickstart](../consumer-quickstart.md), [validation](independent-consumer-validation.md). General workload configuration remains later work; [bounded Java trial](java-consumer-validation.md) is merged in PR #78; Java and Node delivery validation passed at `e083164` for their original revisions. Human acceptance remains pending. The opt-in [Node quality gate](../consumer-quickstart.md#optional-test-and-coverage-gate) is a separate local/CI boundary. |
 
 Scope clarification — 4 November 2026: the owner explicitly authorizes the bounded
 [use-case intake](../use-case-intake.md) documentation/form increment while P00/P01

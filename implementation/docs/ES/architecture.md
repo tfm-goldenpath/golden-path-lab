@@ -483,6 +483,23 @@ de laboratorio, `delivery-v1` o modo alojado. Véanse la
 [guía del consumidor](../../../docs/ES/consumer-quickstart.md) y la
 [validación exacta](../../../docs/EN/maintainers/independent-consumer-validation.md).
 
+### Límite de calidad Node optativo
+
+`bin/deliver quality --consumer PATH` es una operación separada local/CI.
+`src/quality-gate.mjs` reutiliza captura comprometida de consumidor/motor;
+`src/quality-contract.mjs` valida alcance, eventos y cobertura;
+`src/quality-reporter.mjs` serializa eventos nativos Node;
+`src/quality-runner.py` acota ejecución, retira descendientes propios y recoge sin
+seguir enlaces. La selección existente de `src/` incluye estos módulos en captura
+y exportación reducida, sin ejecutar trabajo al importarlos.
+`service/quality-gate.json` ya pertenece a las entradas de consumidor/construcción;
+no se relaja `validateConfig` ni la comprobación de entradas comprometidas.
+
+La puerta conserva evidencia sin firma vinculada a una ejecución nueva. No añade
+predicado, comprobación de resultados firmados ni condición de admisión Kubernetes.
+Entrega Node/Java y las cuatro evidencias autenticadas independientes mantienen su
+contrato. Consulte [configuración, resultados y límites](../../../docs/ES/consumer-quickstart.md#puerta-optativa-de-pruebas-y-cobertura).
+
 ### Adaptador Java acotado
 
 `src/consumer-profiles.mjs` selecciona solo dos perfiles fijos; Node sigue siendo

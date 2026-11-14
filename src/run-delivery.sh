@@ -7,6 +7,10 @@ if [[ "${1:-}" == init ]]; then
   shift
   exec node "$engine_root/consumer.mjs" init "$root/.." "$@"
 fi
+if [[ "${1:-}" == quality ]]; then
+  shift
+  exec node "$engine_root/quality-gate.mjs" "$root/.." "$@"
+fi
 consumer_root=''
 if [[ ( "${1:-}" == local || "${1:-}" == check ) && $# == 3 && "$2" == --consumer ]]; then
   consumer_root=$(realpath -e -- "$3")
@@ -19,7 +23,7 @@ if [[ ( "${1:-}" == local || "${1:-}" == check ) && $# == 3 && "$2" == --consume
 fi
 cd "$root"
 if [[ "${1:-}" == --help ]]; then
-  printf 'Usage: bash bin/deliver local | cleanup ABSOLUTE_DELIVERY_DIRECTORY\ninit DEST [--profile PROFILE] --repository HTTPS_URL --engine-commit FULL_SHA\ncheck | local --consumer PATH\nLocal delivery only. Fresh state required; resume is unsupported.\n'
+  printf 'Usage: bash bin/deliver local | cleanup ABSOLUTE_DELIVERY_DIRECTORY\ninit DEST [--profile PROFILE] --repository HTTPS_URL --engine-commit FULL_SHA\ncheck | local --consumer PATH\nquality --consumer PATH [--output FRESH_DIRECTORY] | quality --verify DIRECTORY\nLocal delivery only. Fresh state required; resume is unsupported.\n'
   exit 0
 fi
 [[ $# == 1 && "$1" == local || $# == 2 && "$1" == cleanup ]] || { echo 'Use --help for supported invocation.' >&2; exit 2; }

@@ -273,6 +273,23 @@ trusted execution configuration in CI and admission. Existing laboratory,
 See the [consumer quickstart](../../../docs/EN/consumer-quickstart.md) and
 [exact validation](../../../docs/EN/maintainers/independent-consumer-validation.md).
 
+### Opt-in Node quality boundary
+
+`bin/deliver quality --consumer PATH` is a separate local/CI operation.
+`src/quality-gate.mjs` reuses committed consumer/engine capture;
+`src/quality-contract.mjs` validates scope, runner events and coverage;
+`src/quality-reporter.mjs` serializes native Node events; and
+`src/quality-runner.py` bounds execution, reaps owned descendants and inspects
+outputs without following links. These modules are included by existing `src/`
+source/sparse-export selection and have no import-time execution.
+`service/quality-gate.json` already belongs to the selected consumer/build inputs;
+no relaxation of `validateConfig` or committed-source checks is needed.
+
+The gate preserves unsigned, run-bound evidence in a fresh directory. Coverage
+has no new predicate, signed results check or Kubernetes admission effect. Existing
+Node/Java delivery behavior and four independent authenticated evidence types
+are unchanged. See [configuration, outcomes and limits](../../../docs/EN/consumer-quickstart.md#optional-test-and-coverage-gate).
+
 ### Bounded Java adapter
 
 `src/consumer-profiles.mjs` maps only two fixed profiles. `src/java-toolchain.json`
