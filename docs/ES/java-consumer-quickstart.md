@@ -133,3 +133,88 @@ La etapa de ejecución actualiza solo `apt` y `libapt-pkg6.0t64` a
 corrigiendo [CVE-2026-109518](https://ubuntu.com/security/CVE-2026-109518).
 Se desactivan reintentos de APT durante esta actualización. Se conservan el digest
 de la imagen base y el límite de 192 MiB.
+
+## Puerta optativa de calidad Java
+
+El perfil Java validado admite ahora `quality`. Sin
+`service/quality-gate.json` comprometido devuelve **NOT_EXECUTED / 0** (antes
+NOT_APPLICABLE); no acepta cobertura ni altera las pruebas de entrega.
+Use `ENGINE`, `CONSUMER` y el commit completo definidos arriba. Actualice juntos
+el pin del motor y el workflow del starter mediante revisión.
+
+```bash
+cat > "$CONSUMER/service/quality-gate.json" <<'JSON'
+{
+  "schema": "java-quality-gate/v1",
+  "include": ["src/main/java/"],
+  "exclude": [],
+  "thresholds": {"lines": 80, "methods": 80, "branches": 70},
+  "limits": {"timeoutSeconds": 300, "maxOutputBytes": 16777216}
+}
+JSON
+git -C "$CONSUMER" add service/quality-gate.json
+git -C "$CONSUMER" commit -m 'Enable reviewed Java quality gate'
+QUALITY_OUTPUT=/absolute/evidence/fresh-java-quality
+bash "$ENGINE/bin/deliver" quality --consumer "$CONSUMER" --output "$QUALITY_OUTPUT"
+bash "$ENGINE/bin/deliver" quality --verify "$QUALITY_OUTPUT"
+```
+
+80/80/70 es un ejemplo revisable, no un estándar ni garantía de PASS del starter.
+El alcance admite archivos o directorios literales terminados en `/` bajo
+`src/main/java/`; todas las reglas deben corresponder a entradas comprometidas.
+Sin comandos, glob ni opciones JVM. Incluye clases productivas nunca ejecutadas.
+Las métricas son **líneas, métodos y ramas**: JaCoCo puede contar constructores e
+inicializadores como métodos y no cuenta manejo de excepciones como ramas.
+Cobertura no demuestra calidad de aserciones ni seguridad. Un denominador cero
+es NOT_APPLICABLE para la métrica y ERROR para su umbral solicitado; los umbrales
+se comparan sin redondear.
+
+Requiere Linux, Node fijado, Python, Git, Docker y descarga limitada de JaCoCo/Maven.
+No necesita JDK anfitrión. Mantenga **10 GiB libres en Docker, 3,5 GiB en salida y
+5 GiB en temporales**, sumando crecimiento cuando comparten filesystem. Una tarea
+pesada cada vez. Cada productor tiene 2 CPU, 1 GiB sin swap, un fork, heap de
+pruebas de 128 MiB y de Maven/informe de 256 MiB. Timeout de 1–300 s **por fase**;
+salida de 4 KiB–16 MiB por log/colección seleccionada; límites fijos de 10.000
+entradas, 32 niveles, 512 MiB de trabajo y 128 MiB de evidencias.
+
+JaCoCo **0.8.16**, verificado el 15/11/2026, queda fijado por hashes del ZIP oficial
+y agente/CLI en `src/java-quality-toolchain.json`. El POM derivado mediante XML
+conserva original, límites y `forkCount=1`; incorpora agente y sesión exactos.
+Compila, ejecuta `surefire:test` **una sola vez** y genera informe en otro productor.
+El ajuste Surefire exclusivo de calidad permite atribuir aserciones mediante XML;
+no cambia el POM del consumidor ni los criterios de entrega.
+
+| Resultado | Código | Interpretación |
+| --- | --- | --- |
+| PASS | 0 | Pruebas completas y cobertura suficiente. |
+| FAIL | 1 | Aserción atribuible o umbral incumplido. |
+| ERROR | 2 | Configuración, compilación, descarga, ejecución, agente, asociación, XML, colección o limpieza inválidos. |
+| NOT_EXECUTED | 0 | Control ausente, sin aceptación de cobertura. |
+
+Consulte `summary.txt`, `result.json`, `inputs.json`, POM original/efectivo y
+`transformation.json`. `compile/`, `tests/`, `report/` conservan comandos, logs,
+recibos de proceso/propiedad, Surefire, clases/hashes, datos de ejecución y XML.
+Se contrastan IDs de clases, sesión/intervalo y capturas de fuentes/configuración.
+Se admite solo el DOCTYPE conocido de JaCoCo, sin resolver DTD ni entidades.
+La colección final es estricta y no sigue enlaces. `checksums.json` verifica
+bytes locales, no firmas ni autorización de despliegue.
+
+Revise `unit-tests.log` y `errors.json` de cada fase ante errores. Descarga fallida
+no significa pruebas ejecutadas. `result.json` identifica recuperación externa a
+los artefactos cuando retirada/colección falla. Use `python3
+"$ENGINE/src/java-tests.py" cleanup "$QUALITY_OUTPUT/tests"` sustituyendo la fase
+registrada; exige ID, propietario e imagen exactos. No elimine trabajo vivo.
+
+CI usa Ubuntu con Node/Docker y motor por SHA; calidad activa o pruebas ordinarias
+una vez, con resumen/artefactos incluso al rechazar. Sin Docker-in-Docker
+privilegiado, secretos de publicación ni cambios de admisión. El
+[registro único](../EN/maintainers/consumer-quality-validation.md) distingue fixtures
+locales/CI del motor de ejecución alojada en un repositorio consumidor real.
+
+Para el desajuste observado universal/NVM: examine `type -a node npm npx`,
+`node -p 'process.execPath'`, `npm config get prefix` y enlaces resueltos. Ante una
+instalación correcta oculta, anteponga `implementation/.tools/bin` de forma
+persistente y compruebe shells actuales y nuevas. Si falta npm fijado, reutilice
+la descarga oficial y `NPM_INTEGRITY` de `implementation/.devcontainer/install-tools.sh`,
+con `--engine-strict`, sin scripts ni `latest`; no ejecute todo el instalador.
+`doctor` comprueba herramientas reales, no acredita la selección del perfil.

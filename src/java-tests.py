@@ -251,7 +251,11 @@ def bounded_client(cid, log, work, output, limits):
             if primary is None: raise
             primary.add_note('Docker client retirement: '+str(error))
         finally:
-            process.stdout.close()
+            try:
+                process.stdout.close()
+            except BaseException as error:
+                if primary is None: raise
+                primary.add_note('Docker client pipe cleanup: '+str(error))
 
 
 def execute(work, output, argv, limits=None, mounts=(), workdir='/work/service'):

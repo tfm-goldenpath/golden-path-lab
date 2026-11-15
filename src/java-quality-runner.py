@@ -135,7 +135,8 @@ def run(request):
             raise ValueError('Unexpected pre-test execution evidence')
         start,end=phase(work,out/'tests',mvn+['surefire:test'],request,tool_dir)
         after=inventory(out/'tests')
-        if any(after.get(n)!=v for n,v in before.items()): raise ValueError('Sources, configuration or compiled classes changed during tests')
+        stable_after={n:v for n,v in after.items() if n!='service/target/jacoco.exec'}
+        if stable_after!=before: raise ValueError('Sources, configuration or compiled classes changed during tests')
         artifacts=lambda d:{f['path']:f['sha256'] for f in json.loads((out/d/'java-build-artifacts.json').read_text())}
         before_artifacts,after_artifacts=artifacts('compile'),artifacts('tests')
         if any(after_artifacts.get(n)!=v for n,v in before_artifacts.items()): raise ValueError('Resolved artifacts changed during tests')

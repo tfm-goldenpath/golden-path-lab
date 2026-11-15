@@ -151,3 +151,100 @@ The runtime stage upgrades only `apt` and `libapt-pkg6.0t64` to
 `2.8.4ubuntu0.1` from the signed Ubuntu snapshot `20261109T000000Z`, fixing
 [CVE-2026-109518](https://ubuntu.com/security/CVE-2026-109518). APT retries are
 disabled during this bootstrap. The base-image digest and 192 MiB limit remain fixed.
+
+## Optional Java test and coverage gate
+
+The validated Java profile now supports `quality`. Without a committed
+`service/quality-gate.json`, it returns **NOT_EXECUTED / 0**, not coverage acceptance
+(previous engines reported NOT_APPLICABLE). Ordinary delivery tests remain unchanged.
+Use the same `ENGINE`, `CONSUMER` and exact engine pin defined above. Update an
+existing consumer's pinned engine and starter workflow together in a reviewed commit.
+
+```bash
+cat > "$CONSUMER/service/quality-gate.json" <<'JSON'
+{
+  "schema": "java-quality-gate/v1",
+  "include": ["src/main/java/"],
+  "exclude": [],
+  "thresholds": {"lines": 80, "methods": 80, "branches": 70},
+  "limits": {"timeoutSeconds": 300, "maxOutputBytes": 16777216}
+}
+JSON
+git -C "$CONSUMER" add service/quality-gate.json
+git -C "$CONSUMER" commit -m 'Enable reviewed Java quality gate'
+QUALITY_OUTPUT=/absolute/evidence/fresh-java-quality
+bash "$ENGINE/bin/deliver" quality --consumer "$CONSUMER" --output "$QUALITY_OUTPUT"
+bash "$ENGINE/bin/deliver" quality --verify "$QUALITY_OUTPUT"
+```
+
+80/80/70 is a reviewable example, **not a standard or a promise that the starter
+passes**. Scope rules are literal files or directories ending `/` under
+`src/main/java/`; no globs, shell commands or JVM options. Every rule must match a
+committed file. All compiled production classes are reported, including classes
+never executed; only explicitly selected source files contribute to thresholds.
+Java metrics are **lines, methods, branches**. JaCoCo may count constructors and
+initializers as methods; branches exclude exception handling. Coverage proves
+neither assertion quality nor security. A zero denominator is not zero coverage:
+it is NOT_APPLICABLE for that metric and an ERROR for a requested threshold.
+Comparison uses integer counters and exact decimal thresholds, before rounding.
+
+Requires Linux, pinned Node, Python, Git, Docker and bounded access to official
+JaCoCo releases/Maven repositories. No host JDK is needed. Keep **10 GiB free in
+Docker storage, 3.5 GiB at output and 5 GiB in temporary storage**, accounting for
+shared filesystems. Run one workload at a time. Each producer has 2 CPUs, 1 GiB
+memory, no swap, one fork, 128 MiB test heap and 256 MiB Maven/report heap.
+`timeoutSeconds` is 1–300 **per phase**; `maxOutputBytes` is 4 KiB–16 MiB per log
+and selected-output collection. Fixed limits include 10,000 working entries,
+32 directory levels and 512 MiB working files. Evidence has a 128 MiB total bound.
+
+[JaCoCo 0.8.16](https://github.com/jacoco/jacoco/releases/tag/v0.8.16) supports the
+fixed Java 25. The official release ZIP and standalone agent/CLI hashes are pinned
+in `src/java-quality-toolchain.json` (verified 15 November 2026). No JDK, Maven,
+JUnit or production dependency upgrade is required. The copied POM is transformed
+as XML: preserves the original and JVM limits, adds the exact agent/session, and
+keeps `forkCount=1`. Compile → `surefire:test` once → trusted CLI reporting are
+separate retired producers. A quality-only Surefire failure-ignore setting lets
+validated assertion reports distinguish FAIL from Maven infrastructure ERROR;
+it never changes the consumer POM or ordinary delivery acceptance.
+
+| Result | Exit | Meaning |
+| --- | --- | --- |
+| PASS | 0 | Complete tests and evaluable coverage satisfy configured thresholds. |
+| FAIL | 1 | Attributed assertion failure or unmet threshold. |
+| ERROR | 2 | Invalid configuration, compile/download/process error, missing agent, stale/mismatched classes/data, invalid XML, collection or cleanup error. |
+| NOT_EXECUTED | 0 | Opt-in absent; no tests or coverage acceptance by this command. |
+
+Read `summary.txt`, `result.json`, `inputs.json`, original/effective POM and
+`transformation.json`. `compile/`, `tests/`, `report/` preserve commands, bounded
+logs, process/ownership receipts, original Surefire, class bytes/hashes, execution
+data and JaCoCo XML. The verified CLI associates class IDs with execution data;
+run nonce/times, source/configuration hashes and original captures are rechecked.
+XML accepts only JaCoCo's exact known DOCTYPE declaration and never fetches a DTD
+or resolves external entities. Final collection is strict and follows no links.
+`checksums.json` verifies local bytes, **not signatures or deployment authorization**.
+
+A compilation or dependency download failure is ERROR even without Surefire XML.
+Check each phase's `unit-tests.log` and `errors.json`; missing/unsafe data and
+instrumentation failures remain errors. If retirement or collection fails,
+`result.json` identifies recovery directories outside uploadable evidence. Retire
+only a phase's verified container with `python3 "$ENGINE/src/java-tests.py" cleanup
+"$QUALITY_OUTPUT/tests"` (substitute the recorded phase). Never delete live recovery
+work. Cleanup needs exact ID, owner and image receipts.
+
+The starter workflow uses Ubuntu with Node/Docker and the exact engine checkout.
+Opted-in consumers invoke this public command; otherwise the bounded ordinary
+Java tests run once. Summaries/artifacts are retained on rejection. No privileged
+Docker-in-Docker, publication secrets or admission changes are introduced.
+See the [single quality validation record](maintainers/consumer-quality-validation.md)
+for actual local/engine-CI observations, distinct from hosted consumer execution.
+
+For the observed universal-image/NVM mismatch, inspect `type -a node npm npx`,
+`node -p 'process.execPath'`, `npm config get prefix` and resolved links before
+installing anything. Prepend the repository's verified `implementation/.tools/bin`
+in the Codespace's persistent shell configuration, then check current and fresh
+login/interactive shells. If pinned npm is absent, use only the official archive
+and existing `NPM_INTEGRITY` verification in
+`implementation/.devcontainer/install-tools.sh`, with `--engine-strict` and no
+installation scripts; do not run the whole installer or select `latest`.
+`make -C "$ENGINE/implementation" doctor` checks actual tools; it does not prove
+the Codespace selected the canonical devcontainer profile.

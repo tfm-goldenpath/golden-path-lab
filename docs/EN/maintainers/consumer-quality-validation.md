@@ -279,3 +279,107 @@ and PR CI results, their exact head and relevant artifact verification are retai
 in `final-ci.json` and the updated PR #79 description. Those CI executions are their
 own observations, not reassigned local receipts. Doctor remains blocked by the
 npm mismatch above; no full-environment or human-acceptance claim is made.
+
+## Opt-in Java adapter — 15 November 2026
+
+PR #79 is merged. This increment starts from current `origin/main`
+`d52190240d9f44ef908cd6d3237b2a69ed531157`, on `feat/java-quality-gate`.
+The unrelated root npm files were preserved. Earlier baseline PASS observations
+are not Java coverage validation. Commands/configuration are in the
+[Java quickstart](../java-consumer-quickstart.md#optional-java-test-and-coverage-gate)
+and [Spanish counterpart](../../ES/java-consumer-quickstart.md#puerta-optativa-de-calidad-java).
+
+### Recovery and environment
+
+The owner's handoff `java-quality-environment-handoff-20261114.tar.gz` matches
+SHA-256 `dfbc8b8e0ee6e72fe00f8070450d8c34dcc579038d18f963f0285a33822a803a`.
+Safe member inspection rejected no entry: 121 regular files comprise **120
+manifest entries plus the manifest**, not 121 entries in that manifest; 512,005
+expanded bytes. Extraction used a new directory under
+`implementation/evidence/raw/java-quality-continuation-20261114T1555/handoff-import/`.
+All manifest hashes, five nested Node manifests, bundle reachability and 73 engine
+input byte/mode associations were verified. Original receipts were not rewritten;
+relocations and rechecks are separate receipts. No imported script was executed.
+The continuation package remains separately preserved with SHA-256
+`f5881f7e5e0df57ba468c4783a7a46824fe1b593dcc68bbe0793218706d9504f`.
+
+Actual environment: universal image, **not** the repository devcontainer profile;
+4 CPUs, 15 GiB reported RAM (16 GB class), 32 GB workspace/Docker filesystem;
+`/tmp` is a separate larger mount. NVM previously shadowed the verified repository
+Node/npm installation. Persistent PATH now resolves Node **24.22.1**, npm/npx
+**12.2.2** through `implementation/.tools/bin` (physical legacy `implementacion/`).
+Current and new login/interactive shells agree. No npm reinstall or pin change was
+needed. A newer local Codex symlink shadowed the existing isolated-lock **0.167.0**
+installation; only that symlink was corrected, preserving its prior target and
+active 0.169.0 application-server files. Version/help checks passed without model
+or credential access. `doctor-functional-01.log` records diagnostic PASS, including
+ten environment tests. This does not establish the canonical profile was selected.
+
+The owner subsequently authorized removal of unnecessary material to recover
+capacity. Exact ownership/inactivity/file inventories precede each action in
+`implementation/evidence/raw/java-quality-resume-20261115/`:
+
+- Eight inactive reproducible caches (old Copilot packages, npm download cache,
+  inactive Codex daemon and unused root node_modules) reclaimed 2,993,938,432 bytes.
+  Root package/lock files, latest Copilot and active Codex remained.
+- The 28 October Trivy DB was losslessly archived and read-back/hash verified
+  before removing its uncompressed copy. Archive SHA-256
+  `f94d57f6a6c5f1686aeae35d179d2ab6f716d13c5e8752f5518055c29adf93f3`,
+  136,043,532 bytes, retained next to `db-preservation.json`. This is historical
+  custody, **not a current vulnerability assessment**. The first preservation
+  attempt failed closed on an inactivity check and remains separately logged.
+- Three unused exact pinned zot/kindest-node/BuildKit image caches reclaimed
+  1,973,116,928 bytes. No containers used them; three historical builder volumes
+  remained. No global prune, historical evidence deletion or volume deletion.
+- Free space reached 13,738,893,312 bytes before pulling the pinned Maven builder;
+  after the pull, 13,054,820,352 bytes remained. Docker's 10 GiB gate was not lowered.
+
+### Instrumentation and initial real execution
+
+[JaCoCo 0.8.16 release](https://github.com/jacoco/jacoco/releases/tag/v0.8.16),
+verified 15 November, officially supports Java 25. The downloaded ZIP matches
+published SHA-256 `a7b90535b30a7159dab62d8db0b276ed1f7bc73b7c2354d314503cd34b9c00ba`;
+agent/CLI hashes are in `src/java-quality-toolchain.json`. The official release's
+EPL-2.0 notice accompanies extracted tools; no repository license was selected.
+No JDK/Maven/JUnit pin changed. Actual JaCoCo XML uses its Report 1.1 DOCTYPE;
+the parser recognizes that exact declaration without resolving a DTD. Method and
+line aggregates are validated separately; source lines shared by methods/classes
+are counted by source-file union, not summed twice.
+
+Engine candidate **`ddbe10130be2db0e8a0343b2fc7d2944eeab1700`** executed all six
+independent committed Java cases at `/tmp/java-quality-real-20261115-attempt01/`.
+`validation.json` records full consumer commits, durations and each manifest hash;
+`consumer.bundle` preserves all cases. The command was
+`node implementation/tests/integration/java-quality.mjs /tmp/java-quality-real-20261115-attempt01`.
+No synthetic report was used for these observations.
+
+| Real case | Observed status / exit | Detail |
+| --- | --- | --- |
+| PASS | PASS / 0 | 3 tests; actual agent argument and 128 MiB/2 CPU JVM limits asserted. 20/23 lines, 2/4 methods, 8/8 branches. |
+| Threshold | FAIL / 1 | Explicit 100% thresholds reject unchanged coverage. |
+| Assertion | FAIL / 1 | Real JUnit assertion failure, independently of coverage. |
+| Evidence error | ERROR / 2 | Test replaces execution-data file with a directory; no usable execution data accepted. |
+| Unexercised class | FAIL / 1 | `trial/Never` appears with zero coverage; methods fall below configured threshold. |
+| Unsafe output | ERROR / 2 | Generated report symlink rejected; external harmless sentinel bytes absent from retained output. |
+
+The fixture chose 80/40/70 **before execution**, without exclusions; main/private
+constructor are not exercised by starter tests. Actual JaCoCo counts four methods,
+not an inferred five. These fixture thresholds are not project recommendations;
+the documented 80/80/70 example would reject the starter's method coverage.
+Three sequential limited containers compile, execute tests once, and report.
+All producer IDs were retired. Unsafe-output recovery remains outside uploadable
+evidence, with exact path/inode/owner receipts, rather than deleting beneath a
+potential producer or copying an unsafe target.
+
+The initial pure-contract regression failed on the missing new module (retained
+`quality-initial-red.log`). Later synthetic tests were added after implementation;
+no earlier TDD history is claimed. The first focused Node run exposed the old
+Java NOT_APPLICABLE assertion; its original failure remains recorded and the
+expectation was updated to the intentionally changed NOT_EXECUTED behavior.
+
+Final revision, subsequent compatibility checks, CI and artifact verification are
+recorded in the final receipt below. Human acceptance, custody/license decisions,
+OIDC, production and general Java coverage remain open. Full deliveries, image
+scans and Kubernetes are not required here: deployment configuration, security
+policy, evidence types and runtime application bytes remain unchanged; ordinary
+Java tests and shared delivery/crypto regressions exercise the refactored lifecycle.

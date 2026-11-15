@@ -194,3 +194,13 @@ test('Java absent configuration is supported but NOT_EXECUTED; strict invalid ac
  assert.equal(verifyQuality(r.output).result,'ERROR');
  fs.appendFileSync(path.join(r.output,'effective-config.json'),'tamper');assert.throws(()=>verifyQuality(r.output),/checksum/);
 });
+test('Java CI uses a host runner, exact engine and one selected test path with complete artifacts',()=>{
+ const w=fs.readFileSync(path.join(root,'templates/java-http/.github/workflows/ci.yml'),'utf8');
+ assert.doesNotMatch(w,/container:|privileged|pull_request_target|secrets\./);
+ assert.match(w,/ref: \$\{\{ steps.quality.outputs.commit \}\}/);
+ assert.match(w,/enabled == 'false'[\s\S]*java-tests.py/);
+ assert.match(w,/enabled == 'true'[\s\S]*quality --consumer/);
+ assert.match(w,/include-hidden-files: true/);assert.match(w,/quality --verify/);
+ for(const a of w.matchAll(/uses: (\S+)/g)) assert.match(a[1],/@[a-f0-9]{40}$/);
+ command('conftest',['test','--policy',path.join(root,'implementation/policies/conftest'),'--namespace','workflow',path.join(root,'templates/java-http/.github/workflows/ci.yml')],root);
+});

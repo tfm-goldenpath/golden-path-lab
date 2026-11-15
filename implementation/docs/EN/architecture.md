@@ -533,3 +533,7 @@ XML reports are included with internal package hashes. Profile/producer admissio
 conditions are exact equalities, never an either-profile authorization. Full local
 acceptance and Java inventory coverage must follow the [validation record](../../../docs/EN/maintainers/java-consumer-validation.md);
 [operator commands](../../../docs/EN/java-consumer-quickstart.md) do not imply execution.
+
+### Java quality adapter boundary
+
+`src/quality-java.mjs` dispatches only the validated Java profile and seals nested unsigned evidence. `src/java-quality-runner.py` reuses the pinned Java producer retirement and no-follow collector in `src/java-tests.py`, plus the PR #79 live monitor (unchanged Node defaults). `src/java-quality-contract.py` owns strict configuration, deterministic copied-POM transformation, Surefire attribution and JaCoCo class/session/counter association. `src/java-quality-toolchain.json` pins the official agent/CLI. Compile, one test execution and trusted reporting are sequential; source captures are rechecked before each. These modules are included by the existing whole-`src/` input inventory and sparse exports. No new delivery check, predicate or admission expectation is added.

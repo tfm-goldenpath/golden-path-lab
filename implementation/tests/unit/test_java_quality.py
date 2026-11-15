@@ -141,4 +141,67 @@ class Lifecycle(unittest.TestCase):
             rows=Q.J.collect(work,out,quality_limit=4096)
             self.assertEqual(rows[0]['sha256'],Q.digest(data));self.assertEqual((out/'java-quality-files/service/target/classes/A.class').read_bytes(),data)
 
+class Faults(unittest.TestCase):
+    def test_all_maven_failures_and_oom_stay_errors_and_retire(self):
+        for status,oom in [(1,False),(0,True)]:
+            with self.subTest(status=status,oom=oom),tempfile.TemporaryDirectory() as d:
+                work=Path(d)/'work';out=Path(d)/'out';work.mkdir();out.mkdir()
+                def docker(*args):
+                    if args[0]=='create':
+                        self.assertIn('2',args);self.assertIn('1g',args);self.assertIn('--read-only',args)
+                        return 'a'*64
+                    if args[:2]==('inspect','--format'):return json.dumps(dict(ExitCode=status,OOMKilled=oom,Running=False,Error=''))
+                    return '[{"Image":"sha256:synthetic"}]'
+                with patch.object(Q.J,'docker',side_effect=docker),patch.object(Q.J,'bounded_client',return_value=status),patch.object(Q.J,'cleanup') as cleanup:
+                    code,_,_,retired,errors=Q.J.execute(work,out,['mvn'],CONFIG['limits'])
+                    self.assertNotEqual(code,0);self.assertTrue(retired);self.assertEqual(errors[0][0],'execution');cleanup.assert_called_once()
+    def test_timeout_interruption_and_receipt_failure_retire_independently(self):
+        for failure in [TimeoutError('original timeout'),InterruptedError('original SIGTERM'),OSError('original ENOSPC')]:
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as d:
+                work=Path(d)/'work';out=Path(d)/'out';work.mkdir();out.mkdir()
+                def docker(*args):return 'a'*64 if args[0]=='create' else '[{"Image":"sha256:synthetic"}]'
+                with patch.object(Q.J,'docker',side_effect=docker),patch.object(Q.J,'bounded_client',side_effect=failure),patch.object(Q.J,'cleanup',side_effect=ValueError('cleanup failed')) as cleanup:
+                    _,_,_,retired,errors=Q.J.execute(work,out,['mvn'],CONFIG['limits'])
+                    self.assertFalse(retired);self.assertIs(errors[0][1],failure);self.assertEqual(errors[1][0],'cleanup');cleanup.assert_called_once()
+    def test_stale_and_nonmatching_execution_data(self):
+        compiled={'trial/A':{'id':'a'*16}}
+        for data in ['Session "'+RUN+'": start - end\n', 'Session "'+RUN+'": start - end\nbbbbbbbbbbbbbbbb 1 of 2 trial/A\n',
+                     'Session "'+RUN+'": start - end\naaaaaaaaaaaaaaaa 3 of 2 trial/A\n']:
+            with self.assertRaises(ValueError): C.execution_info(data,RUN,compiled,['trial/A'])
+    def test_config_unknown_nan_bool_and_unmatched_exclusions(self):
+        for c in [{**CONFIG,'thresholds':dict(lines=float('nan'),methods=80,branches=70)},
+                  {**CONFIG,'thresholds':dict(lines=True,methods=80,branches=70)},
+                  {**CONFIG,'limits':dict(timeoutSeconds=300,maxOutputBytes=4095)},
+                  {**CONFIG,'include':['src/main/java/../../sentinel']},
+                  {**CONFIG,'include':['src/main/java/*.java']}]:
+            with self.assertRaises(ValueError):C.validate_config(c)
+        with self.assertRaises(ValueError):C.expected_files({**CONFIG,'exclude':['src/main/java/Absent.java']},[{'path':'service/src/main/java/A.java'}])
+    def test_missing_inconsistent_or_malformed_surefire(self):
+        for data in [b'<testsuite',b'<!DOCTYPE testsuite SYSTEM "file:///sentinel"><testsuite/>',
+                     b'<testsuite tests="1" failures="0" errors="1" skipped="0"><testcase name="x" classname="A"><error/></testcase></testsuite>',
+                     b'<testsuite tests="2" failures="0" errors="0" skipped="0"><testcase name="x" classname="A"/></testsuite>']:
+            with self.assertRaises(Exception): C.surefire([data])
+    def test_phase_evidence_failure_preserves_primary_and_recovery(self):
+        with tempfile.TemporaryDirectory() as d:
+            work=Path(d)/'work';work.mkdir();primary=TimeoutError('original timeout')
+            with patch.object(Q.J,'capacity'),patch.object(Q,'recheck'),patch.object(Q.J,'execute',return_value=(1,1,2,True,[('execution',primary)])),patch.object(Q.J,'collect',side_effect=OSError('artifact hash failure')):
+                with self.assertRaises(Q.PhaseError) as caught:Q.phase(work,Path(d)/'out',['mvn'],{'config':CONFIG},Path(d))
+                self.assertIs(caught.exception.primary,primary);self.assertFalse(caught.exception.collected)
+                self.assertIn('artifact hash failure',' '.join(primary.__notes__));self.assertTrue(work.exists())
+
+class InputBinding(unittest.TestCase):
+    def test_recheck_rejects_changed_source_engine_or_configuration(self):
+        request={'node':'node','engine':'/engine','consumer':'/consumer','receipt':{'source':'committed','engine':'pinned','config':'original'}}
+        with patch.object(Q.subprocess,'check_output',return_value=json.dumps(request['receipt'])): Q.recheck(request)
+        for key in request['receipt']:
+            with self.subTest(key=key),patch.object(Q.subprocess,'check_output',return_value=json.dumps({**request['receipt'],key:'changed'})):
+                with self.assertRaisesRegex(ValueError,'inputs changed'):Q.recheck(request)
+    def test_no_follow_input_reads_reject_special_and_linked_files(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);sentinel=root/'sentinel';sentinel.write_bytes(b'harmless sentinel')
+            (root/'link').symlink_to(sentinel);os.mkfifo(root/'fifo')
+            for name in ('link','fifo'):
+                with self.assertRaises((OSError,ValueError)):Q.safe_read(root/name)
+            with self.assertRaises(ValueError):Q.safe_read(sentinel,2)
+
 if __name__ == '__main__': unittest.main()

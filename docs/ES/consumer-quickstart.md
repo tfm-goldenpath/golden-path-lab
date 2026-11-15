@@ -146,7 +146,6 @@ del usuario: revíselas y ejecute CI sin secretos. Una tarea pesada cada vez.
 | FAIL | 1 | Fallo de pruebas o umbral concreto incumplido. |
 | ERROR | 2 | Entradas/configuración inválidas, interrupción, evidencia inválida o fallo de colección/limpieza. |
 | NOT_EXECUTED | 0 | Control Node ausente; `quality` no ejecutó pruebas ni aceptó cobertura. |
-| NOT_APPLICABLE | 0 | Perfil Java; su cobertura queda fuera del incremento. |
 
 La [documentación de la versión Node](https://nodejs.org/download/release/v24.22.1/docs/api/test.html#collecting-code-coverage)
 describe el recolector experimental. Solo informa archivos cargados. La puerta
@@ -217,3 +216,5 @@ SBOM completo ni conformidad DORA plena. Firma alojada, publicación pública de
 imágenes y clústeres de producción: **NOT_EXECUTED**. Licencia y canal privado de
 seguridad siguen pendientes del propietario. Revisiones exactas, intentos fallidos
 y límites: [recibo mantenedor en inglés](../EN/maintainers/independent-consumer-validation.md).
+
+[Configuración y límites Java](java-consumer-quickstart.md#puerta-optativa-de-calidad-java). Java sin activación devuelve NOT_EXECUTED; se conserva la verificación Node anterior.

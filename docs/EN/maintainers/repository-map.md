@@ -270,3 +270,5 @@ operations remain local adapters. No directory migration, dependency update,
 consumer template or measurement campaign is included. The original maintenance plan required separate refreshes with stable supported
 releases checked at implementation time, pinned and compatibility-tested;
 `latest` is not a pin. Their later records remain separate from P03 evidence.
+
+The opt-in [Java quality gate](../java-consumer-quickstart.md#optional-java-test-and-coverage-gate) reuses the same coordinator and Java producer lifecycle. It adds local/CI unsigned coverage evidence only; Node formats and delivery/admission contracts remain separate.

@@ -148,7 +148,6 @@ review them and run CI without secrets. One heavy task at a time.
 | FAIL | 1 | Test failure or a specific unmet coverage threshold. |
 | ERROR | 2 | Invalid inputs/configuration, interrupted execution, invalid evidence or failed collection/cleanup. |
 | NOT_EXECUTED | 0 | Node control absent; no coverage acceptance and no tests run by `quality`. |
-| NOT_APPLICABLE | 0 | Java profile; Java coverage is outside this increment. |
 
 The [versioned Node documentation](https://nodejs.org/download/release/v24.22.1/docs/api/test.html#collecting-code-coverage)
 describes the experimental collector. It reports loaded files. This gate derives
@@ -221,3 +220,5 @@ completeness or full DORA compliance. Hosted signing, public image publication
 and production clusters are **NOT_EXECUTED** for this increment. Repository reuse
 terms and private reporting remain owner decisions. Exact integration revisions,
 failed attempts and limitations live in the [maintainer receipt](maintainers/independent-consumer-validation.md).
+
+[Java quality configuration and limits](java-consumer-quickstart.md#optional-java-test-and-coverage-gate). Java without opt-in now returns NOT_EXECUTED; historical Node evidence remains verifiable.
