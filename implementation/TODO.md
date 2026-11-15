@@ -44,7 +44,7 @@ See [Java commands](../docs/EN/java-consumer-quickstart.md#optional-java-test-an
 and the [quality validation record](../docs/EN/maintainers/consumer-quality-validation.md).
 
 - [x] Implement the Java adapter and deterministic regression fixtures.
-- [ ] Complete final-head local/CI verification and artifact custody record.
+- [x] Complete six real Java and four Node quality cases, ordinary Java tests, shared checks and verified local evidence preservation at `96c03b2`. Final-head CI/artifact status is recorded in the draft PR, separately from these local observations.
 - [ ] Human review of implementation, project scope/exclusions and thresholds.
 - [ ] Separate follow-ups: independent SBOM/image analysis; current vulnerability
   reassessment; AI-assisted diagnosis/draft PR; quality integration into authenticated

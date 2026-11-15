@@ -383,3 +383,74 @@ OIDC, production and general Java coverage remain open. Full deliveries, image
 scans and Kubernetes are not required here: deployment configuration, security
 policy, evidence types and runtime application bytes remain unchanged; ordinary
 Java tests and shared delivery/crypto regressions exercise the refactored lifecycle.
+
+### Final local validation receipt
+
+Integrated engine: **`96c03b291711015a23957538ec6633708e9c5c12`**. Both fresh
+independent repositories use explicit `https://example.invalid/...` identities;
+no remote ownership or hosted consumer execution is claimed. Every command in
+`implementation/evidence/raw/java-quality-resume-20261115/final-checks.json`
+finished with exit 0 (the integration harness also asserts each rejection's
+specific 1/2 exit). Resource capacity was checked before each command.
+
+| Check | Result |
+| --- | --- |
+| Java independent real cases | Six expected outcomes, 94.102 s total. |
+| Node independent real cases | PASS/0, threshold FAIL/1, assertion FAIL/1, collection ERROR/2; 2.624 s. |
+| Ordinary Java tests | Real pinned container, 2 tests PASS, exit 0; 9.811 s. |
+| Java runner / live monitor regressions | 22 / 16 PASS, deterministic fault injection. |
+| Java quality contracts | 19 PASS; synthetic reports explicitly labelled. |
+| Focused public quality tests | 26 PASS (native Node execution and synthetic boundary tests). |
+| Shared suite | 10 environment, 19 Java contracts, 1,122 service/unit, 132 Python policies, Conftest/Kyverno, real offline Cosign, workflow, 153 defense and 22 release checks; exit 0. |
+| Doctor / inventory | PASS; 868 tracked paths, 11 inventory tests. |
+| Links / commands / whitespace | 211 relative links/anchors; EN/ES public commands agree; diff check PASS. |
+
+Exact independent source commits and SHA-256 of each `checksums.json`:
+
+| Profile / case | Consumer commit | Manifest SHA-256 |
+| --- | --- | --- |
+| Java / pass | `6ce9c9c6730acaeb6c7337691d9a0f7e5939c5b2` | `051defe55eb93adb307bfd291b5e21e365325186aff839488b04a1ecf4b3f8b4` |
+| Java / threshold | `aec14554c9a40d8e0568dd12799418ae422326ad` | `94fb45a5e459d1929b17fe1394d8c0faa247c14557821ba399818d612162db56` |
+| Java / assertion | `5a06005730d7cf646300f08dcbb13aa54bdcdd17` | `f2487c6732a8eec7522ec5498fca11ce60b3aa74a40b8c3e5794ea6cdcfa7f88` |
+| Java / evidence-error | `7ed69c7c843c98f0dda0d75c246d9bf9873a4ab7` | `d5d090f9f49d59f975234a1b13b2be591f2e01968449236297e86daa1d635fab` |
+| Java / unexercised | `e054bb7ef24c3382889fad618bb44832e7cfae5e` | `c5666283be4c3bd88eda3959f9131d9e890307c76af296130adc35dbb184f672` |
+| Java / unsafe-output | `6a54f6b53608f74cadf9f8cdf77282e5ebe00d7d` | `cc5dd2ad67615792dbc4158722bf54d51b61e206bebe98622da69b804ca06492` |
+| Node / pass | `a4040d8266896257583499424c78e6c1a8e29bd6` | `0364157d37bee56ffacc1c414b8bb42f8e567e11953023beb836ac15a092e189` |
+| Node / threshold | `c5fefc5d5264e3ced3709fe517fb6af8791c2f89` | `d755ed6b94881357f5ffdff75c2ccb981b28767214c023602f1fab0290c57d2b` |
+| Node / test-failure | `57852bfa463523f967798ced632d95c43b7503f4` | `641888f354ad82b8e166e737c4cc23344bbd76459b39e08fffacc89288bea0e5` |
+| Node / collection-error | `095c3fd1f292a563d15ca542333f5ba0fac58d02` | `0e3c9c484a4ea58646873503ee4cdf17d2dac44aebeeb638cfc418ce52ad02d3` |
+
+The local preservation package is
+`implementation/evidence/packages/java-quality-local-20261115.tar.gz`,
+**1,352,279 bytes**, SHA-256
+**`d4884806939fd98a255cc49fe352522419e43ba347734a030e109e26f42daa02`**.
+It preserves both Java attempts, final Node cases, consumer Git bundles, original
+logs and check receipts: 1,192 hashed files plus its manifest; all bytes and **16
+nested quality manifests** were read-back verified. Original absolute receipt
+paths remain unchanged; `manifest.json` records relocation separately. This is a
+local quality validation package, not a signed delivery archive. Original `/tmp`
+evidence and separate historical handoff/DB packages remain intact.
+
+After packaging, workspace/Docker free space was **13,046,308,864 bytes
+(12.15 GiB)**; `/tmp` had 110,848,999,424 bytes. No containers remained. Two unsafe
+negative work/tool directories remain in `/tmp`, identified by `resources-final.json`
+and original phase receipts, outside uploaded evidence. No additional cleanup was
+needed. Net measured recovery before the builder pull was 6,470,651,904 bytes;
+no historical reports, bundles, private recovery or volumes were discarded.
+
+Subsequent handoff edits affect documentation only; compare all `engineSources`
+Git blobs **and modes** against `96c03b2` before attributing these local observations
+to the PR's final runtime. `runtime-equivalence.json` records that comparison.
+Final-head push/PR CI links, exact run/merge revisions and downloaded GitHub ZIP
+and internal-report hash verification belong to the draft PR description and
+`java-quality-resume-20261115/ci/`; local PASS alone does not establish those checks.
+
+Review remains human-pending. Universal-image state is repaired but not rebuilt
+into the canonical profile. Coverage is bounded to this fixed dependency-free
+starter, not general Java/framework support, complete dependency/SBOM coverage,
+current vulnerability assessment or production readiness. Separate hosted consumer
+CI/OIDC, public publication, image scanning, full delivery and Kubernetes remain
+NOT_EXECUTED in this increment. No thresholds/exclusions were lowered after a
+result. The changed lifecycle was exercised by ordinary tests and all mandatory
+shared checks; deployment policies, signed contracts and runtime image inputs were
+not changed.
