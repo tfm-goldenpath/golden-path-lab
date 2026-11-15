@@ -1,0 +1,12 @@
+{
+  "schema": "java-quality-toolchain/v1",
+  "version": "0.8.16",
+  "verifiedAt": "2026-11-15",
+  "release": "https://github.com/jacoco/jacoco/releases/tag/v0.8.16",
+  "url": "https://github.com/jacoco/jacoco/releases/download/v0.8.16/jacoco-0.8.16.zip",
+  "sha256": "a7b90535b30a7159dab62d8db0b276ed1f7bc73b7c2354d314503cd34b9c00ba",
+  "artifacts": {
+    "jacocoagent.jar": {"member": "lib/jacocoagent.jar", "sha256": "37ae2f374ad77e85c59c6e5b46565226c3ac3cb460ac19de0bcb844ac2f43e33"},
+    "jacococli.jar": {"member": "lib/jacococli.jar", "sha256": "1f2a806225623fbd9f53d1ee0e42a6975323de0adebe01c12fc464ed147d756a"}
+  }
+}

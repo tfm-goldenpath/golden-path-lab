@@ -91,7 +91,7 @@ export function captureConsumer(engine,consumer) {
   const adapter=consumerProfile(config.schema);
   for(const name of ['Dockerfile','.dockerignore',...(config.schema===JAVA_PROFILE?['pom.xml']:[])]) if(!fs.readFileSync(path.join(consumer,'service',name)).equals(fs.readFileSync(path.join(engine,'templates',adapter.template,'service',name)))) throw new Error('Unsupported build context '+name+'; use the fixed consumer template');
   if(config.schema===JAVA_PROFILE) {
-    const allowed=['Dockerfile','.dockerignore','pom.xml','src','target'];
+    const allowed=['Dockerfile','.dockerignore','pom.xml','src','target','quality-gate.json'];
     if(fs.readdirSync(path.join(consumer,'service')).some(n=>!allowed.includes(n))) throw new Error('Unsupported Java build configuration');
     for(const name of source.files.map(f=>f.path).filter(p=>p.startsWith('service/src/'))) {
       if(!/^service\/src\/(main|test)\/(java|resources)\//.test(name) || /\.(jar|class|war)$/i.test(name)) throw new Error('Unsupported Java source input: '+name);

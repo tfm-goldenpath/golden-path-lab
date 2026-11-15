@@ -98,7 +98,7 @@ def retire(process):
         time.sleep(.02)
 
 
-def monitor(work, output, maximum, identity):
+def monitor(work, output, maximum, identity, entry_limit=2000):
     # Live children may disappear. The work root and final collection may not.
     count, total = 0, 0
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_NONBLOCK
@@ -123,7 +123,7 @@ def monitor(work, output, maximum, identity):
             raise ValueError('Generated directory depth limit exceeded')
         for entry in entries(fd, depth):
             count += 1
-            if count > 2000:
+            if count > entry_limit:
                 raise ValueError('Generated entry count limit exceeded')
             try:
                 info = entry.stat(follow_symlinks=False)

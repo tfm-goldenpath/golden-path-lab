@@ -79,7 +79,7 @@ export function parseReport(bytes,binding,expectedTests) {
  return {summary,coverage:coverage[0].data.summary};
 }
 export function present(result) {
- const lines=[`Node quality gate: ${result.status}`, ...result.diagnostics];
+ const lines=[`${result.schema==='java-quality-result/v1'?'Java':'Node'} quality gate: ${result.status}`, ...result.diagnostics];
  for(const [name,m] of Object.entries(result.metrics||{})) lines.push(`${name}: ${m.percent===null?'unknown':m.percent.toFixed(2)+'%'} (${m.covered}/${m.total}), threshold ${m.threshold}%`);
  lines.push(`Evidence: ${result.output}`, 'Local hashes are not signed attestations or delivery authorization.');
  return lines.join('\n')+'\n';
