@@ -1,0 +1,15 @@
+{
+  "schema": "sbom-image-consistency/v1",
+  "scope": "Installed dpkg binary packages in final linux/amd64 Debian or Ubuntu image filesystem",
+  "association": "Both scanners read the same immutable archive bytes; capture SHA256 before and after each process; compare config/image ID, platform and archive SHA256 receipts. Image manifest and index identities remain separate.",
+  "key": ["family", "distribution", "distributionVersion", "binaryName", "architecture"],
+  "value": "Exact full installed version, including epoch and Debian revision; never strip suffixes",
+  "purl": "Decode percent escapes only. Retain every qualifier. Require deb namespace/name/version/arch agreement with native fields. Distro codename qualifiers are retained separately from numeric OS version. Source/upstream qualifier is provenance, not binary identity.",
+  "duplicates": "Identical and contradictory duplicate keys are ERROR; preserve pointers; never collapse using a set",
+  "missing": "Missing identity, unexpected empty inventory or ambiguous identity is ERROR",
+  "difference": "MISMATCH is a concrete difference in scoped inventories, not proof of producer omission or completeness. Unresolved modeling differences prevent adoption.",
+  "exclusions": "Non-dpkg families and file integrity, runtime completeness, CVEs, authenticity and admission are NOT_EVALUATED. Syft only selects dpkg-db-cataloger, never an SBOM cataloger.",
+  "outcomes": ["MATCH", "MISMATCH", "ERROR", "NOT_EVALUATED", "NOT_EXECUTED"],
+  "limits": {"reportBytes": 33554432, "archiveBytes": 2147483648, "seconds": 900, "cpus": 2, "reserveGiB": 3, "estimatedGrowthGiB": 5},
+  "adoption": "Separate GO scoped to demonstrated properties, NO_GO or INCONCLUSIVE; harness detecting a negative never means the mutated SBOM passes"
+}
