@@ -10,7 +10,7 @@ function fixture(){
  const id='sha256:'+'a'.repeat(64),url='pkg:deb/debian/binary@1%3A2.3-4?arch=amd64&distro=debian-12';
  const c={type:'library',name:'binary',version:'1:2.3-4',purl:url,properties:[prop('PkgType','debian'),prop('SrcName','source'),prop('SrcVersion','1:2.3-4')]};
  const t={bomFormat:'CycloneDX',specVersion:'1.7',version:1,metadata:{component:{type:'container',name:'synthetic',properties:[prop('ImageID',id)]}},components:[{type:'operating-system',name:'debian',version:'12'},c]};
- const s={schema:{version:'16.1.13'},descriptor:{name:'syft',version:'1.57.1',configuration:{catalogers:{used:['dpkg-db-cataloger']}}},source:{type:'image',metadata:{os:'linux',architecture:'amd64',imageID:id}},distro:{id:'debian',versionID:'12'},artifacts:[{type:'deb',name:'binary',version:c.version,purl:url,foundBy:'dpkg-db-cataloger',metadataType:'dpkg-db-entry',metadata:{package:'binary',version:c.version,architecture:'amd64',source:'source',sourceVersion:c.version},locations:[{path:'/var/lib/dpkg/status'}]}]};
+ const s={schema:{version:'16.1.13'},descriptor:{name:'syft',version:'1.57.1',configuration:{search:{scope:'squashed'},catalogers:{used:['dpkg-db-cataloger']}}},source:{type:'image',metadata:{os:'linux',architecture:'amd64',imageID:id}},distro:{id:'debian',versionID:'12'},artifacts:[{type:'deb',name:'binary',version:c.version,purl:url,foundBy:'dpkg-db-cataloger',metadataType:'dpkg-db-entry',metadata:{package:'binary',version:c.version,architecture:'amd64',source:'source',sourceVersion:c.version},locations:[{path:'/var/lib/dpkg/status'}]}]};
  const r={schema:'sbom-image-acquisition/v1',status:'COLLECTED',platform:'linux/amd64',image:{configDigest:id,platform:'linux/amd64'},archiveSha256:'b'.repeat(64),commands:[0,1].map(()=>({exit:0,archiveSha256After:'b'.repeat(64)}))};
  return {t,s,r};
 }
@@ -40,6 +40,7 @@ const cases=[
  ['report changed after capture','ERROR',f=>f.r.trivySha256='c'.repeat(64)],
  ['scanner failed','ERROR',f=>f.r.commands[0].exit=1],
  ['collection incomplete','ERROR',f=>f.r.status='ERROR'],
+ ['historical layers prohibited','ERROR',f=>f.s.descriptor.configuration.search.scope='all-layers'],
  ['SBOM discovery prohibited','ERROR',f=>f.s.descriptor.configuration.catalogers.used.push('sbom-cataloger')],
  ['missing evidence','ERROR',f=>f.s.artifacts[0].locations=[]],
  ['native identity conflict','ERROR',f=>f.s.artifacts[0].metadata.version='other'],

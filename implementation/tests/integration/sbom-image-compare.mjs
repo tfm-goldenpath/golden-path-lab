@@ -66,6 +66,7 @@ export function compare(t,s,r,bytes){
     validateSchema(t,undefined,bytes.trivy);
     requireThat(s.schema?.version==='16.1.13'&&s.descriptor?.name==='syft'&&s.descriptor.version==='1.57.1','Unsupported Syft format');
     requireThat(JSON.stringify(s.descriptor.configuration?.catalogers?.used)===JSON.stringify(['dpkg-db-cataloger']),'Unapproved cataloger selection');
+    requireThat(s.descriptor.configuration?.search?.scope==='squashed','Unsupported filesystem view');
     requireThat(s.source?.type==='image'&&s.source.metadata.os==='linux'&&s.source.metadata.architecture==='amd64','Image platform mismatch');
     requireThat(property(t.metadata.component,'ImageID')===s.source.metadata.imageID&&/^sha256:[a-f0-9]{64}$/.test(s.source.metadata.imageID),'Image config association');
     requireThat(r.image?.configDigest===s.source.metadata.imageID&&r.image.platform==='linux/amd64','Archive config association');

@@ -192,7 +192,7 @@ admission integration require separate branches and approved requirements.
 
 ## Validation and preservation
 
-The focused checks pass: 30 synthetic comparator/file regressions and eight
+The focused checks pass: 31 synthetic comparator/file regressions and eight
 runner tests (including unsafe archive members), plus 11 ownership-inventory tests.
 The 879-path inventory, workflow checks, doctor, EN/ES command parity and relative
 links pass. The shared suite passed on the development working tree; exact final

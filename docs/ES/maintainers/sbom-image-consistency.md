@@ -144,7 +144,7 @@ y requisitos separados.
 
 ## Validación y preservación
 
-Pasan 30 regresiones sintéticas del comparador/lector, ocho pruebas del runner
+Pasan 31 regresiones sintéticas del comparador/lector, ocho pruebas del runner
 (incluidos miembros tar inseguros) y 11 pruebas de inventario. Inventario de 879
 rutas, workflows, doctor, enlaces relativos y comandos EN/ES pasan. La suite
 compartida pasó en el árbol de desarrollo; los logs local/CI del commit final y
