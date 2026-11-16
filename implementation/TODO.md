@@ -2,10 +2,10 @@
 
 ## Current decisions and actions
 
-As of 10 November 2026, PR #78 is merged at
-`ccc52a59c499510d331d5cb06a9a98e164ee2f1e`. The owner authorizes
-`feat/consumer-quality-gate`: an opt-in Node test/coverage command and CI gate,
-local validation, commit/push and a draft PR, without merge or deployment.
+As of 16 November 2026, PR #80 is merged at
+`03203f4a1b99ed15b7ca1811ee6915e0e3923494`. The current authorized branch is
+`spike/sbom-image-consistency`: independent static inventory research with local
+execution, commit/push and one draft PR; no merge, delivery-control change or publication.
 This index separates
 owner decisions, engineering, unexecuted validation and deferred proposals.
 Merge/CI does not establish human acceptance, custody or untested execution.
@@ -36,20 +36,26 @@ and deferred manual measurement/calibration scope are not reopened.
 
 PR **#79 is merged** at `d52190240d9f44ef908cd6d3237b2a69ed531157`, including the live-monitor temporary-deletion fix. Its Node observations remain attached to their original revisions.
 
-Current branch: **`feat/java-quality-gate`**. Adds opt-in Java tests and JaCoCo
-lines/methods/branches, strict committed scope/configuration, deterministic
-PASS/FAIL/ERROR and NOT_EXECUTED when absent, with bounded local/CI evidence.
-No admission, authenticated results, profile versions or delivery policies change.
-See [Java commands](../docs/EN/java-consumer-quickstart.md#optional-java-test-and-coverage-gate)
-and the [quality validation record](../docs/EN/maintainers/consumer-quality-validation.md).
+Current branch: **`spike/sbom-image-consistency`**. Compare Trivy CycloneDX
+with independent Syft dpkg inventory of the same real Node/Debian/linux-amd64
+image. The [design/validation record](../docs/EN/maintainers/sbom-image-consistency.md)
+separates technical results from adoption and documents real directed negatives.
 
-- [x] Implement the Java adapter and deterministic regression fixtures.
-- [x] Complete six real Java and four Node quality cases, ordinary Java tests, shared checks and verified local evidence preservation at `96c03b2`. Final-head CI/artifact status is recorded in the draft PR, separately from these local observations.
-- [ ] Human review of implementation, project scope/exclusions and thresholds.
-- [ ] Separate follow-ups: independent SBOM/image analysis; current vulnerability
-  reassessment; AI-assisted diagnosis/draft PR; quality integration into authenticated
-  results. Each needs its own scope/oracle and does not follow from local coverage.
-- [ ] Broader Java/framework support, hosted OIDC, custody, licensing and
+PR #79's opt-in Node quality gate and PR #80's opt-in Java JaCoCo gate are merged.
+Their validation remains attached to its original source revisions in the
+[quality validation record](../docs/EN/maintainers/consumer-quality-validation.md).
+No merged PR implies human acceptance or current-source delivery execution.
+
+- [x] Define the experiment, independent acquisition and focused regressions.
+- [x] Execute real Node comparison and directed negatives; observe a pinned JRE base separately.
+- [ ] Human review of scope, comparison contract, evidence and adoption conclusion.
+- [ ] Separate future branch: meaningful Java starter tests, without coverage tricks.
+- [ ] Separate future branch: optional comparator control, only if this spike justifies it.
+- [ ] Separate future branch: authenticated results/admission integration.
+- [ ] Separate future branch: vulnerability reassessment and redeployment freshness.
+- [ ] Separate future branch: AI diagnosis ending in a draft PR.
+- [ ] Separate future branch: dashboard improvements.
+- [ ] General Java/framework support, hosted OIDC, custody, licensing and
   attestation-selection decisions remain separate and pending.
 
 Completed Java increment: **PR #78 merged**, based on PR #77. Added
@@ -86,9 +92,9 @@ outcome; only their operating requirements remain open.
 | --- | --- | --- |
 | Broader Java support | Frameworks, dependencies, alternative build tools and general workload configuration | Separate from the bounded Java trial above; no general Java-support claim from one service. |
 | AI blocker diagnosis → draft PR | Allowed blockers, readable evidence, redaction, credentials, patch scope and retry limits | One opt-in diagnosis/repair case ending in a draft PR with reproducible tests and human review; AI cannot authorize delivery or enter measured manual tasks. |
-| Broader quality coverage | Java measurement and any authenticated-results/admission contract | Separate from the opt-in Node CI/local gate above; define independent oracles and validation before adoption. |
+| Broader quality coverage | Meaningful Java starter test improvement and authenticated-results/admission requirements | Node and bounded Java opt-in gates are merged; improve Java tests and integrate authenticated results in separate increments with independent oracles. |
 | Deployed-image vulnerability reassessment and redeployment freshness | Trigger/cadence, DB/evidence age, exact running digest and reject/revoke/reprepare behavior | Bounded reassessment of one deployed digest plus new-delivery freshness rules; retain original authorization, reports and failure/unreached states. Separate from currently deferred continuous revocation in the [ADR](../docs/EN/maintainers/attestation-selection-contract.md). |
-| Independent SBOM/image inventory comparison | Independent source, matching rules, scope and discrepancy oracle | One genuine image comparison with attributable differences; no inventory-completeness claim from schema validity. |
+| Optional SBOM/image consistency control | Adoption scope, installed-state semantics and error policy after current spike | Promote only if the bounded experiment justifies it; no inventory-completeness claim from agreement. |
 | Scoped default Conftest/Kyverno policies | Supported workloads/namespaces, rule catalogue, exceptions and change ownership | One agreed default scope with matching tests per consumer and real admission where required; preserve existing oracles until explicitly changed. |
 | Manager-oriented control/evidence dashboard | Audience decisions, data sources, freshness, access and unknown-state presentation | Read-only view of verified records linking controls to evidence; distinguish PASS/rejection/error/unreached and historical/current data. Existing defense presentation is not this product. |
 

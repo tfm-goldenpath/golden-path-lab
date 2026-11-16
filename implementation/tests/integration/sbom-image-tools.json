@@ -1,0 +1,15 @@
+{
+  "syft": {
+    "version": "1.57.1",
+    "url": "https://github.com/anchore/syft/releases/download/v1.57.1/syft_1.57.1_linux_amd64.tar.gz",
+    "sha256": "bf52519eb57f675d47c07d43213cb6dff6449f3d6d1147ff6701ed91f44eef0c",
+    "checksums": "https://github.com/anchore/syft/releases/download/v1.57.1/syft_1.57.1_checksums.txt",
+    "identity": "https://github.com/anchore/syft/.github/workflows/release.yaml@refs/heads/main",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "license": "Apache-2.0",
+    "consulted": "2026-11-16",
+    "verification": "Cosign verify-blob of checksums with official sigstore bundle, then archive against signed checksum; extract only bounded regular syft member"
+  },
+  "trivy": "Use unchanged implementation/tools.lock.json pin 0.76.1",
+  "sources": ["https://oss.anchore.com/docs/installation/verification/", "https://oss.anchore.com/docs/guides/sbom/scan-targets/", "https://oss.anchore.com/docs/guides/sbom/catalogers/", "https://github.com/anchore/syft/blob/v1.57.1/LICENSE"]
+}
