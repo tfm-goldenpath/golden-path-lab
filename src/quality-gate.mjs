@@ -5,6 +5,8 @@ import os from 'node:os';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawn,execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
+import {JAVA_PROFILE} from './consumer-profiles.mjs';
+import {runJavaQuality,verifyJavaQuality} from './quality-java.mjs';
 import {captureConsumer,CONSUMER_PROFILE,engineSources} from './consumer.mjs';
 import {validateQualityConfig,expectedFiles,parseReport,evaluateCoverage,present} from './quality-contract.mjs';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -70,6 +72,7 @@ export async function runQuality(engine,consumer,requested) {
   receipt=captureConsumer(engine,consumer);
   write('inputs.json',json(receipt));
   result.binding={runId,consumerCommit:receipt.commit,...receipt.binding};
+  if(receipt.schema===JAVA_PROFILE) return await runJavaQuality(engine,consumer,output,receipt,result);
   const configFile=path.join(consumer,'service/quality-gate.json');
   if(receipt.schema!==CONSUMER_PROFILE) {
    result.status='NOT_APPLICABLE';result.exitCode=0;result.diagnostics.push('Quality coverage is supported only for the Node profile');
@@ -163,6 +166,7 @@ export async function runQuality(engine,consumer,requested) {
 }
 export function verifyQuality(directory) {
  const root=path.resolve(directory),manifest=JSON.parse(safeRead(path.join(root,'checksums.json')));
+ if(manifest.schema==='java-quality-hashes/v1') return verifyJavaQuality(root,manifest);
  if(manifest.schema!=='node-quality-hashes/v1'||!Array.isArray(manifest.artifacts)||fs.existsSync(path.join(root,'finalization-error.json'))) throw new Error('Unsealed quality evidence');
  const expected=['checksums.json',...manifest.artifacts.map(a=>a.path)].sort();
  if(new Set(expected).size!==expected.length||expected.join('\0')!==fs.readdirSync(root).sort().join('\0')) throw new Error('Evidence inventory mismatch');

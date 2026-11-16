@@ -45,8 +45,8 @@ test('absent control is NOT_EXECUTED, invalid control ERROR and Java remains sep
  const f=fixture(t);fs.unlinkSync(path.join(f.consumer,'service/quality-gate.json'));commit(f.consumer);
  const r=await f.run();assert.equal(r.status,'NOT_EXECUTED');assert.equal(r.metrics,null);assert.equal(fs.existsSync(path.join(r.output,'tests.log')),false);
  f.save('quality-gate.json',{...config,command:'exit 0'});commit(f.consumer);assert.equal((await f.run()).status,'ERROR');
- // The fixed Java contract rejects an added quality config; no Java coverage adapter is installed.
- assert.equal(fs.readFileSync(path.join(f.engine,'templates/java-http/.github/workflows/ci.yml'),'utf8').includes('quality'),false);
+ // Java has its own opt-in adapter and host-runner workflow.
+ assert.equal(fs.readFileSync(path.join(f.engine,'templates/java-http/.github/workflows/ci.yml'),'utf8').includes('quality'),true);
 });
 test('threshold rejection and failing tests retain distinct reasons',async t=>{
  const f=fixture(t);f.save('quality-gate.json',{...config,thresholds:{...config.thresholds,branches:90}});commit(f.consumer);
@@ -170,15 +170,37 @@ test('a killed test process reports the concrete signal, not a coverage threshol
  const f=fixture(t);f.save('test/signal.test.js',"import {test} from 'node:test';test('signal',()=>process.kill(process.pid,'SIGTERM'));\n");commit(f.consumer);
  const r=await f.run();assert.equal(r.status,'ERROR');assert.match(r.diagnostics.join(),/interrupted.*SIGTERM/);
 });
-test('Java quality is NOT_APPLICABLE and its committed profile is preserved',async t=>{
+test('Java quality is NOT_EXECUTED and its committed profile is preserved',async t=>{
  const f=fixture(t),consumer=path.join(f.parent,'java');
  initialize(f.engine,consumer,'https://example.invalid/java-quality',command('git',['rev-parse','HEAD'],f.engine),'java-http-consumer/v1');
  command('git',['init','-q'],consumer);commit(consumer);
  const before=captureConsumer(f.engine,consumer),r=await runQuality(f.engine,consumer,path.join(f.parent,'java-result'));
- assert.equal(r.status,'NOT_APPLICABLE');assert.equal(r.exitCode,0);assert.deepEqual(captureConsumer(f.engine,consumer),before);
+ assert.equal(r.status,'NOT_EXECUTED');assert.equal(r.exitCode,0);assert.deepEqual(captureConsumer(f.engine,consumer),before);
 });
 test('failed sealing never yields a PASS receipt or successful integrity check',async t=>{
  const f=fixture(t),target=path.join(f.parent,'run-1/result.json');
  f.save('test/seal.test.js',`import {test} from 'node:test';import {symlinkSync} from 'node:fs';test('unsafe evidence',()=>symlinkSync('/nonexistent-sentinel',${JSON.stringify(target)}));`);commit(f.consumer);
  const r=await f.run();assert.equal(r.status,'ERROR');assert.equal(r.exitCode,2);assert.match(r.diagnostics.join(),/sealing/);assert.throws(()=>verifyQuality(r.output));
+});
+
+test('Java absent configuration is supported but NOT_EXECUTED; strict invalid activation rejects',async t=>{
+ const f=fixture(t),java=path.join(f.parent,'java');
+ initialize(f.engine,java,'https://example.invalid/java-quality-fixture',command('git',['rev-parse','HEAD'],f.engine),'java-http-consumer/v1');
+ command('git',['init','-q'],java);commit(java);
+ let r=await runQuality(f.engine,java,path.join(f.parent,'java-absent'));
+ assert.equal(r.schema,'java-quality-result/v1');assert.equal(r.status,'NOT_EXECUTED');assert.equal(verifyQuality(r.output).result,'NOT_EXECUTED');
+ fs.writeFileSync(path.join(java,'service/quality-gate.json'),JSON.stringify({...config,schema:'java-quality-gate/v1',command:'true'}));commit(java);
+ r=await runQuality(f.engine,java,path.join(f.parent,'java-invalid'));assert.equal(r.status,'ERROR');assert.equal(r.exitCode,2);assert.match(r.diagnostics.join(),/fields/);
+ assert.equal(verifyQuality(r.output).result,'ERROR');
+ fs.appendFileSync(path.join(r.output,'effective-config.json'),'tamper');assert.throws(()=>verifyQuality(r.output),/checksum/);
+});
+test('Java CI uses a host runner, exact engine and one selected test path with complete artifacts',()=>{
+ const w=fs.readFileSync(path.join(root,'templates/java-http/.github/workflows/ci.yml'),'utf8');
+ assert.doesNotMatch(w,/container:|privileged|pull_request_target|secrets\./);
+ assert.match(w,/ref: \$\{\{ steps.quality.outputs.commit \}\}/);
+ assert.match(w,/enabled == 'false'[\s\S]*java-tests.py/);
+ assert.match(w,/enabled == 'true'[\s\S]*quality --consumer/);
+ assert.match(w,/include-hidden-files: true/);assert.match(w,/quality --verify/);
+ for(const a of w.matchAll(/uses: (\S+)/g)) assert.match(a[1],/@[a-f0-9]{40}$/);
+ command('conftest',['test','--policy',path.join(root,'implementation/policies/conftest'),'--namespace','workflow',path.join(root,'templates/java-http/.github/workflows/ci.yml')],root);
 });

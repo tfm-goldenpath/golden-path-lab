@@ -9,6 +9,7 @@ test-env:
 	node --test tests/environment/probe.test.mjs tests/environment/config.test.mjs
 
 test-unit:
+	python3 -I -S tests/unit/test_java_quality.py
 	node --test services/quotes-node/test/*.test.js tests/unit/*.test.mjs
 
 test-policies:

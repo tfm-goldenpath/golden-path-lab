@@ -10,12 +10,14 @@ import json
 import os
 from pathlib import Path
 import re
+import selectors
 import shutil
 import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = Path(__file__).resolve().parent
 PIN = json.loads((ROOT/'java-toolchain.json').read_text())
@@ -79,7 +81,7 @@ MAX_REPORT_FILE_BYTES = 4 * 1024**2
 MAX_REPORT_BYTES = 16 * 1024**2
 
 
-def collect(work, output):
+def collect(work, output, quality_limit=None):
     """Read only retired producer output, using descriptor-relative no-follow IO.
 
     Every generated entry is checked, including unselected files. Opened objects
@@ -87,7 +89,8 @@ def collect(work, output):
     swapped into a regular file's place. No path resolution followed by open.
     """
     artifacts = []
-    totals = {'entries': 0, 'artifacts': 0, 'reports': 0}
+    totals = {'entries': 0, 'artifacts': 0, 'reports': 0, 'quality': 0, 'work': 0}
+    quality_files = []
     destination = output/'java-test-reports'
     directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
 
@@ -119,9 +122,20 @@ def collect(work, output):
                 elif stat.S_ISREG(info.st_mode) and info.st_nlink == 1:
                     report = path.is_relative_to('service/target/surefire-reports')
                     artifact = path.suffix in ('.jar', '.pom')
-                    if not (report or artifact):
+                    quality = quality_limit is not None and (
+                        path.is_relative_to('service/src') or
+                        str(path) in ('service/pom.xml', 'service/Dockerfile', 'service/.dockerignore',
+                                      'service/quality-gate.json', 'service/target/jacoco.exec') or
+                        path.is_relative_to('service/target/classes') or
+                        path.is_relative_to('service/target/test-classes') or
+                        path.is_relative_to('report-input') or path.is_relative_to('report'))
+                    if quality_limit is not None:
+                        totals['work'] += info.st_size
+                        if info.st_size > MAX_FILE_BYTES or totals['work'] > MAX_ARTIFACT_BYTES:
+                            raise ValueError('Java quality working output byte limit exceeded')
+                    if not (report or artifact or quality):
                         continue
-                    limit = MAX_REPORT_FILE_BYTES if report else MAX_FILE_BYTES
+                    limit = MAX_REPORT_FILE_BYTES if report else min(MAX_FILE_BYTES, quality_limit) if quality else MAX_FILE_BYTES
                     if info.st_size > limit:
                         raise ValueError('Java generated file size limit exceeded: '+str(path))
                     source = checked_open(fd, name, info, os.O_RDONLY)
@@ -136,13 +150,14 @@ def collect(work, output):
                             if size > limit:
                                 raise ValueError('Java generated file size limit exceeded: '+str(path))
                             for selected, key, maximum in ((report, 'reports', MAX_REPORT_BYTES),
-                                                          (artifact, 'artifacts', MAX_ARTIFACT_BYTES)):
+                                                          (artifact, 'artifacts', MAX_ARTIFACT_BYTES),
+                                                          (quality, 'quality', quality_limit)):
                                 if selected:
                                     totals[key] += len(chunk)
                                     if totals[key] > maximum:
                                         raise ValueError('Java generated '+key+' byte limit exceeded')
                             hasher.update(chunk)
-                            if report:
+                            if report or quality:
                                 chunks.append(chunk)
                         final = os.fstat(source)
                         if (opened.st_size, opened.st_mtime_ns, opened.st_ctime_ns) != (final.st_size, final.st_mtime_ns, final.st_ctime_ns):
@@ -160,12 +175,23 @@ def collect(work, output):
                             os.utime(retained.fileno(), ns=(info.st_atime_ns, info.st_mtime_ns))
                     if artifact:
                         artifacts.append({'path': str(path), 'sha256': hasher.hexdigest()})
+                    if quality:
+                        target = output/'java-quality-files'/path
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        with target.open('xb') as retained:
+                            for chunk in chunks:
+                                retained.write(chunk)
+                            retained.flush()
+                            os.utime(retained.fileno(), ns=(info.st_atime_ns, info.st_mtime_ns))
+                        quality_files.append({'path':str(path), 'sha256':hasher.hexdigest(),
+                                              'bytes':size, 'mode':oct(info.st_mode & 0o777)[2:],
+                                              'mtimeNs':info.st_mtime_ns})
                 else:
                     raise ValueError('Unsafe Java generated entry (link or nonregular): '+str(path))
 
     root = os.open(work, directory_flags)
     try:
-        for parts in (('repository',), ('service', 'target')):
+        for parts in (((),) if quality_limit is not None else (('repository',), ('service', 'target'))):
             fd = os.dup(root)
             try:
                 for part in parts:
@@ -185,6 +211,98 @@ def collect(work, output):
     finally:
         os.close(root)
     (output/'java-build-artifacts.json').write_text(json.dumps(sorted(artifacts, key=lambda x: x['path']), indent=2)+'\n')
+    if quality_limit is not None:
+        (output/'java-quality-files.json').write_text(json.dumps(sorted(quality_files, key=lambda x: x['path']), indent=2)+'\n')
+    return quality_files
+
+
+def bounded_client(cid, log, work, output, limits):
+    """Bound the Docker client; execute() independently retires its producer."""
+    spec = importlib.util.spec_from_file_location('quality_monitor', ROOT/'quality-runner.py')
+    monitor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(monitor)
+    identity, start, size = work.lstat(), time.monotonic(), 0
+    process = subprocess.Popen(['docker', 'start', '-a', cid], stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT, start_new_session=True)
+    try:
+        with selectors.DefaultSelector() as selector:
+            selector.register(process.stdout, selectors.EVENT_READ)
+            while selector.get_map():
+                if time.monotonic()-start > limits['timeoutSeconds']:
+                    raise TimeoutError('Java quality producer timeout')
+                monitor.monitor(work, output, MAX_ARTIFACT_BYTES, identity, entry_limit=MAX_ENTRIES)
+                for key, _ in selector.select(.1):
+                    chunk = os.read(key.fileobj.fileno(), 65536)
+                    if not chunk:
+                        selector.unregister(key.fileobj); continue
+                    size += len(chunk)
+                    if size > limits['maxOutputBytes']:
+                        raise ValueError('Java quality process output byte limit exceeded')
+                    log.write(chunk); log.flush()
+            return process.wait(timeout=max(.1, limits['timeoutSeconds']-(time.monotonic()-start)))
+    finally:
+        primary = sys.exception()
+        # Do not leave an attached Docker client behind when monitoring fails.
+        try:
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=5)
+        except BaseException as error:
+            if primary is None: raise
+            primary.add_note('Docker client retirement: '+str(error))
+        finally:
+            try:
+                process.stdout.close()
+            except BaseException as error:
+                if primary is None: raise
+                primary.add_note('Docker client pipe cleanup: '+str(error))
+
+
+def execute(work, output, argv, limits=None, mounts=(), workdir='/work/service'):
+    """One pinned Java producer, always retired before callers inspect outputs.
+
+    argv/mounts come only from the two fixed engine adapters, never consumer hooks.
+    Ordinary test behavior is unchanged when limits is None.
+    """
+    status, cid, retired, errors = 1, None, False, []
+    started = time.time_ns()
+    try:
+        extra = [arg for source, destination in mounts
+                 for arg in ('--mount', 'type=bind,src='+str(source)+',dst='+destination+',readonly')]
+        cid = docker('create', '--cidfile', str(output/'java-test-container.id'),
+                     '--label', 'goldenpath.java-test='+str(output), '--platform', 'linux/amd64',
+                     '--cpus', '2', '--memory', '1g', '--memory-swap', '1g', '--pids-limit', '128',
+                     '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--read-only',
+                     '--user', str(os.getuid())+':'+str(os.getgid()),
+                     '--tmpfs', '/tmp:rw,nosuid,nodev,size=128m',
+                     '--mount', 'type=bind,src='+str(work)+',dst=/work', '--workdir', workdir,
+                     '--env', 'MAVEN_OPTS=-Xmx256m -XX:ActiveProcessorCount=2 -Duser.home=/work',
+                     *extra, '--entrypoint', argv[0], PIN['builderImage'], *argv[1:])
+        info = json.loads(docker('inspect', cid))[0]
+        (output/'java-test-container.json').write_text(json.dumps({
+            'id':cid, 'image':info['Image'], 'reference':PIN['builderImage'],
+            'cpus':2, 'memoryBytes':1073741824, 'owner':str(output)}, indent=2)+'\n')
+        with (output/'unit-tests.log').open('wb' if limits else 'w') as log:
+            if limits:
+                client_status = bounded_client(cid, log, work, output, limits)
+            else:
+                client_status = subprocess.run(['docker', 'start', '-a', cid], stdout=log,
+                                               stderr=subprocess.STDOUT, timeout=900).returncode
+        state = json.loads(docker('inspect', '--format', '{{json .State}}', cid))
+        status = client_status or state['ExitCode'] or (1 if state['OOMKilled'] or state['Running'] or state['Error'] else 0)
+        if limits:
+            (output/'process-state.json').write_text(json.dumps(state, indent=2)+'\n')
+        if status:
+            raise ValueError('Java test process failed with exit status '+str(status))
+    except BaseException as error:
+        errors.append(('execution', error))
+    finally:
+        try:
+            cleanup(output, cid=cid, creation_attempted=True)
+            retired = True
+        except BaseException as error:
+            errors.append(('cleanup', error))
+    return status, started, time.time_ns(), retired, errors
 
 
 def run(service, output):
@@ -207,7 +325,7 @@ def run(service, output):
         work.rmdir()
         raise ValueError('Java working and evidence directories must be separate')
     errors = []
-    status, cid, creation_attempted, retired, collected = 1, None, False, False, False
+    status, retired, collected = 1, False, False
     try:
         (output/'java-test-work.json').write_text(json.dumps({'path': str(work),
             'device': work.stat().st_dev, 'inode': work.stat().st_ino})+'\n')
@@ -217,37 +335,17 @@ def run(service, output):
         shutil.copytree(service/'src', app/'src', symlinks=False)
         (work/'.started').touch()
         started = (work/'.started').stat().st_mtime_ns
-        creation_attempted = True
-        cid = docker('create', '--cidfile', str(output/'java-test-container.id'),
-                     '--label', 'goldenpath.java-test='+str(output), '--platform', 'linux/amd64',
-                     '--cpus', '2', '--memory', '1g', '--memory-swap', '1g', '--pids-limit', '128',
-                     '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--read-only',
-                     '--user', str(os.getuid())+':'+str(os.getgid()),
-                     '--tmpfs', '/tmp:rw,nosuid,nodev,size=128m',
-                     '--mount', 'type=bind,src='+str(work)+',dst=/work', '--workdir', '/work/service',
-                     '--env', 'MAVEN_OPTS=-Xmx256m -XX:ActiveProcessorCount=2 -Duser.home=/work',
-                     '--entrypoint', 'mvn', PIN['builderImage'],
-                     '-B', '-ntp', '--strict-checksums', '-Dmaven.repo.local=/work/repository', 'verify')
-        info = json.loads(docker('inspect', cid))[0]
-        (output/'java-test-container.json').write_text(json.dumps({
-            'id': cid, 'image': info['Image'], 'reference': PIN['builderImage'],
-            'cpus': 2, 'memoryBytes': 1073741824, 'owner': str(output)}, indent=2)+'\n')
-        with (output/'unit-tests.log').open('w') as log:
-            process = subprocess.run(['docker', 'start', '-a', cid], stdout=log,
-                                     stderr=subprocess.STDOUT, timeout=900)
-        state = json.loads(docker('inspect', '--format', '{{json .State}}', cid))
-        status = process.returncode or state['ExitCode'] or (1 if state['OOMKilled'] or state['Running'] or state['Error'] else 0)
-        if status:
-            raise ValueError('Java test process failed with exit status '+str(status))
+        status, _, _, retired, execution_errors = execute(work, output,
+            ['mvn', '-B', '-ntp', '--strict-checksums', '-Dmaven.repo.local=/work/repository', 'verify'])
+        errors.extend(execution_errors)
     except BaseException as error:
         errors.append(('execution', error))
-    finally:
-        # Retirement is independent of every evidence write and precedes reads.
+        # Preparation may fail before execute() owns retirement.
         try:
-            cleanup(output, cid=cid, creation_attempted=creation_attempted)
+            cleanup(output, cid=None, creation_attempted=False)
             retired = True
-        except BaseException as error:
-            errors.append(('cleanup', error))
+        except BaseException as cleanup_error:
+            errors.append(('cleanup', cleanup_error))
     if retired:
         try:
             (output/'java-test-exit.txt').write_text(str(status)+'\n')

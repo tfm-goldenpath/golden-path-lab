@@ -34,18 +34,23 @@ and deferred manual measurement/calibration scope are not reopened.
 
 ### Next implementation increment
 
-Current branch: **`feat/consumer-quality-gate`**, based on
-`ccc52a59c499510d331d5cb06a9a98e164ee2f1e`. Adds opt-in Node tests and native coverage,
-explicit committed scope/exclusions/thresholds, deterministic PASS/FAIL/ERROR,
-fresh unsigned evidence and the same local/CI command. No Kubernetes, signed
-result, policy or admission contract changes. [Commands](../docs/EN/consumer-quickstart.md#optional-test-and-coverage-gate)
-and [validation](../docs/EN/maintainers/consumer-quality-validation.md).
+PR **#79 is merged** at `d52190240d9f44ef908cd6d3237b2a69ed531157`, including the live-monitor temporary-deletion fix. Its Node observations remain attached to their original revisions.
 
-- [x] Implement the bounded Node gate and focused negative/compatibility checks.
-- [ ] Human review of the scope, exclusions, thresholds and implementation.
-- [ ] Java coverage: separate future adapter and validation.
-- [ ] Any future authenticated-results/admission integration needs its own contract,
-  producers, validators, policies and real integration validation.
+Current branch: **`feat/java-quality-gate`**. Adds opt-in Java tests and JaCoCo
+lines/methods/branches, strict committed scope/configuration, deterministic
+PASS/FAIL/ERROR and NOT_EXECUTED when absent, with bounded local/CI evidence.
+No admission, authenticated results, profile versions or delivery policies change.
+See [Java commands](../docs/EN/java-consumer-quickstart.md#optional-java-test-and-coverage-gate)
+and the [quality validation record](../docs/EN/maintainers/consumer-quality-validation.md).
+
+- [x] Implement the Java adapter and deterministic regression fixtures.
+- [x] Complete six real Java and four Node quality cases, ordinary Java tests, shared checks and verified local evidence preservation at `96c03b2`. Final-head CI/artifact status is recorded in the draft PR, separately from these local observations.
+- [ ] Human review of implementation, project scope/exclusions and thresholds.
+- [ ] Separate follow-ups: independent SBOM/image analysis; current vulnerability
+  reassessment; AI-assisted diagnosis/draft PR; quality integration into authenticated
+  results. Each needs its own scope/oracle and does not follow from local coverage.
+- [ ] Broader Java/framework support, hosted OIDC, custody, licensing and
+  attestation-selection decisions remain separate and pending.
 
 Completed Java increment: **PR #78 merged**, based on PR #77. Added
 `java-http-consumer/v1`, fixed Temurin/Maven toolchain and service, strict Java

@@ -74,6 +74,26 @@ jobs:
             ${{ runner.temp }}/node-quality-validation/collection-error/*
           if-no-files-found: error
           retention-days: 14
+      - name: Validate opt-in Java quality in an independent committed starter
+        run: node tests/integration/java-quality.mjs "$RUNNER_TEMP/java-quality-validation"
+      - name: Retain Java quality validation evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: java-quality-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            ${{ runner.temp }}/java-quality-validation/validation.json
+            ${{ runner.temp }}/java-quality-validation/*.log
+            ${{ runner.temp }}/java-quality-validation/consumer.bundle
+            ${{ runner.temp }}/java-quality-validation/pass/**
+            ${{ runner.temp }}/java-quality-validation/threshold/**
+            ${{ runner.temp }}/java-quality-validation/assertion/**
+            ${{ runner.temp }}/java-quality-validation/evidence-error/**
+            ${{ runner.temp }}/java-quality-validation/unexercised/**
+            ${{ runner.temp }}/java-quality-validation/unsafe-output/**
+          if-no-files-found: error
+          retention-days: 14
       - name: Prepare harmless Pages packaging smoke
         run: |
           python3 tests/integration/actions-artifact-smoke.py prepare "$RUNNER_TEMP/actions-artifact-smoke" \

@@ -540,3 +540,7 @@ y comandos sí se incluyen, junto con XML de pruebas y sus hashes. Admisión com
 perfil/productor exactos, nunca acepta ambos indiscriminadamente. Consulte la
 [validación real pendiente](../../../docs/EN/maintainers/java-consumer-validation.md)
 y los [comandos](../../../docs/ES/java-consumer-quickstart.md).
+
+### Límite del adaptador de calidad Java
+
+`src/quality-java.mjs` selecciona el perfil Java validado y sella evidencia local sin firma. `src/java-quality-runner.py` reutiliza retirada/colección segura de `src/java-tests.py` y monitor PR #79 con valores Node intactos. `src/java-quality-contract.py` valida configuración, transforma la copia del POM y asocia Surefire/clases/sesión/contadores JaCoCo; `src/java-quality-toolchain.json` fija agente/CLI. Compilación, una ejecución de pruebas e informe son secuenciales con recaptura de entradas. La selección completa de `src/` incluye estas dependencias en inventario/exportaciones. No añade comprobaciones de entrega, predicados ni admisión.
