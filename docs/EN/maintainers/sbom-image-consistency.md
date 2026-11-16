@@ -187,3 +187,28 @@ regulatory compliance or admission claim is made. AI assistance: OpenAI Codex
 implemented and ran the experiment. Human review, acceptance, custody and licensing
 decisions remain pending. Promotion to optional control and authenticated-results/
 admission integration require separate branches and approved requirements.
+
+## Validation and preservation
+
+The focused checks pass: 30 synthetic comparator/file regressions and seven
+runner tests (including unsafe archive members), plus 11 ownership-inventory tests.
+The 879-path inventory, workflow checks, doctor, EN/ES command parity and relative
+links pass. The shared suite passed on the development working tree; exact final
+commit local/CI logs and artifact verification are recorded in the PR handoff,
+not retroactively assigned to earlier executions.
+
+The complete new prepare command was executed independently at `8de437e` and
+again produced MATCH for 413 dpkg rows. Five preserved matrix outputs replay with
+identical bytes. This second build has its own consumer/image identities.
+
+Local evidence package: `sbom-image-consistency-20261116.tar.gz`, **148 internal
+hashes verified**, SHA-256
+`3a2d9ddb57e0942448f13ea452ee729bc27ceb4383e8d4e35b76322b637429f2`.
+The unsupported initial OCI export duplicate was retired after recording its hash
+and equivalent config/manifest in the retained Docker export. Approximately
+21 GiB remains on workspace/Docker; exact byte counts are in the summary.
+CI retains shared-suite logs/source SHA even on failure, using the existing pinned
+upload action and permissions. It does not download Syft or execute this image
+matrix. Later CI receipts are preserved separately from the sealed local package.
+Peak RSS was not measured; available memory, filesystem capacity and elapsed
+scanner times are observations, not performance guarantees.

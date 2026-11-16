@@ -139,3 +139,27 @@ de todos los archivos, cumplimiento regulatorio ni admisión. OpenAI Codex reali
 implementación y ejecución; revisión humana, aceptación, custodia y licencia
 siguen pendientes. Promoción opcional e integración autenticada requieren ramas
 y requisitos separados.
+
+## Validación y preservación
+
+Pasan 30 regresiones sintéticas del comparador/lector, siete pruebas del runner
+(incluidos miembros tar inseguros) y 11 pruebas de inventario. Inventario de 879
+rutas, workflows, doctor, enlaces relativos y comandos EN/ES pasan. La suite
+compartida pasó en el árbol de desarrollo; los logs local/CI del commit final y
+la verificación de artefactos se registran en la entrega de la PR, sin reasignar
+revisiones a ejecuciones anteriores.
+
+El comando completo de preparación se ejecutó por separado en `8de437e` y volvió
+a obtener MATCH para 413 paquetes. Sus identidades son propias. Cinco salidas de
+la matriz se reproducen con bytes idénticos.
+
+Paquete local `sbom-image-consistency-20261116.tar.gz`: **148 hashes internos
+verificados**, SHA-256
+`3a2d9ddb57e0942448f13ea452ee729bc27ceb4383e8d4e35b76322b637429f2`.
+Se retiró el duplicado OCI inicial tras registrar hash y equivalencia de
+configuración/manifiesto con el Docker conservado. Quedan unos 21 GiB en
+workspace/Docker; el resumen conserva bytes exactos. CI preserva logs y SHA de
+la suite incluso en fallo, con la acción fijada y permisos existentes; no descarga
+Syft ni ejecuta esta matriz. Los recibos CI posteriores se conservan aparte del
+paquete local sellado. No se midió RSS máximo; memoria disponible, disco y tiempos
+observados no constituyen garantías de rendimiento.

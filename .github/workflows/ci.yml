@@ -44,7 +44,18 @@ jobs:
       - name: Run service, policy and static workflow scenarios
         run: |
           python3 scripts/check-tool-versions.py
-          make test WORKFLOW_EVIDENCE=evidence/raw/workflow-ci
+          git rev-parse HEAD > "$RUNNER_TEMP/shared-tests-source.txt"
+          make test WORKFLOW_EVIDENCE=evidence/raw/workflow-ci 2>&1 | tee "$RUNNER_TEMP/shared-tests.log"
+      - name: Retain shared regression diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: shared-regressions-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/shared-tests.log
+            ${{ runner.temp }}/shared-tests-source.txt
+          if-no-files-found: warn
+          retention-days: 14
       - name: Run bounded Java service tests
         run: make test-java JAVA_TEST_OUTPUT="$RUNNER_TEMP/java-service-tests"
       - name: Reject a harmless generated link in the real Java container
