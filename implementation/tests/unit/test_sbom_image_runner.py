@@ -53,4 +53,15 @@ class RunnerTests(unittest.TestCase):
     if unsafe:
      with self.assertRaises(ValueError):r.identity(p)
     else:self.assertEqual(r.identity(p)['platform'],'linux/amd64')
+ def test_cleanup_failure_prevents_collection(self):
+  with tempfile.TemporaryDirectory() as d:
+   archive=Path(d)/'image';archive.write_text('synthetic')
+   with patch.object(r,'identity',return_value={'platform':'linux/amd64'}), patch.object(r,'run',return_value={'exit':0}), patch.object(r.shutil,'rmtree') as cleanup:
+    cleanup.avoids_symlink_attacks=True
+    cleanup.side_effect=OSError('synthetic cleanup failure')
+    self.assertEqual(r.scan(archive,Path(d)/'result','unused'),2)
+   receipt=json.loads((Path(d)/'result/receipt.json').read_text())
+   self.assertEqual(receipt['status'],'ERROR')
+   self.assertIn('cleanup',receipt['reason'])
+   os.environ.pop('TMPDIR',None)
 if __name__=='__main__':unittest.main()

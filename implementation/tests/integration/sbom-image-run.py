@@ -9,6 +9,8 @@ import stat
 import subprocess
 import sys
 import time
+import tempfile
+import shutil
 import tarfile
 from pathlib import PurePosixPath
 
@@ -111,7 +113,18 @@ def scan(archive, destination, syft):
             # 2 GiB per-file hard cap also permits scanner temporary runtime files.
             # Reports/logs have a separate monitored 32 MiB acceptance limit.
             wrapped=['bash','-c','ulimit -f 2097152; exec "$@"','bounded',*wrapper]
-            r=run(wrapped,destination/(name+'.log'),extra=report)
+            scratch=Path(tempfile.mkdtemp(prefix='scanner-tmp-',dir=destination)).resolve()
+            os.environ['TMPDIR']=str(scratch)
+            try:
+                r=run(wrapped,destination/(name+'.log'),extra=report)
+            finally:
+                # Only this invocation's exclusively created scratch directory.
+                # rmtree on this platform avoids following attacker-controlled links.
+                if scratch.is_symlink() or not shutil.rmtree.avoids_symlink_attacks:
+                    raise ValueError('Unsafe scanner scratch cleanup')
+                shutil.rmtree(scratch)
+                os.environ.pop('TMPDIR',None)
+            r['cleanupStatus']='PASS'
             r['scannerCommand']=cmd
             r['archiveSha256After']=digest(archive)
             receipt['commands'].append(r)
