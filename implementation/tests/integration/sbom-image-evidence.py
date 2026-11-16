@@ -11,6 +11,10 @@ writer=load('writer',ROOT/'src/package_evidence.py')
 verifier=load('verifier',ROOT/'src/verify_package.py')
 def package(source,output):
  source=verifier.regular(source/'matrix/matrix.json').parent.parent
+ for p in (output,*output.parents):
+  if p.is_symlink():raise ValueError('Symlink package output')
+ for suffix in ['.tar.gz','.tar.gz.sha256']:
+  if (output/(source.name+suffix)).exists():raise FileExistsError('Preserve existing evidence package')
  names={}
  for p in sorted(source.rglob('*')):
   if p.is_symlink(): raise ValueError('Evidence symlink')

@@ -98,6 +98,8 @@ node implementation/tests/integration/sbom-image-compare.mjs implementation/evid
 python3 implementation/tests/integration/sbom-image-run.py implementation/evidence/raw/sbom-image-consistency-20261116/image-docker.tar implementation/evidence/raw/sbom-image-consistency-20261116/replay implementation/.tools/sbom-spike/syft
 # Directed fixture matrix; destination must not exist.
 node implementation/tests/integration/sbom-image-matrix.mjs implementation/evidence/raw/sbom-image-consistency-20261116/node-final implementation/evidence/raw/sbom-image-consistency-20261116/java-final implementation/evidence/raw/sbom-image-consistency-20261116/replay-matrix
+# Controlled scanner-execution failure: expected ERROR / exit 2.
+python3 implementation/tests/integration/sbom-image-run.py implementation/evidence/raw/sbom-image-consistency-20261116/image-docker.tar implementation/evidence/raw/sbom-image-consistency-20261116/replay-error /nonexistent-sbom-spike-scanner
 # Package compact selected evidence; images and DB remain separate retained inputs.
 python3 implementation/tests/integration/sbom-image-evidence.py package implementation/evidence/raw/sbom-image-consistency-20261116 implementation/evidence/packages
 python3 implementation/tests/integration/sbom-image-evidence.py verify implementation/evidence/packages/sbom-image-consistency-20261116.tar.gz
@@ -142,7 +144,7 @@ y requisitos separados.
 
 ## Validación y preservación
 
-Pasan 30 regresiones sintéticas del comparador/lector, siete pruebas del runner
+Pasan 30 regresiones sintéticas del comparador/lector, ocho pruebas del runner
 (incluidos miembros tar inseguros) y 11 pruebas de inventario. Inventario de 879
 rutas, workflows, doctor, enlaces relativos y comandos EN/ES pasan. La suite
 compartida pasó en el árbol de desarrollo; los logs local/CI del commit final y
