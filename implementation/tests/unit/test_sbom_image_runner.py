@@ -1,6 +1,9 @@
 """Synthetic runner boundary regressions; no scanner/image claim."""
 import importlib.util
 import os
+import io
+import json
+import tarfile
 from pathlib import Path
 import tempfile
 import unittest
@@ -33,4 +36,21 @@ class RunnerTests(unittest.TestCase):
    p=Path(d)/'log';p.write_text('preserve')
    with self.assertRaises(FileExistsError):r.run(['true'],p)
    self.assertEqual(p.read_text(),'preserve')
+ def test_archive_metadata_and_unsafe_members(self):
+  for unsafe in [None,'../escape','/absolute','link','fifo','duplicate','platform']:
+   with self.subTest(unsafe=unsafe), tempfile.TemporaryDirectory() as d:
+    p=Path(d)/'image.tar'
+    with tarfile.open(p,'w') as t:
+     def add(name,value):
+      b=json.dumps(value).encode();m=tarfile.TarInfo(name);m.size=len(b);t.addfile(m,io.BytesIO(b))
+     add('manifest.json',[{'Config':'config.json'}])
+     add('config.json',{'os':'linux','architecture':'arm64' if unsafe=='platform' else 'amd64','rootfs':{'diff_ids':[]}})
+     if unsafe and unsafe!='platform':
+      m=tarfile.TarInfo('config.json' if unsafe=='duplicate' else unsafe)
+      if unsafe=='link':m.type=tarfile.SYMTYPE;m.linkname='config.json'
+      if unsafe=='fifo':m.type=tarfile.FIFOTYPE
+      t.addfile(m)
+    if unsafe:
+     with self.assertRaises(ValueError):r.identity(p)
+    else:self.assertEqual(r.identity(p)['platform'],'linux/amd64')
 if __name__=='__main__':unittest.main()

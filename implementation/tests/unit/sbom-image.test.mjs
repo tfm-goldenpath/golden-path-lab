@@ -24,6 +24,7 @@ const cases=[
  ['source name is not binary identity','MISMATCH',f=>{const c=f.t.components[1];c.name='source';c.purl=c.purl.replace('/binary@','/source@');}],
  ['identical duplicate','ERROR',f=>f.s.artifacts.push(structuredClone(f.s.artifacts[0]))],
  ['conflicting duplicate','ERROR',f=>{const c=structuredClone(f.s.artifacts[0]);c.version='2';c.metadata.version='2';c.purl=c.purl.replace('1%3A2.3-4','2');f.s.artifacts.push(c);}],
+ ['missing dpkg PURL','ERROR',f=>delete f.t.components[1].purl],
  ['missing architecture','ERROR',f=>f.t.components[1].purl=f.t.components[1].purl.replace('arch=amd64&','')],
  ['duplicate qualifier','ERROR',f=>f.t.components[1].purl+='&arch=all'],
  ['ambiguous epoch','ERROR',f=>f.t.components[1].purl+='&epoch=1'],

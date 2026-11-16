@@ -32,7 +32,7 @@ function normalize(t,s){
     requireThat(Array.isArray(items)&&items.length<=100000,'Invalid component list');
     items.forEach((c,i)=>{
       const pointer=`/${side==='trivy'?'components':'artifacts'}/${i}`;
-      const isDeb=side==='syft'?c.type==='deb':c.purl?.startsWith('pkg:deb/');
+      const isDeb=side==='syft'?c.type==='deb':(c.purl?.startsWith('pkg:deb/')||c.properties?.some(p=>p.name==='aquasecurity:trivy:PkgType'&&['debian','ubuntu'].includes(p.value)));
       if(!isDeb){exclusions.push({side,pointer,status:'NOT_EVALUATED',name:c.name,family:c.type});return;}
       const p=purl(c.purl);
       requireThat(p.distribution===distro&&p.name===c.name&&p.version===c.version,'PURL/native identity conflict');
